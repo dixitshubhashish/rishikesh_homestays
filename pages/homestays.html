@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Homestays in Rishikesh | Compare Areas, Budgets & Amenities</title>
+    <meta name="description" content="Browse multiple Rishikesh homestays across Tapovan, Swarg Ashram, Triveni Ghat, Muni Ki Reti, and Neelkanth Road.">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/assets/css/styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="nav-wrap">
+        <a class="brand" href="/"><span class="brand-mark">RH</span><span>Rishikesh Homestays</span></a>
+        <button class="nav-toggle" type="button" data-nav-toggle aria-label="Open menu" aria-expanded="false"><span></span></button>
+        <nav class="site-nav" data-nav aria-label="Primary navigation">
+          <a href="/">Home</a>
+          <a href="/pages/homestays.html" aria-current="page">Homestays</a>
+          <a href="/pages/things-to-do.html">Things to do</a>
+          <a href="/pages/about-rishikesh.html">About Rishikesh</a>
+          <a href="/pages/triveni-ghat.html">Triveni Ghat</a>
+          <a href="/pages/places-to-visit.html">Places</a>
+          <a class="nav-cta" href="/pages/contact.html">Plan my stay</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="page-hero stays">
+        <div class="page-hero-inner">
+          <p class="eyebrow">Compare stays</p>
+          <h1>Multiple homestays for different kinds of Rishikesh trips.</h1>
+          <p>Use filters to shortlist stay areas and travel styles. These are sample launch listings, ready to replace with verified properties and real photos.</p>
+        </div>
+      </section>
+      <section class="section" id="stays">
+        <div class="container listing-layout">
+          <div>
+            <div class="filters" aria-label="Homestay filters">
+              <div class="field">
+                <label for="filter-area">Area</label>
+                <select id="filter-area" data-filter-area></select>
+              </div>
+              <div class="field">
+                <label for="filter-type">Traveller type</label>
+                <select id="filter-type" data-filter-type></select>
+              </div>
+              <div class="field">
+                <label for="filter-budget">Budget</label>
+                <select id="filter-budget" data-filter-budget></select>
+              </div>
+              <a class="btn btn-secondary" href="/pages/contact.html">Need help?</a>
+            </div>
+            <div class="listing-grid" data-stay-grid></div>
+          </div>
+          <aside class="booking-panel">
+            <h2>Ask for a shortlist</h2>
+            <p class="lead">Share your dates, group size, and preferred vibe. We will suggest 2-3 suitable options.</p>
+            <form class="booking-form" name="homestay-shortlist" method="POST" data-netlify="true" action="/pages/thanks.html">
+              <input type="hidden" name="form-name" value="homestay-shortlist">
+              <div class="field"><label for="name">Name</label><input id="name" name="name" required></div>
+              <div class="field"><label for="phone">Phone or WhatsApp</label><input id="phone" name="phone" required></div>
+              <div class="field"><label for="dates">Dates</label><input id="dates" name="dates" placeholder="Example: 14-17 Aug"></div>
+              <div class="field"><label for="message">What kind of stay?</label><textarea id="message" name="message" placeholder="Family room, river view, kitchen, parking, quiet area..."></textarea></div>
+              <button class="btn btn-primary" type="submit">Send request</button>
+            </form>
+            <p class="form-note">Netlify will collect this form after the site is deployed.</p>
+          </aside>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <div class="container footer-bottom"><span>© 2026 Rishikesh Homestays</span><a href="/pages/contact.html">Contact</a></div>
+    </footer>
+    <script src="/assets/js/site.js"></script>
+  </body>
+</html>
+
