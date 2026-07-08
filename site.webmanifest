@@ -1,0 +1,10 @@
+{
+  "name": "Rishikesh Homestays",
+  "short_name": "RishikeshStay",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f2e8",
+  "theme_color": "#14524a",
+  "description": "Traveller-friendly homestays and local Rishikesh travel guides."
+}
+
