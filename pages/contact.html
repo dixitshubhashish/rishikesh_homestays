@@ -35,6 +35,33 @@
             <div class="field"><label for="email">Email</label><input id="email" name="email" type="email"></div>
             <div class="field"><label for="preferred_stay">Preferred homestay</label><input id="preferred_stay" name="preferred_stay" placeholder="Optional"></div>
             <div class="field"><label for="area">Preferred area</label><select id="area" name="area"><option>Open to suggestions</option><option>Tapovan</option><option>Swarg Ashram</option><option>Triveni Ghat</option><option>Muni Ki Reti</option><option>Neelkanth Road</option></select></div>
+            <div class="field"><label for="coming_from_city">Coming from (City)</label><input id="coming_from_city" name="coming_from_city" placeholder="Your city"></div>
+            <div class="field"><label>Number of Adults</label><div class="number-counter">
+              <button type="button" class="counter-btn" data-counter="adults" data-action="decrease">−</button>
+              <input type="number" id="adults" name="adults" class="counter-input" min="1" value="1" readonly>
+              <button type="button" class="counter-btn" data-counter="adults" data-action="increase">+</button>
+            </div></div>
+            <div class="field"><label>Number of Children</label><div class="number-counter">
+              <button type="button" class="counter-btn" data-counter="children" data-action="decrease">−</button>
+              <input type="number" id="children" name="children" class="counter-input" min="0" value="0" readonly>
+              <button type="button" class="counter-btn" data-counter="children" data-action="increase">+</button>
+            </div></div>
+            <div class="field"><label>Traveling with pets?</label><div class="pets-selector">
+              <label class="pet-option">
+                <input type="radio" name="pets" value="none" checked> No pets
+              </label>
+              <label class="pet-option">
+                <input type="radio" name="pets" value="dogs"> Dogs
+              </label>
+              <label class="pet-option">
+                <input type="radio" name="pets" value="cats"> Cats
+              </label>
+            </div></div>
+            <div class="field"><label>Number of Pets</label><div class="number-counter">
+              <button type="button" class="counter-btn" data-counter="pet_count" data-action="decrease">−</button>
+              <input type="number" id="pet_count" name="pet_count" class="counter-input" min="0" value="0" readonly>
+              <button type="button" class="counter-btn" data-counter="pet_count" data-action="increase">+</button>
+            </div></div>
             <div class="field"><label for="details">Trip details</label><textarea id="details" name="details" required placeholder="Dates, number of guests, rooms, budget, must-have amenities, arrival time..."></textarea></div>
             <p class="form-status" data-form-status role="status" aria-live="polite"></p>
             <button class="btn btn-primary" type="submit">Request shortlist</button>
