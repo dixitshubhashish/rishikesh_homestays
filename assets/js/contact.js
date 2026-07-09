@@ -1,57 +1,54 @@
-const form =
-document.querySelector("#contactForm");
+// Attach to the site's contact form and POST a JSON payload to the API
+const form = document.querySelector("form[name='main-inquiry']") || document.querySelector("#contactForm") || document.querySelector(".booking-form");
 
-form.addEventListener("submit", async function (e) {
+if (form) {
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
 
-    e.preventDefault();
+        const btn = form.querySelector("button[type='submit']") || form.querySelector("button");
+        const originalText = btn ? btn.innerText : "Submit";
 
-    const btn =
-    form.querySelector("button");
+        if (btn) {
+            btn.disabled = true;
+            btn.innerText = "Sending...";
+        }
 
-    btn.disabled = true;
+        const raw = Object.fromEntries(new FormData(form));
 
-    btn.innerText = "Sending...";
+        const payload = {
+            name: raw.name || "",
+            email: raw.email || "",
+            phone: raw.phone || raw.whatsapp || "",
+            property: raw.preferred_stay || raw.property || "",
+            area: raw.area || "",
+            message: raw.details || raw.message || ""
+        };
 
-    const formData =
-    Object.fromEntries(
-        new FormData(form)
-    );
+        try {
+            const response = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
 
-    const response =
-    await fetch("/api/contact", {
+            const result = await response.json().catch(() => ({}));
 
-        method: "POST",
-
-        headers: {
-            "Content-Type":
-                "application/json"
-        },
-
-        body:
-            JSON.stringify(formData)
-
+            if (response.ok && result.success !== false) {
+                alert("Thank you! We will contact you shortly.");
+                form.reset();
+                // keep user on page or redirect to thanks
+                window.location.href = "/pages/thanks.html";
+            } else {
+                alert(result.message || "Sorry, something went wrong. Please try again.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Network error — please try again later.");
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
     });
-
-    const result =
-    await response.json();
-
-    if (result.success) {
-
-        alert(
-            "Thank you! We will contact you shortly."
-        );
-
-        form.reset();
-
-    }
-    else {
-
-        alert(result.message);
-
-    }
-
-    btn.disabled = false;
-
-    btn.innerText = "Send";
-
-});
+}

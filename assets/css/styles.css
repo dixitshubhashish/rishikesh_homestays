@@ -169,6 +169,20 @@ textarea {
   background: var(--river);
 }
 
+/* Make the header CTA visually lighter and match nav typography */
+.nav-cta {
+  background: transparent;
+  color: var(--river);
+  border-color: rgba(20, 82, 74, 0.12);
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.nav-cta:hover {
+  background: var(--sky);
+  color: var(--river);
+}
+
 .nav-cta:hover,
 .btn-primary:hover {
   background: #0d3f39;
