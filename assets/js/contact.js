@@ -1,57 +1,53 @@
-const form =
-document.querySelector("#contactForm");
+const form = document.querySelector("#contactForm");
 
-form.addEventListener("submit", async function (e) {
+if (form) {
+  const btn = form.querySelector("button");
+  const status = form.querySelector("[data-form-status]");
 
-    e.preventDefault();
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
-    const btn =
-    form.querySelector("button");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+    }
 
-    btn.disabled = true;
+    if (status) {
+      status.textContent = "";
+    }
 
-    btn.innerText = "Sending...";
+    const formData = Object.fromEntries(new FormData(form));
 
-    const formData =
-    Object.fromEntries(
-        new FormData(form)
-    );
-
-    const response =
-    await fetch("/api/contact", {
-
+    try {
+      const response = await fetch("/api/contact", {
         method: "POST",
-
         headers: {
-            "Content-Type":
-                "application/json"
+          "Content-Type": "application/json"
         },
+        body: JSON.stringify(formData)
+      });
 
-        body:
-            JSON.stringify(formData)
+      const result = await response.json();
 
-    });
-
-    const result =
-    await response.json();
-
-    if (result.success) {
-
-        alert(
-            "Thank you! We will contact you shortly."
-        );
-
+      if (result.success) {
         form.reset();
-
+        if (status) {
+          status.textContent = result.message || "Thank you! We will contact you shortly.";
+        }
+      } else {
+        if (status) {
+          status.textContent = result.message || "Unable to send your inquiry right now.";
+        }
+      }
+    } catch (error) {
+      if (status) {
+        status.textContent = "Unable to send your inquiry right now. Please call us directly.";
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Request shortlist";
+      }
     }
-    else {
-
-        alert(result.message);
-
-    }
-
-    btn.disabled = false;
-
-    btn.innerText = "Send";
-
-});
+  });
+}

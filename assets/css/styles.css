@@ -165,13 +165,18 @@ textarea {
 
 .nav-cta,
 .btn-primary {
-  color: #fff;
-  background: var(--river);
+  color: #fff !important;
+  background: #1f6a62;
+  box-shadow: 0 8px 18px rgba(31, 102, 94, 0.14);
+  transition: background-color 220ms ease, box-shadow 220ms ease, transform 220ms ease;
 }
 
 .nav-cta:hover,
 .btn-primary:hover {
-  background: #0d3f39;
+  color: #fff !important;
+  background: #17584f;
+  box-shadow: 0 10px 22px rgba(24, 82, 76, 0.2);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {

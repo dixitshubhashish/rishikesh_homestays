@@ -27,7 +27,7 @@
       </section>
       <section class="section">
         <div class="container split">
-          <form class="contact-card booking-form" name="main-inquiry" method="POST" data-netlify="true" action="/pages/thanks.html">
+          <form id="contactForm" class="contact-card booking-form" name="main-inquiry" method="POST" data-netlify="true" action="/pages/thanks.html">
             <input type="hidden" name="form-name" value="main-inquiry">
             <h2>Send inquiry</h2>
             <div class="field"><label for="name">Name</label><input id="name" name="name" required></div>
@@ -36,8 +36,8 @@
             <div class="field"><label for="preferred_stay">Preferred homestay</label><input id="preferred_stay" name="preferred_stay" placeholder="Optional"></div>
             <div class="field"><label for="area">Preferred area</label><select id="area" name="area"><option>Open to suggestions</option><option>Tapovan</option><option>Swarg Ashram</option><option>Triveni Ghat</option><option>Muni Ki Reti</option><option>Neelkanth Road</option></select></div>
             <div class="field"><label for="details">Trip details</label><textarea id="details" name="details" required placeholder="Dates, number of guests, rooms, budget, must-have amenities, arrival time..."></textarea></div>
+            <p class="form-status" data-form-status role="status" aria-live="polite"></p>
             <button class="btn btn-primary" type="submit">Request shortlist</button>
-           
           </form>
           <aside class="contact-card">
             <h2>What to include?</h2>
@@ -59,6 +59,7 @@
       </section>
     </main>
     <footer class="site-footer"><div class="container footer-bottom"><span>© 2026 Rishikesh Homestays</span><a href="/pages/homestays.html">Homestays List</a></div></footer>
+    <script src="/assets/js/contact.js"></script>
     <script src="/assets/js/site.js"></script>
   </body>
 </html>
