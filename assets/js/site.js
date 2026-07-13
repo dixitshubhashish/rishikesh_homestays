@@ -1,3 +1,14 @@
+const AREAS = [
+  "Tapovan",
+  "Ganga Barrage",
+  "Nirmal Bagh near Ganges",
+  "AIIMS Rishikesh",
+  "Triveni Ghat",
+  "Neelkanth Road",
+  "Bypass Road",
+  "Nepali Farm"
+];
+
 const stays = [
   {
     name: "Ganga View Family Homestay",
@@ -162,6 +173,15 @@ function setupQuickSearch() {
     window.location.href = `/pages/homestays.html?${params.toString()}#stays`;
   });
 }
+
+document.querySelectorAll(".area-dropdown").forEach(select => {
+    AREAS.forEach(area => {
+        const option = document.createElement("option");
+        option.value = area;
+        option.textContent = area;
+        select.appendChild(option);
+    });
+});
 
 function applyListingParams() {
   const params = new URLSearchParams(window.location.search);
