@@ -12,14 +12,14 @@ const AREAS = [
 
 const stays = [
   {
-    name: "Ganga & Hill View Family Homestay",
+    name: "Advaitam Ganga & Hill View Luxury 3BHK by Ganges Homestay",
     area: "Nirmal Bagh",
     type: "Family",
     budget: "Premium",
     price: "From ₹12,800",
     imageClass: "one",
     summary: "Three bedroom family stay with balcony breakfast, fast Wi-Fi, and easy access to cafes and yoga studios.",
-    tags: ["3 bedrooms", "Balcony", "Kitchen access", "Walkable cafes", "Nearby Ghats"]
+    tags: ["3 bedrooms","Sunrise View", "Balcony", "Kitchen access", "Walkable Cafes", "Nearby Ghats"]
   },
   {
     name: "Yoga Retreat at the Ganges ",
@@ -32,7 +32,7 @@ const stays = [
     tags: ["Yoga friendly", "Self-serve kitchen", "Quiet lane", "Solo travellers", "Nearby Ghats"]
   },
   {
-    name: "River Edge Couple Cottage",
+    name: "Ganga & Hill View Couple Retreat",
     area: "Ganga Barrage",
     type: "Nature",
     budget: "Budget",
