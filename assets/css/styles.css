@@ -239,9 +239,26 @@ textarea {
   padding: 96px 0 34px;
 }
 
+.btn-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #25D366;
+  color: #fff;
+  border: 2px solid #25D366;
+  transition: all 0.3s ease;
+}
+
+.btn-whatsapp:hover {
+  background: #1ebe5d;
+  border-color: #1ebe5d;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
 .eyebrow {
   margin: 0 0 12px;
-  color: var(--marigold);
+  color: #f5d81d;
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.12em;
