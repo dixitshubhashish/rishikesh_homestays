@@ -62,6 +62,18 @@ textarea {
   top: 16px;
 }
 
+.site-logo{
+    height:48px;
+    width:auto;
+    display:block;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -88,17 +100,6 @@ textarea {
   font-weight: 800;
   letter-spacing: 0;
   white-space: nowrap;
-}
-
-.brand-mark {
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  color: #fff;
-  background: var(--river);
-  border-radius: 50%;
-  font-size: 15px;
 }
 
 .nav-toggle {
