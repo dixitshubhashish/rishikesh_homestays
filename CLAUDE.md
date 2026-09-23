@@ -19,7 +19,9 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
   - `whatsapp-widget.js` — floating WhatsApp popup: name/phone/dates/guests/pets form, builds a formatted booking message, stores the enquiry via `/api/contact`, and opens WhatsApp
   - `whatsapp-link.js` — device-aware WhatsApp link builder: `wa.me` on mobile (opens the app), `web.whatsapp.com/send` on desktop (skips the wa.me interstitial so an already-open WhatsApp Web session gets the message in one hop); also rewrites every static `wa.me` link on a page via `enhanceStaticWhatsAppLinks()`
   - `validators.js` — shared phone validation (via `window.libphonenumber`) and check-in/check-out date-range validation, used by both the WhatsApp widget and the main contact form
-  - `country-select.js` — builds the country-code `<select>` (flag + name + dial code) purely from `libphonenumber-js` metadata + `Intl.DisplayNames` (no hardcoded country list), and auto-detects the visitor's country via IP geolocation (`ipapi.co`, 2.5s timeout, falls back to India)
+  - `country-select.js` — builds the country-code `<select>` (flag + name + dial code) purely from `libphonenumber-js` metadata + `Intl.DisplayNames` (no hardcoded country list), and auto-detects the visitor's country via `geo.js` (falls back to India)
+  - `geo.js` — shared IP-geolocation lookup used by both `country-select.js` and `currency.js`, backed by `/api/geo` (see below). Cached in-memory per page load and in `localStorage` for 24h, so a visitor's country is looked up at most once a day, not once per page.
+  - `currency.js` — approximate visitor-currency price display (USD/EUR/GBP/AUD/CAD/JPY), backed by `/api/currency-rates`. Never replaces the INR price shown, only adds an approximate equivalent alongside it; rounds up to the nearest 5 units of the target currency.
   - `contact-form.js` — main contact form: phone validation, flatpickr check-in/check-out with range enforcement, counters
 - `assets/vendor/` — self-hosted third-party libraries (no CDN dependency, so the site works offline/behind restrictive networks):
   - `flatpickr/` — calendar date picker (check-in/check-out on both the contact form and WhatsApp widget)
@@ -39,6 +41,9 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
   - Returns success/error JSON
 - `api/bigquery.js` — BigQuery client + `insertEnquiry(row)`. Reads credentials from `GOOGLE_APPLICATION_CREDENTIALS` (local file path) or `GOOGLE_APPLICATION_CREDENTIALS_JSON` (inline JSON string, for Vercel). Dataset/table names come from `BIGQUERY_DATASET`/`BIGQUERY_ENQUIRIES_TABLE` (default `rishikesh_homestays.enquiries`).
 - `scripts/setup-bigquery.js` — one-time/idempotent script that creates the dataset + `enquiries` table (schema + `created_at` day-partitioning). Re-run safely; skips creation if the table already exists.
+- `api/geo.js` — GET endpoint backing `geo.js`. On Vercel, reads the free `x-vercel-ip-country` edge header (no external call, no latency). In local dev (no such header), falls back to `ipwho.is` (free, no API key/pricing tier), cached in-memory for 24h.
+- `api/currency-rates.js` — GET endpoint backing `currency.js`. Fetches from [fawazahmed0/currency-api](https://github.com/fawazahmed0/currency-api) (open-source, GitHub-hosted, served as static JSON via jsDelivr — no API key, no pricing tier), cached server-side for 24h. Falls back to a small static rates table if the fetch ever fails.
+- `api/otp-status.js` / `api/otp-send.js` / `api/otp-verify.js` — optional email OTP verification for the enquiry form, backed by `email-otp.js` + `otp-helpers.js`. Stateless (no storage) — the code is deterministically derived from `OTP_SECRET` + email + expiry, sent via Resend. Never blocks enquiry submission; if `OTP_SECRET` is unset, the verify-email UI simply never appears.
 
 **Database:** Google BigQuery
 - Table: `rishikesh_homestays.enquiries` — stores homestay booking enquiries with guest details, dates, preferences, and `source`

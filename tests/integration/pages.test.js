@@ -276,8 +276,28 @@ test('Page Integration Tests', async (t) => {
       const content = readPage(path);
       assert(content.includes('whatsapp-widget.css'), `${name} should load the WhatsApp widget stylesheet`);
       assert(content.includes('setupWhatsAppWidget'), `${name} should initialize the WhatsApp widget`);
-      assert(content.includes('flatpickr.min.js'), `${name} should load flatpickr (used by the widget's date pickers)`);
-      assert(content.includes('libphonenumber-min.js'), `${name} should load libphonenumber (used by the widget's phone validation)`);
+    });
+  });
+
+  await t.test('flatpickr/libphonenumber are only eager-loaded on pages with their own visible date form', () => {
+    // Performance guard: these two vendor scripts (~225KB combined) are only
+    // needed immediately on pages with their own visible date-picker form
+    // (contact.html, homestays.html). Everywhere else they're only needed
+    // for the WhatsApp widget's hidden popup, which most visitors never
+    // open — whatsapp-widget.js lazy-loads them on first open instead, so
+    // no other page should eager-load them via a plain <script>/<link> tag.
+    const eagerPages = ['pages/contact.html', 'pages/homestays.html'];
+    testPages.forEach(({ path, name }) => {
+      const content = readPage(path);
+      const hasEagerFlatpickr = content.includes('flatpickr.min.js');
+      const hasEagerLibphonenumber = content.includes('libphonenumber-min.js');
+      if (eagerPages.includes(path)) {
+        assert(hasEagerFlatpickr, `${name} should eager-load flatpickr for its own date form`);
+        assert(hasEagerLibphonenumber, `${name} should eager-load libphonenumber for its own phone field`);
+      } else {
+        assert(!hasEagerFlatpickr, `${name} should not eager-load flatpickr — it's only needed by the widget, which lazy-loads it`);
+        assert(!hasEagerLibphonenumber, `${name} should not eager-load libphonenumber — it's only needed by the widget, which lazy-loads it`);
+      }
     });
   });
 

@@ -6,6 +6,53 @@ import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 const AUTO_POPUP_DELAY_MS = 20000;
 const AUTO_POPUP_SESSION_KEY = 'whatsapp_auto_shown';
 
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function loadStylesheet(href) {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = href;
+  document.head.appendChild(link);
+}
+
+// flatpickr + libphonenumber (~225KB combined) are only needed once the
+// widget popup is actually opened — most visitors never click it, so
+// loading them eagerly on every page load wastes bandwidth on every single
+// pageview. Pages with their own visible date-picker form (contact.html,
+// homestays.html) already load flatpickr themselves, so this is a no-op
+// there (the `typeof window.flatpickr === 'function'` check short-circuits).
+let vendorScriptsPromise = null;
+function ensureVendorScripts() {
+  if (vendorScriptsPromise) return vendorScriptsPromise;
+
+  const needsFlatpickr = typeof window.flatpickr !== 'function';
+  const needsLibphonenumber = typeof window.libphonenumber !== 'object';
+
+  if (!needsFlatpickr && !needsLibphonenumber) {
+    vendorScriptsPromise = Promise.resolve();
+    return vendorScriptsPromise;
+  }
+
+  if (needsFlatpickr) loadStylesheet('/assets/vendor/flatpickr/flatpickr.min.css');
+
+  vendorScriptsPromise = Promise.all([
+    needsFlatpickr ? loadScript('/assets/vendor/flatpickr/flatpickr.min.js') : Promise.resolve(),
+    needsLibphonenumber ? loadScript('/assets/vendor/libphonenumber/libphonenumber-min.js') : Promise.resolve()
+  ]).catch((err) => {
+    console.error('WhatsApp widget: failed to load date/phone libraries', err);
+  });
+
+  return vendorScriptsPromise;
+}
+
 export function setupWhatsAppWidget() {
   const WHATSAPP_PHONE = '919027212484';
 
@@ -191,8 +238,6 @@ export function setupWhatsAppWidget() {
         document.body.insertAdjacentHTML('beforeend', widgetHTML);
       }
       setupEventListeners();
-      setupDatePickers();
-      setupCountryPhoneField(document.getElementById('whatsapp-country'));
       setupAutoPopup();
     }
   }
@@ -203,6 +248,19 @@ export function setupWhatsAppWidget() {
   // there would be the kind of intrusive interstitial Google's mobile
   // guidelines specifically discourage, and just feels spammy).
   let userOpenedWidget = false;
+
+  // Loads flatpickr/libphonenumber (if not already present) and wires up
+  // the date pickers + country phone field. Safe to call multiple times —
+  // only does the actual work once.
+  let formActivated = false;
+  function activateForm() {
+    if (formActivated) return;
+    formActivated = true;
+    ensureVendorScripts().then(() => {
+      setupDatePickers();
+      setupCountryPhoneField(document.getElementById('whatsapp-country'));
+    });
+  }
 
   function setupAutoPopup() {
     let alreadyShown = false;
@@ -245,6 +303,7 @@ export function setupWhatsAppWidget() {
           }, 8000);
         }
       } else if (popup) {
+        activateForm();
         popup.hidden = false;
       }
     }, AUTO_POPUP_DELAY_MS);
@@ -324,6 +383,7 @@ export function setupWhatsAppWidget() {
       e.preventDefault();
       userOpenedWidget = true;
       hideNudge();
+      activateForm();
       popup.hidden = !popup.hidden;
     });
 
@@ -332,6 +392,7 @@ export function setupWhatsAppWidget() {
       e.preventDefault();
       userOpenedWidget = true;
       hideNudge();
+      activateForm();
       popup.hidden = false;
     });
 

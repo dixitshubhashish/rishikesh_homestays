@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import { JSDOM } from 'jsdom';
 import { getCountryList, populateCountrySelect, detectCountryByIP } from '../../assets/js/modules/country-select.js';
+import { _resetGeoCacheForTests } from '../../assets/js/modules/geo.js';
 
 // See validators.test.js for why this loads via vm instead of
 // dom.window.eval() — jsdom's eval subtly breaks this UMD bundle.
@@ -94,6 +95,7 @@ test('populateCountrySelect', async (t) => {
 
 test('detectCountryByIP', async (t) => {
   await t.test('falls back to India when fetch fails', async () => {
+    _resetGeoCacheForTests();
     const originalFetch = global.fetch;
     global.fetch = () => Promise.reject(new Error('network down'));
     const result = await detectCountryByIP(500);
@@ -102,6 +104,7 @@ test('detectCountryByIP', async (t) => {
   });
 
   await t.test('falls back to India when the response is not ok', async () => {
+    _resetGeoCacheForTests();
     const originalFetch = global.fetch;
     global.fetch = () => Promise.resolve({ ok: false });
     const result = await detectCountryByIP(500);
@@ -110,10 +113,11 @@ test('detectCountryByIP', async (t) => {
   });
 
   await t.test('uses the detected country code when the lookup succeeds', async () => {
+    _resetGeoCacheForTests();
     const originalFetch = global.fetch;
     global.fetch = () => Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ country_code: 'gb' })
+      json: () => Promise.resolve({ country: 'gb' })
     });
     const result = await detectCountryByIP(500);
     assert.strictEqual(result, 'GB');
@@ -121,10 +125,11 @@ test('detectCountryByIP', async (t) => {
   });
 
   await t.test('falls back to India when the response has a malformed country code', () => {
+    _resetGeoCacheForTests();
     const originalFetch = global.fetch;
     global.fetch = () => Promise.resolve({
       ok: true,
-      json: () => Promise.resolve({ country_code: '123' })
+      json: () => Promise.resolve({ country: '123' })
     });
     return detectCountryByIP(500).then((result) => {
       assert.strictEqual(result, 'IN');

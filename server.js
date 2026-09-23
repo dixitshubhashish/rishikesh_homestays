@@ -8,6 +8,8 @@ import contactHandler from './api/contact.js';
 import otpStatusHandler from './api/otp-status.js';
 import otpSendHandler from './api/otp-send.js';
 import otpVerifyHandler from './api/otp-verify.js';
+import geoHandler from './api/geo.js';
+import currencyRatesHandler from './api/currency-rates.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,6 +67,8 @@ app.use(express.static(path.join(__dirname)));
 
 app.post('/api/contact', contactHandler);
 app.get('/api/otp-status', otpStatusHandler);
+app.get('/api/geo', geoHandler);
+app.get('/api/currency-rates', currencyRatesHandler);
 app.post('/api/otp-send', otpSendHandler);
 app.post('/api/otp-verify', otpVerifyHandler);
 

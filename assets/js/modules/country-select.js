@@ -2,6 +2,7 @@
 // Country list and calling codes come straight from libphonenumber-js's
 // metadata (window.libphonenumber, loaded as a vendor script) rather than a
 // hand-maintained list, so it stays accurate for all ~245 countries.
+import { detectCountryCode } from './geo.js';
 
 const FALLBACK_COUNTRY = 'IN';
 
@@ -57,18 +58,8 @@ export function populateCountrySelect(selectEl, defaultIso2 = FALLBACK_COUNTRY) 
 // lookup, with a short timeout and a hard fallback to India so the form
 // never blocks on a slow/blocked network call.
 export async function detectCountryByIP(timeoutMs = 2500) {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
-    clearTimeout(timer);
-    if (!response.ok) return FALLBACK_COUNTRY;
-    const data = await response.json();
-    const iso2 = String(data?.country_code || '').toUpperCase();
-    return /^[A-Z]{2}$/.test(iso2) ? iso2 : FALLBACK_COUNTRY;
-  } catch {
-    return FALLBACK_COUNTRY;
-  }
+  const iso2 = await detectCountryCode(timeoutMs);
+  return iso2 || FALLBACK_COUNTRY;
 }
 
 // Wires a country <select> + national-number <input> pair: populates the

@@ -507,17 +507,17 @@ main > section:last-child {
   box-shadow: 0 12px 30px rgba(23, 33, 31, 0.07);}
 .homestay-photo {
   min-height: 208px;
-  background-image: url("../images/rishikesh-homestay-hero.png");
+  background-image: url("../images/rishikesh-homestay-hero.webp");
   background-size: cover;
   background-position: center;}
 .homestay-card:nth-child(2) .homestay-photo {
-  background-image: url("../images/rishikesh-things-to-do.png");}
+  background-image: url("../images/rishikesh-things-to-do.webp");}
 .homestay-card:nth-child(3) .homestay-photo {
-  background-image: url("../images/triveni-ghat-aarti.png");}
+  background-image: url("../images/triveni-ghat-aarti.webp");}
 .homestay-photo.two {
-  background-image: url("../images/rishikesh-things-to-do.png");}
+  background-image: url("../images/rishikesh-things-to-do.webp");}
 .homestay-photo.three {
-  background-image: url("../images/triveni-ghat-aarti.png");}
+  background-image: url("../images/triveni-ghat-aarti.webp");}
 .place-photo {
   display: block;
   width: 100%;
@@ -586,7 +586,7 @@ main > section:last-child {
 .image-panel {
   min-height: 460px;
   border-radius: var(--radius);
-  background-image: url("../images/rishikesh-things-to-do.png");
+  background-image: url("../images/rishikesh-things-to-do.webp");
   background-size: cover;
   background-position: center;
   box-shadow: var(--shadow);}
@@ -678,7 +678,7 @@ main > section:last-child {
   inset: 0;
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.2)),
-    url("../images/rishikesh-things-to-do.png");
+    url("../images/rishikesh-things-to-do.webp");
   background-size: cover;
   background-position: center;}
 .page-hero.things-to-do::before {
@@ -699,7 +699,7 @@ main > section:last-child {
 .page-hero.triveni::before {
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.82), rgba(8, 26, 24, 0.16)),
-    url("../images/triveni-ghat-aarti.png");}
+    url("../images/triveni-ghat-aarti.webp");}
 .page-hero.kedarnath-hero::before {
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.82), rgba(8, 26, 24, 0.16)),
@@ -709,7 +709,7 @@ main > section:last-child {
 .page-hero.contact::before {
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.18)),
-    url("../images/rishikesh-homestay-hero.png");}
+    url("../images/rishikesh-homestay-hero.webp");}
 .page-hero-inner {
   position: relative;
   width: min(var(--max), calc(100% - 32px));

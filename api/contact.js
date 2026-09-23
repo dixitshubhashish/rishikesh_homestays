@@ -89,9 +89,10 @@ export default async function handler(req, res) {
     console.log("✅ Data stored in BigQuery:", enquiryId);
 
     // Send email via Resend with tabular format
+    const isHostApplication = data.source === 'host_application';
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">New Rishikesh Homestay Enquiry</h2>
+        <h2 style="color: #333;">${isHostApplication ? 'New Homestay Listing Application' : 'New Rishikesh Homestay Enquiry'}</h2>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr style="background-color: #f5f5f5;">
             <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; width: 30%;">Name</td>
@@ -157,14 +158,49 @@ export default async function handler(req, res) {
     const emailResponse = await resend.emails.send({
       from: 'noreply@rishikeshhomestays.com',
       to: 'hello@rishikeshhomestays.com',
-      subject: `New Enquiry from ${data.name} - Rishikesh Homestay`,
+      subject: isHostApplication
+        ? `New Listing Application from ${data.name} - Rishikesh Homestays`
+        : `New Enquiry from ${data.name} - Rishikesh Homestay`,
       html: emailHtml
     });
 
     console.log("✅ Email sent via Resend:", emailResponse);
 
-    // Send confirmation email to guest if email provided
-    if (data.email) {
+    // Send confirmation email if an email was provided. The List Your
+    // Homestay form (source: 'host_application') also collects an email,
+    // but it's a property owner applying to list, not a guest booking a
+    // stay — so it needs its own messaging, not "personalized recommendations".
+    if (data.email && data.source === 'host_application') {
+      const hostConfirmationHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Thanks for Applying to List Your Homestay!</h2>
+          <p>Hi ${data.name},</p>
+          <p>We've received your application to list your property with Rishikesh Homestays. Our team will review the details and reach out within 24 hours to confirm next steps — there's no listing fee.</p>
+          <p><strong>Your Submission Details:</strong></p>
+          <ul>
+            <li>Phone: ${data.phone}</li>
+            <li>Area: ${data.area || 'Not specified'}</li>
+            <li>Details: ${data.details.substring(0, 100)}...</li>
+          </ul>
+          <p>Questions in the meantime? Reach us directly:</p>
+          <p>
+            📱 +91 9027212484<br>
+            📱 +91 8050091290<br>
+            💬 <a href="https://wa.me/919027212484">WhatsApp us</a>
+          </p>
+          <p>Warm regards,<br><strong>Rishikesh Homestays Team</strong></p>
+        </div>
+      `;
+
+      await resend.emails.send({
+        from: 'hello@rishikeshhomestays.com',
+        to: data.email,
+        subject: 'Your Rishikesh Homestays listing application is received',
+        html: hostConfirmationHtml
+      });
+
+      console.log("✅ Host application confirmation email sent");
+    } else if (data.email) {
       const confirmationHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2 style="color: #333;">Thank You! Your Enquiry is Received</h2>
@@ -176,6 +212,9 @@ export default async function handler(req, res) {
             ${data.check_in ? `<li>Check-in: ${data.check_in}</li>` : ''}
             ${data.check_out ? `<li>Check-out: ${data.check_out}</li>` : ''}
             <li>Preferred Area: ${data.area || 'Open to suggestions'}</li>
+            <li>Adults: ${adults}</li>
+            <li>Children: ${children}</li>
+            ${petType !== 'none' ? `<li>Pets: ${petType} (${petCount})</li>` : ''}
             <li>Trip Details: ${data.details.substring(0, 100)}...</li>
           </ul>
           <p>In the meantime, feel free to call us directly:</p>
