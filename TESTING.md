@@ -73,7 +73,7 @@ tests/
 #### Contact API (`tests/api/contact-api.test.js`)
 - ✅ Required fields are validated
 - ✅ Only POST requests allowed
-- ✅ Supabase integration present
+- ✅ BigQuery integration present
 - ✅ Resend email service used
 - ✅ Guest information captured
 - ✅ Confirmation emails sent

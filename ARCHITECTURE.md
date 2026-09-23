@@ -186,7 +186,7 @@ HTML pages (can use old references)
 
 **Actions:**
 1. Validates required fields (name, phone, details)
-2. Stores in Supabase `enquiries` table
+2. Stores in BigQuery `enquiries` table
 3. Sends email to admin via Resend
 4. Sends confirmation to guest (if email provided)
 5. Returns success/error response
