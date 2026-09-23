@@ -16,6 +16,7 @@ This file is the shared handoff point for Codex, Claude, and any other coding ag
 | Codex | `things-to-do.html` content rebuild (see Handoff Notes below for full brief) | `pages/things-to-do.html`, `PROGRESS.md`, `assets/images/things-to-do/ai-*.png` | complete |
 | Codex | Map generated attraction images and continue 30-image set | `pages/places-to-visit.html`, `assets/images/things-to-do/ai-*.png` | paused after mapping six; 16 images queued — **note: Claude wrapped the existing card-grid in a new `<section data-tab-panel="places">` and added a Restaurants & Cafes tab as a second panel below it, per user request to reduce nav clutter. Individual `.place-card` elements are untouched, so resuming image-mapping should work the same — just don't be confused by the new tab-switcher markup at the top of the page.** |
 | Claude | Restructure nav: merge Restaurants & Cafes into Places as an in-page tab, add new dedicated Kumbh 2027 page/tab (user request — nav had grown to 10 items) | `pages/places-to-visit.html`, `pages/restaurants-cafes.html` (removed), `pages/kumbh-2027.html` (new), `assets/js/modules/page-tabs.js` (new), `server.js`, `_redirects`, nav/footer on all pages, `sitemap.xml`, `llms.txt`, tests | complete — 147/147 tests pass |
+| Codex | Diagnose and fix blocker preventing merge to `main` | branch history, local dependencies, `.agents/coordination.md` | complete |
 
 Before editing, add a row with the files you own. Avoid overlapping active claims unless the handoff is explicit.
 
@@ -74,6 +75,7 @@ Claude has done the prep work (images downloaded + licensed, sibling page rebuil
 
 ## Completed Work
 
+- 2026-09-23: Cleared the merge-readiness blocker for `changes_july_13`: refreshed dependencies so jsdom tests could resolve `safer-buffer`, merged `origin/main` into the branch cleanly, and verified `npm test` passes with 152/152 tests.
 - 2026-09-23: Fixed the WhatsApp widget injection order: it now inserts before `<footer>` instead of appending after it, eliminating visible/DOM content below the footer while preserving its fixed bottom-right position. `npm test` passes with 149 tests.
 - 2026-09-23: Fixed `.gitignore` so generated images under `assets/images/things-to-do/` are trackable. They now appear in `git status` and will be included when changes are committed and pushed.
 
