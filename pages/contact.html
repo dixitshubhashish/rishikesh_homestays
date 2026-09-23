@@ -5,15 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Plan Your Rishikesh Homestay | Send Inquiry</title>
     <meta name="description" content="Send a Rishikesh homestay inquiry with your dates, area preference, traveller type, and budget.">
+    <link rel="canonical" href="https://rishikeshhomestays.com/pages/contact">
+    <meta property="og:title" content="Plan Your Rishikesh Homestay | Send Inquiry">
+    <meta property="og:description" content="Send a Rishikesh homestay inquiry with your dates, area preference, traveller type, and budget.">
+    <meta property="og:image" content="https://rishikeshhomestays.com/assets/images/rishikesh-homestay-hero.png">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://rishikeshhomestays.com/pages/contact">
+    <meta property="og:site_name" content="Rishikesh Homestays">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="/assets/images/logo.ico" type="image/x-icon">
+    <link rel="manifest" href="/site.webmanifest">
     <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/whatsapp-widget.css">
+    <link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://rishikeshhomestays.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Contact", "item": "https://rishikeshhomestays.com/pages/contact" }
+      ]
+    }
+    </script>
   </head>
   <body>
     <header class="site-header">
       <div class="nav-wrap">
-        <a class="brand" href="/"><span class="brand-mark">RH</span><span>Rishikesh Homestays</span></a>
-        <button class="nav-toggle" type="button" data-nav-toggle aria-label="Open menu" aria-expanded="false"><span></span></button>
+        <a class="brand" href="/" aria-label="Rishikesh Homestays">
+          <img src="/assets/images/logo.png" alt="Rishikesh Homestays" class="site-logo">
+          <span>Rishikesh Homestays</span>
+        </a>
+        <button class="nav-toggle" type="button" data-nav-toggle aria-label="Open menu" aria-expanded="false"><span class="nav-toggle-icon"><span></span></span><span class="nav-toggle-label">Menu</span></button>
         <nav class="site-nav" data-nav aria-label="Primary navigation">
-          <a href="/">Home</a><a href="/pages/homestays.html">Homestays</a><a href="/pages/things-to-do.html">Things to do</a><a href="/pages/about-rishikesh.html">About Rishikesh</a><a href="/pages/triveni-ghat.html">Triveni Ghat</a><a href="/pages/places-to-visit.html">Places</a><a class="nav-cta" href="/pages/contact.html" aria-current="page">Plan my stay</a>
+          <a href="/">Home</a><a href="/pages/homestays">Homestays</a><a href="/pages/things-to-do-in-rishikesh">Things to do</a><a href="/pages/about-rishikesh">About Rishikesh</a><a href="/pages/triveni-ghat">Triveni Ghat</a><a href="/pages/places-to-visit">Places</a><a href="/pages/kumbh-2027">Kumbh 2027</a><a href="/pages/gateway-to-kedarnath">Kedarnath &amp; Garhwal</a><a href="/pages/list-your-homestay">List your homestay</a><a class="nav-cta" href="/pages/contact" aria-current="page">Plan my stay</a>
         </nav>
       </div>
     </header>
@@ -27,15 +53,28 @@
       </section>
       <section class="section">
         <div class="container split">
-          <form id="contactForm" class="contact-card booking-form" name="main-inquiry" method="POST" data-netlify="true" action="/pages/thanks.html">
+          <form id="contactForm" class="contact-card booking-form" name="main-inquiry" method="POST" action="/pages/thanks">
             <input type="hidden" name="form-name" value="main-inquiry">
             <h2>Send inquiry</h2>
             <div class="field"><label for="name">Name</label><input id="name" name="name" required></div>
-            <div class="field"><label for="phone">Phone or WhatsApp</label><input id="phone" name="phone" required></div>
+            <div class="field">
+              <label for="phone">Phone or WhatsApp</label>
+              <div class="phone-row">
+                <select id="country" name="country" aria-label="Country code"></select>
+                <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="98765 43210" required>
+              </div>
+              <span class="field-error" id="phone-error" hidden></span>
+            </div>
             <div class="field"><label for="email">Email</label><input id="email" name="email" type="email"></div>
             <div class="field"><label for="preferred_stay">Preferred homestay</label><input id="preferred_stay" name="preferred_stay" placeholder="Optional"></div>
             <div class="field"><label for="area">Preferred area</label><select id="area" name="area"><option>Open to suggestions</option><option>Tapovan</option><option>Swarg Ashram</option><option>Triveni Ghat</option><option>Muni Ki Reti</option><option>Neelkanth Road</option></select></div>
             <div class="field"><label for="coming_from_city">Coming from (City)</label><input id="coming_from_city" name="coming_from_city" placeholder="Your city"></div>
+            <div class="field"><label for="check_in">Check-in date</label><input id="check_in" name="check_in" placeholder="Select check-in date" autocomplete="off" readonly></div>
+            <div class="field">
+              <label for="check_out">Check-out date</label>
+              <input id="check_out" name="check_out" placeholder="Select check-out date" autocomplete="off" readonly>
+              <span class="field-error" id="dates-error" hidden></span>
+            </div>
             <div class="field"><label>Number of Adults</label><div class="number-counter">
               <button type="button" class="counter-btn" data-counter="adults" data-action="decrease">−</button>
               <input type="number" id="adults" name="adults" class="counter-input" min="1" value="1" readonly>
@@ -85,8 +124,169 @@
         </div>
       </section>
     </main>
-    <footer class="site-footer"><div class="container footer-bottom"><span>© 2026 Rishikesh Homestays</span><a href="/pages/homestays.html">Homestays List</a></div></footer>
-    <script src="/assets/js/contact.js"></script>
-    <script src="/assets/js/site.js"></script>
+    <footer class="rhs-footer">
+      <div class="rhs-footer-container">
+
+        <div class="rhs-footer-grid">
+
+          <!-- Brand -->
+          <div class="rhs-footer-brand">
+
+            <a href="/" class="rhs-footer-logo">
+              <img src="/assets/images/logo.png" alt="Rishikesh Homestays" class="rhs-footer-logo-img">
+              <span>Rishikesh Homestays</span>
+            </a>
+
+            <p class="rhs-footer-text">
+              Handpicked homestays near the Ganges, Tapovan,
+              AIIMS, Triveni Ghat and Neelkanth Road.
+            </p>
+
+            <div class="rhs-footer-contact">
+
+              <a href="tel:+918050091290">
+                <svg class="rhs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>
+                </svg>
+
+                +91 80500 91290
+              </a>
+
+              <a href="mailto:hello@rishikeshhomestays.com">
+                <svg class="rhs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="20" height="16" x="2" y="4" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+
+                hello@rishikeshhomestays.com
+              </a>
+
+            </div>
+
+          </div>
+
+          <!-- Stay -->
+
+          <div class="rhs-footer-column">
+
+            <h3>Stay</h3>
+
+            <a href="/pages/homestays">Browse Homestays</a>
+            <a href="/pages/contact">Plan My Stay</a>
+            <a href="/pages/contact">Group Booking</a>
+            <a href="/pages/list-your-homestay">List Your Homestay</a>
+
+          </div>
+
+          <!-- Explore -->
+
+          <div class="rhs-footer-column">
+
+            <h3>Explore</h3>
+
+            <a href="/pages/things-to-do-in-rishikesh">Things to Do</a>
+            <a href="/pages/places-to-visit">Places to Visit</a>
+            <a href="/pages/about-rishikesh">About Rishikesh</a>
+            <a href="/pages/kumbh-2027">Kumbh 2027</a>
+            <a href="/pages/triveni-ghat">Triveni Ghat</a>
+
+          </div>
+
+          <!-- Social -->
+
+          <div class="rhs-footer-column">
+
+            <h3>Connect</h3>
+
+            <div class="rhs-social">
+
+              <a href="https://wa.me/918050091290" aria-label="WhatsApp" target="_blank" rel="noopener">
+
+                <svg class="rhs-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>
+                </svg>
+
+              </a>
+
+              <a href="https://www.instagram.com/rishikesh.homestays" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+
+                <svg class="rhs-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="2" width="20" height="20" rx="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r=".5"/>
+                </svg>
+
+              </a>
+
+              <a href="https://www.facebook.com/profile.php?id=61574309741427" aria-label="Facebook" target="_blank" rel="noopener">
+
+                <svg class="rhs-social-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                </svg>
+
+              </a>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <div class="rhs-footer-bottom">
+
+        <div class="rhs-footer-bottom-inner">
+
+            <div class="rhs-footer-copy">
+                © 2026 Rishikesh Homestays. All Rights Reserved.
+            </div>
+
+            <nav class="rhs-footer-nav" aria-label="Footer Navigation">
+
+                <a href="/">Home</a>
+
+                <span>•</span>
+
+                <a href="/pages/homestays">Homestays</a>
+
+                <span>•</span>
+
+                <a href="/pages/things-to-do-in-rishikesh">Things to Do</a>
+
+                <span>•</span>
+
+                <a href="/pages/places-to-visit">Places</a>
+
+                <span>•</span>
+
+                <a href="/pages/about-rishikesh">About</a>
+
+                <span>•</span>
+
+                <a href="/pages/contact">Contact</a>
+
+                <span>•</span>
+
+                <a href="/sitemap.xml">Sitemap</a>
+
+            </nav>
+
+            <div class="rhs-footer-made">
+                Made with ❤️ in India
+            </div>
+
+        </div>
+
+    </div>
+    </footer>
+    <script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
+    <script src="/assets/vendor/libphonenumber/libphonenumber-min.js"></script>
+    <script type="module" src="/assets/js/contact.js"></script>
+    <script type="module" src="/assets/js/site.js"></script>
+<script type="module">
+  import { setupWhatsAppWidget } from '/assets/js/modules/whatsapp-widget.js';
+  setupWhatsAppWidget();
+</script>
   </body>
 </html>

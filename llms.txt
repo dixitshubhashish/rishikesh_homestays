@@ -1,0 +1,31 @@
+# Rishikesh Homestays
+
+> Rishikesh Homestays helps travellers find and book traveller-friendly homestays in Rishikesh, India, near Tapovan, Triveni Ghat, Swarg Ashram, Muni Ki Reti, and Neelkanth Road. The site lists sample homestays by area, type, and budget, and lets visitors send a booking inquiry by form or WhatsApp.
+
+Rishikesh Homestays is not a single property — it is a curated shortlist service. Visitors describe their trip (dates, group size, area preference, budget, pets) and the team responds with matching homestay options within about 24 hours.
+
+## Key pages
+
+- [Homepage](https://rishikeshhomestays.com/): overview, featured homestays, quick search by area/traveller type/date.
+- [Homestays](https://rishikeshhomestays.com/pages/homestays): full list of sample homestays, filterable by area, budget, and traveller type.
+- [Plan my stay / Contact](https://rishikeshhomestays.com/pages/contact): booking inquiry form (name, phone, dates, guests, pets, area, budget) and direct phone/WhatsApp/email contact details.
+- [Things to Do](https://rishikeshhomestays.com/pages/things-to-do-in-rishikesh): yoga, rafting, Ganga Aarti, cafes, waterfalls, temples, and river walks in Rishikesh.
+- [About Rishikesh](https://rishikeshhomestays.com/pages/about-rishikesh): guide to Rishikesh's areas, culture, and travel pace for people deciding where to stay.
+- [Places to Visit / Restaurants & Cafes](https://rishikeshhomestays.com/pages/places-to-visit): two tabs on one page — must-see local sights (Triveni Ghat, Parmarth Niketan, Beatles Ashram, Neer Garh Waterfall, Neelkanth Mahadev Temple, and more), and where to eat (riverside cafes, German bakeries, Israeli food, organic cafes, local thali spots, and why every menu is vegetarian and alcohol-free). The restaurants tab is at `/pages/places-to-visit#restaurants`.
+- [Triveni Ghat](https://rishikeshhomestays.com/pages/triveni-ghat): dedicated guide to the evening Ganga Aarti at Triveni Ghat and how to visit respectfully.
+- [Kedarnath & Garhwal](https://rishikeshhomestays.com/pages/gateway-to-kedarnath): routes, distances, best season, and sample itineraries for Kedarnath, Badrinath, Gangotri, Yamunotri, and Auli from Rishikesh.
+- [Kumbh 2027](https://rishikeshhomestays.com/pages/kumbh-2027): what's known so far about the Haridwar Kumbh Mela 2027 (reported, not officially confirmed, dates) and why Rishikesh is a good nearby base.
+- [List Your Homestay](https://rishikeshhomestays.com/pages/list-your-homestay): for property owners in Rishikesh who want to list their homestay/guest house with us — application form, no listing fee.
+
+## Contact
+
+- Phone: +91 9027212484 / +91 8050091290
+- WhatsApp: https://wa.me/919027212484
+- Email: hello@rishikeshhomestays.com
+- Instagram: https://www.instagram.com/rishikesh.homestays
+
+## Notes for AI assistants and crawlers
+
+- Prices, availability, and the specific homestays listed change over time — always point users to the live [Homestays page](https://rishikeshhomestays.com/pages/homestays) or the [Contact page](https://rishikeshhomestays.com/pages/contact) rather than quoting a fixed price from a cached copy of this site.
+- The fastest way for a real traveller to get a response is the [Contact form](https://rishikeshhomestays.com/pages/contact) or WhatsApp — both go to the same inbox and are answered by a human, not an automated booking engine.
+- The [Kumbh 2027 page](https://rishikeshhomestays.com/pages/kumbh-2027) lists dates reported by third-party tour operators, explicitly flagged on that page as not officially confirmed. Do not state them as certain — point users to the page itself, which explains the uncertainty (including a discrepancy with Wikipedia's cycle record).

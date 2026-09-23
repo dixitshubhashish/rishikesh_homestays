@@ -48,9 +48,10 @@ textarea {
 .skip-link:focus {
   top: 16px;}
 .site-logo{
-    height:72;
-    width:auto;
-    display:block;}
+    height: 72px;
+    width: auto;
+    display: block;
+    object-fit: contain;}
 .brand{
     display:flex;
     align-items:center;
@@ -77,41 +78,74 @@ textarea {
   font-weight: 700;
   letter-spacing: 0;
   white-space: nowrap;}
+.brand-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.12;
+  font-size: 0.92rem;}
 .nav-toggle {
   display: none;
-  width: 42px;
-  height: 42px;
   align-items: center;
-  justify-content: center;
+  gap: 9px;
+  height: 42px;
+  padding: 0 16px;
   border: 1px solid var(--line);
   background: #fff;
-  border-radius: var(--radius);
-  color: var(--ink);}
-.nav-toggle span,
-.nav-toggle::before,
-.nav-toggle::after {
+  border-radius: 999px;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.92rem;}
+.nav-toggle:hover,
+.nav-toggle[aria-expanded="true"] {
+  background: var(--sky);
+  border-color: rgba(20, 82, 74, 0.26);
+  color: var(--river);}
+.nav-toggle-icon {
+  position: relative;
+  width: 18px;
+  height: 13px;
+  flex-shrink: 0;}
+.nav-toggle-icon span,
+.nav-toggle-icon::before,
+.nav-toggle-icon::after {
   content: "";
+  position: absolute;
+  left: 0;
   width: 18px;
   height: 2px;
   display: block;
   background: currentColor;
   border-radius: 20px;}
-.nav-toggle span {
-  margin: 4px 0;}
+.nav-toggle-icon::before {
+  top: 0;}
+.nav-toggle-icon span {
+  top: 5.5px;}
+.nav-toggle-icon::after {
+  top: 11px;}
 .site-nav {
   display: flex;
   align-items: center;
-  gap: 4px;}
+  gap: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;}
 .site-nav a {
-  padding: 10px 12px;
+  padding: 6px 6px;
   border-radius: var(--radius);
   color: #31413e;
-  font-size: 0.94rem;
-  font-weight: 650;}
+  font-size: 0.76rem;
+  font-weight: 650;
+  white-space: nowrap;}
 .site-nav a:hover,
 .site-nav a[aria-current="page"] {
   background: var(--sky);
   color: var(--river);}
+.site-nav a.nav-cta[aria-current="page"] {
+  /* The CTA button keeps its own dark background + white text even when
+     it happens to be the current page — it should never pick up the
+     light "current page" highlight meant for plain nav links, or its
+     text becomes unreadable (white-on-light-blue). */
+  background: #093a1d;
+  color: #fff;}
 .nav-cta,
 .btn {
   display: inline-flex;
@@ -134,13 +168,9 @@ textarea {
 /* Make the header CTA visually lighter and match nav typography */
 .nav-cta {
   background: #093a1d;
-  color: var(--river);
   border-color: rgba(20, 82, 74, 0.12);
   font-weight: 700;
   padding: 10px 12px;}
-.nav-cta:hover {
-  background: var(--sky);
-  color: var(--river);}
 .nav-cta:hover,
 .btn-primary:hover {
   color: #fff !important;
@@ -211,8 +241,8 @@ textarea {
   max-width: 920px;
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.65rem, 7.2vw, 6.35rem);
-  line-height: 0.94;
+  font-size: clamp(2.3rem, 5.6vw, 4.6rem);
+  line-height: 1.02;
   letter-spacing: 0;}
 .hero-copy {
   max-width: 680px;
@@ -327,6 +357,26 @@ textarea {
 .field textarea {
   min-height: 112px;
   resize: vertical;}
+.field input.field-invalid {
+  border-color: var(--clay);}
+.phone-row {
+  display: flex;
+  gap: 8px;}
+.phone-row select {
+  flex: 0 0 auto;
+  width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;}
+.phone-row input {
+  flex: 1;
+  min-width: 0;}
+.field-error {
+  display: block;
+  margin-top: 4px;
+  color: var(--clay);
+  font-size: 0.78rem;
+  font-weight: 700;}
 .number-counter {
   display: flex;
   align-items: center;
@@ -388,25 +438,25 @@ textarea {
   background: var(--panel);
   overflow: hidden;
   box-shadow: 0 12px 30px rgba(23, 33, 31, 0.07);}
-.homestay-photo,
-.place-photo {
+.homestay-photo {
   min-height: 208px;
   background-image: url("../images/rishikesh-homestay-hero.png");
   background-size: cover;
   background-position: center;}
-.homestay-card:nth-child(2) .homestay-photo,
-.place-card:nth-child(2) .place-photo {
+.homestay-card:nth-child(2) .homestay-photo {
   background-image: url("../images/rishikesh-things-to-do.png");}
-.homestay-card:nth-child(3) .homestay-photo,
-.place-card:nth-child(3) .place-photo {
+.homestay-card:nth-child(3) .homestay-photo {
   background-image: url("../images/triveni-ghat-aarti.png");}
-.homestay-photo.two,
-.place-card:nth-child(5) .place-photo {
+.homestay-photo.two {
   background-image: url("../images/rishikesh-things-to-do.png");}
-.homestay-photo.three,
-.place-card:nth-child(4) .place-photo,
-.place-card:nth-child(6) .place-photo {
+.homestay-photo.three {
   background-image: url("../images/triveni-ghat-aarti.png");}
+.place-photo {
+  display: block;
+  width: 100%;
+  height: 208px;
+  object-fit: cover;
+  background: var(--sky);}
 .card-body {
   padding: 18px;}
 .card-topline {
@@ -491,6 +541,36 @@ textarea {
 .feature-item p {
   margin: 0;
   color: var(--muted);}
+.page-tabs-section {
+  /* The panel section right after this one also has top+bottom padding
+     from the shared .section/.guide-section rule, so without this the two
+     paddings stack into a huge empty gap between the tab buttons and the
+     panel content below. !important is needed because a later mobile
+     breakpoint rule (same .section/.guide-section selector, same
+     specificity) would otherwise win by source order and restore it. */
+  padding-bottom: 0 !important;}
+.page-tabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;}
+.page-tab-btn {
+  padding: 11px 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.94rem;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;}
+.page-tab-btn:hover {
+  border-color: rgba(20, 82, 74, 0.35);}
+.page-tab-btn.is-active {
+  background: var(--river);
+  color: #fff;
+  border-color: var(--river);}
+
 .cta-band {
   padding: 48px;
   border-radius: var(--radius);
@@ -626,6 +706,13 @@ textarea {
   margin: 12px 0 0;
   color: var(--muted);
   font-size: 0.86rem;}
+.photo-credit {
+  margin: 28px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;}
+.photo-credit a {
+  text-decoration: underline;}
 .info-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -674,7 +761,7 @@ textarea {
 @media (max-width: 980px) {
   .nav-toggle {
     display: inline-flex;
-    flex-direction: column;}
+    flex-direction: row;}
 .site-nav {
     position: absolute;
     left: 16px;
@@ -1394,8 +1481,8 @@ textarea {
 
 
 .brand .site-logo{
-    width:90px;
-    height:90px;
+    width:52px;
+    height:52px;
     object-fit:contain;
     display:block;
     flex-shrink:0;

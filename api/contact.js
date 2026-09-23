@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 import dotenv from 'dotenv';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { validateDateRange } from '../assets/js/modules/validators.js';
 
 dotenv.config();
 
@@ -30,6 +32,27 @@ export default async function handler(req, res) {
     });
   }
 
+  // The frontend always sends the phone number in E.164 form (+<country
+  // code><number>) after resolving it against the country the guest picked,
+  // so no country hint is needed here — libphonenumber-js can validate a
+  // full E.164 string on its own.
+  const parsedPhone = parsePhoneNumberFromString(String(data.phone || ''));
+  if (!parsedPhone || !parsedPhone.isValid()) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a valid phone number, including country code."
+    });
+  }
+  data.phone = parsedPhone.number;
+
+  const dateRangeResult = validateDateRange(data.check_in, data.check_out);
+  if (!dateRangeResult.valid) {
+    return res.status(400).json({
+      success: false,
+      message: dateRangeResult.message
+    });
+  }
+
   try {
     // Parse details to extract check_in, check_out, guests info
     // Details format: "Arriving 15th July, staying 7 days. Family of 4 (2 adults, 2 kids). Need 2 rooms with kitchen..."
@@ -55,7 +78,7 @@ export default async function handler(req, res) {
       pets: petType,
       pet_count: petCount,
       message: detailsText,
-      source: 'website_form',
+      source: data.source || 'website_form',
       status: 'pending',
       ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || null,
       user_agent: req.headers['user-agent'] || null,
