@@ -106,6 +106,7 @@ export function setupContactForm() {
   // actual submit button. That bug caused "Sending..."/"Request shortlist"
   // to render on the Adults counter's "−" button instead.
   const btn = form.querySelector('button[type="submit"]');
+  const btnOriginalText = btn?.textContent;
   const status = form.querySelector("[data-form-status]");
   const phoneInput = form.querySelector('#phone');
   const countrySelect = form.querySelector('#country');
@@ -213,7 +214,11 @@ export function setupContactForm() {
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "Request shortlist";
+        // Restore this button's own original label — homestays.html says
+        // "Send request" while contact.html says "Request shortlist"; a
+        // hardcoded string here would silently overwrite whichever one
+        // wasn't hardcoded.
+        btn.textContent = btnOriginalText;
       }
     }
   });

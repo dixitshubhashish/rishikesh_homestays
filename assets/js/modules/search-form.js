@@ -34,12 +34,20 @@ export function setupAreaDropdowns() {
   });
 }
 
+// Uses the same flatpickr setup (dateFormat/altFormat/minDate) as the main
+// contact form and the WhatsApp widget, so the "arrival date" field here
+// behaves identically — same calendar UI, same "no past dates" rule —
+// instead of falling back to a plain native <input type="date"> that
+// allows picking a date that's already gone.
 export function setupDatePickers() {
-  document.querySelectorAll('input[type="date"]').forEach(input => {
-    input.addEventListener('click', () => {
-      if (input.showPicker) {
-        input.showPicker();
-      }
+  if (typeof window.flatpickr !== 'function') return;
+
+  document.querySelectorAll('#date').forEach(input => {
+    window.flatpickr(input, {
+      dateFormat: 'Y-m-d',
+      altInput: true,
+      altFormat: 'd M Y',
+      minDate: 'today'
     });
   });
 }

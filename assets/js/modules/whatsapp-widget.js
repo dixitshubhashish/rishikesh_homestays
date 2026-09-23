@@ -56,9 +56,50 @@ function ensureVendorScripts() {
 export function setupWhatsAppWidget() {
   const WHATSAPP_PHONE = '919027212484';
 
+  // The popup is a slide-in panel, not a plain show/hide overlay — it needs
+  // a frame with `hidden` removed before the transform transition can run
+  // (a hidden element can't animate), and `hidden` re-applied only after
+  // the slide-out finishes (so it isn't still tabbable/visible-to-screen-
+  // readers mid-transition). Centralized here since ~10 call sites across
+  // this file all need to open/close the same way.
+  function openWidgetPopup() {
+    const popup = document.getElementById('whatsapp-popup');
+    const backdrop = document.getElementById('whatsapp-backdrop');
+    if (!popup) return;
+    popup.hidden = false;
+    if (backdrop) backdrop.hidden = false;
+    requestAnimationFrame(() => {
+      popup.classList.add('is-open');
+      backdrop?.classList.add('is-open');
+    });
+  }
+
+  function closeWidgetPopup() {
+    const popup = document.getElementById('whatsapp-popup');
+    const backdrop = document.getElementById('whatsapp-backdrop');
+    if (!popup) return;
+    popup.classList.remove('is-open');
+    backdrop?.classList.remove('is-open');
+    const onTransitionEnd = () => {
+      popup.hidden = true;
+      if (backdrop) backdrop.hidden = true;
+    };
+    popup.addEventListener('transitionend', onTransitionEnd, { once: true });
+    // Fallback in case transitionend doesn't fire (e.g. reduced-motion).
+    setTimeout(onTransitionEnd, 350);
+  }
+
+  function isWidgetPopupOpen() {
+    const popup = document.getElementById('whatsapp-popup');
+    return !!popup && !popup.hidden;
+  }
+
   // Create widget HTML
   const widgetHTML = `
     <div id="whatsapp-widget" class="whatsapp-widget">
+      <!-- Dims the page behind the slide-in panel; clicking it closes the panel -->
+      <div id="whatsapp-backdrop" class="whatsapp-backdrop" hidden></div>
+
       <!-- Floating Action Button -->
       <button id="whatsapp-fab" class="whatsapp-fab" aria-label="Chat on WhatsApp" title="Chat on WhatsApp">
         <svg viewBox="0 0 32 32" width="28" height="28" fill="currentColor">
@@ -288,7 +329,6 @@ export function setupWhatsAppWidget() {
     setTimeout(() => {
       if (userOpenedWidget) return;
 
-      const popup = document.getElementById('whatsapp-popup');
       const fab = document.getElementById('whatsapp-fab');
       const nudge = document.getElementById('whatsapp-nudge');
 
@@ -302,9 +342,9 @@ export function setupWhatsAppWidget() {
             nudge.hidden = true;
           }, 8000);
         }
-      } else if (popup) {
+      } else {
         activateForm();
-        popup.hidden = false;
+        openWidgetPopup();
       }
     }, AUTO_POPUP_DELAY_MS);
   }
@@ -362,8 +402,8 @@ export function setupWhatsAppWidget() {
 
   function setupEventListeners() {
     const fab = document.getElementById('whatsapp-fab');
-    const popup = document.getElementById('whatsapp-popup');
     const closeBtn = document.getElementById('whatsapp-close');
+    const backdrop = document.getElementById('whatsapp-backdrop');
     const nudge = document.getElementById('whatsapp-nudge');
     const form = document.getElementById('whatsapp-form');
     const nameInput = document.getElementById('whatsapp-name');
@@ -384,7 +424,11 @@ export function setupWhatsAppWidget() {
       userOpenedWidget = true;
       hideNudge();
       activateForm();
-      popup.hidden = !popup.hidden;
+      if (isWidgetPopupOpen()) {
+        closeWidgetPopup();
+      } else {
+        openWidgetPopup();
+      }
     });
 
     // Tapping the mobile nudge opens the full form, same as the FAB
@@ -393,20 +437,27 @@ export function setupWhatsAppWidget() {
       userOpenedWidget = true;
       hideNudge();
       activateForm();
-      popup.hidden = false;
+      openWidgetPopup();
     });
 
     // Close popup
     closeBtn?.addEventListener('click', (e) => {
       e.preventDefault();
       userOpenedWidget = true;
-      popup.hidden = true;
+      closeWidgetPopup();
+    });
+
+    // Clicking the dimmed backdrop closes the panel too, same as a real drawer.
+    backdrop?.addEventListener('click', (e) => {
+      e.preventDefault();
+      userOpenedWidget = true;
+      closeWidgetPopup();
     });
 
     // Close on escape key
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        popup.hidden = true;
+      if (e.key === 'Escape' && isWidgetPopupOpen()) {
+        closeWidgetPopup();
       }
     });
 
@@ -567,14 +618,7 @@ export function setupWhatsAppWidget() {
       clearFieldError(nameError, nameInput);
       clearFieldError(phoneError, phoneInput);
       clearFieldError(datesError, document.getElementById('whatsapp-checkout'));
-      popup.hidden = true;
-    });
-
-    // Close popup when clicking outside
-    popup?.addEventListener('click', (e) => {
-      if (e.target === popup) {
-        popup.hidden = true;
-      }
+      closeWidgetPopup();
     });
   }
 
@@ -588,12 +632,9 @@ export function setupWhatsAppWidget() {
   // Expose global reference
   window.whatsappWidget = {
     open: () => {
-      const popup = document.getElementById('whatsapp-popup');
-      if (popup) popup.hidden = false;
+      activateForm();
+      openWidgetPopup();
     },
-    close: () => {
-      const popup = document.getElementById('whatsapp-popup');
-      if (popup) popup.hidden = true;
-    }
+    close: closeWidgetPopup
   };
 }

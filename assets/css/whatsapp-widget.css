@@ -89,34 +89,48 @@
   }
 }
 
+/* A true slide-in side panel, not a floating card over the middle of the
+   page — full viewport height, anchored to the right edge, paired with a
+   dimming backdrop (below) so it reads as a sidebar drawer rather than a
+   popup blocking whatever was behind it. */
 .whatsapp-popup {
   position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 100%;
-  max-width: 380px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  width: min(400px, 100vw);
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.3s ease;
-  max-height: min(90vh, calc(100vh - 110px));
   overflow: hidden;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.whatsapp-popup.is-open {
+  transform: translateX(0);
 }
 
 .whatsapp-popup[hidden] {
+  display: none;
+}
+
+.whatsapp-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 998;
+}
+
+.whatsapp-backdrop.is-open {
+  opacity: 1;
+}
+
+.whatsapp-backdrop[hidden] {
   display: none;
 }
 
@@ -129,7 +143,6 @@
   align-items: center;
   background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
   color: white;
-  border-radius: 12px 12px 0 0;
 }
 
 .whatsapp-popup-header h3 {
@@ -370,13 +383,6 @@
   .whatsapp-fab {
     width: 56px;
     height: 56px;
-  }
-
-  .whatsapp-popup {
-    bottom: 80px;
-    right: 16px;
-    left: 16px;
-    max-width: none;
   }
 
   .whatsapp-popup-header h3 {

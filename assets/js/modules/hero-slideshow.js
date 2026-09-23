@@ -1,5 +1,6 @@
 const SLIDE_INTERVAL_MS = 5000; // industry-standard hero slideshow pace (4-6s/slide)
 const TEXT_FADE_MS = 400;
+const MOBILE_QUERY = '(max-width: 680px)';
 
 function parseJSONList(el, attr) {
   if (!el) return [];
@@ -19,9 +20,48 @@ function fadeSwap(el, nextText) {
   }, TEXT_FADE_MS);
 }
 
+function pickBg(slide) {
+  const wantsMobile = window.matchMedia(MOBILE_QUERY).matches;
+  return (wantsMobile && slide.dataset.bgMobile) || slide.dataset.bg;
+}
+
+// Slides carry their image URL in data-bg/data-bg-mobile, not inline
+// background-image, so the browser only fetches the ones we explicitly set —
+// otherwise all seven full-size hero photos would download on every load
+// even though the slideshow only ever shows one at a time.
+function ensureLoaded(slide) {
+  if (!slide || slide.dataset.loaded) return;
+  const url = pickBg(slide);
+  if (!url) return;
+  slide.style.backgroundImage = `url('${url}')`;
+  slide.dataset.loaded = 'true';
+}
+
+// Warms the browser's HTTP cache for an upcoming slide ahead of time, so the
+// crossfade into it never shows a blank frame, without blocking anything on
+// the current slide (it's a plain background fetch, not a page resource).
+function preload(slide) {
+  if (!slide || slide.dataset.loaded) return;
+  const url = pickBg(slide);
+  if (!url) return;
+  const img = new Image();
+  img.onload = () => ensureLoaded(slide);
+  img.src = url;
+}
+
 export function setupHeroSlideshow() {
   const container = document.querySelector('.hero-slideshow');
+  const hero = container?.closest('.hero');
   const slides = container ? Array.from(container.querySelectorAll('.hero-slide')) : [];
+  if (!slides.length) return;
+
+  // Load the currently-visible slide immediately, before any of the
+  // rotation/reduced-motion logic below — a reduced-motion visitor skips
+  // the rotation entirely and would otherwise see a blank hero.
+  const activeSlide = slides.find((slide) => slide.classList.contains('is-active')) || slides[0];
+  setHeroSlideState(hero, slides.indexOf(activeSlide));
+  ensureLoaded(activeSlide);
+
   if (slides.length < 2) return;
 
   const caption = document.querySelector('.hero-caption');
@@ -32,17 +72,23 @@ export function setupHeroSlideshow() {
   const copies = parseJSONList(copy, 'copy');
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const scheduleIdle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
+  let activeIndex = slides.indexOf(activeSlide);
+  scheduleIdle(() => preload(slides[(activeIndex + 1) % slides.length]));
+
   if (prefersReducedMotion) return;
 
-  let activeIndex = 0;
-
   function showSlide(nextIndex) {
+    ensureLoaded(slides[nextIndex]);
+    setHeroSlideState(hero, nextIndex);
     slides[activeIndex].classList.remove('is-active');
     slides[nextIndex].classList.add('is-active');
     fadeSwap(caption, captions[nextIndex]);
     fadeSwap(headline, headlines[nextIndex]);
     fadeSwap(copy, copies[nextIndex]);
     activeIndex = nextIndex;
+    preload(slides[(activeIndex + 1) % slides.length]);
   }
 
   function start() {
@@ -61,4 +107,11 @@ export function setupHeroSlideshow() {
       timer = start();
     }
   });
+}
+
+function setHeroSlideState(hero, index) {
+  if (!hero) return;
+  hero.className = hero.className.replace(/\bhero-slide-\d+\b/g, '').replace(/\s{2,}/g, ' ').trim();
+  hero.classList.add(`hero-slide-${index + 1}`);
+  hero.classList.toggle('hero-light-slide', index === 3);
 }

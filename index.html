@@ -23,6 +23,7 @@
   <link rel="manifest" href="/site.webmanifest">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/whatsapp-widget.css">
+  <link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -82,19 +83,22 @@
 
   <main id="main">
     <section class="hero">
+      <!-- Only the active slide's image is fetched on load; hero-slideshow.js
+           lazy-loads each of the rest just ahead of when it's due to show,
+           since a slideshow only ever shows one of these seven at a time. -->
       <div class="hero-slideshow" aria-hidden="true">
-        <div class="hero-slide is-active" style="background-image: url('/assets/images/rishikesh-homestay-hero.webp')"></div>
-        <div class="hero-slide" style="background-image: url('/assets/images/page-heroes/things-to-do-hero.webp')"></div>
-        <div class="hero-slide" style="background-image: url('/assets/images/things-to-do/triveni-ghat-aarti-v2.webp')"></div>
-        <div class="hero-slide" style="background-image: url('/assets/images/things-to-do/kunjapuri-devi-temple.webp')"></div>
-        <div class="hero-slide" style="background-image: url('/assets/images/things-to-do/neer-garh-waterfall.webp'); background-position: center bottom;"></div>
-        <div class="hero-slide" style="background-image: url('/assets/images/things-to-do/tera-manzil-temple.webp')"></div>
-        <div class="hero-slide" style="background-image: url('/assets/images/things-to-do/beatles-ashram-refined.webp')"></div>
+        <div class="hero-slide is-active" data-bg="/assets/images/rishikesh-things-to-do.webp" data-bg-mobile="/assets/images/rishikesh-homestay-hero-mobile.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/page-heroes/things-to-do-hero.webp" data-bg-mobile="/assets/images/page-heroes/things-to-do-hero-mobile.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/triveni-ghat-aarti-v2.webp" data-bg-mobile="/assets/images/things-to-do/triveni-ghat-aarti-v2-mobile.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/kunjapuri-devi-temple.webp" data-bg-mobile="/assets/images/things-to-do/kunjapuri-devi-temple-mobile.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/ai-river-rafting.webp" data-bg-mobile="/assets/images/things-to-do/neer-garh-waterfall-mobile.webp" style="background-position: center bottom;"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/tera-manzil-temple.webp" data-bg-mobile="/assets/images/things-to-do/tera-manzil-temple-mobile.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/beatles-ashram-refined.webp" data-bg-mobile="/assets/images/things-to-do/beatles-ashram-refined-mobile.webp"></div>
       </div>
       <div class="hero-inner">
-        <p class="eyebrow hero-caption" data-captions='["Local Homestays for real Rishikesh trips","White-Water Adventure","Sacred Evenings","Golden Hour Views","Nature’s Escape","Temples on the Water","Where Legends Stayed"]'>Local Homestays for real Rishikesh trips</p>
-        <h1 class="hero-headline" data-headlines='["Stay close to the Mountains, Ganges, Cafes, Yoga, &amp; Aarti!","Raft the Rapids, Then Rest by the Ganges","Witness the Ganga Aarti at Triveni Ghat","Chase Sunrise from Kunjapuri Devi Temple","Cool Off at Neer Garh Waterfall","Stay Beside Riverside Temples on the Ganges","Walk Through the Historic Beatles Ashram"]'>Stay close to the Mountains, Ganges, Cafes, Yoga, &amp; Aarti!</h1>
-        <p class="hero-copy" data-copy='["Compare handpicked homestays across Rishikesh — near AIIMS, Triveni Ghat, Tapovan, and quieter hill roads. Send one enquiry and get stay options matched to your dates and group.","Raft by day, then unwind at a homestay just minutes from the put-in point on the Ganges.","Stay a short walk from Triveni Ghat and catch the evening Ganga Aarti without a long commute.","Base yourself nearby and make the Kunjapuri sunrise drive without an early check-out rush.","Pick a Tapovan homestay and reach Neer Garh Waterfall in minutes.","Homestays along the Ganges put temples, ghats, and river walks right on your doorstep.","Stay close to Tapovan’s cafes and explore the Beatles Ashram at your own pace."]'>Compare handpicked homestays across Rishikesh — near AIIMS, Triveni Ghat, Tapovan, and quieter hill roads. Send one enquiry and get stay options matched to your dates and group.</p>
+        <p class="eyebrow hero-caption" data-captions='["Local Homestays for real Rishikesh trips","White-Water Adventure","Aarti, Markets &amp; Riverside Cafes","Golden Hour Views","Nature’s Escape","Temples on the Water","Where Legends Stayed"]'>Local Homestays for real Rishikesh trips</p>
+        <h1 class="hero-headline" data-headlines='["Stay close to the Mountains, Ganges, Cafes, Yoga, &amp; Aarti!","Ride the Ganges, Then Unwind by the River","See Triveni Ghat, Then Wander the Riverside","Chase Sunrise from Kunjapuri Devi Temple","Cool Off at Neer Garh Waterfall","Stay Beside Riverside Temples on the Ganges","Walk Through the Historic Beatles Ashram"]'>Stay close to the Mountains, Ganges, Cafes, Yoga, &amp; Aarti!</h1>
+        <p class="hero-copy" data-copy='["Compare handpicked homestays across Rishikesh — near AIIMS, Triveni Ghat, Tapovan, and quieter hill roads. Send one enquiry and get stay options matched to your dates and group.","Raft by day, then unwind at a homestay just minutes from the put-in point on the Ganges.","Watch the evening aarti, browse local market lanes, and settle into a riverside cafe before heading back to your stay.","Base yourself nearby and make the Kunjapuri sunrise drive without an early check-out rush.","Pick a Tapovan homestay and reach Neer Garh Waterfall in minutes.","Homestays along the Ganges put temples, ghats, and river walks right on your doorstep.","Stay close to Tapovan’s cafes and explore the Beatles Ashram at your own pace."]'>Compare handpicked homestays across Rishikesh — near AIIMS, Triveni Ghat, Tapovan, and quieter hill roads. Send one enquiry and get stay options matched to your dates and group.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="/pages/homestays" target="_blank" rel="noopener">
             Browse Homestays
@@ -142,7 +146,7 @@
 
         <div class="field">
           <label for="date">Arrival date</label>
-          <input id="date" name="date" type="date">
+          <input id="date" name="date" placeholder="Select arrival date" autocomplete="off" readonly>
         </div>
 
         <button class="btn btn-primary" type="submit">
@@ -406,6 +410,7 @@
 
 </div>
 </footer>
+<script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
 <script type="module" src="/assets/js/site.js"></script>
 <script type="module">
   import { setupWhatsAppWidget } from '/assets/js/modules/whatsapp-widget.js';

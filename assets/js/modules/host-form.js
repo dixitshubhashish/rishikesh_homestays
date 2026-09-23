@@ -39,6 +39,7 @@ export function setupHostForm() {
   // See contact-form.js for why this must target the submit button
   // specifically, not just the first <button> in the form.
   const btn = form.querySelector('button[type="submit"]');
+  const btnOriginalText = btn?.textContent;
   const status = form.querySelector('[data-form-status]');
   const phoneInput = form.querySelector('#host_phone');
   const countrySelect = form.querySelector('#host_country');
@@ -79,7 +80,7 @@ export function setupHostForm() {
 
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Sending...';
+      btn.textContent = 'Submitting...';
     }
     if (status) status.textContent = '';
 
@@ -110,7 +111,7 @@ export function setupHostForm() {
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = 'Submit application';
+        btn.textContent = btnOriginalText;
       }
     }
   });

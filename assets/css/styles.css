@@ -17,6 +17,9 @@
   box-sizing: border-box;}
 html {
   scroll-behavior: smooth;}
+html,
+body {
+  overflow-x: hidden;}
 body {
   margin: 0;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -95,6 +98,16 @@ textarea {
   color: var(--ink);
   font-weight: 800;
   font-size: 0.92rem;}
+.nav-toggle-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;}
 .nav-toggle:hover,
 .nav-toggle[aria-expanded="true"] {
   background: var(--sky);
@@ -149,6 +162,13 @@ textarea {
      text becomes unreadable (white-on-light-blue). */
   background: #093a1d;
   color: #fff;}
+/* nav.js injects these unconditionally on every page load regardless of
+   viewport width, so they default to hidden here and are only switched on
+   inside the mobile drawer media query below — otherwise they'd render
+   inline in the desktop nav bar alongside the plain links. */
+.nav-drawer-header,
+.nav-drawer-footer {
+  display: none;}
 .nav-cta,
 .btn {
   display: inline-flex;
@@ -197,7 +217,8 @@ textarea {
   align-items: end;
   color: #fff;
   overflow: hidden;
-  background: #102c28;}
+  --hero-panel-bg: #123f38;
+  background: #102c28 url("../images/things-to-do/kunjapuri-devi-temple-mobile.webp") center 24% / cover no-repeat;}
 .hero::before {
   content: "";
   position: absolute;
@@ -278,6 +299,11 @@ textarea {
   margin: 22px 0 0;
   color: rgba(255, 255, 255, 0.9);
   font-size: clamp(1.05rem, 1.5vw, 1.28rem);}
+.hero.hero-light-slide .hero-caption,
+.hero.hero-light-slide h1,
+.hero.hero-light-slide .hero-copy {
+  color: #123b35;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.48);}
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
@@ -307,6 +333,128 @@ textarea {
   margin-top: 7px;
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.87rem;}
+
+/* Keep hero imagery and copy in separate regions at every viewport size so
+   the subject remains inspectable and the text never competes with it. */
+.hero {
+  --hero-panel-bg: #123f38;
+  display: block;
+  min-height: 0;
+  background: var(--hero-panel-bg);}
+.hero-slideshow {
+  position: relative;
+  height: clamp(360px, 48vw, 620px);}
+.hero-slide {
+  background-size: cover;}
+.hero::before {
+  inset: 0 0 auto;
+  height: clamp(360px, 48vw, 620px);
+  background-image: linear-gradient(180deg, rgba(8, 26, 24, 0.02) 52%, color-mix(in srgb, var(--hero-panel-bg) 35%, transparent) 82%, var(--hero-panel-bg) 100%);}
+.hero > .hero-inner {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 48px max(24px, calc((100% - var(--max)) / 2)) 56px;
+  background: var(--hero-panel-bg);
+  box-sizing: border-box;}
+.hero > .hero-inner h1 {
+  font-size: clamp(2rem, 4vw, 3.8rem);
+  line-height: 1.06;}
+.hero.hero-light-slide .hero-caption,
+.hero.hero-light-slide h1,
+.hero.hero-light-slide .hero-copy {
+  color: #fff;
+  text-shadow: none;}
+@media (min-width: 681px) {
+  .hero-slideshow,
+  .hero::before {
+    height: clamp(320px, 32vw, 460px);}
+  .hero-slide {
+    background-position: center top;}
+  .hero-slide:nth-child(5) {
+    background-position: center top;}
+  .hero > .hero-inner {
+    padding-top: 34px;
+    padding-bottom: 38px;}
+  .hero > .hero-inner h1 {
+    font-size: clamp(2rem, 3.4vw, 3.25rem);}
+  .hero > .hero-inner .hero-actions {
+    margin-top: 20px;}
+  .hero > .hero-inner .hero-stats {
+    margin-top: 30px;}
+}
+@media (min-width: 1200px) {
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(360px, 3fr);
+    align-items: stretch;}
+  .hero-slideshow,
+  .hero::before {
+    grid-column: 1;
+    grid-row: 1;
+    height: clamp(430px, 38vw, 600px);}
+  .hero::before {
+    width: 100%;}
+  .hero > .hero-inner {
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    display: block;
+    padding: 34px 28px;
+    min-height: clamp(430px, 38vw, 600px);}
+  .hero > .hero-inner h1 {
+    font-size: clamp(1.85rem, 2.6vw, 2.7rem);
+    line-height: 1.04;}
+  .hero > .hero-inner .hero-copy {
+    font-size: 0.98rem;
+    line-height: 1.45;}
+  .hero > .hero-inner .hero-actions {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;}
+  .hero > .hero-inner .hero-actions .btn-whatsapp {
+    margin-left: auto;
+    margin-right: auto;}
+  .hero > .hero-inner .hero-actions > .btn:not(.btn-whatsapp) {
+    flex: 0 0 calc((100% - 8px) / 2);
+    width: calc((100% - 8px) / 2);
+    min-width: 0;
+    white-space: nowrap;}
+  .hero > .hero-inner .hero-actions > .btn:not(.btn-whatsapp) {
+    flex: 0 0 calc((100% - 8px) / 2);
+    width: calc((100% - 8px) / 2);
+    min-width: 0;
+    white-space: nowrap;}
+  .hero > .hero-inner .hero-stats {
+    position: static;
+    width: 100%;
+    transform: none;
+    max-width: none;
+    margin: 28px 0 0;
+    grid-template-columns: 1fr;
+    gap: 1px;}
+  .hero > .hero-inner .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 20px;}
+  .hero > .hero-inner .hero-stat {
+    min-height: 0;
+    padding: 7px 12px;}
+  .hero > .hero-inner .hero-stat strong {
+    font-size: 1rem;}
+  .hero > .hero-inner .hero-stat span {
+    font-size: 0.72rem;}
+}
+.hero.hero-slide-1 { --hero-panel-bg: #1d5060; }
+.hero.hero-slide-2 { --hero-panel-bg: #104b4b; }
+.hero.hero-slide-3 { --hero-panel-bg: #28243b; }
+.hero.hero-slide-4 { --hero-panel-bg: #68452f; }
+.hero.hero-slide-5 { --hero-panel-bg: #214534; }
+.hero.hero-slide-6 { --hero-panel-bg: #642f22; }
+.hero.hero-slide-7 { --hero-panel-bg: #263e37; }
 .section,
 .guide-section {
   padding: 62px 0;}
@@ -387,7 +535,17 @@ main > section:last-child {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: #fff;
-  color: var(--ink);}
+  color: var(--ink);
+  transition: box-shadow 150ms ease, border-color 150ms ease;}
+.field select:focus,
+.field select:active,
+.field input:focus,
+.field textarea:focus,
+.phone-row select:focus,
+.phone-row select:active {
+  outline: none;
+  border-color: var(--river);
+  box-shadow: 0 0 0 3px rgba(20, 82, 74, 0.15), 0 4px 12px rgba(23, 33, 31, 0.12);}
 .field textarea {
   min-height: 112px;
   resize: vertical;}
@@ -976,25 +1134,128 @@ main > section:last-child {
   .nav-toggle {
     display: inline-flex;
     flex-direction: row;}
+  /* .site-header's backdrop-filter creates a new containing block for
+     position:fixed descendants, so without this the drawer's top:0/bottom:0
+     would resolve against the header's own short box instead of the
+     viewport. Drop it here so the drawer below is truly full-height. */
+  .site-header {
+    backdrop-filter: none;}
+  /* Slide-in drawer from the left, full viewport height, paired with a
+     dimming backdrop — same pattern as the WhatsApp widget's panel,
+     instead of a dropdown appearing under the header. */
 .site-nav {
-    position: absolute;
-    left: 16px;
-    right: 16px;
-    top: 72px;
-    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: min(300px, 85vw);
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding: 10px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
+    gap: 4px;
+    padding: 0 16px 24px;
     background: #fff;
-    box-shadow: var(--shadow);}
+    box-shadow: 8px 0 40px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;}
 .site-nav.is-open {
-    display: flex;}
+    transform: translateX(0);}
 .site-nav a,
   .site-nav .nav-cta {
     width: 100%;
     justify-content: flex-start;}
+  /* Drawer-only chrome (logo/close row + contact/social footer) — injected
+     by nav.js and hidden by default so it can never leak into the desktop
+     inline nav bar; only shown once .site-nav becomes the fixed drawer. */
+  .nav-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 -16px 8px;
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--line);}
+  .nav-drawer-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    color: var(--ink);}
+  .nav-drawer-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;}
+  .nav-drawer-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border: none;
+    border-radius: 50%;
+    background: var(--sky);
+    color: var(--ink);
+    cursor: pointer;}
+  .nav-drawer-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: auto -16px 0;
+    padding: 16px 16px 0;
+    border-top: 1px solid var(--line);}
+  .nav-drawer-quick-action {
+    width: 100%;}
+  .nav-drawer-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;}
+  .nav-drawer-contact a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;}
+  .nav-drawer-contact svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+    stroke: currentColor;}
+  .nav-drawer-social {
+    display: flex;
+    gap: 10px;}
+  .nav-drawer-social a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--sky);
+    color: var(--river);}
+  .nav-drawer-social svg {
+    width: 17px;
+    height: 17px;
+    stroke: currentColor;}
+.nav-backdrop {
+    position: fixed;
+    inset: 0;
+    /* .site-header has its own z-index (30), which makes it a stacking
+       context — .site-nav's z-index:1000 only wins against siblings inside
+       that header context, not against this backdrop appended to <body>.
+       Keeping the backdrop below the header's z-index (instead of above it)
+       is what actually lets the drawer's links stay on top and clickable. */
+    z-index: 25;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    transition: opacity 0.3s ease;}
+.nav-backdrop.is-open {
+    opacity: 1;}
+.nav-backdrop[hidden] {
+    display: none;}
 .search-grid,
   .feature-band,
   .guide-grid,
@@ -1017,15 +1278,151 @@ main > section:last-child {
   .nav-wrap {
     width: min(100% - 24px, var(--max));}
 .hero {
-    min-height: 720px;}
+    display: block;
+    min-height: 0;
+    background: #102c28 url("../images/things-to-do/kunjapuri-devi-temple-mobile.webp") center 24% / cover no-repeat;}
+.hero-slideshow {
+    position: relative;
+    height: 390px;}
+.hero-slide {
+    background-size: cover;
+    background-position: center;}
+.hero::before {
+    inset: 0 0 auto;
+    height: 390px;
+    background-image: linear-gradient(180deg, rgba(8, 26, 24, 0.02) 48%, color-mix(in srgb, var(--hero-panel-bg) 34%, transparent) 76%, var(--hero-panel-bg) 100%);}
+.hero-inner {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 28px 16px 34px;
+    background: #102c28;}
+.hero::before {
+    background-image: linear-gradient(180deg, rgba(8, 26, 24, 0.02) 48%, rgba(18, 63, 56, 0.34) 76%, #123f38 100%);}
 .hero-inner,
   .container,
   .search-panel,
   .page-hero-inner {
     width: min(100% - 24px, var(--max));}
-.hero h1,
+  /* Push the hero text down a bit rather than starting flush under the
+     sticky header, and dial back the heading/copy/button sizes to a more
+     standard mobile scale (a full-width 16px+bold button and a huge
+     multi-line serif heading both read as oversized on a narrow screen).
+     padding-bottom is bumped well past the desktop 34px too — the hero is
+     bottom-anchored (align-items:end), so this is what actually lifts the
+     text block off the very bottom edge and gives the photo's subject
+     (a raft, a temple, a mural — usually sitting in the lower third of
+     these shots) some clear room instead of running straight into the
+     text. There's ~120px of slack under the 720px min-height before the
+     hero would grow past one phone screen again, so this stays inside it. */
+  .hero-inner {
+    padding: 140px 0 100px;}
+  /* Each mobile photo has a different quiet area. Keep the copy out of the
+     main subject instead of forcing every slide into the same bottom-left
+     composition. */
+  .hero.hero-slide-2 .hero-inner,
+  .hero.hero-slide-3 .hero-inner,
+  .hero.hero-slide-5 .hero-inner,
+  .hero.hero-slide-7 .hero-inner {
+    padding-bottom: 360px;}
+  .hero.hero-slide-4 .hero-inner,
+  .hero.hero-slide-6 .hero-inner {
+    width: 100%;
+    margin: 0;}
+  .hero.hero-slide-4 .hero-inner {
+    padding-bottom: 96px;}
+  .hero.hero-slide-6 .hero-inner {
+    padding-bottom: 150px;}
+  .hero.hero-slide-2 .hero-inner,
+  .hero.hero-slide-3 .hero-inner,
+  .hero.hero-slide-4 .hero-inner,
+  .hero.hero-slide-5 .hero-inner,
+  .hero.hero-slide-6 .hero-inner,
+  .hero.hero-slide-7 .hero-inner {
+    padding: 28px 16px 34px;}
+  .hero.hero-light-slide .hero-caption,
+  .hero.hero-light-slide h1,
+  .hero.hero-light-slide .hero-copy {
+    color: #fff;
+    text-shadow: none;}
+  .hero h1,
   .page-hero h1 {
-    font-size: clamp(2.4rem, 14vw, 4.3rem);}
+    font-size: clamp(1.35rem, 5.4vw, 1.7rem);
+    line-height: 1.18;}
+  .hero-copy {
+    font-size: 0.95rem;
+    line-height: 1.5;}
+  .hero .eyebrow,
+  .page-hero .eyebrow {
+    font-size: 0.76rem;
+    line-height: 1.35;}
+  .hero-actions {
+    gap: 8px;}
+  .hero-actions .btn {
+    font-size: 0.84rem;
+    line-height: 1.25;
+    padding: 8px 12px;}
+  .card-body p,
+  .info-card p,
+  .page-hero p {
+    font-size: 0.95rem;
+    line-height: 1.55;}
+  /* .hero uses align-items:end, so the text block is always anchored to
+     the hero's own bottom edge — but with the stats bar included, the
+     hero's total height (~980px) ran well past one phone screen, so that
+     "bottom edge" sat below the fold and the heading only ever appeared
+     mid-image on first paint, never actually near the bottom like intended.
+     Dropping the stats bar here brings the hero back under min-height
+     (720px), so the whole text block — not just its top half — is what's
+     visible, sitting low in the frame as designed. */
+  .hero-stats {
+    display: none;}
+  /* On a narrow portrait screen, background-size:cover crops hard on the
+     left/right (these are wide landscape photos), so "center" often cuts
+     off the actual subject — a raft, a temple, a mural — even though it
+     looks fine on desktop. Nudge each slide horizontally toward whatever
+     it actually needs to show. Order matches the slides in index.html. */
+  /* This one also needs a bigger zoom, not just a horizontal nudge — cover
+     already matches this image's height exactly to the hero box, leaving no
+     vertical slack for background-position to use, so the raft (sitting
+     ~60-80% down the source photo) landed squarely behind the text no
+     matter what. Zooming past cover's minimum creates that slack, so 100%
+     Y can pull the raft up above the text instead. */
+  .hero-slide:nth-child(2) {
+    background-size: auto 125%;
+    background-position: 68% 100%;}
+  .hero-slide:nth-child(3) {
+    background-position: 62% center;}
+  .hero-slide:nth-child(4) {
+    background-size: auto 115%;
+    background-position: 64% 100%;}
+  .hero-slide:nth-child(6) {
+    background-size: auto 120%;
+    background-position: 100% 100%;}
+  .hero-slide:nth-child(7) {
+    background-position: 15% 35%;}
+  .hero > .hero-inner {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 28px 16px 34px;
+    background: var(--hero-panel-bg);}
+  .hero > .hero-inner .hero-actions .btn-whatsapp {
+    margin-left: auto;
+    margin-right: auto;}
+  .hero > .hero-inner .hero-actions > .btn:not(.btn-whatsapp) {
+    flex: 0 0 calc((100% - 8px) / 2);
+    width: calc((100% - 8px) / 2);
+    min-width: 0;
+    white-space: nowrap;}
+  .hero.hero-slide-1 { --hero-panel-bg: #1d5060; }
+  .hero.hero-slide-2 { --hero-panel-bg: #104b4b; }
+  .hero.hero-slide-3 { --hero-panel-bg: #28243b; }
+  .hero.hero-slide-4 { --hero-panel-bg: #68452f; }
+  .hero.hero-slide-5 { --hero-panel-bg: #214534; }
+  .hero.hero-slide-6 { --hero-panel-bg: #642f22; }
+  .hero.hero-slide-7 { --hero-panel-bg: #263e37; }
 .hero-stats,
   .card-grid,
   .info-grid,
@@ -1050,6 +1447,18 @@ main > section:last-child {
      
 .cta-band {
     padding: 28px;}
+  .page-tabs {
+    flex-wrap: nowrap;
+    gap: 8px;
+    width: 100%;
+  }
+  .page-tab-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 11px 8px;
+    white-space: nowrap;
+    font-size: 0.78rem;
+  }
      }
 .footer-bottom {
     display: block;}
@@ -1421,6 +1830,17 @@ main > section:last-child {
     gap:35px;
 }
 
+}
+
+@media(max-width:700px){
+  .rhs-footer-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:32px 22px;
+  }
+  .rhs-footer-brand,
+  .rhs-footer-grid > .rhs-footer-column:last-child{
+    grid-column:1 / -1;
+  }
 }
 
 /* Brand */

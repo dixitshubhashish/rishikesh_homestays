@@ -79,7 +79,8 @@ export async function setupEmailVerification(emailInput) {
     }
 
     verifyBtn.disabled = true;
-    statusEl.textContent = 'Sending code...';
+    verifyBtn.textContent = 'Sending...';
+    statusEl.textContent = '';
 
     try {
       const response = await fetch('/api/otp-send', {
@@ -100,6 +101,7 @@ export async function setupEmailVerification(emailInput) {
       statusEl.textContent = 'Could not send the code. Please try again.';
     } finally {
       verifyBtn.disabled = false;
+      verifyBtn.textContent = 'Verify email';
     }
   });
 
@@ -108,7 +110,8 @@ export async function setupEmailVerification(emailInput) {
     if (!code || !pendingToken) return;
 
     confirmBtn.disabled = true;
-    statusEl.textContent = 'Checking...';
+    confirmBtn.textContent = 'Verifying...';
+    statusEl.textContent = '';
 
     try {
       const response = await fetch('/api/otp-verify', {
@@ -130,6 +133,7 @@ export async function setupEmailVerification(emailInput) {
       statusEl.textContent = 'Could not verify the code. Please try again.';
     } finally {
       confirmBtn.disabled = false;
+      confirmBtn.textContent = 'Confirm';
     }
   });
 
