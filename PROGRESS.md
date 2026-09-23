@@ -6,7 +6,7 @@ Self-tracking log so work doesn't get lost across a long session. Update this fi
 
 - **`pages/things-to-do.html` renamed to `pages/things-to-do-in-rishikesh.html`** (URL keyword reinforcement for search). All ~48 internal link references updated across every page, `sitemap.xml`, `llms.txt`. Old URLs (both `/pages/things-to-do` and `/pages/things-to-do.html`) 301-redirect to the new one in both `server.js` (local dev) and `_redirects` (Netlify production) — nothing that was ever indexed or bookmarked breaks.
 - **SEO gap audit across every page**, checking: sitemap completeness vs actual files (✅ complete, `thanks.html` correctly excluded as `noindex`), image alt-text coverage (✅ every image on every page has non-empty alt text), broken internal links (✅ none found, verified programmatically), duplicate titles/descriptions (✅ none), heading structure (✅ exactly one `<h1>` per page), `lang` attribute (✅ present everywhere).
-- **Found and fixed 3 real gaps**: `gateway-to-kedarnath.html`'s title was 64 characters (Google truncates past ~60, would have cut off "Itineraries" mid-word) — shortened to 55. Two meta descriptions (`places-to-visit.html` at 164 chars, `list-your-homestay.html` at 166 chars) exceeded Google's ~160-char display limit and would render with an ellipsis cutoff — both trimmed to fit while keeping the key info.
+- **Found and fixed 3 real gaps**: `kedarnath-yatra.html`'s title was 64 characters (Google truncates past ~60, would have cut off "Itineraries" mid-word) — shortened to 55. Two meta descriptions (`places-to-visit.html` at 164 chars, `list-your-homestay.html` at 166 chars) exceeded Google's ~160-char display limit and would render with an ellipsis cutoff — both trimmed to fit while keeping the key info.
 - **Added `og:locale`** (was missing on every single page) — a minor but real gap for how Facebook/LinkedIn and some crawlers interpret language/region when rendering link previews.
 
 152/152 tests passing, all 11 pages verified 200, all old URLs verified redirecting correctly.
@@ -69,7 +69,7 @@ Fixed by adding the missing `setupPageTabs();` call. Also fixed two smaller, rea
 The nav had grown to 10 top-level items and looked cluttered. Consolidated:
 
 - **Restaurants & Cafes merged into Places to Visit** as an in-page tab (new `assets/js/modules/page-tabs.js`, hash-deep-linkable — `/pages/places-to-visit#restaurants` opens directly to that tab). The standalone `pages/restaurants-cafes.html` page was removed; both its old clean URL and `.html` URL 301-redirect to the new location (`server.js` for local dev, `_redirects` for Netlify).
-- **New dedicated `pages/kumbh-2027.html` page**, split out of the paragraph that was in `pages/about-rishikesh.html` (which now has a short teaser + link instead, avoiding duplicate content). Includes the specific 2027 Shahi Snan dates the user asked to pull from a tour-operator source, but explicitly labeled "reported, not officially confirmed" — cross-checked against Wikipedia, which still lists 2033 as the next Kumbh under the strict 12-year cycle, and that discrepancy is disclosed on the page rather than picking one source silently.
+- **New dedicated `pages/haridwar-kumbh-2027.html` page**, split out of the paragraph that was in `pages/about-rishikesh.html` (which now has a short teaser + link instead, avoiding duplicate content). Includes the specific 2027 Shahi Snan dates the user asked to pull from a tour-operator source, but explicitly labeled "reported, not officially confirmed" — cross-checked against Wikipedia, which still lists 2033 as the next Kumbh under the strict 12-year cycle, and that discrepancy is disclosed on the page rather than picking one source silently.
 - Net nav count unchanged (still 10), but now: Restaurants & Cafes is discoverable as a tab within Places (not a competing top-level item), and Kumbh 2027 — a genuinely time-sensitive, high-interest topic — gets its own dedicated page instead of being buried mid-paragraph in About Rishikesh.
 - `sitemap.xml`, `llms.txt`, `server.js`, `_redirects`, and nav/footer across all pages updated consistently. 9 new/updated tests added (147/147 passing), including regression guards that the old restaurants-cafes URL is gone from every internal link and that the tab markup exists.
 
@@ -92,9 +92,9 @@ The nav had grown to 10 top-level items and looked cluttered. Consolidated:
 
 ## ⚠️ Known issue — misidentified form (my mistake, needs correcting)
 
-There are **two different inquiry forms** on this site, and I initially enhanced the wrong one:
+There are **two different enquiry forms** on this site, and I initially enhanced the wrong one:
 
-1. `pages/contact.html` — the main "Send inquiry" / "Plan my stay" form. **This is the one I upgraded** with country-aware phone validation, flatpickr dates, and WhatsApp-message-on-submit.
+1. `pages/contact.html` — the main "Send enquiry" / "Plan my stay" form. **This is the one I upgraded** with country-aware phone validation, flatpickr dates, and WhatsApp-message-on-submit.
 2. `pages/homestays.html` sidebar — headed **"Ask for a shortlist"** (this is what the user meant when asking about "Ask for a shortlist"). This form is still the old, basic version: free-text "Dates" field, no phone validation, no country code, and — importantly — **it submits via Netlify Forms (`data-netlify="true"`, action `/pages/thanks.html`), not `/api/contact`, so it never reaches Supabase at all.**
 
 **Next step:** rebuild the `pages/homestays.html` "Ask for a shortlist" form to match `contact.html`: country-code phone validation, flatpickr check-in/check-out, email field, "coming from city" field, submit to `/api/contact` (so it actually saves to the DB), and open WhatsApp with the same formatted-message pattern.
@@ -102,7 +102,7 @@ There are **two different inquiry forms** on this site, and I initially enhanced
 ## ✅ Also shipped (new pages)
 
 - **`pages/list-your-homestay.html`** — new host-onboarding page (Airbnb-style "list with us"): benefits, how-it-works steps, requirements, and an application form (`host-form.js`) that validates phone, opens WhatsApp with a formatted application message, and saves to `/api/contact` with `source: host_application`.
-- **`pages/gateway-to-kedarnath.html`** — new page positioning Rishikesh as the Char Dham/Garhwal gateway: route/distance to Kedarnath, registration note, best season, distances to Badrinath/Gangotri/Yamunotri/Auli/Valley of Flowers, sample itinerary, practical tips. Content researched and fact-checked via web search; flagged uncertain figures (exact km, yearly registration process, temple open/close dates) as "verify current" rather than stated as fixed.
+- **`pages/kedarnath-yatra.html`** — new page positioning Rishikesh as the Char Dham/Garhwal gateway: route/distance to Kedarnath, registration note, best season, distances to Badrinath/Gangotri/Yamunotri/Auli/Valley of Flowers, sample itinerary, practical tips. Content researched and fact-checked via web search; flagged uncertain figures (exact km, yearly registration process, temple open/close dates) as "verify current" rather than stated as fixed.
 - Both new pages added to nav (all pages), footer (all pages), `sitemap.xml`, and `llms.txt`.
 - Country dropdown now shows compact `🇮🇳 IN +91` format instead of full names that clipped in the select box (full name in `title` tooltip).
 - Removed visible on-page photo-credit line per request; attribution kept as HTML comments per image + `CREDITS.md` (keeps CC BY-SA compliance without a visible line).

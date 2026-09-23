@@ -1,12 +1,13 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import contactHandler from './api/contact.js';
-
-dotenv.config();
+import otpStatusHandler from './api/otp-status.js';
+import otpSendHandler from './api/otp-send.js';
+import otpVerifyHandler from './api/otp-verify.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,11 @@ app.get(['/pages/restaurants-cafes', '/pages/restaurants-cafes.html'], (req, res
 // Things to Do was renamed to Things to Do in Rishikesh.
 app.get(['/pages/things-to-do', '/pages/things-to-do.html'], (req, res) => {
   res.redirect(301, '/pages/things-to-do-in-rishikesh');
+});
+
+// Kedarnath & Garhwal was renamed from gateway-to-kedarnath to kedarnath-yatra.
+app.get(['/pages/gateway-to-kedarnath', '/pages/gateway-to-kedarnath.html'], (req, res) => {
+  res.redirect(301, '/pages/kedarnath-yatra');
 });
 
 // Redirect old-style .html URLs to their clean equivalent (e.g.
@@ -58,6 +64,9 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname)));
 
 app.post('/api/contact', contactHandler);
+app.get('/api/otp-status', otpStatusHandler);
+app.post('/api/otp-send', otpSendHandler);
+app.post('/api/otp-verify', otpVerifyHandler);
 
 app.listen(port, () => {
   console.log(`Dev server running at http://localhost:${port}`);

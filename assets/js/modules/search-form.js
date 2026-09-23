@@ -14,17 +14,22 @@ export function setupQuickSearch() {
       const value = formData.get(key);
       if (value) params.set(key, value);
     });
-    window.location.href = `/pages/homestays.html?${params.toString()}#stays`;
+    window.location.href = `/pages/homestays?${params.toString()}#stays`;
   });
 }
 
 export function setupAreaDropdowns() {
   document.querySelectorAll(".area-dropdown").forEach(select => {
+    // Insert right after the first (placeholder) option, so any trailing
+    // custom option already in the markup — e.g. list-your-homestay.html's
+    // "Other (mention in message)" — stays last instead of getting pushed
+    // above the appended areas.
+    const insertBeforeNode = select.options[1] || null;
     AREAS.forEach(area => {
       const option = document.createElement("option");
       option.value = area;
       option.textContent = area;
-      select.appendChild(option);
+      select.insertBefore(option, insertBeforeNode);
     });
   });
 }

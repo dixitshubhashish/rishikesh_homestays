@@ -1,0 +1,19 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/pages/restaurants-cafes.html", "destination": "/pages/places-to-visit#restaurants", "permanent": true },
+    { "source": "/pages/restaurants-cafes", "destination": "/pages/places-to-visit#restaurants", "permanent": true },
+    { "source": "/pages/things-to-do.html", "destination": "/pages/things-to-do-in-rishikesh", "permanent": true },
+    { "source": "/pages/things-to-do", "destination": "/pages/things-to-do-in-rishikesh", "permanent": true },
+    { "source": "/pages/haridwar-kumbh-2027.html", "destination": "/pages/haridwar-kumbh-2027", "permanent": true },
+    { "source": "/pages/gateway-to-kedarnath.html", "destination": "/pages/kedarnath-yatra", "permanent": true },
+    { "source": "/pages/gateway-to-kedarnath", "destination": "/pages/kedarnath-yatra", "permanent": true },
+    { "source": "/about", "destination": "/pages/about-rishikesh", "permanent": false },
+    { "source": "/homestays", "destination": "/pages/homestays", "permanent": false },
+    { "source": "/things-to-do", "destination": "/pages/things-to-do-in-rishikesh", "permanent": false },
+    { "source": "/triveni-ghat", "destination": "/pages/triveni-ghat", "permanent": false },
+    { "source": "/places", "destination": "/pages/places-to-visit", "permanent": false },
+    { "source": "/contact", "destination": "/pages/contact", "permanent": false }
+  ]
+}

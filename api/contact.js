@@ -1,15 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+import 'dotenv/config';
 import { Resend } from 'resend';
-import dotenv from 'dotenv';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { validateDateRange } from '../assets/js/modules/validators.js';
-
-dotenv.config();
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import { insertEnquiry } from './bigquery.js';
+import { randomUUID } from 'crypto';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -28,7 +22,7 @@ export default async function handler(req, res) {
   if (missingFields.length) {
     return res.status(400).json({
       success: false,
-      message: "Please complete the required fields before sending your inquiry."
+      message: "Please complete the required fields before sending your enquiry."
     });
   }
 
@@ -62,10 +56,14 @@ export default async function handler(req, res) {
     const petCount = parseInt(data.pet_count) || 0;
     const petType = data.pets || 'none';
     
-    // Prepare inquiry data mapping form fields to table columns
-    const inquiryData = {
+    // Prepare enquiry data mapping form fields to table columns
+    const enquiryId = randomUUID();
+    const enquiryData = {
+      id: enquiryId,
+      created_at: new Date().toISOString(),
       name: data.name,
       email: data.email || null,
+      email_verified: Boolean(data.email_verified),
       phone: data.phone,
       check_in: data.check_in || null,
       check_out: data.check_out || null,
@@ -85,23 +83,15 @@ export default async function handler(req, res) {
       referrer: req.headers['referer'] || null
     };
 
-    // Store in Supabase
-    const { data: insertedData, error: dbError } = await supabase
-      .from('enquiries')
-      .insert([inquiryData])
-      .select();
+    // Store in BigQuery
+    await insertEnquiry(enquiryData);
 
-    if (dbError) {
-      console.error("Supabase error:", dbError);
-      throw new Error(`Database error: ${dbError.message}`);
-    }
-
-    console.log("✅ Data stored in Supabase:", insertedData);
+    console.log("✅ Data stored in BigQuery:", enquiryId);
 
     // Send email via Resend with tabular format
     const emailHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">New Rishikesh Homestay Inquiry</h2>
+        <h2 style="color: #333;">New Rishikesh Homestay Enquiry</h2>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr style="background-color: #f5f5f5;">
             <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; width: 30%;">Name</td>
@@ -113,7 +103,15 @@ export default async function handler(req, res) {
           </tr>
           <tr style="background-color: #f5f5f5;">
             <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Email</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.email || 'Not provided'}</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">${data.email || 'Not provided'}${data.email ? (enquiryData.email_verified ? ' ✅ Verified' : ' (not verified)') : ''}</td>
+          </tr>
+          <tr>
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Check-in</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">${data.check_in || 'Not specified'}</td>
+          </tr>
+          <tr style="background-color: #f5f5f5;">
+            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Check-out</td>
+            <td style="padding: 12px; border: 1px solid #ddd;">${data.check_out || 'Not specified'}</td>
           </tr>
           <tr>
             <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Preferred Property</td>
@@ -152,14 +150,14 @@ export default async function handler(req, res) {
             <td style="padding: 12px; border: 1px solid #ddd;">${new Date().toLocaleString()}</td>
           </tr>
         </table>
-        <p style="color: #666; margin-top: 20px; font-size: 12px;">This inquiry has been logged in your database.</p>
+        <p style="color: #666; margin-top: 20px; font-size: 12px;">This enquiry has been logged in your database.</p>
       </div>
     `;
 
     const emailResponse = await resend.emails.send({
       from: 'noreply@rishikeshhomestays.com',
       to: 'hello@rishikeshhomestays.com',
-      subject: `New Inquiry from ${data.name} - Rishikesh Homestay`,
+      subject: `New Enquiry from ${data.name} - Rishikesh Homestay`,
       html: emailHtml
     });
 
@@ -169,12 +167,14 @@ export default async function handler(req, res) {
     if (data.email) {
       const confirmationHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Thank You! Your Inquiry is Received</h2>
+          <h2 style="color: #333;">Thank You! Your Enquiry is Received</h2>
           <p>Hi ${data.name},</p>
-          <p>We've received your Rishikesh homestay inquiry. Our team will review your requirements and get back to you within 24 hours with personalized recommendations.</p>
+          <p>We've received your Rishikesh homestay enquiry. Our team will review your requirements and get back to you within 24 hours with personalized recommendations.</p>
           <p><strong>Your Submission Details:</strong></p>
           <ul>
             <li>Phone: ${data.phone}</li>
+            ${data.check_in ? `<li>Check-in: ${data.check_in}</li>` : ''}
+            ${data.check_out ? `<li>Check-out: ${data.check_out}</li>` : ''}
             <li>Preferred Area: ${data.area || 'Open to suggestions'}</li>
             <li>Trip Details: ${data.details.substring(0, 100)}...</li>
           </ul>
@@ -191,7 +191,7 @@ export default async function handler(req, res) {
       await resend.emails.send({
         from: 'hello@rishikeshhomestays.com',
         to: data.email,
-        subject: 'We received your Rishikesh homestay inquiry!',
+        subject: 'We received your Rishikesh homestay enquiry!',
         html: confirmationHtml
       });
 
@@ -201,11 +201,11 @@ export default async function handler(req, res) {
     return res.json({
       success: true,
       message: "Thank you! We will contact you shortly.",
-      inquiryId: insertedData?.[0]?.id
+      enquiryId
     });
 
   } catch (error) {
-    console.error("Error processing inquiry:", error.message);
+    console.error("Error processing enquiry:", error.message);
     return res.status(500).json({
       success: false,
       message: "We encountered an error. Please try again or contact us directly."

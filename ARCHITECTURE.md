@@ -18,7 +18,7 @@ rishikesh_homestays/
 │   │       ├── stays-renderer.js   # Stay card rendering & filtering
 │   │       ├── search-form.js      # Search & area dropdown setup
 │   │       ├── contact-form.js     # Contact form submission & counters
-│   │       └── inquiry-prefill.js  # URL param handling
+│   │       └── enquiry-prefill.js  # URL param handling
 │   └── images/                     # Placeholder & actual images
 ├── pages/                          # HTML pages
 │   ├── homestays.html
@@ -82,10 +82,10 @@ rishikesh_homestays/
   - `setupCounters()` — increment/decrement buttons
 - **API Integration**: Posts to `/api/contact`
 
-### `modules/inquiry-prefill.js`
-- **Purpose**: URL parameter handling for inquiry forms
+### `modules/enquiry-prefill.js`
+- **Purpose**: URL parameter handling for enquiry forms
 - **Exports**:
-  - `setupInquiryPrefill()` — prefill homestay name
+  - `setupEnquiryPrefill()` — prefill homestay name
   - `applyListingParams()` — apply filter from URL
 - **Use Case**: Linking from stay card → contact form with stay pre-selected
 
@@ -180,7 +180,7 @@ HTML pages (can use old references)
 {
   "success": true,
   "message": "Thank you! We will contact you shortly.",
-  "inquiryId": "uuid"
+  "enquiryId": "uuid"
 }
 ```
 
@@ -249,7 +249,7 @@ But for new pages, prefer:
 | stays-renderer.js | 50 | Card rendering |
 | search-form.js | 30 | Search UI |
 | contact-form.js | 60 | Form handling |
-| inquiry-prefill.js | 15 | URL params |
+| enquiry-prefill.js | 15 | URL params |
 | **Total** | **262** | Better organized |
 
 *Slightly larger combined, but much more maintainable.*

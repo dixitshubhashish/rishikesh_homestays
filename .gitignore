@@ -3,6 +3,13 @@
 .env.local
 .env.*.local
 
+# GCP / BigQuery service account keys — never commit credentials
+*.json
+!package.json
+!package-lock.json
+!vercel.json
+credentials/
+
 # Dependencies
 node_modules/
 package-lock.json

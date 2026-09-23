@@ -6,9 +6,10 @@ import { qs, qsa } from './modules/dom-helpers.js';
 import { createStayCard, renderStays, hydrateFilters } from './modules/stays-renderer.js';
 import { setupNav } from './modules/nav.js';
 import { setupQuickSearch, setupAreaDropdowns, setupDatePickers } from './modules/search-form.js';
-import { setupInquiryPrefill, applyListingParams } from './modules/inquiry-prefill.js';
+import { setupEnquiryPrefill, applyListingParams } from './modules/enquiry-prefill.js';
 import { enhanceStaticWhatsAppLinks } from './modules/whatsapp-link.js';
 import { setupPageTabs } from './modules/page-tabs.js';
+import { setupHeroSlideshow } from './modules/hero-slideshow.js';
 
 // Re-export for any inline script usage
 window.AREAS = AREAS;
@@ -20,7 +21,7 @@ window.renderStays = renderStays;
 window.hydrateFilters = hydrateFilters;
 window.setupNav = setupNav;
 window.setupQuickSearch = setupQuickSearch;
-window.setupInquiryPrefill = setupInquiryPrefill;
+window.setupEnquiryPrefill = setupEnquiryPrefill;
 window.applyListingParams = applyListingParams;
 
 // Initialize on DOM ready
@@ -32,7 +33,8 @@ document.addEventListener("DOMContentLoaded", () => {
   hydrateFilters();
   applyListingParams();
   renderStays(qs("[data-stay-grid]")?.dataset.limit ? Number(qs("[data-stay-grid]").dataset.limit) : undefined);
-  setupInquiryPrefill();
+  setupEnquiryPrefill();
   enhanceStaticWhatsAppLinks();
   setupPageTabs();
+  setupHeroSlideshow();
 });

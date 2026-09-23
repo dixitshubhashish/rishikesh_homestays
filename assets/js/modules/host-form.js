@@ -36,7 +36,9 @@ export function setupHostForm() {
   const form = document.querySelector('#hostForm');
   if (!form) return;
 
-  const btn = form.querySelector('button');
+  // See contact-form.js for why this must target the submit button
+  // specifically, not just the first <button> in the form.
+  const btn = form.querySelector('button[type="submit"]');
   const status = form.querySelector('[data-form-status]');
   const phoneInput = form.querySelector('#host_phone');
   const countrySelect = form.querySelector('#host_country');

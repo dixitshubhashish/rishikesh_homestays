@@ -20,6 +20,7 @@ export const STAYS = [
     type: "Family",
     budget: "Premium",
     price: "From ₹12,800",
+    priceINR: 12800,
     imageClass: "one",
     summary: "Three bedroom family stay with balcony breakfast, fast Wi-Fi, and easy access to cafes and yoga studios.",
     tags: ["3 bedrooms","Sunrise View", "Balcony", "Kitchen access", "Walkable Cafes", "Nearby Ghats"]
@@ -30,6 +31,7 @@ export const STAYS = [
     type: "Wellness",
     budget: "Mid-range",
     price: "From ₹3,600",
+    priceINR: 3600,
     imageClass: "two",
     summary: "Quiet private rooms with mountain near AIIMS, river walks 900m, vegetarian meals, and sunrise practice spaces.",
     tags: ["Yoga friendly", "Self-serve kitchen", "Quiet lane", "Solo travellers", "Nearby Ghats"]
@@ -40,6 +42,7 @@ export const STAYS = [
     type: "Nature",
     budget: "Budget",
     price: "From ₹3,200",
+    priceINR: 3200,
     imageClass: "three",
     summary: "A peaceful cottage for couples and small groups looking for green views and a slower Rishikesh stay near Ghats.",
     tags: ["Forest view", "Private sit-out", "Balcony view", "Driver parking", "Nearby Ghats"]
@@ -50,6 +53,7 @@ export const STAYS = [
     type: "Workation",
     budget: "Mid-range",
     price: "From ₹6,400",
+    priceINR: 6400,
     imageClass: "two",
     summary: "Compact studio with desk, kitchenette, inverter backup, and quick access to rafting pickup points.",
     tags: ["Work desk", "Kitchenette", "Power backup", "Rafting pickup"]
@@ -60,6 +64,7 @@ export const STAYS = [
     type: "Family",
     budget: "Budget",
     price: "From ₹9,900",
+    priceINR: 9900,
     imageClass: "three",
     summary: "Simple, clean rooms close to evening aarti, local markets, and early morning riverside walks.",
     tags: ["Near aarti", "Market access", "Senior friendly", "Local host"]
@@ -70,6 +75,7 @@ export const STAYS = [
     type: "Couples",
     budget: "Premium",
     price: "From ₹6,900",
+    priceINR: 6900,
     imageClass: "one",
     summary: "Private balcony rooms with mountain air, curated cafe recommendations, and relaxed check-in support.",
     tags: ["Mountain view", "Couple friendly", "Cafe guide", "Late check-in"]

@@ -1,10 +1,11 @@
 import { validatePhone, validateDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
+import { setupEmailVerification } from './email-otp.js';
 
 const WHATSAPP_PHONE = '919027212484';
 
-// Formats the same inquiry data as a plain-text WhatsApp message, matching
+// Formats the same enquiry data as a plain-text WhatsApp message, matching
 // the WhatsApp widget's format (no emoji/unicode bullets — some WhatsApp
 // clients render those as a broken "tofu" character).
 function buildShortlistMessage(data) {
@@ -99,7 +100,12 @@ export function setupContactForm() {
 
   if (!form) return;
 
-  const btn = form.querySelector("button");
+  // Must be the submit button specifically — a plain `form.querySelector("button")`
+  // grabs whichever <button> comes first in the DOM, which is one of the
+  // adults/children/pets counter's type="button" decrease buttons, not the
+  // actual submit button. That bug caused "Sending..."/"Request shortlist"
+  // to render on the Adults counter's "−" button instead.
+  const btn = form.querySelector('button[type="submit"]');
   const status = form.querySelector("[data-form-status]");
   const phoneInput = form.querySelector('#phone');
   const countrySelect = form.querySelector('#country');
@@ -107,6 +113,10 @@ export function setupContactForm() {
   const datesError = document.getElementById('dates-error');
 
   setupCountryPhoneField(countrySelect);
+
+  const emailInput = form.querySelector('#email');
+  let isEmailVerified = () => false;
+  setupEmailVerification(emailInput).then((fn) => { isEmailVerified = fn; });
 
   phoneInput?.addEventListener('input', () => {
     if (phoneError) phoneError.hidden = true;
@@ -145,6 +155,10 @@ export function setupContactForm() {
       return;
     }
     if (datesError) datesError.hidden = true;
+
+    // Verification is informational only — never blocks sending the
+    // enquiry, whether or not the guest verified their email.
+    data.email_verified = isEmailVerified();
 
     // Open WhatsApp immediately (must happen synchronously within the user
     // gesture so browsers don't block the popup) with the same formatted
@@ -187,13 +201,13 @@ export function setupContactForm() {
         }
       } else {
         if (status) {
-          status.textContent = result.message || "Unable to send your inquiry right now.";
+          status.textContent = result.message || "Unable to send your enquiry right now.";
           status.style.color = "#f44336";
         }
       }
     } catch (error) {
       if (status) {
-        status.textContent = "Unable to send your inquiry right now. Please call us directly.";
+        status.textContent = "Unable to send your enquiry right now. Please call us directly.";
         status.style.color = "#f44336";
       }
     } finally {

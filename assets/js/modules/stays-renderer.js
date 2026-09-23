@@ -1,6 +1,7 @@
 // Homestay card rendering and filtering
 import { qs, qsa } from './dom-helpers.js';
-import { STAYS } from './data.js';
+import { STAYS, AREAS } from './data.js';
+import { setupCurrencyConversion } from './currency.js';
 
 export function createStayCard(stay) {
   const tagMarkup = stay.tags.map((tag) => `<span class="tag">${tag}</span>`).join("");
@@ -10,14 +11,14 @@ export function createStayCard(stay) {
       <div class="card-body">
         <div class="card-topline">
           <span>${stay.area} / ${stay.type}</span>
-          <span class="price">${stay.price}</span>
+          <span class="price"${stay.priceINR ? ` data-price-inr="${stay.priceINR}"` : ""}>${stay.price}</span>
         </div>
         <h3>${stay.name}</h3>
         <p>${stay.summary}</p>
         <div class="tag-row">${tagMarkup}</div>
         <div class="card-actions">
-          <a class="btn btn-primary" href="/pages/contact.html?stay=${encodeURIComponent(stay.name)}">Send inquiry</a>
-          <a class="btn btn-secondary" href="/pages/homestays.html">Compare stays</a>
+          <a class="btn btn-primary" href="/pages/contact?stay=${encodeURIComponent(stay.name)}">Send enquiry</a>
+          <a class="btn btn-secondary" href="/pages/homestays">Compare stays</a>
         </div>
       </div>
     </article>
@@ -41,14 +42,20 @@ export function renderStays(limit) {
   const visible = typeof limit === "number" ? filtered.slice(0, limit) : filtered;
   grid.innerHTML = visible.length
     ? visible.map(createStayCard).join("")
-    : '<div class="empty-state">No stays match these filters yet. Send an inquiry and we will suggest the closest fit.</div>';
+    : '<div class="empty-state">No stays match these filters yet. Send an enquiry and we will suggest the closest fit.</div>';
+
+  setupCurrencyConversion();
 }
 
 export function hydrateFilters() {
   const filterArea = qs("[data-filter-area]");
   if (!filterArea) return;
 
-  const areas = ["All", ...new Set(STAYS.map((stay) => stay.area))];
+  // Use the canonical AREAS list (same one the homepage search and contact
+  // forms use), not just whichever areas the current sample STAYS data
+  // happens to cover — otherwise this filter silently shows fewer areas
+  // than the rest of the site and looks inconsistent/broken.
+  const areas = ["All", ...AREAS];
   const types = ["All", ...new Set(STAYS.map((stay) => stay.type))];
   const budgets = ["All", ...new Set(STAYS.map((stay) => stay.budget))];
 

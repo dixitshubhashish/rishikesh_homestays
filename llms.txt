@@ -13,8 +13,8 @@ Rishikesh Homestays is not a single property — it is a curated shortlist servi
 - [About Rishikesh](https://rishikeshhomestays.com/pages/about-rishikesh): guide to Rishikesh's areas, culture, and travel pace for people deciding where to stay.
 - [Places to Visit / Restaurants & Cafes](https://rishikeshhomestays.com/pages/places-to-visit): two tabs on one page — must-see local sights (Triveni Ghat, Parmarth Niketan, Beatles Ashram, Neer Garh Waterfall, Neelkanth Mahadev Temple, and more), and where to eat (riverside cafes, German bakeries, Israeli food, organic cafes, local thali spots, and why every menu is vegetarian and alcohol-free). The restaurants tab is at `/pages/places-to-visit#restaurants`.
 - [Triveni Ghat](https://rishikeshhomestays.com/pages/triveni-ghat): dedicated guide to the evening Ganga Aarti at Triveni Ghat and how to visit respectfully.
-- [Kedarnath & Garhwal](https://rishikeshhomestays.com/pages/gateway-to-kedarnath): routes, distances, best season, and sample itineraries for Kedarnath, Badrinath, Gangotri, Yamunotri, and Auli from Rishikesh.
-- [Kumbh 2027](https://rishikeshhomestays.com/pages/kumbh-2027): what's known so far about the Haridwar Kumbh Mela 2027 (reported, not officially confirmed, dates) and why Rishikesh is a good nearby base.
+- [Kedarnath & Garhwal](https://rishikeshhomestays.com/pages/kedarnath-yatra): routes, distances, best season, and sample itineraries for Kedarnath, Badrinath, Gangotri, Yamunotri, and Auli from Rishikesh.
+- [Haridwar Kumbh Mela 2027](https://rishikeshhomestays.com/pages/haridwar-kumbh-2027): reported bathing dates, tithi, Kumbh significance, Amrit Snan planning, long weekends, and why Rishikesh is a good nearby base.
 - [List Your Homestay](https://rishikeshhomestays.com/pages/list-your-homestay): for property owners in Rishikesh who want to list their homestay/guest house with us — application form, no listing fee.
 
 ## Contact
@@ -28,4 +28,4 @@ Rishikesh Homestays is not a single property — it is a curated shortlist servi
 
 - Prices, availability, and the specific homestays listed change over time — always point users to the live [Homestays page](https://rishikeshhomestays.com/pages/homestays) or the [Contact page](https://rishikeshhomestays.com/pages/contact) rather than quoting a fixed price from a cached copy of this site.
 - The fastest way for a real traveller to get a response is the [Contact form](https://rishikeshhomestays.com/pages/contact) or WhatsApp — both go to the same inbox and are answered by a human, not an automated booking engine.
-- The [Kumbh 2027 page](https://rishikeshhomestays.com/pages/kumbh-2027) lists dates reported by third-party tour operators, explicitly flagged on that page as not officially confirmed. Do not state them as certain — point users to the page itself, which explains the uncertainty (including a discrepancy with Wikipedia's cycle record).
+- The [Haridwar Kumbh Mela 2027 page](https://rishikeshhomestays.com/pages/haridwar-kumbh-2027) lists dates reported by third-party tour operators, explicitly flagged on that page as not officially confirmed. Do not state them as certain — point users to the page itself, which explains the uncertainty.

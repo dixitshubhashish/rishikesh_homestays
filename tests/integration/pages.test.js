@@ -12,9 +12,9 @@ const testPages = [
   { path: 'pages/triveni-ghat.html', name: 'Triveni Ghat' },
   { path: 'pages/places-to-visit.html', name: 'Places to Visit' },
   { path: 'pages/thanks.html', name: 'Thank You Page' },
-  { path: 'pages/gateway-to-kedarnath.html', name: 'Kedarnath & Garhwal Gateway' },
+  { path: 'pages/kedarnath-yatra.html', name: 'Kedarnath & Garhwal Gateway' },
   { path: 'pages/list-your-homestay.html', name: 'List Your Homestay' },
-  { path: 'pages/kumbh-2027.html', name: 'Kumbh 2027' }
+  { path: 'pages/haridwar-kumbh-2027.html', name: 'Kumbh 2027' }
 ];
 
 function readPage(filePath) {
@@ -226,9 +226,9 @@ test('Page Integration Tests', async (t) => {
   await t.test('every page links to the key new pages from its nav', () => {
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
-      assert(content.includes('/pages/gateway-to-kedarnath'), `${name} nav should link to the Kedarnath page`);
+      assert(content.includes('/pages/kedarnath-yatra'), `${name} nav should link to the Kedarnath page`);
       assert(content.includes('/pages/list-your-homestay'), `${name} nav should link to List Your Homestay`);
-      assert(content.includes('/pages/kumbh-2027'), `${name} nav should link to the Kumbh 2027 page`);
+      assert(content.includes('/pages/haridwar-kumbh-2027'), `${name} nav should link to the Kumbh 2027 page`);
     });
   });
 
@@ -238,6 +238,20 @@ test('Page Integration Tests', async (t) => {
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
       assert(!content.includes('/pages/restaurants-cafes'), `${name} should not link to the removed restaurants-cafes page`);
+    });
+  });
+
+  await t.test('no page still links to the old gateway-to-kedarnath URL', () => {
+    // Regression guard: this page was renamed to kedarnath-yatra.html but
+    // never got a server.js/vercel.json/_redirects entry redirecting the
+    // old URL — anyone with it bookmarked or indexed would 404.
+    testPages.forEach(({ path, name }) => {
+      const content = readPage(path);
+      assert(!content.includes('/pages/gateway-to-kedarnath'), `${name} should not link to the renamed gateway-to-kedarnath page`);
+    });
+    ['server.js', 'vercel.json', '_redirects'].forEach((file) => {
+      const content = readFileSync(join(process.cwd(), file), 'utf-8');
+      assert(content.includes('gateway-to-kedarnath'), `${file} should redirect the old gateway-to-kedarnath URL to kedarnath-yatra`);
     });
   });
 
@@ -251,7 +265,7 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('Kumbh 2027 page exists with a clear "not confirmed" caveat', () => {
-    const content = readPage('pages/kumbh-2027.html');
+    const content = readPage('pages/haridwar-kumbh-2027.html');
     assert(content.includes('not yet officially confirmed') || content.includes('reported, not confirmed') || content.includes('Treat this list as reported'), 'Should caveat the reported dates clearly');
     assert(content.includes('cta-band'), 'Should have a booking CTA');
   });
@@ -283,7 +297,7 @@ test('Page Integration Tests', async (t) => {
 
   await t.test('Homestays page "Ask for a shortlist" form saves to the database, not Netlify', () => {
     // Regression guard: this form used to submit via data-netlify="true" to
-    // /pages/thanks.html and never reached /api/contact or Supabase.
+    // /pages/thanks.html and never reached /api/contact or BigQuery.
     const content = readPage('pages/homestays.html');
     assert(!content.includes('data-netlify'), 'Should not use Netlify Forms');
     assert(content.includes('id="contactForm"'), 'Should reuse the validated contact form pattern');
@@ -299,8 +313,48 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('Kedarnath & Garhwal page has a booking CTA', () => {
-    const content = readPage('pages/gateway-to-kedarnath.html');
+    const content = readPage('pages/kedarnath-yatra.html');
     assert(content.includes('cta-band'), 'Should have a call-to-action band');
     assert(content.includes('/pages/contact'), 'CTA should link to the booking/contact page');
+  });
+
+  await t.test('every page that loads flatpickr.min.js also loads flatpickr.min.css', () => {
+    // Regression guard: several pages had the WhatsApp widget's flatpickr.min.js
+    // script but were missing flatpickr.min.css. Without the stylesheet, the
+    // calendar popup (normally absolutely-positioned and hidden until opened)
+    // renders unstyled as a large block of visible content dumped at the end
+    // of <body> — appearing as "random content after the footer" on the page.
+    testPages.forEach(({ path, name }) => {
+      const content = readPage(path);
+      const hasJs = content.includes('flatpickr.min.js');
+      const hasCss = content.includes('flatpickr.min.css');
+      if (hasJs) {
+        assert(hasCss, `${name} loads flatpickr.min.js but not flatpickr.min.css — the calendar will render unstyled and inflate page height`);
+      }
+    });
+  });
+
+  await t.test('every footer Explore column links to every core content page', () => {
+    // Regression guard: kedarnath-yatra.html's footer link was missing from
+    // every OTHER page's Explore column (only present on its own page),
+    // and triveni-ghat.html had the same gap earlier. Checking the full set
+    // here so a future page addition can't silently repeat this.
+    const corePages = [
+      '/pages/things-to-do-in-rishikesh',
+      '/pages/places-to-visit',
+      '/pages/about-rishikesh',
+      '/pages/haridwar-kumbh-2027',
+      '/pages/triveni-ghat',
+      '/pages/kedarnath-yatra'
+    ];
+    testPages.forEach(({ path, name }) => {
+      const content = readPage(path);
+      const footerMatch = content.match(/<footer[\s\S]*$/);
+      assert(footerMatch, `${name} should have a footer`);
+      const footerHtml = footerMatch[0];
+      corePages.forEach((href) => {
+        assert(footerHtml.includes(`href="${href}"`), `${name}'s footer is missing a link to ${href}`);
+      });
+    });
   });
 });

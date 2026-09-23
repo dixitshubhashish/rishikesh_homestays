@@ -472,8 +472,8 @@ export function setupWhatsAppWidget() {
       const waUrl = buildWhatsAppLink(WHATSAPP_PHONE, waMessage);
       window.open(waUrl, '_blank', 'noopener,noreferrer');
 
-      // Best-effort: also store the inquiry in the database via the existing
-      // contact API so it shows up alongside regular contact-form inquiries.
+      // Best-effort: also store the enquiry in the database via the existing
+      // contact API so it shows up alongside regular contact-form enquiries.
       const detailsText = message
         || `WhatsApp widget booking request. Check-in: ${checkin || 'flexible'}, Check-out: ${checkout || 'flexible'}.`;
 
@@ -493,7 +493,7 @@ export function setupWhatsAppWidget() {
           source: 'whatsapp_widget'
         })
       }).catch((err) => {
-        console.error('WhatsApp widget: failed to store inquiry in database', err);
+        console.error('WhatsApp widget: failed to store enquiry in database', err);
       });
 
       // Reset form and close popup

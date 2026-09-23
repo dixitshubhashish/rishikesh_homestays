@@ -17,10 +17,30 @@ This file is the shared handoff point for Codex, Claude, and any other coding ag
 | Codex | Map generated attraction images and continue 30-image set | `pages/places-to-visit.html`, `assets/images/things-to-do/ai-*.png` | paused after mapping six; 16 images queued — **note: Claude wrapped the existing card-grid in a new `<section data-tab-panel="places">` and added a Restaurants & Cafes tab as a second panel below it, per user request to reduce nav clutter. Individual `.place-card` elements are untouched, so resuming image-mapping should work the same — just don't be confused by the new tab-switcher markup at the top of the page.** |
 | Claude | Restructure nav: merge Restaurants & Cafes into Places as an in-page tab, add new dedicated Kumbh 2027 page/tab (user request — nav had grown to 10 items) | `pages/places-to-visit.html`, `pages/restaurants-cafes.html` (removed), `pages/kumbh-2027.html` (new), `assets/js/modules/page-tabs.js` (new), `server.js`, `_redirects`, nav/footer on all pages, `sitemap.xml`, `llms.txt`, tests | complete — 147/147 tests pass |
 | Codex | Diagnose and fix blocker preventing merge to `main` | branch history, local dependencies, `.agents/coordination.md` | complete |
+| Claude | Migrate enquiries storage from Supabase to BigQuery; add homepage hero slideshow with rotating captions; vercel.json for clean-URL parity; dotenv import-order fix in server.js/api/contact.js/api/bigquery.js | `api/contact.js`, `api/bigquery.js` (new), `scripts/setup-bigquery.js` (new), `vercel.json` (new), `server.js`, `index.html`, `assets/css/styles.css`, `assets/js/site.js`, `assets/js/modules/hero-slideshow.js` (new), `.gitignore`, `CLAUDE.md`, tests | complete — 152/152 tests pass. **Note for Codex:** touched `assets/css/styles.css` (added `.hero-slide`/`.hero-slideshow`/`.hero-caption` rules near the existing `.hero` block) while your Kumbh 2027 visuals task is also active on that file — should be a low-overlap, different section, but worth a diff check before you commit. Also restarted the local dev server on port 3000 (killed an orphaned instance from earlier testing first). |
 
 Before editing, add a row with the files you own. Avoid overlapping active claims unless the handoff is explicit.
 
 | Codex | About Rishikesh visual/content refresh | `pages/about-rishikesh.html`, `assets/images/things-to-do/about-*.png` | complete |
+| Codex | Separate Things to Do and About Rishikesh hero visuals | `pages/things-to-do-in-rishikesh.html`, `pages/about-rishikesh.html`, `assets/images/page-heroes/` | complete |
+| Codex | Fix spacing between About Rishikesh headings, images, and copy | `assets/css/styles.css` | complete |
+| Codex | Expand Kumbh 2027 visuals, dates table, and festival/long-weekend planning | `pages/kumbh-2027.html`, `assets/css/styles.css`, `assets/images/kumbh-2027/` | complete |
+| Codex | Refine Kumbh heading punctuation and scale | `pages/kumbh-2027.html`, `assets/css/styles.css` | complete |
+| Codex | Reduce Kumbh table travel-note column clipping | `assets/css/styles.css` | complete |
+| Codex | Rename Kumbh page URL to Haridwar Kumbh 2027 | `pages/haridwar-kumbh-2027.html`, `server.js`, `_redirects`, `vercel.json`, nav/SEO references | complete |
+| Codex | Make Haridwar Kumbh URL canonical without legacy redirects | `server.js`, `_redirects`, `vercel.json`, SEO/nav copy | complete |
+| Codex | Replace Places page Triveni Ghat card image with edited Aarti view | `pages/places-to-visit.html`, `assets/images/things-to-do/triveni-ghat-aarti-v2.webp` | complete |
+| Codex | Refresh Places imagery for Parmarth, Beatles Ashram, Ram Jhula, Janki Setu, and Bajrang Setu | `pages/places-to-visit.html`, `assets/images/things-to-do/*-refined.webp`, `assets/images/things-to-do/CREDITS.md` | complete — generated editorial visuals added; `npm test` passes |
+| Codex | Tighten shared spacing above footer | `assets/css/styles.css` | complete — reduced footer boundary gap across pages; `npm test` passes |
+| Codex | Tighten repeated mid-page section spacing | `assets/css/styles.css` | complete — reduced shared section and guide heading rhythm across desktop/mobile; `npm test` passes |
+| Codex | Remove duplicated gap above tab panels | `assets/css/styles.css` | complete — tightened tab-to-card spacing on Places page and mobile; `npm test` passes |
+| Codex | Tighten transitions between content sections | `assets/css/styles.css` | complete — reduced guide/CTA and adjacent section gaps globally; `npm test` passes |
+| Codex | Replace Bharat Mandir card image | `pages/places-to-visit.html`, `assets/images/things-to-do/bharat-mandir-refined.webp`, `assets/images/things-to-do/CREDITS.md` | complete — clearer full-temple editorial image added; `npm test` passes |
+| Codex | Add missing later-place and restaurant theme imagery | `pages/places-to-visit.html`, `assets/images/things-to-do/rishikesh-food-themes.webp`, `assets/images/things-to-do/CREDITS.md` | complete — filled text-only attraction cards and added restaurant theme visual; `npm test` passes |
+| Codex | Improve Places page subsection headings for search visibility | `pages/places-to-visit.html` | complete — added descriptive Rishikesh place and restaurant headings; `npm test` passes |
+| Codex | Standardize Kumbh 2027 static navigation labels | `index.html`, `pages/*.html` | complete — unified top/footer labels as “Kumbh 2027”; `npm test` passes |
+| Codex | Expand Kedarnath & Garhwal page with yatra visuals and planning sections | `pages/gateway-to-kedarnath.html`, `assets/css/styles.css`, `assets/images/kedarnath-yatra/` | complete — Pexels-sourced images, generated editorial image, credits, yatra context, and hero metadata added; captions removed; `npm test` passes |
+| Claude | Fixed "content after footer" bug (7 pages missing `flatpickr.min.css` while loading `flatpickr.min.js` for the WhatsApp widget's date pickers — unstyled calendar rendered as ~5000px of visible junk after `</footer>`); added Triveni Ghat to the two footers that were missing it (`gateway-to-kedarnath.html`/now renamed `kedarnath-yatra.html`, `haridwar-kumbh-2027.html`); renamed 5 loose `ChatGPT Image...png` + 1 `.mp4` at repo root into `assets/marketing/rafting-relaunch-sep-2026/` with descriptive names (untracked, matching existing precedent) | `pages/about-rishikesh.html`, `pages/gateway-to-kedarnath.html` (edited before Codex's concurrent rename to `kedarnath-yatra.html` — verified the rename preserved these fixes), `pages/haridwar-kumbh-2027.html`, `pages/places-to-visit.html`, `pages/thanks.html`, `pages/things-to-do-in-rishikesh.html`, `pages/triveni-ghat.html`, `tests/integration/pages.test.js` (new regression guard), `assets/marketing/` (new) | complete — 163/163 tests pass. **Note for Codex:** I edited `gateway-to-kedarnath.html` right as you renamed it to `kedarnath-yatra.html` — no conflict this time (verified my fixes carried over), but flagging the near-miss in case either of us is mid-edit on a file the other is renaming again. |
 
 ## ⚠️ Concern for Codex — partially addressed (Claude, 2026-09-23)
 
@@ -80,6 +100,19 @@ Claude has done the prep work (images downloaded + licensed, sibling page rebuil
 - 2026-09-23: Fixed `.gitignore` so generated images under `assets/images/things-to-do/` are trackable. They now appear in `git status` and will be included when changes are committed and pushed.
 
 Add completed work here with the agent, date, files, and verification command or result. Keep entries concise.
+
+- 2026-09-23: Added distinct generated hero images for the Things to Do and About Rishikesh pages, wired page-specific hero classes and social preview images, and verified the full test suite.
+- 2026-09-23: Compressed both page hero images from PNG to same-dimension WebP (1672x941), reducing them from 2.4/2.7 MB to 295/400 KB; `npm test` passes with 152/152.
+- 2026-09-23: Compressed the remaining 19 generated Things to Do/About images from 1536x1024 PNGs to same-dimension WebPs, updated all page references, removed stale PNGs, and verified no generated PNG paths remain; `npm test` passes with 152/152.
+- 2026-09-23: Added vertical rhythm to guide headings and full-width guide images so About Rishikesh sections no longer visually collide; `npm test` passes with 152/152.
+- 2026-09-23: Expanded Kumbh 2027 with three illustrative WebP visuals, respectful Naga sadhu/procession context, Kumbh significance, 2021 attendance context, a styled 10-row date/tithi table, and long-weekend plus 2027 festival planning; retained the user's requested “Kumbh” wording and clearly marked dates as not yet officially confirmed. `npm test` passes with 152/152.
+- 2026-09-23: Added question marks to question-style Kumbh headings and reduced their display size for a calmer planning-guide hierarchy.
+- 2026-09-23: Reduced and wrapped the Kumbh table's Travel note column so long planning notes fit without clipping.
+- 2026-09-23: Renamed the canonical Kumbh page URL to `/pages/haridwar-kumbh-2027`, updated all internal/SEO references, and added permanent redirects from both old `/pages/kumbh-2027` variants.
+- 2026-09-23: Made `/pages/haridwar-kumbh-2027` the sole Kumbh URL by removing legacy `/pages/kumbh-2027` redirect rules; strengthened title, description, navigation, and `llms.txt` wording for Haridwar Kumbh Mela 2027 discovery.
+- 2026-09-23: Replaced the Places page's Triveni Ghat card image with a compressed 1622x969 AI-edited illustrative Aarti view based on the user's supplied reference; kept the attraction name, link, and backlink structure unchanged.
+- 2026-09-23: Refined the approved Triveni Aarti card image to show more Ganga beyond the railing, then tightened the Kumbh dates table with fixed layout, smaller type, wrapping, and no horizontal scroll.
+- 2026-09-23: Fixed Kumbh image references after the URL rename accidentally pointed at a non-existent `assets/images/haridwar-kumbh-2027/` folder; restored all three references to the existing `assets/images/kumbh-2027/` assets.
 
 ## Handoff Template
 

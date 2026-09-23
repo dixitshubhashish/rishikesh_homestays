@@ -63,7 +63,7 @@ tests/
 - ✅ createStayCard generates valid HTML
 - ✅ Card includes stay name and details
 - ✅ Tags are rendered correctly
-- ✅ Inquiry button links are correct
+- ✅ Enquiry button links are correct
 - ✅ Filter data attributes are set
 - ✅ Semantic HTML is used
 - ✅ Image containers are included

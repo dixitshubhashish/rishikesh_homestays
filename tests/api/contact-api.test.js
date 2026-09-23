@@ -22,10 +22,9 @@ test('Contact API Tests', async (t) => {
     assert(apiCode.includes('405'), 'Should return 405 for non-POST requests');
   });
 
-  await t.test('API should integrate with Supabase', () => {
-    assert(apiCode.includes('supabase'), 'Should use Supabase');
-    assert(apiCode.includes('enquiries'), 'Should use enquiries table');
-    assert(apiCode.includes('insert'), 'Should insert data');
+  await t.test('API should integrate with BigQuery', () => {
+    assert(apiCode.includes('insertEnquiry'), 'Should use the BigQuery insertEnquiry helper');
+    assert(apiCode.includes('bigquery.js'), 'Should import from the BigQuery module');
   });
 
   await t.test('API should send emails via Resend', () => {
@@ -60,7 +59,7 @@ test('Contact API Tests', async (t) => {
   await t.test('API should return success response', () => {
     assert(apiCode.includes('success'), 'Should indicate success');
     assert(apiCode.includes('message'), 'Should return message');
-    assert(apiCode.includes('inquiryId'), 'Should return inquiry ID');
+    assert(apiCode.includes('enquiryId'), 'Should return enquiry ID');
   });
 
   await t.test('API should format email properly', () => {
@@ -73,8 +72,8 @@ test('Contact API Tests', async (t) => {
     assert(apiCode.includes('new Date()'), 'Should record submission time');
   });
 
-  await t.test('API should set inquiry status', () => {
-    assert(apiCode.includes('status'), 'Should set inquiry status');
+  await t.test('API should set enquiry status', () => {
+    assert(apiCode.includes('status'), 'Should set enquiry status');
     assert(apiCode.includes('pending'), 'Should mark as pending');
   });
 

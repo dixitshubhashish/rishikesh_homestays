@@ -16,7 +16,7 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
 - `assets/js/site.js` / `assets/js/contact.js` — backward-compat shims that import from `assets/js/modules/` and re-export onto `window`. Both are real ES modules (they use `import`), so every page loads them with `<script type="module" src="...">` — **never as a plain `<script src="...">`**, or the browser throws `Cannot use import statement outside a module` and silently breaks nav/search/forms on that page.
 - `assets/js/modules/` — the actual modular source (see ARCHITECTURE.md for full breakdown). Notable ones:
   - `data.js` — AREAS/STAYS data
-  - `whatsapp-widget.js` — floating WhatsApp popup: name/phone/dates/guests/pets form, builds a formatted booking message, stores the inquiry via `/api/contact`, and opens WhatsApp
+  - `whatsapp-widget.js` — floating WhatsApp popup: name/phone/dates/guests/pets form, builds a formatted booking message, stores the enquiry via `/api/contact`, and opens WhatsApp
   - `whatsapp-link.js` — device-aware WhatsApp link builder: `wa.me` on mobile (opens the app), `web.whatsapp.com/send` on desktop (skips the wa.me interstitial so an already-open WhatsApp Web session gets the message in one hop); also rewrites every static `wa.me` link on a page via `enhanceStaticWhatsAppLinks()`
   - `validators.js` — shared phone validation (via `window.libphonenumber`) and check-in/check-out date-range validation, used by both the WhatsApp widget and the main contact form
   - `country-select.js` — builds the country-code `<select>` (flag + name + dial code) purely from `libphonenumber-js` metadata + `Intl.DisplayNames` (no hardcoded country list), and auto-detects the visitor's country via IP geolocation (`ipapi.co`, 2.5s timeout, falls back to India)
@@ -33,17 +33,20 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
   - Validates form data (name, phone, details required)
   - Validates the phone number server-side using `libphonenumber-js` (expects E.164 — the frontend always normalizes to `+<countrycode><number>` before sending, so this is defense-in-depth, not the primary validation)
   - Validates check-in/check-out date range server-side (`validateDateRange` from `assets/js/modules/validators.js`)
-  - Stores inquiry in Supabase `enquiries` table, tagged with `source` (`website_form` from the contact page, `whatsapp_widget` from the WhatsApp popup)
+  - Stores enquiry in BigQuery via `api/bigquery.js` (`insertEnquiry`), tagged with `source` (`website_form` from the contact page, `whatsapp_widget` from the WhatsApp popup)
   - Sends tabular email to `CONTACT_EMAIL` via Resend
   - Sends confirmation email to guest (if email provided)
   - Returns success/error JSON
+- `api/bigquery.js` — BigQuery client + `insertEnquiry(row)`. Reads credentials from `GOOGLE_APPLICATION_CREDENTIALS` (local file path) or `GOOGLE_APPLICATION_CREDENTIALS_JSON` (inline JSON string, for Vercel). Dataset/table names come from `BIGQUERY_DATASET`/`BIGQUERY_ENQUIRIES_TABLE` (default `rishikesh_homestays.enquiries`).
+- `scripts/setup-bigquery.js` — one-time/idempotent script that creates the dataset + `enquiries` table (schema + `created_at` day-partitioning). Re-run safely; skips creation if the table already exists.
 
-**Database:** Supabase (PostgreSQL)
-- Table: `enquiries` — stores homestay booking inquiries with guest details, dates, preferences, and `source`
+**Database:** Google BigQuery
+- Table: `rishikesh_homestays.enquiries` — stores homestay booking enquiries with guest details, dates, preferences, and `source`
+- Service account key lives at `credentials/bigquery-service-account.json` locally (gitignored — never commit it). On Vercel, paste the full JSON into the `GOOGLE_APPLICATION_CREDENTIALS_JSON` env var instead, since serverless functions can't read a local file path.
 
 **Email:** Resend — transactional email service
 
-**Hosting:** Netlify (static export; redirects defined in `_redirects`)
+**Hosting:** Vercel (primary — see `vercel.json` for clean-URL redirects) and Netlify (static export; redirects defined in `_redirects`, kept for parity)
 
 ## 📁 Key Files to Edit
 
@@ -64,14 +67,15 @@ npm run dev
 
 ### Environment Variables (`.env`)
 ```
-SUPABASE_URL=<your-supabase-url>
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
 RESEND_API_KEY=<your-resend-api-key>
 CONTACT_EMAIL=hello@rishikeshhomestays.com
 PORT=3000
+GOOGLE_APPLICATION_CREDENTIALS=credentials/bigquery-service-account.json
+BIGQUERY_DATASET=rishikesh_homestays
+BIGQUERY_ENQUIRIES_TABLE=enquiries
 ```
 
-`.env`, `node_modules/`, and other local-only files are git-ignored (see `.gitignore`). Do not commit `.env` — rotate any keys that were ever committed in the past.
+`.env`, `node_modules/`, `credentials/`, all other `*.json` files (except `package.json`/`package-lock.json`/`vercel.json`), and other local-only files are git-ignored (see `.gitignore`). Do not commit `.env` or the BigQuery service-account key — rotate any keys that were ever committed in the past.
 
 ## 🔑 Dependencies
 
@@ -80,7 +84,7 @@ Runtime:
 - **express** — Web server
 - **dotenv** — Environment variables
 - **body-parser** — Parse form submissions
-- **@supabase/supabase-js** — Database + auth
+- **@google-cloud/bigquery** — Database (enquiries storage)
 - **resend** — Email service
 - **libphonenumber-js** — server-side phone number validation in `api/contact.js` (the browser also uses this library, but via the self-hosted bundle in `assets/vendor/libphonenumber/`, not this npm install)
 

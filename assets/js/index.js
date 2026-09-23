@@ -2,7 +2,7 @@
 import { setupNav } from './modules/nav.js';
 import { setupQuickSearch, setupAreaDropdowns, setupDatePickers } from './modules/search-form.js';
 import { hydrateFilters, renderStays } from './modules/stays-renderer.js';
-import { setupInquiryPrefill, applyListingParams } from './modules/inquiry-prefill.js';
+import { setupEnquiryPrefill, applyListingParams } from './modules/enquiry-prefill.js';
 
 // Initialize all functionality when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,6 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const limit = gridElement?.dataset.limit ? Number(gridElement.dataset.limit) : undefined;
   renderStays(limit);
 
-  // Inquiry form prefilling
-  setupInquiryPrefill();
+  // Enquiry form prefilling
+  setupEnquiryPrefill();
 });

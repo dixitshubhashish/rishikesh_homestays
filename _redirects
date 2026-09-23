@@ -6,7 +6,7 @@
 /pages/triveni-ghat.html /pages/triveni-ghat 301
 /pages/places-to-visit.html /pages/places-to-visit 301
 /pages/thanks.html /pages/thanks 301
-/pages/gateway-to-kedarnath.html /pages/gateway-to-kedarnath 301
+/pages/kedarnath-yatra.html /pages/kedarnath-yatra 301
 /pages/list-your-homestay.html /pages/list-your-homestay 301
 /index.html / 301
 
@@ -20,6 +20,10 @@
 /pages/things-to-do.html /pages/things-to-do-in-rishikesh 301
 /pages/things-to-do /pages/things-to-do-in-rishikesh 301
 
+# Kedarnath & Garhwal was renamed from gateway-to-kedarnath to kedarnath-yatra.
+/pages/gateway-to-kedarnath.html /pages/kedarnath-yatra 301
+/pages/gateway-to-kedarnath /pages/kedarnath-yatra 301
+
 # Serve the actual .html file for each clean URL, so the browser's address
 # bar never shows the .html extension.
 /pages/about-rishikesh /pages/about-rishikesh.html 200
@@ -29,10 +33,10 @@
 /pages/triveni-ghat /pages/triveni-ghat.html 200
 /pages/places-to-visit /pages/places-to-visit.html 200
 /pages/thanks /pages/thanks.html 200
-/pages/gateway-to-kedarnath /pages/gateway-to-kedarnath.html 200
+/pages/kedarnath-yatra /pages/kedarnath-yatra.html 200
 /pages/list-your-homestay /pages/list-your-homestay.html 200
-/pages/kumbh-2027.html /pages/kumbh-2027 301
-/pages/kumbh-2027 /pages/kumbh-2027.html 200
+/pages/haridwar-kumbh-2027.html /pages/haridwar-kumbh-2027 301
+/pages/haridwar-kumbh-2027 /pages/haridwar-kumbh-2027.html 200
 
 # Existing short aliases (kept for backward compatibility with any links
 # already shared/indexed using these shorter paths).
