@@ -4,6 +4,10 @@ import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 
 const ATTENTION_DELAY_MS = 15000;
+// The standalone "Book on WhatsApp" buttons run on their own, shorter timing
+// (turn black at 10s, then the CSS animation swaps color every 7s) — separate
+// from the FAB's 15s auto-popup delay above.
+const BTN_ATTENTION_DELAY_MS = 10000;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -319,17 +323,19 @@ export function setupWhatsAppWidget() {
   }
 
   function setupAutoPopup() {
+    // Draw attention to every visible "Book on WhatsApp" CTA on the page on
+    // its own, shorter timer — independent of the FAB's popup delay below.
+    // Color-only effect (no scale/box-shadow, unlike the FAB's pulse) since
+    // scaling this inline button visually overlapped its neighbor.
     setTimeout(() => {
       if (userOpenedWidget) return;
-
-      // Draw attention to every visible WhatsApp CTA on the page, not just
-      // the widget's own FAB, so a visitor scanning the page (not just the
-      // corner) notices it too. Same pulse animation/class as the FAB —
-      // shape comes from each button's own styling, this just layers the
-      // color-loop on top.
       document.querySelectorAll('a.btn-whatsapp').forEach((btn) => {
-        btn.classList.add('whatsapp-fab-pulse');
+        btn.classList.add('whatsapp-btn-attention');
       });
+    }, BTN_ATTENTION_DELAY_MS);
+
+    setTimeout(() => {
+      if (userOpenedWidget) return;
 
       const fab = document.getElementById('whatsapp-fab');
       const nudge = document.getElementById('whatsapp-nudge');
@@ -418,7 +424,7 @@ export function setupWhatsAppWidget() {
       nudge.hidden = true;
       fab?.classList.remove('whatsapp-fab-pulse');
       document.querySelectorAll('a.btn-whatsapp').forEach((btn) => {
-        btn.classList.remove('whatsapp-fab-pulse');
+        btn.classList.remove('whatsapp-btn-attention');
       });
     }
 
