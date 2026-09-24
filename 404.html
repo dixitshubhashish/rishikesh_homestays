@@ -459,10 +459,13 @@
         line-height: 1.5;
         transform: rotate(-0.7deg);}
       /* Same zig-zag as the headline, gentler so body text stays readable. */
-      .error-zigzag { line-height: 2.35; }
-      .error-zigzag > span { display: inline-block; margin-right: 0.55em; }
-      .error-zigzag > span:nth-child(odd) { transform: translateY(-0.2em) rotate(-0.9deg); }
-      .error-zigzag > span:nth-child(even) { transform: translateY(0.22em) rotate(0.9deg); }
+      /* Phrases stay inline so the text wraps at any word (first line fills,
+         the rest continues on the next) instead of whole phrases jumping
+         down; each phrase just steps up or down. */
+      .error-zigzag { line-height: 2.1; }
+      .error-zigzag > span { position: relative; margin-right: 0.45em; }
+      .error-zigzag > span:nth-child(odd) { top: -0.18em; }
+      .error-zigzag > span:nth-child(even) { top: 0.2em; }
       .error-actions {
         display: flex;
         flex-wrap: wrap;
@@ -619,7 +622,7 @@
           padding: 36px clamp(24px, 5cqw, 56px);}
         .error-content { max-width: none; }
         .error-content > :not(.error-title) { max-width: 720px; }
-        .error-content > .error-zigzag { max-width: 960px; }
+        .error-content > .error-zigzag { max-width: none; }
       }
       /* Same stacked layout, switched on by the script at the bottom when
          the text beside the photo would be taller than the photo itself
@@ -652,7 +655,7 @@
           padding: 36px clamp(24px, 5cqw, 56px);}
         .error-stage.is-stacked .error-content { max-width: none; }
         .error-stage.is-stacked .error-content > :not(.error-title) { max-width: 720px; }
-        .error-stage.is-stacked .error-content > .error-zigzag { max-width: 960px; }
+        .error-stage.is-stacked .error-content > .error-zigzag { max-width: none; }
       @media (max-width: 760px) {
         .error-art picture { display: block; }
         .error-stage-image-wide { display: none; }
@@ -702,8 +705,7 @@
           min-height: 82px;}
         .error-title { font-size: clamp(1.7rem, 8vw, 2.4rem); }
         .error-copy { font-size: 0.98rem; }
-        .error-zigzag { line-height: 1.75; }
-        .error-zigzag > span { margin-bottom: 0.3em; }
+        .error-zigzag { line-height: 1.9; }
         .error-actions .btn { flex: 1 1 160px; }
         .error-recovery { padding: 40px 0; }
         .error-recovery-heading,
