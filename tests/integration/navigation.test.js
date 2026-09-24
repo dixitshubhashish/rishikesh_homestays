@@ -82,7 +82,7 @@ test('Navigation and internal links resolve to a real file', async (t) => {
     assert(content.includes('tel:+918050091290'), 'should offer a phone contact');
     assert(content.includes('wa.me/918050091290'), 'should offer a WhatsApp contact');
     assert(content.includes('mailto:hello@rishikeshhomestays.com'), 'should offer an email contact');
-    assert(content.includes("seconds = 20"), 'should auto-redirect home after 20 seconds');
+    assert(content.includes("seconds = 30"), 'should auto-redirect home after 30 seconds');
     assert(content.includes("window.location.href = '/'"), 'should redirect to the homepage');
     assert(content.includes('redirect-cancel'), 'should let the visitor cancel the auto-redirect');
     assert(content.includes('Om Namah Shivaya'), 'should have the spiritual chant feel');

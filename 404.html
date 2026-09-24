@@ -504,7 +504,7 @@
         height: 100%;
         transform-origin: left;
         background: #f4a43b;
-        animation: error-countdown 20s linear forwards;}
+        animation: error-countdown 30s linear forwards;}
       @keyframes error-countdown { to { transform: scaleX(0); }}
       .error-recovery {
         padding: 54px 0 58px;
@@ -800,7 +800,7 @@
               <a class="btn btn-secondary" href="/homestays">Find a homestay</a>
             </div>
             <div class="error-redirect" id="redirect-note">
-              <p class="error-redirect-note">Returning home in <strong id="redirect-seconds">20</strong>s. <button type="button" id="redirect-cancel">Wait, I like it here</button></p>
+              <p class="error-redirect-note">Returning home in <strong id="redirect-seconds">30</strong>s. <button type="button" id="redirect-cancel">Wait, I like it here</button></p>
               <div class="error-progress" aria-hidden="true"><span></span></div>
             </div>
           </div>
@@ -1021,7 +1021,7 @@
     </script>
     <script>
       (function () {
-        var seconds = 20;
+        var seconds = 30;
         var secondsEl = document.getElementById('redirect-seconds');
         var noteEl = document.getElementById('redirect-note');
         var cancelBtn = document.getElementById('redirect-cancel');
