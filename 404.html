@@ -35,6 +35,13 @@
         object-fit: cover;
         object-position: center top;
         animation: none;}
+      .error-stage-image-wide {
+        display: none;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;}
       .error-art::after {
         content: "";
         position: absolute;
@@ -115,113 +122,211 @@
         72% { opacity: 0.72; }
         88% { opacity: 0.22; transform: translateX(var(--landing-x)) scaleY(1); }
         96%, 100% { opacity: 0; transform: translateX(var(--landing-x)) scaleY(1.25); }}
-      .error-raft-scene {
+      /* Raft run: real photo cutouts (from the Things to Do hero). The raft
+         paddles in, flips upside down with a splash, then the rafters pop up
+         waist-deep in the river shouting chants. One 12s loop; every piece
+         shares the same duration so the keyframe percentages line up. */
+      .error-capsize {
+        --rr-left: 80%;
+        --rr-bottom: 20.5%;
+        --rr-width: 16%;
         position: absolute;
-        right: 12%;
-        bottom: 22%;
+        inset: 0;
         z-index: 2;
-        width: 150px;
-        height: 92px;
-        pointer-events: none;}
-      .error-raft {
+        pointer-events: none;
+        perspective: 700px;}
+      .error-capsize > * { animation-duration: 12s; animation-iteration-count: infinite; }
+      .rr-up,
+      .rr-down {
         position: absolute;
-        right: 4px;
-        bottom: 10px;
-        width: 112px;
-        height: 48px;
-        transform-origin: 58% 70%;
-        filter: drop-shadow(0 3px 3px rgba(5, 25, 28, 0.35));
-        animation: error-raft-capsize 7s ease-in-out infinite;}
-      .error-raft-person {
-        position: absolute;
-        right: 55px;
-        bottom: 46px;
-        width: 8px;
-        height: 15px;
-        border-radius: 50% 50% 35% 35%;
-        background: #ffd47c;
-        border: 1.5px solid #112b2b;
-        transform-origin: center bottom;
-        animation: error-raft-jump 7s ease-in infinite;}
-      .error-raft-person::after {
-        content: "";
-        position: absolute;
-        left: 1px;
-        top: 7px;
-        width: 4px;
-        height: 8px;
-        border-radius: 2px;
-        background: #ef6f3c;}
-      .error-raft-person:nth-child(2) {
-        right: 34px;
-        animation-delay: 0.22s;}
-      .error-raft-person:nth-child(3) {
-        right: 76px;
-        animation-delay: 0.42s;}
-      .error-raft-wake {
-        position: absolute;
-        right: 0;
-        bottom: 3px;
-        width: 124px;
-        height: 17px;
-        border: 3px solid rgba(231, 252, 255, 0.92);
-        border-color: rgba(231, 252, 255, 0.92) transparent transparent;
-        border-radius: 50%;
-        animation: error-raft-wake 7s ease-out infinite;}
-      .error-raft-wake::before,
-      .error-raft-wake::after {
-        content: "";
-        position: absolute;
-        border-radius: 50%;}
-      .error-raft-wake::before {
-        inset: 3px 18px;
-        border-top: 2px solid rgba(231, 252, 255, 0.8);}
-      .error-raft-wake::after {
-        left: 50%;
-        top: -14px;
-        width: 7px;
-        height: 7px;
-        background: #e7fcff;
-        box-shadow: -22px 8px 0 -1px rgba(231, 252, 255, 0.9), 24px 5px 0 -1px rgba(231, 252, 255, 0.9);}
-      .error-person-splash {
-        position: absolute;
-        left: 22px;
-        bottom: 2px;
-        width: 25px;
-        height: 8px;
-        border: 2px solid rgba(231, 252, 255, 0.96);
-        border-radius: 50%;
+        left: var(--rr-left);
+        bottom: var(--rr-bottom);
+        width: var(--rr-width);
+        height: auto;
+        transform-origin: 50% 85%;}
+      .rr-up {
+        -webkit-mask-image: linear-gradient(180deg, #000 80%, transparent 100%);
+        mask-image: linear-gradient(180deg, #000 80%, transparent 100%);
+        animation-name: rr-up;
+        animation-timing-function: linear;}
+      .rr-down {
         opacity: 0;
-        animation: error-person-splash 7s ease-out infinite;}
-      .error-person-splash:nth-of-type(5) {
-        left: 45px;
-        animation-delay: 0.22s;}
-      .error-person-splash:nth-of-type(6) {
-        left: 67px;
-        animation-delay: 0.42s;}
-      @keyframes error-raft-capsize {
-        0%, 20% { opacity: 0; transform: translate3d(70px, 0, 0) rotate(0deg); }
-        25% { opacity: 1; }
-        45% { transform: translate3d(0, 0, 0) rotate(-7deg); }
-        62% { transform: translate3d(-16px, 8px, 0) rotate(-112deg); }
-        74% { opacity: 1; transform: translate3d(-22px, 22px, 0) rotate(-178deg); }
-        84%, 100% { opacity: 0; transform: translate3d(-26px, 38px, 0) rotate(-184deg); }}
-      @keyframes error-raft-jump {
-        0%, 43% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
-        46% { opacity: 1; }
-        58% { opacity: 1; transform: translate3d(-22px, -25px, 0) rotate(-42deg); }
-        70% { opacity: 1; transform: translate3d(-38px, 28px, 0) rotate(-80deg); }
-        73%, 100% { opacity: 0; transform: translate3d(-40px, 35px, 0) rotate(-90deg); }}
-      @keyframes error-raft-wake {
-        0%, 42% { opacity: 0; transform: scale(0.3); }
-        48% { opacity: 0.9; }
-        78% { opacity: 0; transform: scale(1.2); }
-        100% { opacity: 0; }}
-      @keyframes error-person-splash {
-        0%, 67% { opacity: 0; transform: scale(0.25); }
-        71% { opacity: 1; transform: scale(0.65); }
-        82% { opacity: 0.7; transform: scale(1.35); }
-        94%, 100% { opacity: 0; transform: scale(1.8); }}
+        -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+        mask-image: linear-gradient(180deg, #000 62%, transparent 100%);
+        animation-name: rr-down;
+        animation-timing-function: ease-in-out;}
+      .rr-wake {
+        position: absolute;
+        left: var(--rr-left);
+        bottom: calc(var(--rr-bottom) - 1.5%);
+        width: var(--rr-width);
+        height: 3.5%;
+        opacity: 0;
+        border-radius: 50%;
+        background:
+          radial-gradient(ellipse at 18% 50%, rgba(240, 253, 255, 0.85) 0 18%, transparent 42%),
+          linear-gradient(90deg, transparent 0%, rgba(240, 253, 255, 0.55) 30%, rgba(240, 253, 255, 0.85) 70%, transparent 100%);
+        filter: blur(1px);
+        animation-name: rr-wake;
+        animation-timing-function: linear;}
+      /* After the flip each rafter surfaces separately, drifts out from the
+         raft to their own spot, and shouts on their own random schedule
+         (set by the script at the bottom of the page). --fx is how far
+         (in their own widths) they start from the raft. */
+      .rr-swimmer {
+        position: absolute;
+        left: var(--sx);
+        top: var(--sy);
+        width: var(--sw);
+        opacity: 0;
+        animation-name: rr-swimmer;}
+      .rr-swimmer img {
+        display: block;
+        width: 100%;
+        height: auto;
+        -webkit-mask-image: linear-gradient(180deg, #000 68%, transparent 94%);
+        mask-image: linear-gradient(180deg, #000 68%, transparent 94%);}
+      .rr-s1 { --sx: 54%; --sy: 75.5%; --sw: 5%; --fx: 590%; }
+      .rr-s2 { --sx: 79%; --sy: 80.5%; --sw: 2.8%; --fx: 200%; animation-delay: 0.2s; }
+      .rr-s3 { --sx: 84.5%; --sy: 80%; --sw: 3.8%; --fx: 0%; animation-delay: 0.35s; }
+      .rr-s4 { --sx: 90.5%; --sy: 79%; --sw: 6%; --fx: -125%; animation-delay: 0.5s; }
+      .rr-splash {
+        position: absolute;
+        left: calc(var(--rr-left) - 1%);
+        bottom: calc(var(--rr-bottom) - 2.5%);
+        width: calc(var(--rr-width) + 2%);
+        height: 5%;
+        opacity: 0;
+        animation-name: rr-splash;}
+      .rr-splash span {
+        position: absolute;
+        inset: 0;
+        border: 2px solid rgba(236, 252, 255, 0.92);
+        border-color: rgba(236, 252, 255, 0.92) transparent transparent;
+        border-radius: 50%;
+        animation: rr-wave 2s ease-out infinite;}
+      .rr-splash span:nth-child(2) { animation-delay: 0.7s; }
+      .rr-splash span:nth-child(3) { animation-delay: 1.4s; }
+      .rr-splash i {
+        position: absolute;
+        bottom: 40%;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #eefcff;
+        opacity: 0;
+        animation: rr-drop 2s ease-out infinite;}
+      .rr-splash i:nth-of-type(1) { left: 10%; --dx: -16px; }
+      .rr-splash i:nth-of-type(2) { left: 32%; --dx: -5px; animation-delay: 0.4s; }
+      .rr-splash i:nth-of-type(3) { left: 58%; --dx: 7px; animation-delay: 0.9s; }
+      .rr-splash i:nth-of-type(4) { left: 84%; --dx: 16px; animation-delay: 1.4s; }
+      /* The big burst right as it flips. */
+      .rr-burst {
+        position: absolute;
+        left: var(--rr-left);
+        bottom: calc(var(--rr-bottom) - 1%);
+        width: var(--rr-width);
+        aspect-ratio: 3 / 1;
+        border-radius: 50% 50% 8px 8px;
+        background: radial-gradient(ellipse at 50% 100%, rgba(240, 253, 255, 0.95) 0 35%, rgba(240, 253, 255, 0.55) 55%, transparent 72%);
+        opacity: 0;
+        transform-origin: 50% 100%;
+        animation-name: rr-burst;
+        animation-timing-function: ease-out;}
+      .rr-bubble {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        z-index: 3;
+        margin-bottom: 6px;
+        padding: 4px 10px;
+        border-radius: 13px;
+        background: #fffdf5;
+        color: #7a2e10;
+        font-weight: 800;
+        font-size: clamp(0.78rem, 1cqw, 0.92rem);
+        white-space: nowrap;
+        box-shadow: 0 6px 16px rgba(5, 25, 28, 0.28);
+        opacity: 0;
+        transform: translateX(-50%) scale(0.4);
+        transform-origin: 50% 100%;
+        transition: opacity 180ms ease, transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1);}
+      .rr-bubble::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -6px;
+        margin-left: -6px;
+        border: 6px solid transparent;
+        border-top-color: #fffdf5;
+        border-bottom: 0;}
+      .rr-bubble.is-shouting {
+        opacity: 1;
+        transform: translateX(-50%) scale(1);}
+      /* Rightmost rafter: anchor the bubble to their right edge so it can't
+         run off the picture. */
+      .rr-s4 .rr-bubble { left: auto; right: 0; transform: scale(0.4); transform-origin: 90% 100%; }
+      .rr-s4 .rr-bubble.is-shouting { transform: scale(1); }
+      .rr-s4 .rr-bubble::after { left: auto; right: 14px; }
+      /* 0-38% paddle in; 38-44% tip over; 44-50% land upside down. */
+      /* Riding the swell: every step rises/falls a little and rolls
+         with the wave while it paddles in (0-38%), tips over (38-44%),
+         then keeps bobbing upside down until the loop resets. */
+      @keyframes rr-up {
+        0% { opacity: 0; transform: translate(-110%, 0) rotate(0deg); }
+        4% { opacity: 1; transform: translate(-100%, -5%) rotate(-2deg); }
+        8% { transform: translate(-89%, 2%) rotate(1.5deg); }
+        12% { transform: translate(-78%, -6%) rotate(-2.5deg); }
+        16% { transform: translate(-67%, 1%) rotate(2deg); }
+        20% { transform: translate(-56%, -5%) rotate(-1.5deg); }
+        24% { transform: translate(-45%, 2%) rotate(2.5deg); }
+        28% { transform: translate(-34%, -6%) rotate(-2deg); }
+        32% { transform: translate(-22%, 1%) rotate(1.5deg); }
+        35% { transform: translate(-10%, -4%) rotate(-1deg); }
+        38% { opacity: 1; transform: translate(0, 0) rotate(0deg) rotateX(0deg); }
+        44% { opacity: 1; transform: translate(0, -8%) rotate(6deg) rotateX(88deg); }
+        44.1%, 100% { opacity: 0; transform: translate(0, 0) rotateX(90deg); }}
+      @keyframes rr-down {
+        0%, 44% { opacity: 0; transform: rotateX(-90deg); }
+        44.1% { opacity: 1; transform: translateY(-10%) rotateX(-88deg); }
+        50% { transform: translateY(4%) rotateX(0deg) rotate(-2.5deg); }
+        56% { transform: translateY(-10%) rotate(2.5deg); }
+        62% { transform: translateY(6%) rotate(-2deg); }
+        68% { transform: translateY(-9%) rotate(2deg); }
+        74% { transform: translateY(5%) rotate(-2.5deg); }
+        80% { transform: translateY(-8%) rotate(1.5deg); }
+        86% { opacity: 1; transform: translateY(4%) rotate(-1.5deg); }
+        94%, 100% { opacity: 0; transform: translateY(14%) rotate(0deg); }}
+      /* V-shaped wake trailing the moving raft (same travel as rr-up). */
+      @keyframes rr-wake {
+        0% { opacity: 0; transform: translateX(-110%); }
+        6% { opacity: 0.85; }
+        35% { opacity: 0.85; transform: translateX(-10%); }
+        40%, 100% { opacity: 0; transform: translateX(0); }}
+      @keyframes rr-burst {
+        0%, 43% { opacity: 0; transform: scale(0.3, 0.2); }
+        46% { opacity: 1; transform: scale(1, 1.4); }
+        56%, 100% { opacity: 0; transform: scale(1.5, 0.6); }}
+      @keyframes rr-splash {
+        0%, 44% { opacity: 0; }
+        48%, 86% { opacity: 1; }
+        94%, 100% { opacity: 0; }}
+      @keyframes rr-swimmer {
+        0%, 50% { opacity: 0; transform: translate(var(--fx), 40%); }
+        53% { opacity: 1; transform: translate(calc(var(--fx) * 0.8), -6%); }
+        62% { transform: translate(0, 4%); }
+        70% { transform: translate(0, -2%); }
+        78% { transform: translate(0, 4%); }
+        86% { opacity: 1; transform: translate(0, 0); }
+        94%, 100% { opacity: 0; transform: translate(0, 40%); }}
+      @keyframes rr-wave {
+        0% { opacity: 0.95; transform: scale(0.7, 0.6); }
+        100% { opacity: 0; transform: scale(1.3, 1.5); }}
+      @keyframes rr-drop {
+        0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+        15% { opacity: 1; }
+        45% { opacity: 1; transform: translate(calc(var(--dx) * 0.6), -18px) scale(1); }
+        80%, 100% { opacity: 0; transform: translate(var(--dx), 4px) scale(0.7); }}
       .error-stage-inner {
         width: 100%;
         margin: 0;
@@ -483,14 +588,64 @@
         .error-stage {
           height: auto;
           grid-template-columns: minmax(0, 1fr);}
+        /* Full-width photo here, so use the wide art: it shows the two
+           travellers full-length on the riverside path, feet included. */
         .error-art {
           height: auto;
-          aspect-ratio: 16 / 9;}
+          aspect-ratio: 1922 / 818;}
+        .error-art picture { display: none; }
+        .error-stage-image-wide { display: block; }
+        /* Thin fade only, so the travellers' feet on the path stay visible. */
+        .error-art::after {
+          background: linear-gradient(0deg, #173a35 0%, rgba(23, 58, 53, 0.55) 3%, transparent 9%);}
+        .error-capsize { --rr-left: 75%; --rr-bottom: 17%; --rr-width: 12%; }
+        .rr-s1 { --sx: 50%; --sy: 70%; --sw: 4%; --fx: 725%; }
+        .rr-s2 { --sx: 64%; --sy: 74%; --sw: 2.3%; --fx: 700%; }
+        .rr-s3 { --sx: 70%; --sy: 76%; --sw: 3%; --fx: 317%; }
+        .rr-s4 { --sx: 88%; --sy: 73%; --sw: 4.6%; --fx: -200%; }
+        .error-dive-loop {
+          --arc-y: 64px;
+          --landing-y: 136px;
+          --sink-y: 144px;
+          top: 40%;
+          left: 64%;}
         .error-stage-inner {
           padding: 36px clamp(24px, 5cqw, 56px);}
         .error-content { max-width: 720px; }
       }
+      /* Same stacked layout, switched on by the script at the bottom when
+         the text beside the photo would be taller than the photo itself
+         (which would otherwise leave an empty band under the picture). */
+        .error-stage.is-stacked {
+          height: auto;
+          grid-template-columns: minmax(0, 1fr);}
+        /* Full-width photo here, so use the wide art: it shows the two
+           travellers full-length on the riverside path, feet included. */
+        .error-stage.is-stacked .error-art {
+          height: auto;
+          aspect-ratio: 1922 / 818;}
+        .error-stage.is-stacked .error-art picture { display: none; }
+        .error-stage.is-stacked .error-stage-image-wide { display: block; }
+        /* Thin fade only, so the travellers' feet on the path stay visible. */
+        .error-stage.is-stacked .error-art::after {
+          background: linear-gradient(0deg, #173a35 0%, rgba(23, 58, 53, 0.55) 3%, transparent 9%);}
+        .error-stage.is-stacked .error-capsize { --rr-left: 75%; --rr-bottom: 17%; --rr-width: 12%; }
+        .error-stage.is-stacked .rr-s1 { --sx: 50%; --sy: 70%; --sw: 4%; --fx: 725%; }
+        .error-stage.is-stacked .rr-s2 { --sx: 64%; --sy: 74%; --sw: 2.3%; --fx: 700%; }
+        .error-stage.is-stacked .rr-s3 { --sx: 70%; --sy: 76%; --sw: 3%; --fx: 317%; }
+        .error-stage.is-stacked .rr-s4 { --sx: 88%; --sy: 73%; --sw: 4.6%; --fx: -200%; }
+        .error-stage.is-stacked .error-dive-loop {
+          --arc-y: 64px;
+          --landing-y: 136px;
+          --sink-y: 144px;
+          top: 40%;
+          left: 64%;}
+        .error-stage.is-stacked .error-stage-inner {
+          padding: 36px clamp(24px, 5cqw, 56px);}
+        .error-stage.is-stacked .error-content { max-width: 720px; }
       @media (max-width: 760px) {
+        .error-art picture { display: block; }
+        .error-stage-image-wide { display: none; }
         .error-stage {
           height: auto;
           min-height: auto;
@@ -517,10 +672,13 @@
           top: 42%;
           left: 72%;
           transform: scale(0.68);}
-        .error-raft-scene {
-          right: -7%;
-          bottom: 28%;
-          transform: scale(0.62);}
+        /* Mobile art: the photo's own raft sits bottom-right, so the
+           capsized one lands over it and the rafters take the water beside it. */
+        .error-capsize { --rr-left: 80%; --rr-bottom: 31.5%; --rr-width: 20%; }
+        .rr-s1, .rr-s2 { display: none; }
+        .rr-s3 { --sx: 81%; --sy: 58.5%; --sw: 8.5%; --fx: 60%; }
+        .rr-s4 { --sx: 89%; --sy: 57.5%; --sw: 10.5%; --fx: -40%; }
+        .rr-bubble { font-size: 0.74rem; }
         .error-stage-inner {
           width: min(100% - 32px, 1180px);
           margin: 0 auto;
@@ -558,13 +716,13 @@
         .error-diver,
         .error-splash,
         .error-splash-reflection,
-        .error-raft,
-        .error-raft-person,
-        .error-raft-wake,
-        .error-person-splash,
         .error-progress span { animation: none; }}
       @media (prefers-reduced-motion: reduce) {
-        .error-raft-scene { display: none; }}
+        .error-capsize > *,
+        .rr-splash span,
+        .rr-splash i { animation: none !important; }
+        .rr-up, .rr-wake, .rr-burst, .rr-splash { display: none; }
+        .rr-down, .rr-swimmer { opacity: 1; }}
     </style>
   </head>
   <body class="error-page">
@@ -594,6 +752,7 @@
             <source media="(max-width: 760px)" srcset="/assets/images/404/rishikesh-wrong-turn-mobile.webp">
             <img class="error-stage-image" src="/assets/images/404/rishikesh-wrong-turn.webp" alt="" width="1600" height="900" fetchpriority="high">
           </picture>
+          <img class="error-stage-image-wide" src="/assets/images/404/rishikesh-wrong-turn-wide-v2.webp" alt="" width="1922" height="818" loading="lazy">
           <p class="error-chant" lang="hi" aria-label="Om Namah Shivaya, Har Har Gange"><span>ॐ नमः शिवाय</span><span aria-hidden="true">&bull;</span><span>हर हर गंगे</span></p>
           <div class="error-dive-loop" id="error-dive-loop" aria-hidden="true">
             <svg class="error-diver" viewBox="0 0 48 72" xmlns="http://www.w3.org/2000/svg">
@@ -606,20 +765,16 @@
             <span class="error-splash"></span>
             <span class="error-splash-reflection"></span>
           </div>
-          <div class="error-raft-scene" aria-hidden="true">
-            <span class="error-raft-person"></span>
-            <span class="error-raft-person"></span>
-            <span class="error-raft-person"></span>
-            <svg class="error-raft" viewBox="0 0 112 48" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 18 H104 L93 39 H19 Z" fill="#ef8f32" stroke="#122c2d" stroke-width="3" stroke-linejoin="round"/>
-              <path d="M17 15 Q56 2 95 15" fill="none" stroke="#ffd66d" stroke-width="7" stroke-linecap="round"/>
-              <path d="M26 20 L22 35 M47 16 L46 38 M69 16 L70 38 M90 20 L94 34" stroke="#195f75" stroke-width="4"/>
-              <path d="M13 30 Q56 43 99 30" fill="none" stroke="#b9462f" stroke-width="4"/>
-            </svg>
-            <span class="error-raft-wake"></span>
-            <span class="error-person-splash"></span>
-            <span class="error-person-splash"></span>
-            <span class="error-person-splash"></span>
+          <div class="error-capsize" aria-hidden="true">
+            <span class="rr-wake"></span>
+            <img class="rr-up" src="/assets/images/404/raft-upright.webp" alt="" width="331" height="144" loading="lazy">
+            <span class="rr-burst"></span>
+            <img class="rr-down" src="/assets/images/404/raft-capsized.webp" alt="" width="331" height="59" loading="lazy">
+            <span class="rr-splash"><span></span><span></span><span></span><i></i><i></i><i></i><i></i></span>
+            <div class="rr-swimmer rr-s1"><span class="rr-bubble" lang="hi"></span><img src="/assets/images/404/rafter-a.webp" alt="" width="94" height="90" loading="lazy"></div>
+            <div class="rr-swimmer rr-s2"><span class="rr-bubble" lang="hi"></span><img src="/assets/images/404/rafter-b.webp" alt="" width="49" height="85" loading="lazy"></div>
+            <div class="rr-swimmer rr-s3"><span class="rr-bubble" lang="hi"></span><img src="/assets/images/404/rafter-c.webp" alt="" width="69" height="89" loading="lazy"></div>
+            <div class="rr-swimmer rr-s4"><span class="rr-bubble" lang="hi"></span><img src="/assets/images/404/rafter-d.webp" alt="" width="116" height="90" loading="lazy"></div>
           </div>
         </div>
         <div class="error-stage-inner">
@@ -886,6 +1041,76 @@
           diveLoop.remove();
           noteEl.remove();
         });
+      })();
+    </script>
+    <script>
+      // Side by side only when the text fits next to the 16:9 photo;
+      // otherwise stack, which shows the wide art (travellers full-length on
+      // the riverside path) instead of an empty band under the photo.
+      (function () {
+        var stage = document.querySelector('.error-stage');
+        var inner = stage && stage.querySelector('.error-stage-inner');
+        if (!stage || !inner || !window.ResizeObserver) return;
+        var mobile = window.matchMedia('(max-width: 760px)');
+        var probe = inner.cloneNode(true);
+        probe.setAttribute('aria-hidden', 'true');
+        probe.removeAttribute('id');
+        probe.querySelectorAll('[id]').forEach(function (el) { el.removeAttribute('id'); });
+        probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;left:-9999px;top:0;';
+        stage.appendChild(probe);
+        function decide() {
+          if (mobile.matches) { stage.classList.remove('is-stacked'); return; }
+          var width = stage.getBoundingClientRect().width;
+          var textWidth = Math.max(320, width * 0.3);
+          var photoHeight = (width - textWidth) * 9 / 16;
+          probe.style.width = textWidth + 'px';
+          stage.classList.toggle('is-stacked', probe.offsetHeight > photoHeight + 24);
+        }
+        new ResizeObserver(decide).observe(stage.parentElement);
+        mobile.addEventListener('change', decide);
+        decide();
+      })();
+    </script>
+    <script>
+      // Each loop, every rafter that's visible shouts once (one gets a second
+      // go) at a random moment while they're in the water, with a random chant.
+      (function () {
+        var raft = document.querySelector('.rr-down');
+        if (!raft || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        var CHANTS = ['ॐ नमः शिवाय!', 'हर हर गंगे!'];
+        var WINDOW_START = 6900, WINDOW_END = 9900, SHOUT_MS = 1150;
+        var timers = [];
+        function shout(swimmer) {
+          var bubble = swimmer.querySelector('.rr-bubble');
+          bubble.textContent = CHANTS[Math.floor(Math.random() * CHANTS.length)];
+          bubble.classList.add('is-shouting');
+          timers.push(setTimeout(function () { bubble.classList.remove('is-shouting'); }, SHOUT_MS));
+        }
+        function scheduleCycle() {
+          timers.forEach(clearTimeout);
+          timers = [];
+          var swimmers = Array.prototype.filter.call(document.querySelectorAll('.rr-swimmer'), function (el) {
+            return el.offsetParent !== null;
+          });
+          if (!swimmers.length) return;
+          var turns = swimmers.slice();
+          turns.push(swimmers[Math.floor(Math.random() * swimmers.length)]);
+          // Random order and random moments, but spaced so two bubbles never
+          // pop at once and pile on top of each other.
+          turns.sort(function () { return Math.random() - 0.5; });
+          var gap = Math.min(SHOUT_MS + 100, (WINDOW_END - WINDOW_START) / Math.max(1, turns.length - 1));
+          var slack = Math.max(0, (WINDOW_END - WINDOW_START) - gap * (turns.length - 1));
+          var at = WINDOW_START;
+          var extras = turns.map(function () { return Math.random(); });
+          var total = extras.reduce(function (a, b) { return a + b; }, 0) || 1;
+          turns.forEach(function (swimmer, i) {
+            at += (i === 0 ? 0 : gap) + slack * (extras[i] / total);
+            var when = at;
+            timers.push(setTimeout(function () { shout(swimmer); }, when));
+          });
+        }
+        raft.addEventListener('animationstart', scheduleCycle);
+        raft.addEventListener('animationiteration', scheduleCycle);
       })();
     </script>
   </body>
