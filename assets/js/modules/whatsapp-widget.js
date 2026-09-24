@@ -4,6 +4,7 @@ import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 
 const ATTENTION_DELAY_MS = 15000;
+const AUTO_POPUP_TIMEOUT_MS = 30000;
 // The standalone "Book on WhatsApp" buttons run on their own timing (turn
 // black at 15s, then the CSS animation swaps color every 7s) — independent
 // of the FAB's own 15s auto-popup delay above, even though the numbers
@@ -13,6 +14,8 @@ const ATTENTION_DELAY_MS = 15000;
 const BTN_ATTENTION_DELAY_MS = 15000;
 const BTN_ATTENTION_TIMEOUT_MS = 40000;
 const BTN_ATTENTION_HINT_TEXT = "👉 Still here — tap anytime to book on WhatsApp.";
+const RETURN_HINT_TIMEOUT_MS = 7000;
+const RETURN_HINT_TEXT = '👋 Psst… still here! Tap me anytime to book your Rishikesh stay 🏔️';
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -75,11 +78,8 @@ export function setupWhatsAppWidget() {
     const backdrop = document.getElementById('whatsapp-backdrop');
     if (!popup) return;
     popup.hidden = false;
-    // On desktop the page content shrinks to make room for the panel
-    // (body.whatsapp-drawer-open below) instead of being covered — it stays
-    // fully usable, so there's no dimmed backdrop and clicking elsewhere on
-    // the page doesn't dismiss it. On mobile the panel still covers the
-    // page, so the dimming + click-to-close backdrop stays.
+    // Desktop overlays the right edge without resizing the page underneath;
+    // mobile also uses a backdrop because the drawer covers most of the view.
     if (isMobileDevice() && backdrop) backdrop.hidden = false;
     requestAnimationFrame(() => {
       popup.classList.add('is-open');
@@ -89,9 +89,26 @@ export function setupWhatsAppWidget() {
         document.body.classList.add('whatsapp-drawer-open');
       }
     });
+
+    // Opened (by any means, on any device) but left untouched — close it
+    // back up rather than leaving it open indefinitely, and leave the same
+    // short "I can help again" hint a manual close shows, so it's clear
+    // where to reopen it.
+    if (idleCloseTimer) clearTimeout(idleCloseTimer);
+    idleCloseTimer = setTimeout(() => {
+      idleCloseTimer = null;
+      if (!formEngaged && isWidgetPopupOpen()) {
+        closeWidgetPopup();
+        showReturnHint();
+      }
+    }, AUTO_POPUP_TIMEOUT_MS);
   }
 
   function closeWidgetPopup() {
+    if (idleCloseTimer) {
+      clearTimeout(idleCloseTimer);
+      idleCloseTimer = null;
+    }
     const popup = document.getElementById('whatsapp-popup');
     const backdrop = document.getElementById('whatsapp-backdrop');
     if (!popup) return;
@@ -104,9 +121,9 @@ export function setupWhatsAppWidget() {
     };
     popup.addEventListener('transitionend', onTransitionEnd, { once: true });
     // Fallback in case transitionend doesn't fire (e.g. reduced-motion).
-    // Matches the 0.55s slide transition below, plus a small buffer — must
+    // Matches the 0.9s slide transition below, plus a small buffer — must
     // not fire before it or the close animation gets cut off mid-slide.
-    setTimeout(onTransitionEnd, 600);
+    setTimeout(onTransitionEnd, 1000);
   }
 
   function isWidgetPopupOpen() {
@@ -263,7 +280,7 @@ export function setupWhatsAppWidget() {
             Send on WhatsApp
           </button>
           <p class="whatsapp-response-time">
-            ⏱️ Usually replies within 30 minutes
+            ⏱️ Usually replies within 30 minutes (unless 🥾 trekking or ✈️ on our next flight!)
           </p>
         </div>
       </div>
@@ -320,6 +337,23 @@ export function setupWhatsAppWidget() {
   // once, at the attention-timeout mark below, so it never forces the
   // attention effect to stop or hides it behind a hint while genuinely in use.
   let formEngaged = false;
+  let idleCloseTimer = null;
+  let returnHintTimer = null;
+
+  // Short-lived "I can help again from here" bubble next to the FAB, shown
+  // after the chat panel closes (manually or by idling out) so the visitor
+  // knows where to reopen it.
+  function showReturnHint() {
+    const nudge = document.getElementById('whatsapp-nudge');
+    if (!nudge) return;
+    nudge.textContent = RETURN_HINT_TEXT;
+    nudge.hidden = false;
+    if (returnHintTimer) clearTimeout(returnHintTimer);
+    returnHintTimer = setTimeout(() => {
+      nudge.hidden = true;
+      returnHintTimer = null;
+    }, RETURN_HINT_TIMEOUT_MS);
+  }
 
   // Loads flatpickr/libphonenumber (if not already present) and wires up
   // the date pickers + country phone field. Safe to call multiple times —
@@ -359,24 +393,22 @@ export function setupWhatsAppWidget() {
       });
     }, BTN_ATTENTION_DELAY_MS);
 
+    // Pulse the FAB and show a small dismissible nudge — on every device.
+    // This never forces the chat panel itself open: it used to auto-open
+    // the whole drawer on desktop, which meant an overlay forcing itself
+    // onto every single pageview.
     setTimeout(() => {
       if (userOpenedWidget) return;
 
       const fab = document.getElementById('whatsapp-fab');
       const nudge = document.getElementById('whatsapp-nudge');
 
-      if (isMobileDevice()) {
-        fab?.classList.add('whatsapp-fab-pulse');
-        // Small, dismissible nudge instead of forcing the form open.
-        if (nudge) {
-          nudge.hidden = false;
-          setTimeout(() => {
-            nudge.hidden = true;
-          }, 8000);
-        }
-      } else {
-        activateForm();
-        openWidgetPopup();
+      fab?.classList.add('whatsapp-fab-pulse');
+      if (nudge) {
+        nudge.hidden = false;
+        setTimeout(() => {
+          nudge.hidden = true;
+        }, 8000);
       }
     }, ATTENTION_DELAY_MS);
   }
@@ -469,6 +501,10 @@ export function setupWhatsAppWidget() {
     form?.addEventListener('change', () => { formEngaged = true; }, { once: true });
 
     function hideNudge() {
+      if (returnHintTimer) {
+        clearTimeout(returnHintTimer);
+        returnHintTimer = null;
+      }
       nudge.hidden = true;
       fab?.classList.remove('whatsapp-fab-pulse');
       document.querySelectorAll('a.btn-whatsapp').forEach((btn) => {
@@ -484,6 +520,7 @@ export function setupWhatsAppWidget() {
       activateForm();
       if (isWidgetPopupOpen()) {
         closeWidgetPopup();
+        showReturnHint();
       } else {
         openWidgetPopup();
       }
@@ -504,6 +541,7 @@ export function setupWhatsAppWidget() {
       userOpenedWidget = true;
       hideNudge();
       closeWidgetPopup();
+      showReturnHint();
     });
 
     // Clicking the dimmed backdrop closes the panel too, same as a real drawer.
@@ -512,6 +550,7 @@ export function setupWhatsAppWidget() {
       userOpenedWidget = true;
       hideNudge();
       closeWidgetPopup();
+      showReturnHint();
     });
 
     // Close on escape key

@@ -192,21 +192,17 @@
   flex-direction: column;
   overflow: hidden;
   transform: translateX(100%);
-  /* A slower, gentler ease-out (vs. the original 0.3s linear-ish ease) so the
-     panel reads as a deliberate slide rather than a snap — matched exactly
-     by the backdrop fade and the body's padding-right shift below, so all
-     three move together instead of at slightly different speeds/curves,
-     which was reading as "randomness" rather than one coordinated motion. */
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  /* A slower, gentler ease-out so the panel reads as a deliberate slide. */
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (min-width: 681px) {
-  body.whatsapp-drawer-open {
+  body.whatsapp-drawer-open:not(.error-page) {
     padding-right: min(400px, 32vw);
-    transition: padding-right 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: padding-right 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  body.whatsapp-drawer-open .whatsapp-popup {
+  .whatsapp-popup {
     width: min(400px, 32vw);
   }
 }
@@ -224,7 +220,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   opacity: 0;
-  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   z-index: 998;
 }
 
@@ -234,6 +230,13 @@
 
 .whatsapp-backdrop[hidden] {
   display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-popup,
+  .whatsapp-backdrop {
+    transition: none;
+  }
 }
 
 .whatsapp-popup-header {

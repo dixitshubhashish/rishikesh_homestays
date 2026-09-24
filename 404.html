@@ -10,154 +10,538 @@
     <link rel="stylesheet" href="/assets/css/styles.css">
     <link rel="stylesheet" href="/assets/css/whatsapp-widget.css">
     <style>
-      .error-hero {
-        padding: 72px 0 48px;
-        text-align: center;}
-      .error-chant {
-        margin: 0 0 10px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        color: var(--river);
-        animation: error-chant-pulse 3.2s ease-in-out infinite alternate;}
-      @keyframes error-chant-pulse {
-        0% { opacity: 0.65; }
-        100% { opacity: 1; }}
-      .error-glyph {
-        font-size: clamp(64px, 14vw, 120px);
-        line-height: 1;
-        margin: 0 0 8px;
-        animation: error-float 3.2s ease-in-out infinite;}
-      @keyframes error-float {
-        0%, 100% { transform: translateY(0) rotate(-2deg); }
-        50% { transform: translateY(-10px) rotate(2deg); }}
-      .error-scene {
-        max-width: 460px;
-        margin: 8px auto 20px;
-        border-radius: var(--radius);
+      .error-stage {
+        position: relative;
+        height: clamp(520px, 39.375vw, 680px);
+        display: grid;
+        grid-template-columns: minmax(0, 7fr) minmax(320px, 3fr);
         overflow: hidden;
-        background: linear-gradient(180deg, var(--sky) 0%, #f4f1e4 100%);
-        border: 1px solid var(--line);}
-      .error-scene svg {
-        display: block;
+        isolation: isolate;
+        background: #173a35;}
+      .error-art {
+        position: relative;
         width: 100%;
-        height: auto;}
-      .error-scene-caption {
-        margin: 8px 0 24px;
-        font-size: 0.85rem;
-        font-style: italic;
-        color: var(--muted);}
+        height: 100%;
+        overflow: hidden;}
+      .error-art picture {
+        position: absolute;
+        inset: 0;
+        display: block;}
+      .error-stage-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        animation: none;}
+      .error-art::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background:
+          linear-gradient(0deg, #081a18 0%, rgba(8, 26, 24, 0.92) 5%, rgba(8, 26, 24, 0.38) 14%, transparent 27%);}
+      @keyframes error-scene-drift {
+        from { transform: scale(1.01) translate3d(-0.3%, 0, 0); }
+        to { transform: scale(1.045) translate3d(0.5%, -0.4%, 0); }}
+      .error-dive-loop {
+        --landing-x: -18px;
+        --arc-y: 104px;
+        --landing-y: 218px;
+        --sink-y: 228px;
+        position: absolute;
+        z-index: 1;
+        top: 35%;
+        left: 58%;
+        width: 110px;
+        height: 190px;
+        pointer-events: none;}
       .error-diver {
-        transform-box: fill-box;
-        transform-origin: center;
-        animation: error-dive 5s ease-in-out infinite;}
-      @keyframes error-dive {
-        0%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-        6%   { transform: translate(-4px, -3px) rotate(-10deg); opacity: 1; }
-        16%  { transform: translate(14px, -16px) rotate(20deg); opacity: 1; }
-        34%  { transform: translate(62px, 6px) rotate(150deg); opacity: 1; }
-        52%  { transform: translate(102px, 52px) rotate(270deg); opacity: 1; }
-        66%  { transform: translate(126px, 96px) rotate(390deg); opacity: 1; }
-        72%  { transform: translate(134px, 118px) rotate(430deg); opacity: 0; }
-        100% { transform: translate(134px, 118px) rotate(430deg); opacity: 0; }}
+        position: absolute;
+        top: 0;
+        left: 34px;
+        width: 42px;
+        height: 62px;
+        filter: drop-shadow(0 3px 4px rgba(5, 20, 18, 0.35));
+        animation: error-cliff-dive 4s cubic-bezier(0.42, 0, 0.72, 1) infinite;}
       .error-splash {
-        transform-box: fill-box;
-        transform-origin: center;
+        position: absolute;
+        top: calc(var(--landing-y) + 9px);
+        left: 45px;
+        width: 42px;
+        height: 13px;
+        border: 3px solid rgba(231, 252, 255, 0.96);
+        border-radius: 50%;
         opacity: 0;
-        animation: error-splash 5s ease-out infinite;}
-      @keyframes error-splash {
-        0%, 65% { opacity: 0; transform: scale(0.5); }
-        70%  { opacity: 1; transform: scale(0.85); }
-        78%  { opacity: 0.8; transform: scale(1.15); }
-        90%  { opacity: 0; transform: scale(1.4); }
-        100% { opacity: 0; transform: scale(1.4); }}
-      @media (prefers-reduced-motion: reduce) {
-        .error-chant,
-        .error-glyph,
-        .error-diver,
-        .error-splash {
-          animation: none;}
-        .error-diver {
-          opacity: 1;
-          transform: translate(0, 0) rotate(0deg);}
-      }
-      .error-code {
+        filter: drop-shadow(0 2px 2px rgba(8, 67, 71, 0.4));
+        animation: error-river-splash 4s ease-out infinite;}
+      .error-splash-reflection {
+        position: absolute;
+        top: calc(var(--landing-y) + 19px);
+        left: 48px;
+        width: 34px;
+        height: 18px;
+        opacity: 0;
+        background: linear-gradient(180deg, rgba(255, 232, 174, 0.72), transparent);
+        clip-path: polygon(44% 0, 58% 0, 78% 100%, 22% 100%);
+        filter: blur(2px);
+        animation: error-river-reflection 4s ease-out infinite;}
+      .error-splash::before,
+      .error-splash::after {
+        content: "";
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #e7fcff;}
+      .error-splash::before { left: 5px; top: -14px; }
+      .error-splash::after { right: 4px; top: -9px; }
+      @keyframes error-cliff-dive {
+        0%, 8% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-12deg) scale(0.82); }
+        10% { opacity: 1; }
+        25% { transform: translate3d(-14px, -20px, 0) rotate(36deg) scale(0.88); }
+        48% { transform: translate3d(calc(var(--landing-x) * 0.55), var(--arc-y), 0) rotate(190deg) scale(0.82); }
+        67% { opacity: 1; transform: translate3d(var(--landing-x), var(--landing-y), 0) rotate(350deg) scale(0.72); }
+        69%, 100% { opacity: 0; transform: translate3d(var(--landing-x), var(--sink-y), 0) rotate(380deg) scale(0.65); }}
+      @keyframes error-river-splash {
+        0%, 65% { opacity: 0; transform: translateX(var(--landing-x)) scale(0.35); }
+        70% { opacity: 1; transform: translateX(var(--landing-x)) scale(0.72); }
+        82% { opacity: 0.78; transform: translateX(var(--landing-x)) scale(1.18); }
+        94%, 100% { opacity: 0; transform: translateX(var(--landing-x)) scale(1.55); }}
+      @keyframes error-river-reflection {
+        0%, 68% { opacity: 0; transform: translateX(var(--landing-x)) scaleY(0.2); }
+        72% { opacity: 0.72; }
+        88% { opacity: 0.22; transform: translateX(var(--landing-x)) scaleY(1); }
+        96%, 100% { opacity: 0; transform: translateX(var(--landing-x)) scaleY(1.25); }}
+      .error-raft-scene {
+        position: absolute;
+        right: 12%;
+        bottom: 22%;
+        z-index: 2;
+        width: 150px;
+        height: 92px;
+        pointer-events: none;}
+      .error-raft {
+        position: absolute;
+        right: 4px;
+        bottom: 10px;
+        width: 112px;
+        height: 48px;
+        transform-origin: 58% 70%;
+        filter: drop-shadow(0 3px 3px rgba(5, 25, 28, 0.35));
+        animation: error-raft-capsize 7s ease-in-out infinite;}
+      .error-raft-person {
+        position: absolute;
+        right: 55px;
+        bottom: 46px;
+        width: 8px;
+        height: 15px;
+        border-radius: 50% 50% 35% 35%;
+        background: #ffd47c;
+        border: 1.5px solid #112b2b;
+        transform-origin: center bottom;
+        animation: error-raft-jump 7s ease-in infinite;}
+      .error-raft-person::after {
+        content: "";
+        position: absolute;
+        left: 1px;
+        top: 7px;
+        width: 4px;
+        height: 8px;
+        border-radius: 2px;
+        background: #ef6f3c;}
+      .error-raft-person:nth-child(2) {
+        right: 34px;
+        animation-delay: 0.22s;}
+      .error-raft-person:nth-child(3) {
+        right: 76px;
+        animation-delay: 0.42s;}
+      .error-raft-wake {
+        position: absolute;
+        right: 0;
+        bottom: 3px;
+        width: 124px;
+        height: 17px;
+        border: 3px solid rgba(231, 252, 255, 0.92);
+        border-color: rgba(231, 252, 255, 0.92) transparent transparent;
+        border-radius: 50%;
+        animation: error-raft-wake 7s ease-out infinite;}
+      .error-raft-wake::before,
+      .error-raft-wake::after {
+        content: "";
+        position: absolute;
+        border-radius: 50%;}
+      .error-raft-wake::before {
+        inset: 3px 18px;
+        border-top: 2px solid rgba(231, 252, 255, 0.8);}
+      .error-raft-wake::after {
+        left: 50%;
+        top: -14px;
+        width: 7px;
+        height: 7px;
+        background: #e7fcff;
+        box-shadow: -22px 8px 0 -1px rgba(231, 252, 255, 0.9), 24px 5px 0 -1px rgba(231, 252, 255, 0.9);}
+      .error-person-splash {
+        position: absolute;
+        left: 22px;
+        bottom: 2px;
+        width: 25px;
+        height: 8px;
+        border: 2px solid rgba(231, 252, 255, 0.96);
+        border-radius: 50%;
+        opacity: 0;
+        animation: error-person-splash 7s ease-out infinite;}
+      .error-person-splash:nth-of-type(5) {
+        left: 45px;
+        animation-delay: 0.22s;}
+      .error-person-splash:nth-of-type(6) {
+        left: 67px;
+        animation-delay: 0.42s;}
+      @keyframes error-raft-capsize {
+        0%, 20% { opacity: 0; transform: translate3d(70px, 0, 0) rotate(0deg); }
+        25% { opacity: 1; }
+        45% { transform: translate3d(0, 0, 0) rotate(-7deg); }
+        62% { transform: translate3d(-16px, 8px, 0) rotate(-112deg); }
+        74% { opacity: 1; transform: translate3d(-22px, 22px, 0) rotate(-178deg); }
+        84%, 100% { opacity: 0; transform: translate3d(-26px, 38px, 0) rotate(-184deg); }}
+      @keyframes error-raft-jump {
+        0%, 43% { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
+        46% { opacity: 1; }
+        58% { opacity: 1; transform: translate3d(-22px, -25px, 0) rotate(-42deg); }
+        70% { opacity: 1; transform: translate3d(-38px, 28px, 0) rotate(-80deg); }
+        73%, 100% { opacity: 0; transform: translate3d(-40px, 35px, 0) rotate(-90deg); }}
+      @keyframes error-raft-wake {
+        0%, 42% { opacity: 0; transform: scale(0.3); }
+        48% { opacity: 0.9; }
+        78% { opacity: 0; transform: scale(1.2); }
+        100% { opacity: 0; }}
+      @keyframes error-person-splash {
+        0%, 67% { opacity: 0; transform: scale(0.25); }
+        71% { opacity: 1; transform: scale(0.65); }
+        82% { opacity: 0.7; transform: scale(1.35); }
+        94%, 100% { opacity: 0; transform: scale(1.8); }}
+      .error-stage-inner {
+        width: 100%;
         margin: 0;
-        font-size: clamp(56px, 12vw, 96px);
+        padding: clamp(28px, 4vh, 48px) clamp(24px, 3vw, 48px);
+        box-sizing: border-box;}
+      .error-content {
+        width: 100%;
+        display: block;
+        color: #fff;}
+      .error-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        margin: 0 0 14px;
+        font-weight: 800;
+        font-size: 0.79rem;
+        text-transform: uppercase;}
+      .error-chant {
+        position: absolute;
+        z-index: 2;
+        top: clamp(30px, 7%, 58px);
+        right: auto;
+        left: clamp(28px, 7vw, 118px);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: fit-content;
+        margin: 0;
+        padding: 8px 12px 20px;
+        color: #ffe0a3;
+        font-family: "Noto Serif Devanagari", "Kohinoor Devanagari", "Devanagari Sangam MN", Georgia, serif;
+        font-size: clamp(1.1rem, 2vw, 1.48rem);
+        font-weight: 800;
+        line-height: 1.2;
+        text-shadow: 0 2px 8px rgba(7, 28, 25, 0.86), 0 0 22px rgba(7, 28, 25, 0.55);}
+      .error-chant::before,
+      .error-chant::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 1px;
+        width: 100%;
+        height: 10px;
+        background: radial-gradient(12px 7px at 12px 0, transparent 58%, #75d9e5 61% 69%, transparent 72%) 0 0 / 24px 10px repeat-x;
+        animation: error-ganga-flow 2.8s linear infinite;}
+      .error-chant::after {
+        bottom: -3px;
+        opacity: 0.48;
+        background-position: 12px 0;
+        animation-direction: reverse;
+        animation-duration: 4.2s;}
+      @keyframes error-ganga-flow {
+        to { background-position-x: 48px; }}
+      .error-chant span:not([aria-hidden]) {
+        display: inline-block;}
+      .error-chant span:first-child {
+        transform: rotate(-1.5deg) translateY(-2px);}
+      .error-chant span:last-child {
+        transform: rotate(1.5deg) translateY(3px);}
+      .error-chant [aria-hidden] {
+        color: #f4a43b;
+        transform: translateY(-4px);}
+      .error-status::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #f4a43b;
+        box-shadow: 0 0 0 0 rgba(244, 164, 59, 0.7);
+        animation: error-route-pulse 1.8s ease-out infinite;}
+      @keyframes error-route-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(244, 164, 59, 0.7); }
+        70%, 100% { box-shadow: 0 0 0 10px rgba(244, 164, 59, 0); }}
+      .error-code {
+        display: inline-flex;
+        align-items: center;
+        min-height: 112px;
+        margin: 0 0 10px;
+        color: #f4a43b;
         font-weight: 900;
-        letter-spacing: -0.02em;
-        background: linear-gradient(135deg, var(--river) 0%, var(--river-2) 55%, var(--marigold) 100%);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;}
+        font-size: clamp(4.5rem, 10vw, 8rem);
+        line-height: 0.84;}
+      .error-code span {
+        display: inline-block;
+        text-shadow: 0 8px 24px rgba(5, 20, 18, 0.28);}
+      .error-code span:nth-child(1) { transform: rotate(-7deg) translateY(-5px); }
+      .error-code span:nth-child(2) {
+        color: #fff;
+        font-family: Georgia, "Times New Roman", serif;
+        transform: rotate(6deg) translateY(9px);}
+      .error-code span:nth-child(3) { transform: rotate(-3deg) translateY(-1px); }
       .error-title {
-        margin: 4px 0 12px;
-        font-size: clamp(22px, 4vw, 30px);}
+        max-width: 590px;
+        margin: 0 0 14px;
+        color: #fff;
+        font-size: clamp(2.25rem, 3vw, 3.35rem);
+        line-height: 1.02;}
+      .error-title span {
+        display: block;
+        width: fit-content;
+        text-shadow: 0 4px 18px rgba(5, 20, 18, 0.32);}
+      .error-title span:nth-child(1) {
+        transform: rotate(-1.7deg);}
+      .error-title span:nth-child(2) {
+        margin-left: 28px;
+        color: #ffd286;
+        font-family: Georgia, "Times New Roman", serif;
+        font-style: italic;
+        transform: rotate(1.5deg) translateY(2px);}
+      .error-title span:nth-child(3) {
+        margin-left: 10px;
+        transform: rotate(-0.8deg);}
       .error-copy {
-        max-width: 560px;
-        margin: 0 auto 28px;
-        color: var(--muted);}
+        max-width: 545px;
+        margin: 0 0 12px;
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 0.96rem;
+        line-height: 1.5;}
+      .error-last-seen {
+        width: fit-content;
+        max-width: 540px;
+        margin: 0 0 16px;
+        padding: 9px 12px;
+        color: #ffe2ad;
+        border-left: 3px solid #f4a43b;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 0.94rem;
+        font-style: italic;
+        line-height: 1.5;
+        transform: rotate(-0.7deg);}
       .error-actions {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        justify-content: center;
-        margin-bottom: 20px;}
+        margin-bottom: 16px;}
+      .error-actions .btn-secondary {
+        border-color: rgba(255, 255, 255, 0.65);
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        backdrop-filter: blur(8px);}
+      .error-actions .btn-secondary:hover {
+        background: #fff;
+        color: var(--ink);}
+      .error-redirect {
+        width: min(430px, 100%);}
       .error-redirect-note {
-        font-size: 0.9rem;
-        color: var(--muted);}
+        margin: 0 0 9px;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 0.88rem;}
       .error-redirect-note button {
-        border: none;
+        border: 0;
         background: none;
         padding: 0;
-        color: var(--river);
-        font-weight: 700;
+        color: #fff;
+        font: inherit;
+        font-weight: 800;
         text-decoration: underline;
         cursor: pointer;}
-      .error-quicklinks {
+      .error-progress {
+        height: 3px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.22);}
+      .error-progress span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        transform-origin: left;
+        background: #f4a43b;
+        animation: error-countdown 20s linear forwards;}
+      @keyframes error-countdown { to { transform: scaleX(0); }}
+      .error-recovery {
+        padding: 54px 0 58px;
+        background: #f7faf8;}
+      .error-recovery-heading {
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px 18px;
-        justify-content: center;
-        margin: 28px 0 0;
-        padding: 0;
-        list-style: none;}
-      .error-quicklinks a {
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 28px;}
+      .error-recovery-heading h2 {
+        max-width: 520px;
+        margin: 0;
+        font-size: clamp(1.7rem, 3vw, 2.5rem);}
+      .error-recovery-heading p {
+        max-width: 410px;
+        margin: 0;
+        color: var(--muted);}
+      .error-routes {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);}
+      .error-route {
+        min-width: 0;
+        padding: 26px 24px 28px;
+        color: var(--ink);
+        border-right: 1px solid var(--line);}
+      .error-route:last-child { border-right: 0; }
+      .error-route span {
+        display: block;
+        margin-bottom: 18px;
         color: var(--river);
-        font-weight: 700;}
-      .error-contact-card {
-        max-width: 460px;
-        margin: 40px auto 0;
-        padding: 22px 24px;
-        background: var(--panel);
-        border: 1px solid var(--line);
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        text-align: left;}
-      .error-contact-card h2 {
-        margin: 0 0 4px;
-        font-size: 1.05rem;}
-      .error-contact-card p {
-        margin: 0 0 14px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-transform: uppercase;}
+      .error-route strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 1.16rem;}
+      .error-route small {
+        display: block;
         color: var(--muted);
-        font-size: 0.92rem;}
+        font-size: 0.92rem;
+        line-height: 1.55;}
+      .error-route:hover { background: #fff; }
+      .error-help {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 28px;
+        align-items: center;
+        padding: 34px 0 0;}
+      .error-help h2 {
+        margin: 0 0 5px;
+        font-size: 1.25rem;}
+      .error-help p {
+        margin: 0;
+        color: var(--muted);}
       .error-contact-list {
         display: flex;
-        flex-direction: column;
-        gap: 10px;}
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px 20px;}
       .error-contact-list a {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        gap: 10px;
+        gap: 8px;
         color: var(--ink);
-        font-weight: 700;}
+        font-weight: 750;}
       .error-contact-list svg {
-        width: 20px;
-        height: 20px;
-        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
         color: var(--river);}
+      @media (max-width: 760px) {
+        .error-stage {
+          height: auto;
+          min-height: auto;
+          display: block;}
+        .error-art {
+          height: auto;
+          aspect-ratio: 3 / 4;}
+        .error-stage-image {
+          object-position: 50% 58%;}
+        .error-art::after {
+          background:
+            linear-gradient(0deg, #071816 0%, rgba(7, 24, 22, 0.82) 7%, rgba(7, 24, 22, 0.22) 18%, transparent 30%);}
+        .error-chant {
+          top: 28px;
+          right: auto;
+          left: 22px;
+          justify-content: flex-start;
+          max-width: 58%;
+          font-size: 1.05rem;}
+        .error-dive-loop {
+          --arc-y: 68px;
+          --landing-y: 160px;
+          --sink-y: 170px;
+          top: 42%;
+          left: 72%;
+          transform: scale(0.68);}
+        .error-raft-scene {
+          right: -7%;
+          bottom: 28%;
+          transform: scale(0.62);}
+        .error-stage-inner {
+          width: min(100% - 32px, 1180px);
+          margin: 0 auto;
+          padding: 38px 0;}
+        .error-content {
+          display: block;}
+        .error-chant {
+          flex-wrap: wrap;
+          gap: 4px 8px;}
+        .error-code {
+          min-height: 82px;}
+        .error-title { font-size: clamp(2.05rem, 11vw, 3rem); }
+        .error-title span:nth-child(2) { margin-left: 16px; }
+        .error-title span:nth-child(3) { margin-left: 4px; }
+        .error-copy { font-size: 0.98rem; }
+        .error-actions .btn { flex: 1 1 160px; }
+        .error-recovery { padding: 40px 0; }
+        .error-recovery-heading,
+        .error-help {
+          display: block;}
+        .error-recovery-heading p { margin-top: 10px; }
+        .error-routes { grid-template-columns: 1fr; }
+        .error-route {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);}
+        .error-route:last-child { border-bottom: 0; }
+        .error-contact-list {
+          justify-content: flex-start;
+          margin-top: 20px;}}
+      @media (prefers-reduced-motion: reduce) {
+        .error-stage-image,
+        .error-status::before,
+        .error-chant::before,
+        .error-chant::after,
+        .error-diver,
+        .error-splash,
+        .error-splash-reflection,
+        .error-raft,
+        .error-raft-person,
+        .error-raft-wake,
+        .error-person-splash,
+        .error-progress span { animation: none; }}
+      @media (prefers-reduced-motion: reduce) {
+        .error-raft-scene { display: none; }}
     </style>
   </head>
-  <body>
+  <body class="error-page">
     <header class="site-header">
       <div class="nav-wrap">
         <a class="brand" href="/" aria-label="Rishikesh Homestays">
@@ -178,59 +562,75 @@
       </div>
     </header>
     <main>
-      <section class="section error-hero">
-        <div class="container">
-          <p class="error-chant">🕉️ Om Namah Shivaya <span aria-hidden="true">•</span> Har Har Gange 🌊</p>
-          <p class="error-glyph" aria-hidden="true">🕉️</p>
-          <p class="error-code">404</p>
-          <h1 class="error-title">This page went for a dip in the Ganga and never came back.</h1>
-          <p class="error-copy">Maybe it wandered off on a Kedarnath trek, floated away at the evening Aarti, or simply never existed in this life. Either way, karma says it's time to head somewhere that does exist.</p>
-
-          <figure class="error-scene" aria-hidden="true">
-            <svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-              <path d="M0,200 L0,72 Q45,30 96,58 L66,118 L32,168 L0,200 Z" fill="#b5573f" opacity="0.85"/>
-              <path d="M0,200 L0,110 Q40,90 70,120 L40,168 L0,200 Z" fill="#a44a34"/>
-              <path d="M0,178 Q50,166 100,178 T200,178 T300,178 T400,178 V200 H0 Z" fill="#0f6f74" opacity="0.85"/>
-              <path d="M0,188 Q50,178 100,188 T200,188 T300,188 T400,188 V200 H0 Z" fill="#14524a"/>
-              <g transform="translate(230,177)">
-                <g class="error-splash">
-                  <ellipse cx="0" cy="0" rx="26" ry="8" fill="none" stroke="#eaf6f4" stroke-width="2"/>
-                  <circle cx="-14" cy="-10" r="3" fill="#eaf6f4"/>
-                  <circle cx="4" cy="-16" r="2.5" fill="#eaf6f4"/>
-                  <circle cx="16" cy="-8" r="2.5" fill="#eaf6f4"/>
-                </g>
-              </g>
-              <g transform="translate(96,55)">
-                <g class="error-diver">
-                  <circle cx="0" cy="-16" r="6" fill="#17211f"/>
-                  <line x1="0" y1="-10" x2="4" y2="8" stroke="#17211f" stroke-width="3" stroke-linecap="round"/>
-                  <line x1="0" y1="-9" x2="-11" y2="-17" stroke="#17211f" stroke-width="3" stroke-linecap="round"/>
-                  <line x1="1" y1="-9" x2="10" y2="-16" stroke="#17211f" stroke-width="3" stroke-linecap="round"/>
-                  <line x1="4" y1="8" x2="11" y2="21" stroke="#17211f" stroke-width="3" stroke-linecap="round"/>
-                  <line x1="4" y1="8" x2="-3" y2="21" stroke="#17211f" stroke-width="3" stroke-linecap="round"/>
-                </g>
-              </g>
+      <section class="error-stage">
+        <div class="error-art">
+          <picture>
+            <source media="(max-width: 760px)" srcset="/assets/images/404/rishikesh-wrong-turn-mobile.webp">
+            <img class="error-stage-image" src="/assets/images/404/rishikesh-wrong-turn.webp" alt="" width="1600" height="900" fetchpriority="high">
+          </picture>
+          <p class="error-chant" lang="hi" aria-label="Om Namah Shivaya, Har Har Gange"><span>ॐ नमः शिवाय</span><span aria-hidden="true">&bull;</span><span>हर हर गंगे</span></p>
+          <div class="error-dive-loop" id="error-dive-loop" aria-hidden="true">
+            <svg class="error-diver" viewBox="0 0 48 72" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="9" r="7" fill="#d68b58" stroke="#17211f" stroke-width="2"/>
+              <path d="M17 18 Q24 14 31 18 L34 39 Q24 45 14 38 Z" fill="#ef8f32" stroke="#17211f" stroke-width="2" stroke-linejoin="round"/>
+              <path d="M18 21 L4 33 M30 21 L44 29" fill="none" stroke="#17211f" stroke-width="5" stroke-linecap="round"/>
+              <path d="M18 39 L10 62 M30 39 L39 61" fill="none" stroke="#17211f" stroke-width="6" stroke-linecap="round"/>
+              <path d="M5 33 L1 37 M44 29 L47 34 M10 62 L5 65 M39 61 L44 65" fill="none" stroke="#d68b58" stroke-width="4" stroke-linecap="round"/>
             </svg>
-          </figure>
-          <p class="error-scene-caption">Last seen: airborne over the Ganga. Status: presumed enlightened. (This page did the same thing — jumped, and never came back.)</p>
-
-          <div class="error-actions">
-            <a class="btn btn-primary" href="/">🏠 Back to homepage</a>
-            <a class="btn btn-secondary" href="/homestays">🏡 Browse homestays</a>
+            <span class="error-splash"></span>
+            <span class="error-splash-reflection"></span>
           </div>
-          <p class="error-redirect-note" id="redirect-note">
-            Taking you home automatically in <strong id="redirect-seconds">20</strong>s — <button type="button" id="redirect-cancel">stay on this page instead</button>.
-          </p>
-          <ul class="error-quicklinks">
-            <li><a href="/things-to-do-in-rishikesh">Things to do</a></li>
-            <li><a href="/places-to-visit">Places to visit</a></li>
-            <li><a href="/about-rishikesh">About Rishikesh</a></li>
-            <li><a href="/contact">Contact us</a></li>
-          </ul>
+          <div class="error-raft-scene" aria-hidden="true">
+            <span class="error-raft-person"></span>
+            <span class="error-raft-person"></span>
+            <span class="error-raft-person"></span>
+            <svg class="error-raft" viewBox="0 0 112 48" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 18 H104 L93 39 H19 Z" fill="#ef8f32" stroke="#122c2d" stroke-width="3" stroke-linejoin="round"/>
+              <path d="M17 15 Q56 2 95 15" fill="none" stroke="#ffd66d" stroke-width="7" stroke-linecap="round"/>
+              <path d="M26 20 L22 35 M47 16 L46 38 M69 16 L70 38 M90 20 L94 34" stroke="#195f75" stroke-width="4"/>
+              <path d="M13 30 Q56 43 99 30" fill="none" stroke="#b9462f" stroke-width="4"/>
+            </svg>
+            <span class="error-raft-wake"></span>
+            <span class="error-person-splash"></span>
+            <span class="error-person-splash"></span>
+            <span class="error-person-splash"></span>
+          </div>
+        </div>
+        <div class="error-stage-inner">
+          <div class="error-content">
+            <p class="error-status">Route status: delightfully lost</p>
+            <h1 class="error-title"><span>This page went</span><span>for a dip in the Ganga</span><span>and never came back.</span></h1>
+            <p class="error-copy">The page jumped from the cliff into the Ganga and never resurfaced. A confused traveller and Chotiwala sir are trying to find it, but she is holding the map upside down and he has arrived prepared for the Kedarnath trek instead.</p>
+            <p class="error-last-seen">Last seen: airborne over the Ganga. Status: presumed enlightened. (This page did the same thing — jumped, and never came back.)</p>
+            <div class="error-actions">
+              <a class="btn btn-primary" href="/">Return home</a>
+              <a class="btn btn-secondary" href="/homestays">Find a homestay</a>
+            </div>
+            <div class="error-redirect" id="redirect-note">
+              <p class="error-redirect-note">Returning home in <strong id="redirect-seconds">20</strong>s. <button type="button" id="redirect-cancel">Wait, I like it here</button></p>
+              <div class="error-progress" aria-hidden="true"><span></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <div class="error-contact-card">
-            <h2>Can't find what you were looking for?</h2>
-            <p>Tell us what you were after and we'll point you in the right direction.</p>
+      <section class="error-recovery" aria-labelledby="error-recovery-title">
+        <div class="container">
+          <div class="error-recovery-heading">
+            <h2 id="error-recovery-title">Choose a better route</h2>
+            <p>No need to retrace your steps. Pick what you came to Rishikesh for and we will take it from here.</p>
+          </div>
+          <nav class="error-routes" aria-label="Helpful destinations">
+            <a class="error-route" href="/homestays"><span>Stay</span><strong>Browse homestays</strong><small>Find the right base near Tapovan, Triveni Ghat, AIIMS, or the river.</small></a>
+            <a class="error-route" href="/things-to-do-in-rishikesh"><span>Explore</span><strong>Plan your days</strong><small>Rafting, aarti, waterfalls, temples, yoga, and slower mornings.</small></a>
+            <a class="error-route" href="/places-to-visit"><span>Discover</span><strong>See places and cafes</strong><small>Build a practical route through Rishikesh's landmarks and food stops.</small></a>
+          </nav>
+
+          <div class="error-help">
+            <div>
+              <h2>Still looking for something specific?</h2>
+              <p>Tell us what you were trying to find and a local host will point you the right way.</p>
+            </div>
             <div class="error-contact-list">
               <a href="tel:+918050091290">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -242,7 +642,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>
                 </svg>
-                Chat on WhatsApp
+                WhatsApp us
               </a>
               <a href="mailto:hello@rishikeshhomestays.com">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -432,6 +832,20 @@
         var secondsEl = document.getElementById('redirect-seconds');
         var noteEl = document.getElementById('redirect-note');
         var cancelBtn = document.getElementById('redirect-cancel');
+        var diveLoop = document.getElementById('error-dive-loop');
+        var diver = diveLoop.querySelector('.error-diver');
+        var landingPoints = [-28, -14, 0, 14, 28];
+        var lastLanding = -1;
+        function setNextLanding() {
+          var nextLanding = lastLanding;
+          while (nextLanding === lastLanding) {
+            nextLanding = Math.floor(Math.random() * landingPoints.length);
+          }
+          lastLanding = nextLanding;
+          diveLoop.style.setProperty('--landing-x', landingPoints[nextLanding] + 'px');
+        }
+        setNextLanding();
+        diver.addEventListener('animationiteration', setNextLanding);
         var timer = setInterval(function () {
           seconds -= 1;
           if (seconds <= 0) {
@@ -443,6 +857,7 @@
         }, 1000);
         cancelBtn.addEventListener('click', function () {
           clearInterval(timer);
+          diveLoop.remove();
           noteEl.remove();
         });
       })();
