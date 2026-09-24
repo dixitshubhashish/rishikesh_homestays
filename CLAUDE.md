@@ -10,7 +10,8 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
 
 **Frontend:** Static HTML5/CSS3/Vanilla JS (no framework, no build step)
 - `index.html` — Main landing page
-- `pages/` — Dedicated pages (homestays, about-rishikesh, places-to-visit, things-to-do, contact, thanks, triveni-ghat)
+- `pages/` — Dedicated content/guide pages (homestays, about-rishikesh, places-to-visit, things-to-do-in-rishikesh, contact, thanks, triveni-ghat, kedarnath-yatra, haridwar-kumbh-2027, list-your-homestay)
+- `hotels/` — Dedicated pages for individual bookable listings (separate from `pages/`, which is guides/content). Currently one: `advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html`. A `STAYS` entry in `data.js` gets a clickable card (photo + title link to the page) by adding a `detailUrl: "/hotels/<slug>"` field; entries without one render as plain (non-linked) cards, same as before.
 - `assets/css/styles.css` — Main site styles
 - `assets/css/whatsapp-widget.css` — WhatsApp widget popup styles
 - `assets/js/site.js` / `assets/js/contact.js` — backward-compat shims that import from `assets/js/modules/` and re-export onto `window`. Both are real ES modules (they use `import`), so every page loads them with `<script type="module" src="...">` — **never as a plain `<script src="...">`**, or the browser throws `Cannot use import statement outside a module` and silently breaks nav/search/forms on that page.
@@ -23,6 +24,8 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
   - `geo.js` — shared IP-geolocation lookup used by both `country-select.js` and `currency.js`, backed by `/api/geo` (see below). Cached in-memory per page load and in `localStorage` for 24h, so a visitor's country is looked up at most once a day, not once per page.
   - `currency.js` — approximate visitor-currency price display (USD/EUR/GBP/AUD/CAD/JPY), backed by `/api/currency-rates`. Never replaces the INR price shown, only adds an approximate equivalent alongside it; rounds up to the nearest 5 units of the target currency.
   - `contact-form.js` — main contact form: phone validation, flatpickr check-in/check-out with range enforcement, counters
+  - `button-loading.js` — shared busy-state helper (`setButtonLoading`/`clearButtonLoading`) used by every "-ing" submit button (contact form, host form, email OTP, OTA lead-gate) — shows a spinner + label, disables the button, and restores the exact original label afterward via a `data-original-label` attribute rather than a hardcoded string
+  - `ota-lead-gate.js` — gates outbound links to third-party booking platforms (Airbnb/Booking.com/MakeMyTrip on the `hotels/` pages) behind a small name+phone modal; awaits a real `/api/contact` acknowledgement (spinner shown) before opening the external link, so the lead is actually captured before the guest leaves
 - `assets/vendor/` — self-hosted third-party libraries (no CDN dependency, so the site works offline/behind restrictive networks):
   - `flatpickr/` — calendar date picker (check-in/check-out on both the contact form and WhatsApp widget)
   - `libphonenumber/` — Google's phone-number metadata library, used client-side for real per-country validation
@@ -35,9 +38,8 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
   - Validates form data (name, phone, details required)
   - Validates the phone number server-side using `libphonenumber-js` (expects E.164 — the frontend always normalizes to `+<countrycode><number>` before sending, so this is defense-in-depth, not the primary validation)
   - Validates check-in/check-out date range server-side (`validateDateRange` from `assets/js/modules/validators.js`)
-  - Stores enquiry in BigQuery via `api/bigquery.js` (`insertEnquiry`), tagged with `source` (`website_form` from the contact page, `whatsapp_widget` from the WhatsApp popup)
-  - Sends tabular email to `CONTACT_EMAIL` via Resend
-  - Sends confirmation email to guest (if email provided)
+  - Stores enquiry in BigQuery via `api/bigquery.js` (`insertEnquiry`), tagged with `source` (`website_form` from the contact page, `whatsapp_widget` from the WhatsApp popup, `ota_redirect_<platform>` from the OTA lead-gate, `host_application` from List Your Homestay)
+  - Sends one branded HTML email (logo, WhatsApp CTA, book-direct pitch) via Resend. If the guest gave an email, they're the `to` and `CONTACT_EMAIL` is `cc`'d — one shared, reply-all-able thread instead of two disconnected emails. No guest email → internal-only notification to `CONTACT_EMAIL`. (`CONTACT_EMAIL` was defined in `.env` for a while but never actually read by the code — fixed; always reference `process.env.CONTACT_EMAIL`, don't hardcode the address again.)
   - Returns success/error JSON
 - `api/bigquery.js` — BigQuery client + `insertEnquiry(row)`. Reads credentials from `GOOGLE_APPLICATION_CREDENTIALS` (local file path) or `GOOGLE_APPLICATION_CREDENTIALS_JSON` (inline JSON string, for Vercel). Dataset/table names come from `BIGQUERY_DATASET`/`BIGQUERY_ENQUIRIES_TABLE` (default `rishikesh_homestays.enquiries`).
 - `scripts/setup-bigquery.js` — one-time/idempotent script that creates the dataset + `enquiries` table (schema + `created_at` day-partitioning). Re-run safely; skips creation if the table already exists.
@@ -97,6 +99,7 @@ Dev-only (their browser bundles are copied into `assets/vendor/` and committed �
 
 - **flatpickr** — source of `assets/vendor/flatpickr/flatpickr.min.{js,css}`
 - **jsdom** — DOM helper tests
+- **playwright** — real-browser rendering for `tests/visual/no-horizontal-overflow.test.js` (jsdom doesn't run actual CSS layout, so it can't catch a page overflowing its viewport — only a real rendered browser can). That test spins up its own ephemeral static-file server on a random port and checks every page at mobile + laptop widths; it's part of `npm test`, no separate setup needed. Also used ad hoc during development for visual verification (screenshots, timing) — keep it installed even if no other automated test uses it yet.
 
 If you upgrade `flatpickr` or `libphonenumber-js`, re-copy the built files:
 
@@ -120,6 +123,7 @@ cp node_modules/libphonenumber-js/bundle/libphonenumber-min.js assets/vendor/lib
 - **Form validation** — Both frontend (contact-form module) and backend (`api/contact.js`)
 - **Optimize images** — Use tools like ImageOptim before committing media files
 - **Backward compatibility** — Keep `site.js` and `contact.js` shims for existing HTML
+- **Responsive grid tracks** — use `minmax(0, 1fr)`, not a bare `1fr`, for any mobile single-column reset (`.search-grid`, `.guide-grid`, etc. in `styles.css`). A bare `1fr` still has an implicit min-content floor, so a single fixed-width descendant anywhere inside (an embed widget, an oversized image) silently blows the whole column out to that width instead of the screen's — this exact bug shipped once and clipped an entire page's text off-screen on mobile. `tests/visual/no-horizontal-overflow.test.js` guards against it, but don't reintroduce a bare `1fr` reset.
 
 ## 📊 Current State
 
