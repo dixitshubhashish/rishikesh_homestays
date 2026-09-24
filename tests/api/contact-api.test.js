@@ -40,8 +40,12 @@ test('Contact API Tests', async (t) => {
   });
 
   await t.test('API should send confirmation to guest', () => {
-    assert(apiCode.includes('email'), 'Should use guest email');
-    assert(apiCode.includes('confirmationHtml'), 'Should send confirmation email');
+    // When a guest provides an email, they get one combined email as the
+    // primary recipient with the owner CC'd (a single reply-all-able
+    // thread), instead of two separate emails.
+    assert(apiCode.includes('data.email'), 'Should use guest email');
+    assert(apiCode.includes('greetingHtml'), 'Should send a combined guest+owner email');
+    assert(apiCode.includes('cc: contactEmail'), 'Should CC the owner on the guest email');
   });
 
   await t.test('API should log IP and user agent', () => {
@@ -63,7 +67,7 @@ test('Contact API Tests', async (t) => {
   });
 
   await t.test('API should format email properly', () => {
-    assert(apiCode.includes('emailHtml'), 'Should format HTML email');
+    assert(apiCode.includes('emailShell'), 'Should format HTML email');
     assert(apiCode.includes('table'), 'Should use table for email layout');
     assert(apiCode.includes('border'), 'Should style email table');
   });

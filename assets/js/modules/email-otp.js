@@ -2,6 +2,7 @@
 // informational only — it never blocks submitting the enquiry. If the
 // backend isn't configured (no OTP_SECRET set), this silently does nothing
 // and the email field behaves exactly as it did before.
+import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 let otpConfigured = null;
 
 async function checkConfigured() {
@@ -78,8 +79,7 @@ export async function setupEmailVerification(emailInput) {
       return;
     }
 
-    verifyBtn.disabled = true;
-    verifyBtn.textContent = 'Sending...';
+    setButtonLoading(verifyBtn, 'Sending...');
     statusEl.textContent = '';
 
     try {
@@ -100,8 +100,7 @@ export async function setupEmailVerification(emailInput) {
     } catch {
       statusEl.textContent = 'Could not send the code. Please try again.';
     } finally {
-      verifyBtn.disabled = false;
-      verifyBtn.textContent = 'Verify email';
+      clearButtonLoading(verifyBtn);
     }
   });
 
@@ -109,8 +108,7 @@ export async function setupEmailVerification(emailInput) {
     const code = codeInput.value.trim();
     if (!code || !pendingToken) return;
 
-    confirmBtn.disabled = true;
-    confirmBtn.textContent = 'Verifying...';
+    setButtonLoading(confirmBtn, 'Verifying...');
     statusEl.textContent = '';
 
     try {
@@ -132,8 +130,7 @@ export async function setupEmailVerification(emailInput) {
     } catch {
       statusEl.textContent = 'Could not verify the code. Please try again.';
     } finally {
-      confirmBtn.disabled = false;
-      confirmBtn.textContent = 'Confirm';
+      clearButtonLoading(confirmBtn);
     }
   });
 

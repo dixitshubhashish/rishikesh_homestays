@@ -426,19 +426,18 @@ textarea {
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 16px;}
-  .hero > .hero-inner .hero-actions .btn-whatsapp {
-    margin-left: auto;
-    margin-right: auto;}
-  .hero > .hero-inner .hero-actions > .btn:not(.btn-whatsapp) {
+  /* Two buttons now (not three) — sit side by side sharing the row equally,
+     not one full-width row with WhatsApp centered on its own line below.
+     white-space stays normal (not nowrap): at this grid's minmax(360px,3fr)
+     floor, 50% of the row is only ~150-180px, and once the WhatsApp
+     sidebar's content-push narrows this column further, nowrap text would
+     overflow its own box and collide with the sibling button. */
+  .hero > .hero-inner .hero-actions > .btn {
     flex: 0 0 calc((100% - 8px) / 2);
     width: calc((100% - 8px) / 2);
     min-width: 0;
-    white-space: nowrap;}
-  .hero > .hero-inner .hero-actions > .btn:not(.btn-whatsapp) {
-    flex: 0 0 calc((100% - 8px) / 2);
-    width: calc((100% - 8px) / 2);
-    min-width: 0;
-    white-space: nowrap;}
+    white-space: normal;
+    text-align: center;}
   .hero > .hero-inner .hero-stats {
     position: static;
     width: 100%;
@@ -459,6 +458,35 @@ textarea {
     font-size: 1rem;}
   .hero > .hero-inner .hero-stat span {
     font-size: 0.72rem;}
+}
+
+/* Keep the Advaitam split stable when a long property title would otherwise
+   widen the text track and push the slideshow out of view. */
+@media (min-width: 1200px) {
+    .page-hero.advaitam-ganga {
+        grid-template-columns: 70% 30%;
+        grid-template-rows: auto;
+    }
+    .page-hero.advaitam-ganga .advaitam-hero-media,
+    .page-hero.advaitam-ganga .page-hero-inner {
+        min-width: 0;
+    }
+    .page-hero.advaitam-ganga .advaitam-hero-media {
+        height: 500px;
+        align-self: start;
+    }
+    .page-hero.advaitam-ganga .page-hero-inner {
+        overflow: visible;
+        padding: 34px 28px 42px;
+    }
+    .page-hero.advaitam-ganga .page-hero-inner h1 {
+        font-size: clamp(2rem, 2.45vw, 3rem);
+        line-height: 1.06;
+        overflow-wrap: anywhere;
+    }
+    .page-hero.advaitam-ganga .page-hero-inner > p:not(.eyebrow) {
+        font-size: .95rem;
+    }
 }
 .hero.hero-slide-1 { --hero-panel-bg: #1d5060; }
 .hero.hero-slide-2 { --hero-panel-bg: #104b4b; }
@@ -523,10 +551,81 @@ main > section:last-child {
 
  .search-grid{
     display:grid;
-    grid-template-columns:2fr 1.2fr 1.2fr auto;
+    grid-template-columns: 1.3fr 1fr 1fr 1fr auto;
     gap:16px;
     align-items:end;
-} 
+}
+
+/* Real booking-site search bars don't stretch every field edge to edge —
+   date pickers and the travellers dropdown only need to show a short label,
+   so capping their width (while area, which shows longer place names, stays
+   free to fill its own column) reads as an intentional compact search bar
+   instead of a handful of oversized, near-empty controls. Scoped to the
+   multi-column layout only (search-grid collapses to one column below
+   1381px) — the cap would just strand a narrow field in an otherwise
+   full-width mobile row. */
+@media (min-width: 1381px) {
+  .search-grid .field:not(:first-child) select,
+  .search-grid .field:not(:first-child) input {
+    max-width: 170px;
+  }
+
+  /* Button has no label above it like the fields do, so bottom-aligning it
+     (the grid's own align-items:end) left it looking a little high and
+     off-balance next to the taller label+input columns — centering it
+     against the row's full height instead lines its middle up with theirs. */
+  .search-grid > .btn {
+    align-self: center;
+  }
+
+}
+
+/* Hover "spotlight" for dropdowns site-wide, on devices where hovering
+   actually means something (a mouse/trackpad, not a touchscreen — touch
+   would otherwise get a hover state stuck on after tapping).
+   Two tiers:
+   1. Any select on its own (country code, a lone filter, etc.) just grows
+      slightly under the cursor.
+   2. Selects/fields that share a row (the homepage search bar, the
+      homestays filter bar) also dim and shrink their siblings a touch, so
+      attention follows the pointer instead of every field competing
+      equally — the same effect, extended to every dropdown row on the
+      site rather than just the one it was first built for. */
+@media (hover: hover) and (pointer: fine) {
+  .field select,
+  .whatsapp-field select,
+  .phone-row select {
+    transition: transform 150ms ease, box-shadow 150ms ease;
+  }
+  .field select:hover,
+  .whatsapp-field select:hover,
+  .phone-row select:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(23, 33, 31, 0.14);
+    position: relative;
+    z-index: 2;
+  }
+
+  .search-grid .field,
+  .filters .field {
+    transition: transform 200ms ease, opacity 200ms ease;
+  }
+  /* :has(.field:hover), not a plain :hover on the whole container — the
+     container also includes the submit button and the gaps between fields,
+     and hovering those isn't "hovering a field", so it shouldn't dim them. */
+  .search-grid:has(.field:hover) .field:not(:hover),
+  .filters:has(.field:hover) .field:not(:hover) {
+    transform: scale(0.96);
+    opacity: 0.75;
+  }
+  .search-grid .field:hover,
+  .filters .field:hover {
+    transform: scale(1.06);
+    opacity: 1;
+    position: relative;
+    z-index: 2;
+  }
+}
 
 .field{
     display:flex;
@@ -676,6 +775,7 @@ main > section:last-child {
   overflow: hidden;
   box-shadow: 0 12px 30px rgba(23, 33, 31, 0.07);}
 .homestay-photo {
+  display: block;
   min-height: 208px;
   background-image: url("../images/rishikesh-homestay-hero.webp");
   background-size: cover;
@@ -688,6 +788,8 @@ main > section:last-child {
   background-image: url("../images/rishikesh-things-to-do.webp");}
 .homestay-photo.three {
   background-image: url("../images/triveni-ghat-aarti.webp");}
+.homestay-photo.advaitam-ganga {
+  background-image: url("../images/homestays/advaitam-ganga-hill-view.webp");}
 .place-photo {
   display: block;
   width: 100%;
@@ -721,6 +823,11 @@ main > section:last-child {
   margin: 10px 0 8px;
   font-size: 1.2rem;
   line-height: 1.2;}
+.homestay-card h3 a:hover {
+  text-decoration: underline;}
+a.homestay-photo:hover {
+  cursor: pointer;
+  opacity: 0.92;}
 .card-body p,
 .info-card p,
 .itinerary-card p,
@@ -880,6 +987,11 @@ main > section:last-child {
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.18)),
     url("../images/rishikesh-homestay-hero.webp");}
+.page-hero.advaitam-ganga::before {
+  background-image:
+    linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.18)),
+    url("../images/homestays/advaitam-ganga-hill-view.webp");
+  background-position: center 40%;}
 .page-hero-inner {
   position: relative;
   width: min(var(--max), calc(100% - 32px));
@@ -1025,6 +1137,11 @@ main > section:last-child {
 .guide-copy ol {
   padding-left: 22px;
   color: var(--muted);}
+.airbnb-embed-wrap {
+  margin: 16px 0 4px;
+  overflow-x: auto;}
+.airbnb-embed-frame {
+  max-width: 100%;}
 .side-panel,
 .booking-panel {
   position: sticky;
@@ -1038,12 +1155,18 @@ main > section:last-child {
 .side-panel h3 {
   margin: 0 0 12px;
   font-size: 1.15rem;}
-.side-panel a {
+/* :not(.btn) — a real button link (e.g. "Send enquiry") shouldn't inherit
+   this plain-link treatment; it was zeroing the button's own left/right
+   padding and adding a stray border line on top of the button's shadow,
+   which read as a distorted/glitchy button rather than a clean one. */
+.side-panel a:not(.btn) {
   display: block;
   padding: 10px 0;
   border-top: 1px solid var(--line);
   color: var(--river);
   font-weight: 800;}
+.side-panel a.btn {
+  margin-bottom: 10px;}
 .check-list {
   display: grid;
   gap: 10px;
@@ -1274,7 +1397,13 @@ main > section:last-child {
   .listing-layout,
   .split,
   .cta-band {
-    grid-template-columns: 1fr;}
+    /* minmax(0, 1fr), not a bare 1fr — a bare 1fr track still has an
+       implicit min-content floor, so a fixed-width descendant anywhere
+       inside (e.g. the Airbnb embed's 800px-wide iframe) silently blows
+       the whole single-column mobile layout out to that width instead of
+       wrapping/scrolling internally, dragging every sibling — headings,
+       tags, image galleries — off the right edge of the screen with it. */
+    grid-template-columns: minmax(0, 1fr);}
   .card-grid,
   .info-grid,
   .listing-grid,
@@ -1421,10 +1550,7 @@ main > section:last-child {
     padding: 28px 16px 34px;
     background-color: var(--hero-panel-bg);
     background-image: radial-gradient(circle at 0% 0%, var(--hero-gradient-a) 0%, transparent 66%), radial-gradient(circle at 100% 22%, var(--hero-gradient-b) 0%, transparent 70%), radial-gradient(circle at 78% 100%, var(--hero-gradient-c) 0%, transparent 72%);}
-  .hero > .hero-inner .hero-actions .btn-whatsapp {
-    margin-left: auto;
-    margin-right: auto;}
-  .hero > .hero-inner .hero-actions > .btn:not(.btn-whatsapp) {
+  .hero > .hero-inner .hero-actions > .btn {
     flex: 0 0 calc((100% - 8px) / 2);
     width: calc((100% - 8px) / 2);
     min-width: 0;
@@ -1444,6 +1570,13 @@ main > section:last-child {
   .filters,
   .footer-grid {
     grid-template-columns: 1fr;}
+  /* .container's 32px side padding (fine on desktop) eats 64px of a ~390px
+     phone screen, leaving the homestay cards narrower than they need to be.
+     Pulling just this grid out to the container's edges reclaims that width
+     for the card itself without touching the container/padding everywhere
+     else it's used. */
+  [data-stay-grid] {
+    margin: 0 -16px;}
 
 .section,
   .guide-section {
@@ -2142,6 +2275,271 @@ main > section:last-child {
     flex-shrink:0;
 }
 
+/* Let the Advaitam photo lead, then place its guest-facing message in a
+   spacious scene-colored panel below it instead of covering the property. */
+.page-hero.advaitam-ganga {
+    min-height: 0;
+    display: block;
+    background: #21483f;
+}
+/* Something upstream zeroes out the base .eyebrow{margin-bottom:12px} on
+   this page specifically, leaving the caption line touching the heading
+   with no breathing room — pin it back explicitly here rather than
+   chasing which earlier rule wins. */
+.page-hero.advaitam-ganga .page-hero-inner > .eyebrow {
+    margin: 0 0 14px;
+}
+.page-hero.advaitam-ganga::before {
+    display: none;
+}
+.advaitam-hero-media {
+    display: flex;
+    width: 100%;
+    height: 460px;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #173c3d;
+}
+.advaitam-hero-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+.stay-gallery-hero {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+}
+.stay-gallery-hero .stay-gallery-slide {
+    height: 100%;
+    aspect-ratio: auto;
+}
+.stay-gallery-hero .stay-gallery-slide img {
+    height: 100%;
+}
+.page-hero.advaitam-ganga .page-hero-inner {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 46px max(24px, calc((100% - var(--max)) / 2)) 52px;
+    box-sizing: border-box;
+    background: radial-gradient(circle at 8% 0%, #397f70 0%, transparent 54%), radial-gradient(circle at 94% 100%, #8b4c38 0%, transparent 62%), #21483f;
+}
+.stay-gallery-section {
+    padding: 28px 0 0;
+    background: var(--paper);
+}
+.stay-gallery {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius);
+    background: #163b36;
+}
+.stay-gallery-slide {
+    display: none;
+    position: relative;
+    margin: 0;
+    aspect-ratio: 2.2 / 1;
+    background: #173c3d;
+}
+.stay-gallery-slide.is-active {
+    display: block;
+}
+.stay-gallery-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+.stay-gallery-slide figcaption {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 28px 20px 16px;
+    color: #fff;
+    background: linear-gradient(transparent, rgba(8, 26, 24, 0.82));
+    font-weight: 800;
+}
+.stay-gallery-dots {
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    max-width: calc(100% - 32px);
+}
+.stay-gallery-dots button {
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+}
+.stay-gallery-dots button.is-active {
+    background: #fff;
+}
+.stay-detail-strip {
+    display: grid;
+    grid-template-columns: minmax(180px, 0.9fr) minmax(0, 1.1fr);
+    gap: 22px;
+    align-items: center;
+    margin: 28px 0 34px;
+    padding: 14px;
+    border-radius: var(--radius);
+    background: #eef4f0;
+}
+.stay-detail-strip-reverse {
+    grid-template-columns: minmax(0, 1.1fr) minmax(180px, 0.9fr);
+}
+.stay-detail-strip-reverse img {
+    order: 2;
+}
+.stay-detail-strip img {
+    width: 100%;
+    height: 190px;
+    object-fit: contain;
+    background: #dbe9e2;
+    border-radius: calc(var(--radius) - 2px);
+}
+.stay-detail-strip h3 {
+    margin: 0 0 8px;
+    color: var(--ink);
+    font-size: 1.2rem;
+}
+.stay-detail-strip p {
+    margin: 0;
+}
+.stay-story-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin: 30px 0 38px;
+}
+.stay-story-grid figure {
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid #d8e3dc;
+    border-radius: var(--radius);
+    background: #f4f8f5;
+}
+.stay-story-grid img {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: contain;
+    background: #dce9e2;
+}
+.stay-story-grid figcaption {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px 16px;
+    color: #314b47;
+    line-height: 1.4;
+}
+.stay-story-grid figcaption strong {
+    color: var(--ink);
+    font-size: 1.05rem;
+}
+.stay-story-grid figcaption span {
+    font-size: .95rem;
+}
+.notice-card {
+    display: grid;
+    gap: 7px;
+    margin: 24px 0;
+    padding: 18px 20px;
+    border-left: 5px solid #20c96b;
+    border-radius: 8px;
+    background: linear-gradient(110deg, #e6f7ed 0%, #fff8df 100%);
+    color: #173c3d;
+}
+.notice-card strong {
+    display: block;
+    color: #0b6b45;
+    font-size: 1.2rem;
+    line-height: 1.25;
+}
+.notice-card span {
+    display: block;
+    max-width: 58ch;
+    color: #314b47;
+    font-size: 1rem;
+    line-height: 1.45;
+}
+@media (max-width: 680px) {
+    .advaitam-hero-media {
+        height: 360px;
+    }
+    .page-hero.advaitam-ganga .page-hero-inner {
+        padding: 32px 20px 38px;
+    }
+    .stay-gallery-slide {
+        aspect-ratio: 1.25 / 1;
+    }
+    .stay-gallery-hero .stay-gallery-slide {
+        height: 100%;
+    }
+    .stay-detail-strip,
+    .stay-detail-strip-reverse {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .stay-detail-strip-reverse img {
+        order: 0;
+    }
+    .stay-detail-strip img {
+        height: 170px;
+    }
+    .stay-story-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+    .stay-story-grid img {
+        height: 210px;
+    }
+}
+@media (min-width: 1200px) {
+    .page-hero.advaitam-ganga {
+        display: grid;
+        grid-template-columns: minmax(0, 6fr) minmax(360px, 4fr);
+        /* minmax(500px, auto), not a hard 500px — the text column can need
+           more height than the image at this width (long heading + full
+           paragraph), and a fixed row height let that overflow get covered
+           by the section that follows instead of the row growing to fit. */
+        grid-template-rows: minmax(500px, auto);
+        min-height: 500px;
+        align-items: start;
+    }
+    .page-hero.advaitam-ganga .advaitam-hero-media {
+        grid-column: 1;
+        grid-row: 1;
+        height: 500px;
+    }
+    .page-hero.advaitam-ganga .page-hero-inner {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: stretch;
+        margin: 0;
+        padding: 42px 30px;
+    }
+    .page-hero.advaitam-ganga .page-hero-inner h1 {
+        font-size: clamp(2.25rem, 3vw, 3.25rem);
+        line-height: 1.04;
+    }
+    .page-hero.advaitam-ganga .page-hero-inner > p:not(.eyebrow) {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+}
+
 /* Final hero panel treatment: keep the three scene colors visible after
    the older responsive hero rules above, without placing imagery behind text. */
 .hero > .hero-inner {
@@ -2175,4 +2573,121 @@ main > section:last-child {
         background-size: cover;
         background-position: center top;
     }
+}
+
+/* Booking-platform icon row (Airbnb / Booking.com / MakeMyTrip) + the lead-
+   capture modal that gates those external links (see ota-lead-gate.js). */
+.ota-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 20px 0;}
+.ota-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(23, 33, 31, 0.14);
+  transition: transform 180ms ease, box-shadow 180ms ease;}
+.ota-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(23, 33, 31, 0.2);}
+.ota-link svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;}
+.ota-link.ota-airbnb {
+  background: #FF5A5F;}
+.ota-link.ota-booking {
+  background: #003580;}
+.ota-link.ota-mmt {
+  background: #EB2026;}
+
+.ota-gate-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1998;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s ease;}
+.ota-gate-backdrop.is-open {
+  opacity: 1;}
+.ota-gate-backdrop[hidden] {
+  display: none;}
+.ota-gate-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 1999;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 28px 24px 24px;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -48%) scale(0.96);
+  opacity: 0;
+  transition: transform 0.25s ease, opacity 0.25s ease;}
+.ota-gate-modal.is-open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;}
+.ota-gate-modal[hidden] {
+  display: none;}
+.ota-gate-modal h3 {
+  margin: 0 0 8px;
+  padding-right: 24px;
+  font-size: 1.2rem;}
+.ota-gate-modal p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 0.92rem;}
+.ota-gate-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--sky);
+  color: var(--ink);
+  cursor: pointer;}
+.ota-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;}
+.ota-gate-submit {
+  width: 100%;}
+
+/* Shared busy-state spinner for every "-ing" button (see button-loading.js) —
+   one consistent rotating indicator across the whole site instead of plain
+   text alone. */
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  vertical-align: -2px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: btn-spin 0.7s linear infinite;}
+.btn-secondary .btn-spinner,
+.btn-quiet .btn-spinner {
+  border-color: rgba(20, 82, 74, 0.25);
+  border-top-color: var(--river);}
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner {
+    animation: none;}
 }

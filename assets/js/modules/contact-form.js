@@ -2,6 +2,7 @@ import { validatePhone, validateDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
 import { setupEmailVerification } from './email-otp.js';
+import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 
 const WHATSAPP_PHONE = '919027212484';
 
@@ -106,7 +107,6 @@ export function setupContactForm() {
   // actual submit button. That bug caused "Sending..."/"Request shortlist"
   // to render on the Adults counter's "−" button instead.
   const btn = form.querySelector('button[type="submit"]');
-  const btnOriginalText = btn?.textContent;
   const status = form.querySelector("[data-form-status]");
   const phoneInput = form.querySelector('#phone');
   const countrySelect = form.querySelector('#country');
@@ -168,10 +168,7 @@ export function setupContactForm() {
     const waMessage = buildShortlistMessage(data);
     window.open(buildWhatsAppLink(WHATSAPP_PHONE, waMessage), '_blank', 'noopener,noreferrer');
 
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Sending...";
-    }
+    setButtonLoading(btn, "Sending...");
 
     if (status) {
       status.textContent = "";
@@ -212,14 +209,11 @@ export function setupContactForm() {
         status.style.color = "#f44336";
       }
     } finally {
-      if (btn) {
-        btn.disabled = false;
-        // Restore this button's own original label — homestays.html says
-        // "Send request" while contact.html says "Request shortlist"; a
-        // hardcoded string here would silently overwrite whichever one
-        // wasn't hardcoded.
-        btn.textContent = btnOriginalText;
-      }
+      // Restores this button's own original label — homestays.html says
+      // "Send request" while contact.html says "Request shortlist"; a
+      // hardcoded string here would silently overwrite whichever one
+      // wasn't hardcoded.
+      clearButtonLoading(btn);
     }
   });
 }

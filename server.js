@@ -36,6 +36,12 @@ app.get(['/pages/gateway-to-kedarnath', '/pages/gateway-to-kedarnath.html'], (re
   res.redirect(301, '/pages/kedarnath-yatra');
 });
 
+// Individual property listing pages live under /hotels/, not /pages/ — this
+// one briefly existed at the /pages/ path before moving.
+app.get(['/pages/advaitam-ganga-hill-view-luxury-3bhk', '/pages/advaitam-ganga-hill-view-luxury-3bhk.html'], (req, res) => {
+  res.redirect(301, '/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh');
+});
+
 // Redirect old-style .html URLs to their clean equivalent (e.g.
 // /pages/contact.html -> /pages/contact) so there's a single canonical URL
 // and any bookmarked/indexed .html links still work.

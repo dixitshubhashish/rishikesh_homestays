@@ -1,6 +1,7 @@
 import { validatePhone } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
+import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 
 const WHATSAPP_PHONE = '919027212484';
 
@@ -39,7 +40,6 @@ export function setupHostForm() {
   // See contact-form.js for why this must target the submit button
   // specifically, not just the first <button> in the form.
   const btn = form.querySelector('button[type="submit"]');
-  const btnOriginalText = btn?.textContent;
   const status = form.querySelector('[data-form-status]');
   const phoneInput = form.querySelector('#host_phone');
   const countrySelect = form.querySelector('#host_country');
@@ -78,10 +78,7 @@ export function setupHostForm() {
     const waMessage = buildHostMessage(data);
     window.open(buildWhatsAppLink(WHATSAPP_PHONE, waMessage), '_blank', 'noopener,noreferrer');
 
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = 'Submitting...';
-    }
+    setButtonLoading(btn, 'Submitting...');
     if (status) status.textContent = '';
 
     try {
@@ -109,10 +106,7 @@ export function setupHostForm() {
         status.style.color = '#f44336';
       }
     } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = btnOriginalText;
-      }
+      clearButtonLoading(btn);
     }
   });
 }

@@ -21,9 +21,10 @@ export const STAYS = [
     budget: "Premium",
     price: "From ₹12,800",
     priceINR: 12800,
-    imageClass: "one",
+    imageClass: "advaitam-ganga",
     summary: "Three bedroom family stay with balcony breakfast, fast Wi-Fi, and easy access to cafes and yoga studios.",
-    tags: ["3 bedrooms","Sunrise View", "Balcony", "Kitchen access", "Walkable Cafes", "Nearby Ghats"]
+    tags: ["3 bedrooms","Sunrise View", "Balcony", "Kitchen access", "Walkable Cafes", "Nearby Ghats"],
+    detailUrl: "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh"
   },
   {
     name: "Yoga Retreat at the Ganges ",

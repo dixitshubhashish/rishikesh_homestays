@@ -14,7 +14,8 @@ const testPages = [
   { path: 'pages/thanks.html', name: 'Thank You Page' },
   { path: 'pages/kedarnath-yatra.html', name: 'Kedarnath & Garhwal Gateway' },
   { path: 'pages/list-your-homestay.html', name: 'List Your Homestay' },
-  { path: 'pages/haridwar-kumbh-2027.html', name: 'Kumbh 2027' }
+  { path: 'pages/haridwar-kumbh-2027.html', name: 'Kumbh 2027' },
+  { path: 'hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html', name: 'Advaitam Ganga Listing' }
 ];
 
 function readPage(filePath) {

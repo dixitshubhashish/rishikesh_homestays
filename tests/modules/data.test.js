@@ -67,7 +67,11 @@ test('Data Module Tests', async (t) => {
   });
 
   await t.test('STAYS - imageClass should be valid', () => {
-    const validClasses = ['one', 'two', 'three'];
+    // Each class must have a matching .homestay-photo.<class> background
+    // rule in styles.css — 'advaitam-ganga' is that listing's own real
+    // photo, kept separate from 'one' so it doesn't collide with the other
+    // stay that still uses the generic 'one' fallback image.
+    const validClasses = ['one', 'two', 'three', 'advaitam-ganga'];
     STAYS.forEach((stay, index) => {
       assert(validClasses.includes(stay.imageClass), `Stay ${index} has invalid imageClass: ${stay.imageClass}`);
     });

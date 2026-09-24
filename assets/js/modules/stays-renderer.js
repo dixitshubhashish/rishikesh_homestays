@@ -5,15 +5,24 @@ import { setupCurrencyConversion } from './currency.js';
 
 export function createStayCard(stay) {
   const tagMarkup = stay.tags.map((tag) => `<span class="tag">${tag}</span>`).join("");
+  // Only stays with their own dedicated page (detailUrl) are clickable —
+  // the rest don't have anywhere to link to yet, so the photo/title stay
+  // as plain (non-link) elements for those, same as before.
+  const photo = stay.detailUrl
+    ? `<a class="homestay-photo ${stay.imageClass}" href="${stay.detailUrl}" aria-label="View ${stay.name}"></a>`
+    : `<div class="homestay-photo ${stay.imageClass}" aria-hidden="true"></div>`;
+  const title = stay.detailUrl
+    ? `<h3><a href="${stay.detailUrl}">${stay.name}</a></h3>`
+    : `<h3>${stay.name}</h3>`;
   return `
     <article class="homestay-card" data-area="${stay.area}" data-type="${stay.type}" data-budget="${stay.budget}">
-      <div class="homestay-photo ${stay.imageClass}" aria-hidden="true"></div>
+      ${photo}
       <div class="card-body">
         <div class="card-topline">
           <span>${stay.area} / ${stay.type}</span>
           <span class="price"${stay.priceINR ? ` data-price-inr="${stay.priceINR}"` : ""}>${stay.price}</span>
         </div>
-        <h3>${stay.name}</h3>
+        ${title}
         <p>${stay.summary}</p>
         <div class="tag-row">${tagMarkup}</div>
         <div class="card-actions">

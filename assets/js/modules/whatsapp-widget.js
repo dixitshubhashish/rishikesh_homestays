@@ -3,9 +3,7 @@ import { validatePhone, validateDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 
-const AUTO_POPUP_DELAY_MS = 15000;
-const FAB_PULSE_DELAY_MS = 10000;
-const AUTO_POPUP_SESSION_KEY = 'whatsapp_auto_shown';
+const ATTENTION_DELAY_MS = 10000;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -68,11 +66,19 @@ export function setupWhatsAppWidget() {
     const backdrop = document.getElementById('whatsapp-backdrop');
     if (!popup) return;
     popup.hidden = false;
-    if (backdrop) backdrop.hidden = false;
+    // On desktop the page content shrinks to make room for the panel
+    // (body.whatsapp-drawer-open below) instead of being covered — it stays
+    // fully usable, so there's no dimmed backdrop and clicking elsewhere on
+    // the page doesn't dismiss it. On mobile the panel still covers the
+    // page, so the dimming + click-to-close backdrop stays.
+    if (isMobileDevice() && backdrop) backdrop.hidden = false;
     requestAnimationFrame(() => {
       popup.classList.add('is-open');
-      backdrop?.classList.add('is-open');
-      if (!isMobileDevice()) document.body.classList.add('whatsapp-drawer-open');
+      if (isMobileDevice()) {
+        backdrop?.classList.add('is-open');
+      } else {
+        document.body.classList.add('whatsapp-drawer-open');
+      }
     });
   }
 
@@ -89,7 +95,9 @@ export function setupWhatsAppWidget() {
     };
     popup.addEventListener('transitionend', onTransitionEnd, { once: true });
     // Fallback in case transitionend doesn't fire (e.g. reduced-motion).
-    setTimeout(onTransitionEnd, 350);
+    // Matches the 0.55s slide transition below, plus a small buffer — must
+    // not fire before it or the close animation gets cut off mid-slide.
+    setTimeout(onTransitionEnd, 600);
   }
 
   function isWidgetPopupOpen() {
@@ -286,11 +294,15 @@ export function setupWhatsAppWidget() {
     }
   }
 
-  // After a delay, draw attention to the widget once per browser session —
-  // but never if the visitor has already opened it themselves, and never in
-  // a way that blocks page content on mobile (auto-opening the full form
-  // there would be the kind of intrusive interstitial Google's mobile
-  // guidelines specifically discourage, and just feels spammy).
+  // After a delay, draw attention to the widget on this pageview — but never
+  // if the visitor has already opened it themselves, and never in a way that
+  // blocks page content on mobile (auto-opening the full form there would be
+  // the kind of intrusive interstitial Google's mobile guidelines
+  // specifically discourage, and just feels spammy). Intentionally no
+  // cross-reload/session flag here — each fresh page load gets its own timer
+  // rather than being silently suppressed by a flag left over from an
+  // earlier load in the same tab, which was confusing during testing and
+  // easy to mistake for a bug.
   let userOpenedWidget = false;
 
   // Loads flatpickr/libphonenumber (if not already present) and wires up
@@ -307,41 +319,23 @@ export function setupWhatsAppWidget() {
   }
 
   function setupAutoPopup() {
-    let alreadyShown = false;
-    try {
-      alreadyShown = sessionStorage.getItem(AUTO_POPUP_SESSION_KEY) === '1';
-    } catch {
-      // sessionStorage unavailable (privacy mode, etc.) — treat as not shown.
-    }
-    setTimeout(() => {
-      if (alreadyShown || userOpenedWidget || !isMobileDevice()) return;
-      const fab = document.getElementById('whatsapp-fab');
-      fab?.classList.add('whatsapp-fab-pulse');
-    }, FAB_PULSE_DELAY_MS);
-
-    if (alreadyShown) return;
-
-    // Claim the "shown" flag immediately, not inside the timeout callback.
-    // Each page navigation is a fresh script execution with its own timer —
-    // if the flag were only written once the timer *fires*, a visitor who
-    // browses to a new page before 20s elapses (very normal) would reset
-    // the clock, and the popup could pop up again on every single page they
-    // spend 20+ seconds on. Claiming the slot up front means it can only
-    // ever fire once per browser tab session, on whichever page happens to
-    // be open when the first 20-second window completes.
-    try {
-      sessionStorage.setItem(AUTO_POPUP_SESSION_KEY, '1');
-    } catch {
-      // Ignore — worst case it may show again next page load.
-    }
-
     setTimeout(() => {
       if (userOpenedWidget) return;
+
+      // Draw attention to every visible WhatsApp CTA on the page, not just
+      // the widget's own FAB, so a visitor scanning the page (not just the
+      // corner) notices it too. Same pulse animation/class as the FAB —
+      // shape comes from each button's own styling, this just layers the
+      // color-loop on top.
+      document.querySelectorAll('a.btn-whatsapp').forEach((btn) => {
+        btn.classList.add('whatsapp-fab-pulse');
+      });
 
       const fab = document.getElementById('whatsapp-fab');
       const nudge = document.getElementById('whatsapp-nudge');
 
       if (isMobileDevice()) {
+        fab?.classList.add('whatsapp-fab-pulse');
         // Small, dismissible nudge instead of forcing the form open.
         if (nudge) {
           nudge.hidden = false;
@@ -353,7 +347,7 @@ export function setupWhatsAppWidget() {
         activateForm();
         openWidgetPopup();
       }
-    }, AUTO_POPUP_DELAY_MS);
+    }, ATTENTION_DELAY_MS);
   }
 
   let checkinPicker = null;
@@ -423,6 +417,9 @@ export function setupWhatsAppWidget() {
     function hideNudge() {
       nudge.hidden = true;
       fab?.classList.remove('whatsapp-fab-pulse');
+      document.querySelectorAll('a.btn-whatsapp').forEach((btn) => {
+        btn.classList.remove('whatsapp-fab-pulse');
+      });
     }
 
     // Toggle popup
@@ -451,6 +448,7 @@ export function setupWhatsAppWidget() {
     closeBtn?.addEventListener('click', (e) => {
       e.preventDefault();
       userOpenedWidget = true;
+      hideNudge();
       closeWidgetPopup();
     });
 
@@ -458,6 +456,7 @@ export function setupWhatsAppWidget() {
     backdrop?.addEventListener('click', (e) => {
       e.preventDefault();
       userOpenedWidget = true;
+      hideNudge();
       closeWidgetPopup();
     });
 

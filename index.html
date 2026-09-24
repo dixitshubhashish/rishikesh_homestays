@@ -104,10 +104,6 @@
             Browse Homestays
           </a>
 
-          <a class="btn btn-secondary" href="/pages/contact" target="_blank" rel="noopener">
-            Get Stay Suggestions
-          </a>
-
           <a class="btn btn-whatsapp"
             href="https://wa.me/918050091290?text=Hi%20Rishikesh%20Homestays!%20I'd%20like%20to%20book%20a%20stay."
             target="_blank" rel="noopener">
@@ -134,6 +130,16 @@
         </div>
 
         <div class="field">
+          <label for="checkin">Check-in</label>
+          <input id="checkin" name="checkin" placeholder="Check-in date" autocomplete="off" readonly>
+        </div>
+
+        <div class="field">
+          <label for="checkout">Check-out</label>
+          <input id="checkout" name="checkout" placeholder="Check-out date" autocomplete="off" readonly>
+        </div>
+
+        <div class="field">
           <label for="travellers">Travellers</label>
           <select id="travellers" name="travellers">
             <option value="">Any group</option>
@@ -143,11 +149,6 @@
             <option>Friends</option>
             <option>Workation</option>
           </select>
-        </div>
-
-        <div class="field">
-          <label for="date">Arrival date</label>
-          <input id="date" name="date" placeholder="Select arrival date" autocomplete="off" readonly>
         </div>
 
         <button class="btn btn-primary" type="submit">
@@ -162,6 +163,7 @@
           <h2>Featured Homestays</h2>
           <p>Start with a few different stay styles, then narrow down by area, budget, and pace of travel.</p>
         </div>
+        <div class="notice-card"><strong>Stay 5+ days and save 15%</strong><span>Planning a longer Rishikesh trip? Ask us for the long-stay rate when you share your dates and group size.</span></div>
         <div class="card-grid" data-stay-grid data-limit="3"></div>
       </div>
     </section>

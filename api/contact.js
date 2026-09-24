@@ -88,153 +88,128 @@ export default async function handler(req, res) {
 
     console.log("✅ Data stored in BigQuery:", enquiryId);
 
-    // Send email via Resend with tabular format
+    // Send email via Resend. Wrapped in a branded header/footer (logo, brand
+    // colors) instead of a bare unstyled div, since this is a guest-facing
+    // moment too now (see the combined email below), not just an internal
+    // notice — a well-designed confirmation reads as more trustworthy than
+    // a plain data dump.
     const isHostApplication = data.source === 'host_application';
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">${isHostApplication ? 'New Homestay Listing Application' : 'New Rishikesh Homestay Enquiry'}</h2>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <tr style="background-color: #f5f5f5;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; width: 30%;">Name</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.name}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Phone</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.phone}</td>
-          </tr>
-          <tr style="background-color: #f5f5f5;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Email</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.email || 'Not provided'}${data.email ? (enquiryData.email_verified ? ' ✅ Verified' : ' (not verified)') : ''}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Check-in</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.check_in || 'Not specified'}</td>
-          </tr>
-          <tr style="background-color: #f5f5f5;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Check-out</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.check_out || 'Not specified'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Preferred Property</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.preferred_stay || 'Open to suggestions'}</td>
-          </tr>
-          <tr style="background-color: #f5f5f5;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Preferred Area</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.area || 'Not specified'}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Coming from (City)</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${data.coming_from_city || 'Not specified'}</td>
-          </tr>
-          <tr style="background-color: #f5f5f5;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Adults</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${adults}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Children</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${children}</td>
-          </tr>
-          <tr style="background-color: #f5f5f5;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Pets Type</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${petType}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Pet Count</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${petCount}</td>
-          </tr>
-          <tr style="background-color: #f5f5f5;">
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Trip Details</td>
-            <td style="padding: 12px; border: 1px solid #ddd; white-space: pre-wrap;">${data.details}</td>
-          </tr>
-          <tr>
-            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Submitted At</td>
-            <td style="padding: 12px; border: 1px solid #ddd;">${new Date().toLocaleString()}</td>
-          </tr>
-        </table>
-        <p style="color: #666; margin-top: 20px; font-size: 12px;">This enquiry has been logged in your database.</p>
-      </div>
-    `;
+    const contactEmail = process.env.CONTACT_EMAIL || 'hello@rishikeshhomestays.com';
+    const LOGO_URL = 'https://rishikeshhomestays.com/assets/images/logo.png';
+    const BRAND_DARK = '#0f2f2b';
+    const BRAND = '#14524a';
+    const BRAND_LIGHT = '#e7f1ef';
 
-    const emailResponse = await resend.emails.send({
-      from: 'noreply@rishikeshhomestays.com',
-      to: 'hello@rishikeshhomestays.com',
-      subject: isHostApplication
-        ? `New Listing Application from ${data.name} - Rishikesh Homestays`
-        : `New Enquiry from ${data.name} - Rishikesh Homestay`,
-      html: emailHtml
-    });
+    const row = (label, value) => `
+          <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #66726f; font-size: 13px; width: 40%; vertical-align: top;">${label}</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #17211f; font-size: 14px; font-weight: 600; vertical-align: top;">${value}</td>
+          </tr>`;
 
-    console.log("✅ Email sent via Resend:", emailResponse);
+    const detailsCardHtml = `
+        <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 22px 0; background: #fbfaf5; border: 1px solid #ded8ca; border-radius: 12px; padding: 4px 18px;">
+          ${row('Name', data.name)}
+          ${row('Phone', data.phone)}
+          ${row('Email', `${data.email || 'Not provided'}${data.email ? (enquiryData.email_verified ? ' ✅ Verified' : ' (not verified)') : ''}`)}
+          ${row('Check-in', data.check_in || 'Not specified')}
+          ${row('Check-out', data.check_out || 'Not specified')}
+          ${row('Preferred Property', data.preferred_stay || 'Open to suggestions')}
+          ${row('Preferred Area', data.area || 'Not specified')}
+          ${row('Coming from (City)', data.coming_from_city || 'Not specified')}
+          ${row('Guests', `${adults} adult(s), ${children} child(ren)`)}
+          ${row('Pets', petCount > 0 ? `${petType} (${petCount})` : 'None')}
+          ${row('Trip Details', `<span style="font-weight: 400; white-space: pre-wrap;">${data.details}</span>`)}
+          ${row('Submitted At', new Date().toLocaleString())}
+        </table>`;
 
-    // Send confirmation email if an email was provided. The List Your
-    // Homestay form (source: 'host_application') also collects an email,
-    // but it's a property owner applying to list, not a guest booking a
-    // stay — so it needs its own messaging, not "personalized recommendations".
-    if (data.email && data.source === 'host_application') {
-      const hostConfirmationHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Thanks for Applying to List Your Homestay!</h2>
-          <p>Hi ${data.name},</p>
-          <p>We've received your application to list your property with Rishikesh Homestays. Our team will review the details and reach out within 24 hours to confirm next steps — there's no listing fee.</p>
-          <p><strong>Your Submission Details:</strong></p>
-          <ul>
-            <li>Phone: ${data.phone}</li>
-            <li>Area: ${data.area || 'Not specified'}</li>
-            <li>Details: ${data.details.substring(0, 100)}...</li>
-          </ul>
-          <p>Questions in the meantime? Reach us directly:</p>
-          <p>
-            📱 +91 9027212484<br>
-            📱 +91 8050091290<br>
-            💬 <a href="https://wa.me/919027212484">WhatsApp us</a>
-          </p>
-          <p>Warm regards,<br><strong>Rishikesh Homestays Team</strong></p>
+    const whatsappCtaHtml = `
+        <table role="presentation" style="width: 100%; margin: 26px 0;"><tr><td align="center">
+          <a href="https://wa.me/919027212484" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 30px; border-radius: 999px;">💬 Chat with us on WhatsApp</a>
+        </td></tr></table>
+        <p style="text-align: center; color: #66726f; font-size: 13px; margin: 0 0 4px;">or call us directly</p>
+        <p style="text-align: center; color: #17211f; font-size: 14px; font-weight: 600; margin: 0;">+91 90272 12484 &nbsp;·&nbsp; +91 80500 91290</p>`;
+
+    // Shared header/footer chrome — every email from the site looks like it
+    // came from the same place, guest-facing or internal.
+    // A custom hand-drawn illustration would need a hosted image asset we
+    // don't have yet, and SVG is unreliable across email clients anyway —
+    // an emoji "skyline" motif gets the same hand-drawn, illustrated warmth
+    // cheaply, renders everywhere (Gmail, Outlook, Apple Mail alike), and
+    // needs no asset hosting or dark-mode handling.
+    const skylineHtml = `
+        <div style="text-align: center; font-size: 26px; letter-spacing: 6px; padding: 14px 0 2px; opacity: 0.9;">🏔️⛰️🛖🌊🛖⛰️🏔️</div>`;
+
+    const emailShell = (bodyHtml) => `
+      <div style="font-family: -apple-system, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #ede8dc;">
+        <div style="background: linear-gradient(135deg, ${BRAND} 0%, ${BRAND_DARK} 100%); padding: 28px 32px; text-align: center;">
+          <img src="${LOGO_URL}" width="84" height="84" alt="Rishikesh Homestays" style="border-radius: 50%; background: #fff; padding: 6px; display: inline-block;">
+          <div style="color: #fff; font-size: 19px; font-weight: 700; margin-top: 12px; letter-spacing: 0.02em;">Rishikesh Homestays</div>
+          <div style="color: #cfe8e2; font-size: 13px; font-weight: 600; margin-top: 4px;">You've found your Ganges getaway 🎉</div>
         </div>
-      `;
+        ${skylineHtml}
+        <div style="padding: 8px 32px 32px;">
+          ${bodyHtml}
+        </div>
+        <div style="background: ${BRAND_LIGHT}; padding: 18px 32px; text-align: center; color: #45534f; font-size: 12px;">
+          Handpicked homestays near the Ganges, Tapovan &amp; Triveni Ghat<br>
+          <a href="https://rishikeshhomestays.com" style="color: ${BRAND}; font-weight: 600; text-decoration: none;">rishikeshhomestays.com</a>
+        </div>
+      </div>`;
 
-      await resend.emails.send({
+    // A little personality + a reason to book direct rather than through an
+    // OTA — guest-facing only, since it's a booking pitch, not something an
+    // internal "new enquiry" alert needs.
+    const bookDirectApppealHtml = `
+        <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 22px 0; background: ${BRAND_LIGHT}; border-radius: 12px;"><tr><td style="padding: 18px 20px;">
+          <p style="margin: 0 0 6px; color: ${BRAND}; font-weight: 800; font-size: 14px;">🌤️ Psst — a little insider tip</p>
+          <p style="margin: 0; color: #314b47; font-size: 14px; line-height: 1.6;">Book directly with us (like you just did!) and there's no middleman fee baked into your price — plus you get a real human on WhatsApp who actually knows the ghats, the good chai stalls, and which room has the best sunrise view. Airbnb can't tell you that. 😉</p>
+        </td></tr></table>`;
+
+    if (data.email) {
+      // One shared thread instead of two disconnected emails: the guest is
+      // the primary recipient (so it reads as "your enquiry", not an
+      // internal notice) and we're CC'd on the same message, so replying
+      // all keeps guest and owner in the same conversation from message one.
+      const greetingHtml = `
+          <h1 style="color: ${BRAND}; font-size: 22px; margin: 0 0 6px;">${isHostApplication ? `Thanks, ${data.name}! Let's get your homestay listed 🏡` : `Thanks, ${data.name} — your Rishikesh trip is taking shape! 🌊`}</h1>
+          <p style="color: #45534f; font-size: 15px; line-height: 1.6; margin: 0 0 4px;">${isHostApplication
+            ? "We've received your application to list your property with us — there's no listing fee. Our team will review your details and reach out within 24 hours to confirm next steps."
+            : "We've got your enquiry and we're already matching it against our handpicked homestays. Expect personalized recommendations from our team within 24 hours — pack your sense of adventure (and maybe some flip-flops for the ghats) 🏔️"}</p>
+          ${detailsCardHtml}
+          ${isHostApplication ? '' : bookDirectApppealHtml}
+          ${whatsappCtaHtml}
+          <p style="color: #45534f; font-size: 14px; margin: 26px 0 0;">Warm regards,<br><strong style="color: #17211f;">Rishikesh Homestays Team</strong></p>`;
+
+      const emailResponse = await resend.emails.send({
         from: 'hello@rishikeshhomestays.com',
         to: data.email,
-        subject: 'Your Rishikesh Homestays listing application is received',
-        html: hostConfirmationHtml
+        cc: contactEmail,
+        subject: isHostApplication
+          ? 'Your Rishikesh Homestays listing application is received'
+          : 'We received your Rishikesh homestay enquiry!',
+        html: emailShell(greetingHtml)
       });
 
-      console.log("✅ Host application confirmation email sent");
-    } else if (data.email) {
-      const confirmationHtml = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Thank You! Your Enquiry is Received</h2>
-          <p>Hi ${data.name},</p>
-          <p>We've received your Rishikesh homestay enquiry. Our team will review your requirements and get back to you within 24 hours with personalized recommendations.</p>
-          <p><strong>Your Submission Details:</strong></p>
-          <ul>
-            <li>Phone: ${data.phone}</li>
-            ${data.check_in ? `<li>Check-in: ${data.check_in}</li>` : ''}
-            ${data.check_out ? `<li>Check-out: ${data.check_out}</li>` : ''}
-            <li>Preferred Area: ${data.area || 'Open to suggestions'}</li>
-            <li>Adults: ${adults}</li>
-            <li>Children: ${children}</li>
-            ${petType !== 'none' ? `<li>Pets: ${petType} (${petCount})</li>` : ''}
-            <li>Trip Details: ${data.details.substring(0, 100)}...</li>
-          </ul>
-          <p>In the meantime, feel free to call us directly:</p>
-          <p>
-            📱 +91 9027212484<br>
-            📱 +91 8050091290<br>
-            💬 <a href="https://wa.me/919027212484">WhatsApp us</a>
-          </p>
-          <p>Warm regards,<br><strong>Rishikesh Homestays Team</strong></p>
-        </div>
-      `;
+      console.log("✅ Combined guest+owner email sent via Resend:", emailResponse);
+    } else {
+      // No guest email to make the primary recipient — just notify us
+      // internally, same branded shell but framed as an internal alert.
+      const internalHtml = `
+          <h1 style="color: ${BRAND}; font-size: 20px; margin: 0 0 6px;">${isHostApplication ? 'New Homestay Listing Application' : 'New Rishikesh Homestay Enquiry'}</h1>
+          <p style="color: #66726f; font-size: 14px; margin: 0 0 4px;">No email on file for this guest — reach out by phone or WhatsApp.</p>
+          ${detailsCardHtml}
+          <p style="color: #66726f; font-size: 12px; margin-top: 20px;">This enquiry has been logged in your database.</p>`;
 
-      await resend.emails.send({
-        from: 'hello@rishikeshhomestays.com',
-        to: data.email,
-        subject: 'We received your Rishikesh homestay enquiry!',
-        html: confirmationHtml
+      const emailResponse = await resend.emails.send({
+        from: 'noreply@rishikeshhomestays.com',
+        to: contactEmail,
+        subject: isHostApplication
+          ? `New Listing Application from ${data.name} - Rishikesh Homestays`
+          : `New Enquiry from ${data.name} - Rishikesh Homestay`,
+        html: emailShell(internalHtml)
       });
 
-      console.log("✅ Confirmation email sent to guest");
+      console.log("✅ Email sent via Resend:", emailResponse);
     }
 
     return res.json({
