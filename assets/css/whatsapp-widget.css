@@ -193,13 +193,18 @@
   overflow: hidden;
   transform: translateX(100%);
   /* A slower, gentler ease-out so the panel reads as a deliberate slide. */
-  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 @media (min-width: 681px) {
+  /* Page width eases in and out with the drawer's slide (same duration and
+     curve), so the content gently makes room instead of snapping. */
+  body:not(.error-page) {
+    transition: padding-right 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+
   body.whatsapp-drawer-open:not(.error-page) {
     padding-right: min(400px, 32vw);
-    transition: padding-right 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .whatsapp-popup {
@@ -220,7 +225,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   opacity: 0;
-  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
   z-index: 998;
 }
 
@@ -234,8 +239,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .whatsapp-popup,
-  .whatsapp-backdrop {
-    transition: none;
+  .whatsapp-backdrop,
+  body {
+    transition: none !important;
   }
 }
 

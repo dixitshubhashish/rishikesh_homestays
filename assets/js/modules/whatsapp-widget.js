@@ -4,7 +4,13 @@ import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 
 const ATTENTION_DELAY_MS = 15000;
-const AUTO_POPUP_TIMEOUT_MS = 30000;
+// Desktop auto-opens the drawer at ATTENTION_DELAY_MS; if the visitor
+// doesn't engage it closes again after AUTO_OPEN_IDLE_MS. A drawer the
+// visitor opened themselves (any device) gets the longer MANUAL_OPEN_IDLE_MS.
+const AUTO_OPEN_IDLE_MS = 15000;
+const MANUAL_OPEN_IDLE_MS = 30000;
+const DESKTOP_PRE_OPEN_HINT_DELAY_MS = 3000;
+const DESKTOP_PRE_OPEN_HINT_TEXT = '💬 Planning a Rishikesh trip? I can help — tap me!';
 // The standalone "Book on WhatsApp" buttons run on their own timing (turn
 // black at 15s, then the CSS animation swaps color every 7s) — independent
 // of the FAB's own 15s auto-popup delay above, even though the numbers
@@ -73,7 +79,7 @@ export function setupWhatsAppWidget() {
   // the slide-out finishes (so it isn't still tabbable/visible-to-screen-
   // readers mid-transition). Centralized here since ~10 call sites across
   // this file all need to open/close the same way.
-  function openWidgetPopup() {
+  function openWidgetPopup(idleMs = MANUAL_OPEN_IDLE_MS) {
     const popup = document.getElementById('whatsapp-popup');
     const backdrop = document.getElementById('whatsapp-backdrop');
     if (!popup) return;
@@ -90,10 +96,8 @@ export function setupWhatsAppWidget() {
       }
     });
 
-    // Opened (by any means, on any device) but left untouched — close it
-    // back up rather than leaving it open indefinitely, and leave the same
-    // short "I can help again" hint a manual close shows, so it's clear
-    // where to reopen it.
+    // Left untouched after opening — close it back up and leave the
+    // "tap me anytime" hint by the icon so it's clear where to reopen it.
     if (idleCloseTimer) clearTimeout(idleCloseTimer);
     idleCloseTimer = setTimeout(() => {
       idleCloseTimer = null;
@@ -101,7 +105,7 @@ export function setupWhatsAppWidget() {
         closeWidgetPopup();
         showReturnHint();
       }
-    }, AUTO_POPUP_TIMEOUT_MS);
+    }, idleMs);
   }
 
   function closeWidgetPopup() {
@@ -121,9 +125,9 @@ export function setupWhatsAppWidget() {
     };
     popup.addEventListener('transitionend', onTransitionEnd, { once: true });
     // Fallback in case transitionend doesn't fire (e.g. reduced-motion).
-    // Matches the 0.9s slide transition below, plus a small buffer — must
-    // not fire before it or the close animation gets cut off mid-slide.
-    setTimeout(onTransitionEnd, 1000);
+    // Matches the 1.4s slide transition in whatsapp-widget.css, plus a small
+    // buffer — must not fire before it or the close gets cut off mid-slide.
+    setTimeout(onTransitionEnd, 1600);
   }
 
   function isWidgetPopupOpen() {
@@ -393,16 +397,30 @@ export function setupWhatsAppWidget() {
       });
     }, BTN_ATTENTION_DELAY_MS);
 
-    // Pulse the FAB and show a small dismissible nudge — on every device.
-    // This never forces the chat panel itself open: it used to auto-open
-    // the whole drawer on desktop, which meant an overlay forcing itself
-    // onto every single pageview.
+    const fab = document.getElementById('whatsapp-fab');
+    const nudge = document.getElementById('whatsapp-nudge');
+
+    // Desktop: hint by the icon right away, then open the drawer itself at
+    // 15s; it idles out after AUTO_OPEN_IDLE_MS unless the visitor engages.
+    if (!isMobileDevice()) {
+      setTimeout(() => {
+        if (userOpenedWidget || !nudge) return;
+        nudge.textContent = DESKTOP_PRE_OPEN_HINT_TEXT;
+        nudge.hidden = false;
+      }, DESKTOP_PRE_OPEN_HINT_DELAY_MS);
+
+      setTimeout(() => {
+        if (userOpenedWidget) return;
+        if (nudge) nudge.hidden = true;
+        activateForm();
+        openWidgetPopup(AUTO_OPEN_IDLE_MS);
+      }, ATTENTION_DELAY_MS);
+      return;
+    }
+
+    // Mobile: never open by itself — pulse the icon and show a short nudge.
     setTimeout(() => {
       if (userOpenedWidget) return;
-
-      const fab = document.getElementById('whatsapp-fab');
-      const nudge = document.getElementById('whatsapp-nudge');
-
       fab?.classList.add('whatsapp-fab-pulse');
       if (nudge) {
         nudge.hidden = false;

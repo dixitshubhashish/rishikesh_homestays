@@ -10,13 +10,16 @@ import { setupWhatsAppWidget } from '../../assets/js/modules/whatsapp-widget.js'
 // flashing forever at someone who's ignoring it.
 const BTN_ATTENTION_DELAY_MS = 15000;
 const BTN_ATTENTION_TIMEOUT_MS = 40000;
-const AUTO_POPUP_TIMEOUT_MS = 30000;
+const ATTENTION_DELAY_MS = 15000;
+const AUTO_OPEN_IDLE_MS = 15000;
+const MANUAL_OPEN_IDLE_MS = 30000;
+const RETURN_HINT_TIMEOUT_MS = 7000;
 
 // Builds a fresh page, waits for it to actually reach 'complete' (jsdom
 // dispatches DOMContentLoaded/load asynchronously, same as a real browser —
 // the widget module only self-injects once that fires), then enables fake
 // timers and boots the widget against it.
-async function setup(t) {
+async function setup(t, { mobile = false } = {}) {
   const dom = new JSDOM(`
     <body>
       <div class="hero-actions">
@@ -33,6 +36,16 @@ async function setup(t) {
   // setTimeout(0)-based stand-in drives the hint's fade-in and, once fake
   // timers are enabled, resolves deterministically under tick(0).
   global.requestAnimationFrame = (cb) => setTimeout(cb, 0);
+  // Node's `navigator` getter is configurable, so a mobile UA can be swapped
+  // in for the mobile-flow tests and restored afterwards.
+  const realNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  if (mobile) {
+    Object.defineProperty(globalThis, 'navigator', {
+      configurable: true,
+      value: { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)' }
+    });
+    t.after(() => Object.defineProperty(globalThis, 'navigator', realNavigator));
+  }
 
   // Real (unmocked) wait, on purpose — this settles jsdom's own readiness
   // timeline before we take over setTimeout for the widget's own delays.
@@ -126,61 +139,92 @@ test('WhatsApp "Book on WhatsApp" button attention effect', async (t) => {
     assert(!getHint(), 'opening the widget directly is real intent — no need for a hint');
   });
 
-  await t.test('never forces the chat panel open on its own', async (t) => {
-    await setup(t);
+  const nudge = () => document.getElementById('whatsapp-nudge');
+  const popup = () => document.getElementById('whatsapp-popup');
+  const click = (id) => document.getElementById(id).dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+  const typeName = () => {
+    const input = document.getElementById('whatsapp-name');
+    input.value = 'A';
+    input.dispatchEvent(new window.Event('input', { bubbles: true }));
+  };
 
-    t.mock.timers.tick(BTN_ATTENTION_DELAY_MS);
-    t.mock.timers.tick(AUTO_POPUP_TIMEOUT_MS);
-    const popup = document.getElementById('whatsapp-popup');
-    assert(popup.hidden, 'the panel should stay closed unless the visitor opens it');
-    assert(!document.body.classList.contains('whatsapp-drawer-open'));
-    assert(document.getElementById('whatsapp-fab').classList.contains('whatsapp-fab-pulse'), 'the FAB should pulse instead');
+  // ---- Laptop/desktop: hint first, auto-open at 15s, idle-close after 15s more ----
+
+  await t.test('desktop: shows a hint by the icon before the drawer opens', async (t) => {
+    await setup(t);
+    t.mock.timers.tick(ATTENTION_DELAY_MS - 1000);
+    assert(!nudge().hidden, 'a hint should be visible during the first 15s');
+    assert(popup().hidden, 'drawer should not be open yet');
   });
 
-  await t.test('auto-closes an opened-but-untouched panel after 30s and shows a hint', async (t) => {
+  await t.test('desktop: auto-opens the drawer at 15s', async (t) => {
     await setup(t);
-
-    document.getElementById('whatsapp-fab').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    t.mock.timers.tick(ATTENTION_DELAY_MS);
     t.mock.timers.tick(0);
-    const popup = document.getElementById('whatsapp-popup');
-    assert(popup.classList.contains('is-open'), 'clicking the FAB should open the panel');
-
-    t.mock.timers.tick(AUTO_POPUP_TIMEOUT_MS);
-    assert(!popup.classList.contains('is-open'), 'untouched panel should close after 30s');
-    const nudge = document.getElementById('whatsapp-nudge');
-    assert(!nudge.hidden, 'a hint should show after the idle close');
-    assert.match(nudge.textContent, /tap me anytime/i);
-
-    t.mock.timers.tick(7000);
-    assert(nudge.hidden, 'the hint should disappear after a few seconds');
+    assert(popup().classList.contains('is-open'), 'drawer should auto-open at 15s');
+    assert(document.body.classList.contains('whatsapp-drawer-open'), 'page should make room for it');
+    assert(nudge().hidden, 'the pre-open hint should go away once it opens');
   });
 
-  await t.test('keeps an opened panel open once the visitor starts filling it in', async (t) => {
+  await t.test('desktop: auto-opened drawer closes after 15s idle and shows a reopen hint', async (t) => {
     await setup(t);
-
-    document.getElementById('whatsapp-fab').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    t.mock.timers.tick(ATTENTION_DELAY_MS);
     t.mock.timers.tick(0);
-    const popup = document.getElementById('whatsapp-popup');
-    const nameInput = document.getElementById('whatsapp-name');
-    nameInput.value = 'A';
-    nameInput.dispatchEvent(new window.Event('input', { bubbles: true }));
-
-    t.mock.timers.tick(AUTO_POPUP_TIMEOUT_MS);
-    assert(popup.classList.contains('is-open'), 'engaged panel should remain open');
+    t.mock.timers.tick(AUTO_OPEN_IDLE_MS);
+    assert(!popup().classList.contains('is-open'), 'untouched drawer should close at 30s total');
+    assert(!nudge().hidden);
+    assert.match(nudge().textContent, /tap me anytime/i);
+    t.mock.timers.tick(RETURN_HINT_TIMEOUT_MS);
+    assert(nudge().hidden, 'reopen hint should disappear after a few seconds');
   });
 
-  await t.test('shows a temporary reopen hint after a visitor closes the drawer', async (t) => {
+  await t.test('desktop: auto-opened drawer stays open once the visitor starts typing', async (t) => {
     await setup(t);
-
-    document.getElementById('whatsapp-fab').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    t.mock.timers.tick(ATTENTION_DELAY_MS);
     t.mock.timers.tick(0);
-    document.getElementById('whatsapp-close').dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
+    typeName();
+    t.mock.timers.tick(AUTO_OPEN_IDLE_MS + MANUAL_OPEN_IDLE_MS);
+    assert(popup().classList.contains('is-open'), 'engaged drawer should remain open');
+  });
 
-    const nudge = document.getElementById('whatsapp-nudge');
-    assert(!nudge.hidden, 'reopen hint should appear after a manual close');
-    assert.match(nudge.textContent, /tap me anytime/i);
+  await t.test('desktop: manual close shows the reopen hint', async (t) => {
+    await setup(t);
+    t.mock.timers.tick(ATTENTION_DELAY_MS);
+    t.mock.timers.tick(0);
+    click('whatsapp-close');
+    assert(!nudge().hidden, 'reopen hint should appear after a manual close');
+    assert.match(nudge().textContent, /tap me anytime/i);
+    t.mock.timers.tick(RETURN_HINT_TIMEOUT_MS);
+    assert(nudge().hidden);
+  });
 
-    t.mock.timers.tick(7000);
-    assert(nudge.hidden, 'reopen hint should disappear after a few seconds');
+  // ---- Mobile: hints only; opens on tap; idle-close with reopen hint ----
+
+  await t.test('mobile: never opens by itself, only pulses and hints', async (t) => {
+    await setup(t, { mobile: true });
+    t.mock.timers.tick(ATTENTION_DELAY_MS);
+    t.mock.timers.tick(MANUAL_OPEN_IDLE_MS);
+    assert(popup().hidden, 'drawer must stay closed on mobile until tapped');
+    assert(document.getElementById('whatsapp-fab').classList.contains('whatsapp-fab-pulse'));
+  });
+
+  await t.test('mobile: tapped-open drawer closes after idle and shows a reopen hint', async (t) => {
+    await setup(t, { mobile: true });
+    click('whatsapp-fab');
+    t.mock.timers.tick(0);
+    assert(popup().classList.contains('is-open'), 'tapping the icon should open it');
+    t.mock.timers.tick(MANUAL_OPEN_IDLE_MS);
+    assert(!popup().classList.contains('is-open'), 'untouched drawer should close');
+    assert(!nudge().hidden);
+    assert.match(nudge().textContent, /tap me anytime/i);
+  });
+
+  await t.test('mobile: tapped-open drawer stays open once the visitor starts typing', async (t) => {
+    await setup(t, { mobile: true });
+    click('whatsapp-fab');
+    t.mock.timers.tick(0);
+    typeName();
+    t.mock.timers.tick(MANUAL_OPEN_IDLE_MS);
+    assert(popup().classList.contains('is-open'));
   });
 });
