@@ -42,7 +42,7 @@
         z-index: 1;
         pointer-events: none;
         background:
-          linear-gradient(0deg, #081a18 0%, rgba(8, 26, 24, 0.92) 5%, rgba(8, 26, 24, 0.38) 14%, transparent 27%);}
+          linear-gradient(0deg, #173a35 0%, rgba(23, 58, 53, 0.92) 5%, rgba(23, 58, 53, 0.38) 14%, transparent 27%);}
       @keyframes error-scene-drift {
         from { transform: scale(1.01) translate3d(-0.3%, 0, 0); }
         to { transform: scale(1.045) translate3d(0.5%, -0.4%, 0); }}
@@ -464,6 +464,32 @@
         width: 18px;
         height: 18px;
         color: var(--river);}
+      /* Size the hero from the width it actually has, not the viewport — the
+         WhatsApp sidebar shrinks the page by up to 400px on desktop, and a
+         viewport-based height then forces the 16:9 photo to crop its sides
+         (losing the traveller and the 404 signpost). */
+      .error-page main { container-type: inline-size; }
+      /* The photo stays exactly 16:9 so it is never cropped; the hero grows
+         to fit the text, and any extra height below the photo blends into
+         its bottom fade (same #173a35 as the text panel). */
+      .error-stage { height: auto; }
+      .error-art {
+        height: auto;
+        aspect-ratio: 16 / 9;
+        align-self: start;}
+      /* Too narrow for photo + text side by side without cropping the
+         photo: keep the photo whole at 16:9 and put the text under it. */
+      @container (max-width: 1300px) {
+        .error-stage {
+          height: auto;
+          grid-template-columns: minmax(0, 1fr);}
+        .error-art {
+          height: auto;
+          aspect-ratio: 16 / 9;}
+        .error-stage-inner {
+          padding: 36px clamp(24px, 5cqw, 56px);}
+        .error-content { max-width: 720px; }
+      }
       @media (max-width: 760px) {
         .error-stage {
           height: auto;

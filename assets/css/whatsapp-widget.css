@@ -199,11 +199,11 @@
 @media (min-width: 681px) {
   /* Page width eases in and out with the drawer's slide (same duration and
      curve), so the content gently makes room instead of snapping. */
-  body:not(.error-page) {
+  body {
     transition: padding-right 1.4s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
 
-  body.whatsapp-drawer-open:not(.error-page) {
+  body.whatsapp-drawer-open {
     padding-right: min(400px, 32vw);
   }
 
