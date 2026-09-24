@@ -418,27 +418,28 @@
         font-family: Georgia, "Times New Roman", serif;
         transform: rotate(6deg) translateY(9px);}
       .error-code span:nth-child(3) { transform: rotate(-3deg) translateY(-1px); }
+      /* One line, zig-zagging: each part sits a little higher or lower and
+         tilts the opposite way to its neighbour. Wraps only if it has to. */
       .error-title {
-        max-width: 590px;
-        margin: 0 0 14px;
+        margin: 0 0 18px;
+        padding: 0.18em 0;
         color: #fff;
-        font-size: clamp(2.25rem, 3vw, 3.35rem);
-        line-height: 1.02;}
+        font-size: clamp(1.7rem, 2.3cqw, 2.9rem);
+        line-height: 1.25;}
       .error-title span {
-        display: block;
-        width: fit-content;
+        display: inline-block;
+        margin-right: 0.22em;
         text-shadow: 0 4px 18px rgba(5, 20, 18, 0.32);}
       .error-title span:nth-child(1) {
-        transform: rotate(-1.7deg);}
+        transform: translateY(-0.16em) rotate(-2.5deg);}
       .error-title span:nth-child(2) {
-        margin-left: 28px;
         color: #ffd286;
         font-family: Georgia, "Times New Roman", serif;
         font-style: italic;
-        transform: rotate(1.5deg) translateY(2px);}
+        transform: translateY(0.2em) rotate(2.5deg);}
       .error-title span:nth-child(3) {
-        margin-left: 10px;
-        transform: rotate(-0.8deg);}
+        margin-right: 0;
+        transform: translateY(-0.14em) rotate(-2deg);}
       .error-copy {
         max-width: 545px;
         margin: 0 0 12px;
@@ -611,7 +612,8 @@
           left: 64%;}
         .error-stage-inner {
           padding: 36px clamp(24px, 5cqw, 56px);}
-        .error-content { max-width: 720px; }
+        .error-content { max-width: none; }
+        .error-content > :not(.error-title) { max-width: 720px; }
       }
       /* Same stacked layout, switched on by the script at the bottom when
          the text beside the photo would be taller than the photo itself
@@ -642,7 +644,8 @@
           left: 64%;}
         .error-stage.is-stacked .error-stage-inner {
           padding: 36px clamp(24px, 5cqw, 56px);}
-        .error-stage.is-stacked .error-content { max-width: 720px; }
+        .error-stage.is-stacked .error-content { max-width: none; }
+        .error-stage.is-stacked .error-content > :not(.error-title) { max-width: 720px; }
       @media (max-width: 760px) {
         .error-art picture { display: block; }
         .error-stage-image-wide { display: none; }
@@ -690,9 +693,7 @@
           gap: 4px 8px;}
         .error-code {
           min-height: 82px;}
-        .error-title { font-size: clamp(2.05rem, 11vw, 3rem); }
-        .error-title span:nth-child(2) { margin-left: 16px; }
-        .error-title span:nth-child(3) { margin-left: 4px; }
+        .error-title { font-size: clamp(1.7rem, 8vw, 2.4rem); }
         .error-copy { font-size: 0.98rem; }
         .error-actions .btn { flex: 1 1 160px; }
         .error-recovery { padding: 40px 0; }
