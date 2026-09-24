@@ -1037,30 +1037,25 @@ a.homestay-photo:hover {
 .restaurants-guide .info-card {
   overflow: hidden;
   padding: 0;}
-.restaurants-guide .info-card::before {
+.restaurants-guide .food-style-grid .info-card::before {
   content: "";
   display: block;
   height: 150px;
   background: center / cover no-repeat;}
-.restaurants-guide .info-grid:first-of-type .info-card:nth-child(1)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(1)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(2)::before {
+.restaurants-guide .food-style-grid .info-card:nth-child(1)::before {
   background-image: url("../images/things-to-do/food-theme-1.webp");}
-.restaurants-guide .info-grid:first-of-type .info-card:nth-child(2)::before,
-.restaurants-guide .info-grid:first-of-type .info-card:nth-child(4)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(3)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(4)::before {
+.restaurants-guide .food-style-grid .info-card:nth-child(2)::before,
+.restaurants-guide .food-style-grid .info-card:nth-child(4)::before {
   background-image: url("../images/things-to-do/food-theme-4.webp");}
-.restaurants-guide .info-grid:first-of-type .info-card:nth-child(3)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(5)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(6)::before {
+.restaurants-guide .food-style-grid .info-card:nth-child(3)::before {
   background-image: url("../images/things-to-do/food-theme-2.webp");}
-.restaurants-guide .info-grid:first-of-type .info-card:nth-child(5)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(7)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(8)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(9)::before,
-.restaurants-guide .info-grid:last-of-type .info-card:nth-child(10)::before {
+.restaurants-guide .food-style-grid .info-card:nth-child(5)::before {
   background-image: url("../images/things-to-do/food-theme-3.webp");}
+.restaurants-guide .venue-card > img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;}
 .restaurants-guide .info-card h3,
 .restaurants-guide .info-card p {
   margin-left: 24px;

@@ -25,6 +25,7 @@ The following editorial illustrations were generated for this site and do not re
 - `bharat-mandir-refined.webp` — Bharat Mandir temple entrance
 - `rishikesh-food-themes.webp` — AI-generated editorial food-theme image for the Restaurants & Cafes tab
 - `food-theme-1.webp` through `food-theme-4.webp` — AI-generated editorial food-theme crops for restaurant and cafe cards
+- `rajaji-national-park-safari.webp` — AI-edited editorial view based on the credited Rajaji National Park landscape, adding a Chilla-style safari jeep, Asian elephants, and spotted deer
 | `sivananda-ashram.webp` | Sivananda Ashram | Fred Hsu | CC BY 2.0 | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Ashrams_on_the_banks_of_Ganges,_Rishikesh.jpg) |
 | `patna-waterfall.webp` | Patna Waterfalls | Ravi Dwivedi | CC BY-SA 4.0 | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Patna_Waterfalls,_Rishikesh,_India.jpg) |
 | `tera-manzil-temple.webp` | Tera Manzil / Trayambakeshwar Temple | Mrnikkkhil | CC BY-SA 4.0 | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Trayambakeshwar_Rishikesh.jpg) |
