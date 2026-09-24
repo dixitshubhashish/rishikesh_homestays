@@ -23,17 +23,17 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Restaurants & Cafes was merged into Places to Visit as an in-page tab —
 // redirect both its old clean and .html URLs to the new location.
 app.get(['/pages/restaurants-cafes', '/pages/restaurants-cafes.html'], (req, res) => {
-  res.redirect(301, '/pages/places-to-visit#restaurants');
+  res.redirect(301, '/places-to-visit#restaurants');
 });
 
 // Things to Do was renamed to Things to Do in Rishikesh.
 app.get(['/pages/things-to-do', '/pages/things-to-do.html'], (req, res) => {
-  res.redirect(301, '/pages/things-to-do-in-rishikesh');
+  res.redirect(301, '/things-to-do-in-rishikesh');
 });
 
 // Kedarnath & Garhwal was renamed from gateway-to-kedarnath to kedarnath-yatra.
 app.get(['/pages/gateway-to-kedarnath', '/pages/gateway-to-kedarnath.html'], (req, res) => {
-  res.redirect(301, '/pages/kedarnath-yatra');
+  res.redirect(301, '/kedarnath-yatra');
 });
 
 // Individual property listing pages live under /hotels/, not /pages/ — this
@@ -42,9 +42,19 @@ app.get(['/pages/advaitam-ganga-hill-view-luxury-3bhk', '/pages/advaitam-ganga-h
   res.redirect(301, '/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh');
 });
 
+// The `pages/` folder is just where these files live on disk — the URL
+// itself dropped the `/pages/` segment (e.g. /pages/contact -> /contact).
+// Catch any remaining old-style `/pages/<slug>` or `/pages/<slug>.html`
+// request (bookmarks, indexed links, anything not already handled by a
+// rename redirect above) and send it straight to the new canonical URL.
+app.get(/^\/pages\/([a-z0-9-]+)(?:\.html)?$/, (req, res) => {
+  const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  res.redirect(301, '/' + req.params[0] + query);
+});
+
 // Redirect old-style .html URLs to their clean equivalent (e.g.
-// /pages/contact.html -> /pages/contact) so there's a single canonical URL
-// and any bookmarked/indexed .html links still work.
+// /about-rishikesh.html -> /about-rishikesh) so there's a single canonical
+// URL and any bookmarked/indexed .html links still work.
 app.use((req, res, next) => {
   if (req.path.endsWith('.html')) {
     const query = req.originalUrl.slice(req.path.length);
@@ -56,13 +66,19 @@ app.use((req, res, next) => {
 });
 
 // Serve clean URLs (no extension) by mapping them to the matching .html
-// file on disk, e.g. /pages/contact -> pages/contact.html.
+// file on disk — first at the root (e.g. /thanks -> thanks.html, if one
+// ever lives there), then inside pages/ (e.g. /contact -> pages/contact.html),
+// since every guide/content page's URL no longer carries its folder name.
 app.use((req, res, next) => {
   if (req.path !== '/' && !path.extname(req.path)) {
-    const htmlPath = path.join(__dirname, req.path + '.html');
-    fs.stat(htmlPath, (err, stats) => {
-      if (!err && stats.isFile()) return res.sendFile(htmlPath);
-      next();
+    const rootHtmlPath = path.join(__dirname, req.path + '.html');
+    const pagesHtmlPath = path.join(__dirname, 'pages', req.path + '.html');
+    fs.stat(rootHtmlPath, (err, stats) => {
+      if (!err && stats.isFile()) return res.sendFile(rootHtmlPath);
+      fs.stat(pagesHtmlPath, (err2, stats2) => {
+        if (!err2 && stats2.isFile()) return res.sendFile(pagesHtmlPath);
+        next();
+      });
     });
   } else {
     next();

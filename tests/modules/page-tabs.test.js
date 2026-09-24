@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { JSDOM } from 'jsdom';
 import { setupPageTabs } from '../../assets/js/modules/page-tabs.js';
 
-function buildDom(url = 'http://localhost/pages/places-to-visit') {
+function buildDom(url = 'http://localhost/places-to-visit') {
   const dom = new JSDOM(`
     <div class="page-tabs">
       <button data-tab-target="places">Places to Visit</button>
@@ -32,7 +32,7 @@ test('setupPageTabs', async (t) => {
   });
 
   await t.test('honours a valid URL hash on load (deep link)', () => {
-    buildDom('http://localhost/pages/places-to-visit#restaurants');
+    buildDom('http://localhost/places-to-visit#restaurants');
     setupPageTabs();
     assert.strictEqual(document.querySelector('[data-tab-panel="restaurants"]').hidden, false);
     assert.strictEqual(document.querySelector('[data-tab-panel="places"]').hidden, true);
@@ -40,7 +40,7 @@ test('setupPageTabs', async (t) => {
   });
 
   await t.test('falls back to the first tab for an unrecognised hash', () => {
-    buildDom('http://localhost/pages/places-to-visit#nonsense');
+    buildDom('http://localhost/places-to-visit#nonsense');
     setupPageTabs();
     assert.strictEqual(document.querySelector('[data-tab-panel="places"]').hidden, false);
   });
@@ -56,7 +56,7 @@ test('setupPageTabs', async (t) => {
   });
 
   await t.test('does nothing when the page has no tab buttons', () => {
-    const dom = new JSDOM('<p>No tabs here</p>', { url: 'http://localhost/pages/contact' });
+    const dom = new JSDOM('<p>No tabs here</p>', { url: 'http://localhost/contact' });
     global.document = dom.window.document;
     global.window = dom.window;
     assert.doesNotThrow(() => setupPageTabs());

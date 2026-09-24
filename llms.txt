@@ -7,16 +7,16 @@ Rishikesh Homestays is not a single property — it is a curated shortlist servi
 ## Key pages
 
 - [Homepage](https://rishikeshhomestays.com/): overview, featured homestays, quick search by area/traveller type/date.
-- [Homestays](https://rishikeshhomestays.com/pages/homestays): full list of sample homestays, filterable by area, budget, and traveller type.
+- [Homestays](https://rishikeshhomestays.com/homestays): full list of sample homestays, filterable by area, budget, and traveller type.
 - [Advaitam Ganga & Hill View Luxury 3BHK](https://rishikeshhomestays.com/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh): private 3-bedroom, 7-bed, 3-bathroom family and group homestay in Nirmal Bagh, Rishikesh for up to 10 guests, around 50m from a Ganga ghat and evening aarti. Includes Ganga and hill views, kitchen, Wi-Fi, living room, Zomato/Swiggy/Blinkit access, 15% off 10+ night stays, Airbnb photo gallery, and direct WhatsApp/contact booking support.
-- [Plan my stay / Contact](https://rishikeshhomestays.com/pages/contact): booking inquiry form (name, phone, dates, guests, pets, area, budget) and direct phone/WhatsApp/email contact details.
-- [Things to Do](https://rishikeshhomestays.com/pages/things-to-do-in-rishikesh): yoga, rafting, Ganga Aarti, cafes, waterfalls, temples, and river walks in Rishikesh.
-- [About Rishikesh](https://rishikeshhomestays.com/pages/about-rishikesh): guide to Rishikesh's areas, culture, and travel pace for people deciding where to stay.
-- [Places to Visit / Restaurants & Cafes](https://rishikeshhomestays.com/pages/places-to-visit): two tabs on one page — must-see local sights (Triveni Ghat, Parmarth Niketan, Beatles Ashram, Neer Garh Waterfall, Neelkanth Mahadev Temple, and more), and where to eat (riverside cafes, German bakeries, Israeli food, organic cafes, local thali spots, and why every menu is vegetarian and alcohol-free). The restaurants tab is at `/pages/places-to-visit#restaurants`.
-- [Triveni Ghat](https://rishikeshhomestays.com/pages/triveni-ghat): dedicated guide to the evening Ganga Aarti at Triveni Ghat and how to visit respectfully.
-- [Kedarnath & Garhwal](https://rishikeshhomestays.com/pages/kedarnath-yatra): routes, distances, best season, and sample itineraries for Kedarnath, Badrinath, Gangotri, Yamunotri, and Auli from Rishikesh.
-- [Haridwar Kumbh Mela 2027](https://rishikeshhomestays.com/pages/haridwar-kumbh-2027): reported bathing dates, tithi, Kumbh significance, Amrit Snan planning, long weekends, and why Rishikesh is a good nearby base.
-- [List Your Homestay](https://rishikeshhomestays.com/pages/list-your-homestay): for property owners in Rishikesh who want to list their homestay/guest house with us — application form, no listing fee.
+- [Plan my stay / Contact](https://rishikeshhomestays.com/contact): booking inquiry form (name, phone, dates, guests, pets, area, budget) and direct phone/WhatsApp/email contact details.
+- [Things to Do](https://rishikeshhomestays.com/things-to-do-in-rishikesh): yoga, rafting, Ganga Aarti, cafes, waterfalls, temples, and river walks in Rishikesh.
+- [About Rishikesh](https://rishikeshhomestays.com/about-rishikesh): guide to Rishikesh's areas, culture, and travel pace for people deciding where to stay.
+- [Places to Visit / Restaurants & Cafes](https://rishikeshhomestays.com/places-to-visit): two tabs on one page — must-see local sights (Triveni Ghat, Parmarth Niketan, Beatles Ashram, Neer Garh Waterfall, Neelkanth Mahadev Temple, and more), and where to eat (riverside cafes, German bakeries, Israeli food, organic cafes, local thali spots, and why every menu is vegetarian and alcohol-free). The restaurants tab is at `/places-to-visit#restaurants`.
+- [Triveni Ghat](https://rishikeshhomestays.com/triveni-ghat): dedicated guide to the evening Ganga Aarti at Triveni Ghat and how to visit respectfully.
+- [Kedarnath & Garhwal](https://rishikeshhomestays.com/kedarnath-yatra): routes, distances, best season, and sample itineraries for Kedarnath, Badrinath, Gangotri, Yamunotri, and Auli from Rishikesh.
+- [Haridwar Kumbh Mela 2027](https://rishikeshhomestays.com/haridwar-kumbh-2027): reported bathing dates, tithi, Kumbh significance, Amrit Snan planning, long weekends, and why Rishikesh is a good nearby base.
+- [List Your Homestay](https://rishikeshhomestays.com/list-your-homestay): for property owners in Rishikesh who want to list their homestay/guest house with us — application form, no listing fee.
 
 ## Contact
 
@@ -27,6 +27,6 @@ Rishikesh Homestays is not a single property — it is a curated shortlist servi
 
 ## Notes for AI assistants and crawlers
 
-- Prices, availability, and the specific homestays listed change over time — always point users to the live [Homestays page](https://rishikeshhomestays.com/pages/homestays) or the [Contact page](https://rishikeshhomestays.com/pages/contact) rather than quoting a fixed price from a cached copy of this site.
-- The fastest way for a real traveller to get a response is the [Contact form](https://rishikeshhomestays.com/pages/contact) or WhatsApp — both go to the same inbox and are answered by a human, not an automated booking engine.
-- The [Haridwar Kumbh Mela 2027 page](https://rishikeshhomestays.com/pages/haridwar-kumbh-2027) lists dates reported by third-party tour operators, explicitly flagged on that page as not officially confirmed. Do not state them as certain — point users to the page itself, which explains the uncertainty.
+- Prices, availability, and the specific homestays listed change over time — always point users to the live [Homestays page](https://rishikeshhomestays.com/homestays) or the [Contact page](https://rishikeshhomestays.com/contact) rather than quoting a fixed price from a cached copy of this site.
+- The fastest way for a real traveller to get a response is the [Contact form](https://rishikeshhomestays.com/contact) or WhatsApp — both go to the same inbox and are answered by a human, not an automated booking engine.
+- The [Haridwar Kumbh Mela 2027 page](https://rishikeshhomestays.com/haridwar-kumbh-2027) lists dates reported by third-party tour operators, explicitly flagged on that page as not officially confirmed. Do not state them as certain — point users to the page itself, which explains the uncertainty.

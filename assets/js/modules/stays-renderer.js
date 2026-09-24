@@ -26,8 +26,8 @@ export function createStayCard(stay) {
         <p>${stay.summary}</p>
         <div class="tag-row">${tagMarkup}</div>
         <div class="card-actions">
-          <a class="btn btn-primary" href="/pages/contact?stay=${encodeURIComponent(stay.name)}">Send enquiry</a>
-          <a class="btn btn-secondary" href="/pages/homestays">Compare stays</a>
+          <a class="btn btn-primary" href="/contact?stay=${encodeURIComponent(stay.name)}">Send enquiry</a>
+          <a class="btn btn-secondary" href="/homestays">Compare stays</a>
         </div>
       </div>
     </article>

@@ -2,20 +2,31 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/pages/restaurants-cafes.html", "destination": "/pages/places-to-visit#restaurants", "permanent": true },
-    { "source": "/pages/restaurants-cafes", "destination": "/pages/places-to-visit#restaurants", "permanent": true },
-    { "source": "/pages/things-to-do.html", "destination": "/pages/things-to-do-in-rishikesh", "permanent": true },
-    { "source": "/pages/things-to-do", "destination": "/pages/things-to-do-in-rishikesh", "permanent": true },
-    { "source": "/pages/haridwar-kumbh-2027.html", "destination": "/pages/haridwar-kumbh-2027", "permanent": true },
-    { "source": "/pages/gateway-to-kedarnath.html", "destination": "/pages/kedarnath-yatra", "permanent": true },
-    { "source": "/pages/gateway-to-kedarnath", "destination": "/pages/kedarnath-yatra", "permanent": true },
+    { "source": "/pages/restaurants-cafes.html", "destination": "/places-to-visit#restaurants", "permanent": true },
+    { "source": "/pages/restaurants-cafes", "destination": "/places-to-visit#restaurants", "permanent": true },
+    { "source": "/pages/things-to-do.html", "destination": "/things-to-do-in-rishikesh", "permanent": true },
+    { "source": "/pages/things-to-do", "destination": "/things-to-do-in-rishikesh", "permanent": true },
+    { "source": "/pages/gateway-to-kedarnath.html", "destination": "/kedarnath-yatra", "permanent": true },
+    { "source": "/pages/gateway-to-kedarnath", "destination": "/kedarnath-yatra", "permanent": true },
     { "source": "/pages/advaitam-ganga-hill-view-luxury-3bhk.html", "destination": "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh", "permanent": true },
     { "source": "/pages/advaitam-ganga-hill-view-luxury-3bhk", "destination": "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh", "permanent": true },
-    { "source": "/about", "destination": "/pages/about-rishikesh", "permanent": false },
-    { "source": "/homestays", "destination": "/pages/homestays", "permanent": false },
-    { "source": "/things-to-do", "destination": "/pages/things-to-do-in-rishikesh", "permanent": false },
-    { "source": "/triveni-ghat", "destination": "/pages/triveni-ghat", "permanent": false },
-    { "source": "/places", "destination": "/pages/places-to-visit", "permanent": false },
-    { "source": "/contact", "destination": "/pages/contact", "permanent": false }
+
+    { "source": "/pages/:slug.html", "destination": "/:slug", "permanent": true },
+    { "source": "/pages/:slug", "destination": "/:slug", "permanent": true },
+
+    { "source": "/about", "destination": "/about-rishikesh", "permanent": false },
+    { "source": "/places", "destination": "/places-to-visit", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/about-rishikesh", "destination": "/pages/about-rishikesh.html" },
+    { "source": "/contact", "destination": "/pages/contact.html" },
+    { "source": "/haridwar-kumbh-2027", "destination": "/pages/haridwar-kumbh-2027.html" },
+    { "source": "/homestays", "destination": "/pages/homestays.html" },
+    { "source": "/kedarnath-yatra", "destination": "/pages/kedarnath-yatra.html" },
+    { "source": "/list-your-homestay", "destination": "/pages/list-your-homestay.html" },
+    { "source": "/places-to-visit", "destination": "/pages/places-to-visit.html" },
+    { "source": "/thanks", "destination": "/pages/thanks.html" },
+    { "source": "/things-to-do-in-rishikesh", "destination": "/pages/things-to-do-in-rishikesh.html" },
+    { "source": "/triveni-ghat", "destination": "/pages/triveni-ghat.html" }
   ]
 }

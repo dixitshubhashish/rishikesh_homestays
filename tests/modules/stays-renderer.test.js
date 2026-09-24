@@ -51,7 +51,7 @@ test('Stays Renderer Module Tests', async (t) => {
   await t.test('createStayCard - should include enquiry button', () => {
     const html = createStayCard(mockStay);
     assert(html.includes('Send enquiry'), 'HTML should include enquiry button');
-    assert(html.includes('/pages/contact?'), 'Should link to contact page');
+    assert(html.includes('/contact?'), 'Should link to contact page');
   });
 
   await t.test('createStayCard - should URL-encode stay name in enquiry link', () => {
@@ -62,7 +62,7 @@ test('Stays Renderer Module Tests', async (t) => {
   await t.test('createStayCard - should include compare button', () => {
     const html = createStayCard(mockStay);
     assert(html.includes('Compare stays'), 'HTML should include compare button');
-    assert(html.includes('/pages/homestays'), 'Should link to homestays page');
+    assert(html.includes('/homestays'), 'Should link to homestays page');
   });
 
   await t.test('createStayCard - should set data attributes for filtering', () => {

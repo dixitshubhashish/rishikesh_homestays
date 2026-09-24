@@ -1,48 +1,63 @@
-# Redirect old .html URLs to their clean equivalent — keeps a single
-# canonical URL and makes sure bookmarked/indexed .html links still work.
-/pages/about-rishikesh.html /pages/about-rishikesh 301
-/pages/contact.html /pages/contact 301
-/pages/homestays.html /pages/homestays 301
-/pages/triveni-ghat.html /pages/triveni-ghat 301
-/pages/places-to-visit.html /pages/places-to-visit 301
-/pages/thanks.html /pages/thanks 301
-/pages/kedarnath-yatra.html /pages/kedarnath-yatra 301
-/pages/list-your-homestay.html /pages/list-your-homestay 301
+# The pages/ folder is just where these files live on disk — canonical URLs
+# dropped the /pages/ segment (e.g. /pages/contact -> /contact).
+
 /index.html / 301
 
 # Restaurants & Cafes was merged into Places to Visit as an in-page tab —
 # redirect both the old .html and clean URL to the new location.
-/pages/restaurants-cafes.html /pages/places-to-visit#restaurants 301
-/pages/restaurants-cafes /pages/places-to-visit#restaurants 301
+/pages/restaurants-cafes.html /places-to-visit#restaurants 301
+/pages/restaurants-cafes /places-to-visit#restaurants 301
 
 # Things to Do was renamed to Things to Do in Rishikesh — redirect every old
 # form (clean and .html) straight to the new clean URL.
-/pages/things-to-do.html /pages/things-to-do-in-rishikesh 301
-/pages/things-to-do /pages/things-to-do-in-rishikesh 301
+/pages/things-to-do.html /things-to-do-in-rishikesh 301
+/pages/things-to-do /things-to-do-in-rishikesh 301
 
 # Kedarnath & Garhwal was renamed from gateway-to-kedarnath to kedarnath-yatra.
-/pages/gateway-to-kedarnath.html /pages/kedarnath-yatra 301
-/pages/gateway-to-kedarnath /pages/kedarnath-yatra 301
+/pages/gateway-to-kedarnath.html /kedarnath-yatra 301
+/pages/gateway-to-kedarnath /kedarnath-yatra 301
 
-# Serve the actual .html file for each clean URL, so the browser's address
-# bar never shows the .html extension.
-/pages/about-rishikesh /pages/about-rishikesh.html 200
-/pages/contact /pages/contact.html 200
-/pages/homestays /pages/homestays.html 200
-/pages/things-to-do-in-rishikesh /pages/things-to-do-in-rishikesh.html 200
-/pages/triveni-ghat /pages/triveni-ghat.html 200
-/pages/places-to-visit /pages/places-to-visit.html 200
-/pages/thanks /pages/thanks.html 200
-/pages/kedarnath-yatra /pages/kedarnath-yatra.html 200
-/pages/list-your-homestay /pages/list-your-homestay.html 200
-/pages/haridwar-kumbh-2027.html /pages/haridwar-kumbh-2027 301
-/pages/haridwar-kumbh-2027 /pages/haridwar-kumbh-2027.html 200
+# Individual property listing pages live under /hotels/, not /pages/ — this
+# one briefly existed at the /pages/ path before moving.
+/pages/advaitam-ganga-hill-view-luxury-3bhk.html /hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh 301
+/pages/advaitam-ganga-hill-view-luxury-3bhk /hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh 301
+
+# Old /pages/<slug>(.html) URLs for every current page -> new clean root URL.
+/pages/about-rishikesh.html /about-rishikesh 301
+/pages/about-rishikesh /about-rishikesh 301
+/pages/contact.html /contact 301
+/pages/contact /contact 301
+/pages/haridwar-kumbh-2027.html /haridwar-kumbh-2027 301
+/pages/haridwar-kumbh-2027 /haridwar-kumbh-2027 301
+/pages/homestays.html /homestays 301
+/pages/homestays /homestays 301
+/pages/kedarnath-yatra.html /kedarnath-yatra 301
+/pages/kedarnath-yatra /kedarnath-yatra 301
+/pages/list-your-homestay.html /list-your-homestay 301
+/pages/list-your-homestay /list-your-homestay 301
+/pages/places-to-visit.html /places-to-visit 301
+/pages/places-to-visit /places-to-visit 301
+/pages/thanks.html /thanks 301
+/pages/thanks /thanks 301
+/pages/things-to-do-in-rishikesh.html /things-to-do-in-rishikesh 301
+/pages/things-to-do-in-rishikesh /things-to-do-in-rishikesh 301
+/pages/triveni-ghat.html /triveni-ghat 301
+/pages/triveni-ghat /triveni-ghat 301
+
+# Serve the actual .html file for each new clean root URL, so the browser's
+# address bar never shows /pages/ or the .html extension.
+/about-rishikesh /pages/about-rishikesh.html 200
+/contact /pages/contact.html 200
+/haridwar-kumbh-2027 /pages/haridwar-kumbh-2027.html 200
+/homestays /pages/homestays.html 200
+/kedarnath-yatra /pages/kedarnath-yatra.html 200
+/list-your-homestay /pages/list-your-homestay.html 200
+/places-to-visit /pages/places-to-visit.html 200
+/thanks /pages/thanks.html 200
+/things-to-do-in-rishikesh /pages/things-to-do-in-rishikesh.html 200
+/triveni-ghat /pages/triveni-ghat.html 200
 
 # Existing short aliases (kept for backward compatibility with any links
 # already shared/indexed using these shorter paths).
 /about /pages/about-rishikesh.html 200
-/homestays /pages/homestays.html 200
-/things-to-do /pages/things-to-do-in-rishikesh.html 200
-/triveni-ghat /pages/triveni-ghat.html 200
 /places /pages/places-to-visit.html 200
-/contact /pages/contact.html 200

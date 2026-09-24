@@ -33,8 +33,11 @@ rishikesh_homestays/
 ├── index.html                      # Landing page
 ├── server.js                       # Express dev server
 ├── CLAUDE.md                       # Project documentation
-└── ARCHITECTURE.md                 # This file
+└── docs/
+    └── ARCHITECTURE.md             # This file
 ```
+
+Note: this tree is illustrative of the original module layout, not a full current listing — see `CLAUDE.md`'s own Architecture section for the up-to-date file map (`hotels/`, `tests/`, `scripts/`, `docs/`, etc. have been added since).
 
 ## Module Breakdown
 

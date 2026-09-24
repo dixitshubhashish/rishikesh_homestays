@@ -2,6 +2,15 @@
 
 A modern hospitality platform for discovering premium homestays in Rishikesh, India.
 
+## 📚 Documentation Map
+
+- `README.md`, `CLAUDE.md`, `AGENTS.md` — stay at repo root (GitHub/Claude Code/Codex all read these by convention from the root).
+- `.agents/coordination.md` — live multi-agent coordination ledger; stays under `.agents/` (see below).
+- `docs/ARCHITECTURE.md` — module/file breakdown.
+- `docs/TESTING.md` — how to run and write tests.
+- `docs/TEST_RESULTS.md` — latest recorded test run output.
+- `PROGRESS.md` — shipped/pending work log; stays at root for now since it's actively read/written by in-flight multi-agent tasks tracked in `.agents/coordination.md` — check that file before relocating it.
+
 ## Multi-Agent Coordination
 
 When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coordination.md` before editing. Claim the files or task you are working on, avoid overlapping active claims, and update the coordination ledger with changes, verification, and handoff notes when finished. The coordination file is the shared source of truth; it is file-based synchronization, not live messaging.
@@ -10,12 +19,12 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
 
 **Frontend:** Static HTML5/CSS3/Vanilla JS (no framework, no build step)
 - `index.html` — Main landing page
-- `pages/` — Dedicated content/guide pages (homestays, about-rishikesh, places-to-visit, things-to-do-in-rishikesh, contact, thanks, triveni-ghat, kedarnath-yatra, haridwar-kumbh-2027, list-your-homestay)
+- `pages/` — Dedicated content/guide pages (homestays, about-rishikesh, places-to-visit, things-to-do-in-rishikesh, contact, thanks, triveni-ghat, kedarnath-yatra, haridwar-kumbh-2027, list-your-homestay). **The folder name is not in the URL** — canonical URLs are `/about-rishikesh`, `/contact`, etc., not `/pages/about-rishikesh`. `server.js` (local dev), `vercel.json` (rewrites + redirects), and `_redirects` (Netlify) all map the clean root URL to the file in `pages/` and 301-redirect any old `/pages/<slug>` request to the new one — keep all three in sync when adding/renaming a page.
 - `hotels/` — Dedicated pages for individual bookable listings (separate from `pages/`, which is guides/content). Currently one: `advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html`. A `STAYS` entry in `data.js` gets a clickable card (photo + title link to the page) by adding a `detailUrl: "/hotels/<slug>"` field; entries without one render as plain (non-linked) cards, same as before.
 - `assets/css/styles.css` — Main site styles
 - `assets/css/whatsapp-widget.css` — WhatsApp widget popup styles
 - `assets/js/site.js` / `assets/js/contact.js` — backward-compat shims that import from `assets/js/modules/` and re-export onto `window`. Both are real ES modules (they use `import`), so every page loads them with `<script type="module" src="...">` — **never as a plain `<script src="...">`**, or the browser throws `Cannot use import statement outside a module` and silently breaks nav/search/forms on that page.
-- `assets/js/modules/` — the actual modular source (see ARCHITECTURE.md for full breakdown). Notable ones:
+- `assets/js/modules/` — the actual modular source (see `docs/ARCHITECTURE.md` for full breakdown). Notable ones:
   - `data.js` — AREAS/STAYS data
   - `whatsapp-widget.js` — floating WhatsApp popup: name/phone/dates/guests/pets form, builds a formatted booking message, stores the enquiry via `/api/contact`, and opens WhatsApp
   - `whatsapp-link.js` — device-aware WhatsApp link builder: `wa.me` on mobile (opens the app), `web.whatsapp.com/send` on desktop (skips the wa.me interstitial so an already-open WhatsApp Web session gets the message in one hop); also rewrites every static `wa.me` link on a page via `enhanceStaticWhatsAppLinks()`
@@ -118,7 +127,7 @@ cp node_modules/libphonenumber-js/bundle/libphonenumber-min.js assets/vendor/lib
 ## 💡 Development Rules
 
 - **Keep CSS unified** — Single `assets/css/styles.css` for performance
-- **Modular JavaScript** — Use `assets/js/modules/` for new features (see ARCHITECTURE.md)
+- **Modular JavaScript** — Use `assets/js/modules/` for new features (see `docs/ARCHITECTURE.md`)
 - **Data centralization** — Homestays and areas defined in `assets/js/modules/data.js`
 - **Form validation** — Both frontend (contact-form module) and backend (`api/contact.js`)
 - **Optimize images** — Use tools like ImageOptim before committing media files

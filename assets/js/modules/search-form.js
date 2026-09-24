@@ -14,7 +14,7 @@ export function setupQuickSearch() {
       const value = formData.get(key);
       if (value) params.set(key, value);
     });
-    window.location.href = `/pages/homestays?${params.toString()}#stays`;
+    window.location.href = `/homestays?${params.toString()}#stays`;
   });
 }
 

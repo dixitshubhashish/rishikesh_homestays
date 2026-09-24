@@ -70,9 +70,9 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('internal page links never expose a .html extension', () => {
-    // Regression guard: URLs should read as /pages/contact, not
-    // /pages/contact.html — the server 301-redirects the .html form to the
-    // clean one, and Netlify's _redirects does the same in production.
+    // Regression guard: URLs should read as /contact, not /pages/contact.html
+    // — the server 301-redirects both the old /pages/ and .html forms to the
+    // clean root URL, and Netlify's _redirects does the same in production.
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
       const badLinks = content.match(/href="\/pages\/[a-z-]+\.html/g) || [];
@@ -227,9 +227,9 @@ test('Page Integration Tests', async (t) => {
   await t.test('every page links to the key new pages from its nav', () => {
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
-      assert(content.includes('/pages/kedarnath-yatra'), `${name} nav should link to the Kedarnath page`);
-      assert(content.includes('/pages/list-your-homestay'), `${name} nav should link to List Your Homestay`);
-      assert(content.includes('/pages/haridwar-kumbh-2027'), `${name} nav should link to the Kumbh 2027 page`);
+      assert(content.includes('/kedarnath-yatra'), `${name} nav should link to the Kedarnath page`);
+      assert(content.includes('/list-your-homestay'), `${name} nav should link to List Your Homestay`);
+      assert(content.includes('/haridwar-kumbh-2027'), `${name} nav should link to the Kumbh 2027 page`);
     });
   });
 
@@ -342,7 +342,7 @@ test('Page Integration Tests', async (t) => {
   await t.test('Kedarnath & Garhwal page has a booking CTA', () => {
     const content = readPage('pages/kedarnath-yatra.html');
     assert(content.includes('cta-band'), 'Should have a call-to-action band');
-    assert(content.includes('/pages/contact'), 'CTA should link to the booking/contact page');
+    assert(content.includes('/contact'), 'CTA should link to the booking/contact page');
   });
 
   await t.test('every page that loads flatpickr.min.js also loads flatpickr.min.css', () => {
@@ -367,12 +367,12 @@ test('Page Integration Tests', async (t) => {
     // and triveni-ghat.html had the same gap earlier. Checking the full set
     // here so a future page addition can't silently repeat this.
     const corePages = [
-      '/pages/things-to-do-in-rishikesh',
-      '/pages/places-to-visit',
-      '/pages/about-rishikesh',
-      '/pages/haridwar-kumbh-2027',
-      '/pages/triveni-ghat',
-      '/pages/kedarnath-yatra'
+      '/things-to-do-in-rishikesh',
+      '/places-to-visit',
+      '/about-rishikesh',
+      '/haridwar-kumbh-2027',
+      '/triveni-ghat',
+      '/kedarnath-yatra'
     ];
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
