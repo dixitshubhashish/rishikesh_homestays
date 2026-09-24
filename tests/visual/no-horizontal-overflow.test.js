@@ -21,7 +21,12 @@ const ROOT = path.join(__dirname, '..', '..');
 
 function discoverPages() {
   const pages = ['/'];
-  for (const dir of ['pages', 'hotels']) {
+  // Content/guide pages live at the repo root (index.html, about-rishikesh.html,
+  // etc.) — everything except index.html itself, which is already covered by '/'.
+  readdirSync(ROOT)
+    .filter((f) => f.endsWith('.html') && f !== 'index.html')
+    .forEach((f) => pages.push(`/${f}`));
+  for (const dir of ['hotels']) {
     const dirPath = path.join(ROOT, dir);
     let files;
     try {

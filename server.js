@@ -42,11 +42,12 @@ app.get(['/pages/advaitam-ganga-hill-view-luxury-3bhk', '/pages/advaitam-ganga-h
   res.redirect(301, '/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh');
 });
 
-// The `pages/` folder is just where these files live on disk — the URL
-// itself dropped the `/pages/` segment (e.g. /pages/contact -> /contact).
-// Catch any remaining old-style `/pages/<slug>` or `/pages/<slug>.html`
-// request (bookmarks, indexed links, anything not already handled by a
-// rename redirect above) and send it straight to the new canonical URL.
+// These guide/content pages used to live under /pages/ (both on disk and
+// in the URL); they've since moved to the repo root and dropped the
+// segment from the URL too (e.g. /pages/contact -> /contact). Catch any
+// remaining old-style `/pages/<slug>` or `/pages/<slug>.html` request
+// (bookmarks, indexed links, anything not already handled by a rename
+// redirect above) and send it straight to the new canonical URL.
 app.get(/^\/pages\/([a-z0-9-]+)(?:\.html)?$/, (req, res) => {
   const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
   res.redirect(301, '/' + req.params[0] + query);
@@ -66,19 +67,15 @@ app.use((req, res, next) => {
 });
 
 // Serve clean URLs (no extension) by mapping them to the matching .html
-// file on disk — first at the root (e.g. /thanks -> thanks.html, if one
-// ever lives there), then inside pages/ (e.g. /contact -> pages/contact.html),
-// since every guide/content page's URL no longer carries its folder name.
+// file on disk, e.g. /contact -> contact.html. Every guide/content page's
+// URL matches its filename directly (no /pages/ folder segment) — see
+// vercel.json/_redirects for the same rule in production.
 app.use((req, res, next) => {
   if (req.path !== '/' && !path.extname(req.path)) {
-    const rootHtmlPath = path.join(__dirname, req.path + '.html');
-    const pagesHtmlPath = path.join(__dirname, 'pages', req.path + '.html');
-    fs.stat(rootHtmlPath, (err, stats) => {
-      if (!err && stats.isFile()) return res.sendFile(rootHtmlPath);
-      fs.stat(pagesHtmlPath, (err2, stats2) => {
-        if (!err2 && stats2.isFile()) return res.sendFile(pagesHtmlPath);
-        next();
-      });
+    const htmlPath = path.join(__dirname, req.path + '.html');
+    fs.stat(htmlPath, (err, stats) => {
+      if (!err && stats.isFile()) return res.sendFile(htmlPath);
+      next();
     });
   } else {
     next();

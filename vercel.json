@@ -16,17 +16,5 @@
 
     { "source": "/about", "destination": "/about-rishikesh", "permanent": false },
     { "source": "/places", "destination": "/places-to-visit", "permanent": false }
-  ],
-  "rewrites": [
-    { "source": "/about-rishikesh", "destination": "/pages/about-rishikesh.html" },
-    { "source": "/contact", "destination": "/pages/contact.html" },
-    { "source": "/haridwar-kumbh-2027", "destination": "/pages/haridwar-kumbh-2027.html" },
-    { "source": "/homestays", "destination": "/pages/homestays.html" },
-    { "source": "/kedarnath-yatra", "destination": "/pages/kedarnath-yatra.html" },
-    { "source": "/list-your-homestay", "destination": "/pages/list-your-homestay.html" },
-    { "source": "/places-to-visit", "destination": "/pages/places-to-visit.html" },
-    { "source": "/thanks", "destination": "/pages/thanks.html" },
-    { "source": "/things-to-do-in-rishikesh", "destination": "/pages/things-to-do-in-rishikesh.html" },
-    { "source": "/triveni-ghat", "destination": "/pages/triveni-ghat.html" }
   ]
 }

@@ -210,10 +210,10 @@ node --test tests/api/*.test.js
 **Logo not found on page:**
 ```bash
 # Check if logo is in the HTML
-grep 'site-logo' pages/contact.html
+grep 'site-logo' contact.html
 
 # Verify the image path
-grep '/assets/images/logo.png' pages/contact.html
+grep '/assets/images/logo.png' contact.html
 ```
 
 **CSS height issue:**

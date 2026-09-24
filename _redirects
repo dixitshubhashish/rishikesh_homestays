@@ -1,5 +1,5 @@
-# The pages/ folder is just where these files live on disk — canonical URLs
-# dropped the /pages/ segment (e.g. /pages/contact -> /contact).
+# These guide/content pages live at the repo root (e.g. contact.html) —
+# canonical URLs match the filename directly, with no /pages/ segment.
 
 /index.html / 301
 
@@ -44,20 +44,21 @@
 /pages/triveni-ghat.html /triveni-ghat 301
 /pages/triveni-ghat /triveni-ghat 301
 
-# Serve the actual .html file for each new clean root URL, so the browser's
-# address bar never shows /pages/ or the .html extension.
-/about-rishikesh /pages/about-rishikesh.html 200
-/contact /pages/contact.html 200
-/haridwar-kumbh-2027 /pages/haridwar-kumbh-2027.html 200
-/homestays /pages/homestays.html 200
-/kedarnath-yatra /pages/kedarnath-yatra.html 200
-/list-your-homestay /pages/list-your-homestay.html 200
-/places-to-visit /pages/places-to-visit.html 200
-/thanks /pages/thanks.html 200
-/things-to-do-in-rishikesh /pages/things-to-do-in-rishikesh.html 200
-/triveni-ghat /pages/triveni-ghat.html 200
+# Serve the actual root .html file for each clean URL (belt-and-suspenders
+# alongside Netlify's own automatic pretty-URL handling), so the browser's
+# address bar never shows the .html extension.
+/about-rishikesh /about-rishikesh.html 200
+/contact /contact.html 200
+/haridwar-kumbh-2027 /haridwar-kumbh-2027.html 200
+/homestays /homestays.html 200
+/kedarnath-yatra /kedarnath-yatra.html 200
+/list-your-homestay /list-your-homestay.html 200
+/places-to-visit /places-to-visit.html 200
+/thanks /thanks.html 200
+/things-to-do-in-rishikesh /things-to-do-in-rishikesh.html 200
+/triveni-ghat /triveni-ghat.html 200
 
 # Existing short aliases (kept for backward compatibility with any links
 # already shared/indexed using these shorter paths).
-/about /pages/about-rishikesh.html 200
-/places /pages/places-to-visit.html 200
+/about /about-rishikesh.html 200
+/places /places-to-visit.html 200

@@ -5,16 +5,16 @@ import { join } from 'path';
 
 const testPages = [
   { path: 'index.html', name: 'Homepage' },
-  { path: 'pages/contact.html', name: 'Contact Page' },
-  { path: 'pages/homestays.html', name: 'Homestays Page' },
-  { path: 'pages/things-to-do-in-rishikesh.html', name: 'Things to Do' },
-  { path: 'pages/about-rishikesh.html', name: 'About Rishikesh' },
-  { path: 'pages/triveni-ghat.html', name: 'Triveni Ghat' },
-  { path: 'pages/places-to-visit.html', name: 'Places to Visit' },
-  { path: 'pages/thanks.html', name: 'Thank You Page' },
-  { path: 'pages/kedarnath-yatra.html', name: 'Kedarnath & Garhwal Gateway' },
-  { path: 'pages/list-your-homestay.html', name: 'List Your Homestay' },
-  { path: 'pages/haridwar-kumbh-2027.html', name: 'Kumbh 2027' },
+  { path: 'contact.html', name: 'Contact Page' },
+  { path: 'homestays.html', name: 'Homestays Page' },
+  { path: 'things-to-do-in-rishikesh.html', name: 'Things to Do' },
+  { path: 'about-rishikesh.html', name: 'About Rishikesh' },
+  { path: 'triveni-ghat.html', name: 'Triveni Ghat' },
+  { path: 'places-to-visit.html', name: 'Places to Visit' },
+  { path: 'thanks.html', name: 'Thank You Page' },
+  { path: 'kedarnath-yatra.html', name: 'Kedarnath & Garhwal Gateway' },
+  { path: 'list-your-homestay.html', name: 'List Your Homestay' },
+  { path: 'haridwar-kumbh-2027.html', name: 'Kumbh 2027' },
   { path: 'hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html', name: 'Advaitam Ganga Listing' }
 ];
 
@@ -144,7 +144,7 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('Contact page should have form', () => {
-    const content = readPage('pages/contact.html');
+    const content = readPage('contact.html');
     assert(content.includes('id="contactForm"'), 'Should have contact form');
     assert(content.includes('name="name"'), 'Should have name field');
     assert(content.includes('name="phone"'), 'Should have phone field');
@@ -152,14 +152,14 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('Contact page should have counter buttons', () => {
-    const content = readPage('pages/contact.html');
+    const content = readPage('contact.html');
     assert(content.includes('class="counter-btn"'), 'Should have counter buttons');
     assert(content.includes('data-counter="adults"'), 'Should have adults counter');
     assert(content.includes('data-counter="children"'), 'Should have children counter');
   });
 
   await t.test('Homestays page should have filter elements', () => {
-    const content = readPage('pages/homestays.html');
+    const content = readPage('homestays.html');
     assert(content.includes('data-filter-area'), 'Should have area filter');
     assert(content.includes('data-filter-type'), 'Should have type filter');
     assert(content.includes('data-filter-budget'), 'Should have budget filter');
@@ -257,7 +257,7 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('Places to Visit page has both the Places and Restaurants & Cafes tabs', () => {
-    const content = readPage('pages/places-to-visit.html');
+    const content = readPage('places-to-visit.html');
     assert(content.includes('data-tab-target="places"'), 'Should have a Places tab button');
     assert(content.includes('data-tab-target="restaurants"'), 'Should have a Restaurants tab button');
     assert(content.includes('data-tab-panel="places"'), 'Should have a places panel');
@@ -266,7 +266,7 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('Kumbh 2027 page exists with a clear "not confirmed" caveat', () => {
-    const content = readPage('pages/haridwar-kumbh-2027.html');
+    const content = readPage('haridwar-kumbh-2027.html');
     assert(content.includes('not yet officially confirmed') || content.includes('reported, not confirmed') || content.includes('Treat this list as reported'), 'Should caveat the reported dates clearly');
     assert(content.includes('cta-band'), 'Should have a booking CTA');
   });
@@ -289,8 +289,8 @@ test('Page Integration Tests', async (t) => {
     // visitors never open — whatsapp-widget.js lazy-loads them on first
     // open instead, so no other page should eager-load them via a plain
     // <script>/<link> tag.
-    const eagerFlatpickrPages = ['index.html', 'pages/contact.html', 'pages/homestays.html'];
-    const eagerLibphonenumberPages = ['pages/contact.html', 'pages/homestays.html'];
+    const eagerFlatpickrPages = ['index.html', 'contact.html', 'homestays.html'];
+    const eagerLibphonenumberPages = ['contact.html', 'homestays.html'];
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
       const hasEagerFlatpickr = content.includes('flatpickr.min.js');
@@ -325,14 +325,14 @@ test('Page Integration Tests', async (t) => {
   await t.test('Homestays page "Ask for a shortlist" form saves to the database, not Netlify', () => {
     // Regression guard: this form used to submit via data-netlify="true" to
     // /pages/thanks.html and never reached /api/contact or BigQuery.
-    const content = readPage('pages/homestays.html');
+    const content = readPage('homestays.html');
     assert(!content.includes('data-netlify'), 'Should not use Netlify Forms');
     assert(content.includes('id="contactForm"'), 'Should reuse the validated contact form pattern');
     assert(content.includes('id="country"'), 'Should have a country selector for phone validation');
   });
 
   await t.test('List Your Homestay page has a working application form', () => {
-    const content = readPage('pages/list-your-homestay.html');
+    const content = readPage('list-your-homestay.html');
     assert(content.includes('id="hostForm"'), 'Should have the host application form');
     assert(content.includes('name="phone"'), 'Should have a phone field');
     assert(content.includes('name="details"'), 'Should have a details field (required by /api/contact)');
@@ -340,7 +340,7 @@ test('Page Integration Tests', async (t) => {
   });
 
   await t.test('Kedarnath & Garhwal page has a booking CTA', () => {
-    const content = readPage('pages/kedarnath-yatra.html');
+    const content = readPage('kedarnath-yatra.html');
     assert(content.includes('cta-band'), 'Should have a call-to-action band');
     assert(content.includes('/contact'), 'CTA should link to the booking/contact page');
   });
