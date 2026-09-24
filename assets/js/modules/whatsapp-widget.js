@@ -3,7 +3,7 @@ import { validatePhone, validateDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 
-const ATTENTION_DELAY_MS = 10000;
+const ATTENTION_DELAY_MS = 15000;
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
