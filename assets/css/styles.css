@@ -2254,6 +2254,16 @@ a.homestay-photo:hover {
 
 }
 
+@media(max-width:680px){
+    /* 55px margin-top + 22px padding was sized for a wide desktop footer;
+       on a narrow phone screen it reads as a large dead gap between the
+       social icons and the copyright line. */
+    .rhs-footer-bottom{
+        margin-top:28px;
+        padding:16px 0;
+    }
+}
+
 .field input[type="date"]{
     cursor:pointer;
 }
