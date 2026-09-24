@@ -11,6 +11,7 @@ const ROOT = process.cwd();
 // implied.
 const pagesToScan = [
   'index.html',
+  '404.html',
   'about-rishikesh.html',
   'contact.html',
   'haridwar-kumbh-2027.html',
@@ -73,5 +74,16 @@ test('Navigation and internal links resolve to a real file', async (t) => {
       assert(existsSync(join(ROOT, file)), `${file} should exist at the repo root so its clean URL resolves natively on Vercel/Netlify`);
     });
     assert(!existsSync(join(ROOT, 'pages')), 'the old pages/ folder should no longer exist — files moved to the repo root');
+  });
+
+  await t.test('404.html has contact details and an auto-redirect that can be cancelled', () => {
+    const content = readFileSync(join(ROOT, '404.html'), 'utf-8');
+    assert(content.includes('noindex'), 'should not be indexed by search engines');
+    assert(content.includes('tel:+918050091290'), 'should offer a phone contact');
+    assert(content.includes('wa.me/918050091290'), 'should offer a WhatsApp contact');
+    assert(content.includes('mailto:hello@rishikeshhomestays.com'), 'should offer an email contact');
+    assert(content.includes("seconds = 20"), 'should auto-redirect home after 20 seconds');
+    assert(content.includes("window.location.href = '/'"), 'should redirect to the homepage');
+    assert(content.includes('redirect-cancel'), 'should let the visitor cancel the auto-redirect');
   });
 });

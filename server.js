@@ -91,6 +91,13 @@ app.get('/api/currency-rates', currencyRatesHandler);
 app.post('/api/otp-send', otpSendHandler);
 app.post('/api/otp-verify', otpVerifyHandler);
 
+// Anything that reaches here matched no route, redirect, or static file —
+// serve the custom 404 page (Vercel/Netlify do this automatically for a
+// root-level 404.html; Express needs it spelled out explicitly).
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, '404.html'));
+});
+
 app.listen(port, () => {
   console.log(`Dev server running at http://localhost:${port}`);
 });
