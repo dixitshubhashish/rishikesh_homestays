@@ -82,9 +82,12 @@
 /* Attention effect for the standalone "Book on WhatsApp" link buttons
    (not the floating widget FAB). No scale/box-shadow — those visually
    overlapped neighboring buttons in the hero. The class is added (by
-   whatsapp-widget.js) 10s after page load, turning the button black
+   whatsapp-widget.js) 15s after page load, turning the button black
    immediately; from there this loop fades it to green and back, each
-   swap taking 7s (14s per full black-green-black cycle), indefinitely. */
+   swap taking 7s (14s per full black-green-black cycle). If the button
+   still hasn't been clicked 40s after that, the class is removed and
+   whatsapp-btn-hint (below) appears instead — see BTN_ATTENTION_DELAY_MS /
+   BTN_ATTENTION_TIMEOUT_MS in whatsapp-widget.js. */
 .whatsapp-btn-attention {
   background: #050505;
   border-color: #050505;
@@ -107,6 +110,32 @@
     animation: none;
     background: #25d366;
     border-color: #25d366;
+  }
+}
+
+/* Quiet reminder shown once the attention effect above gives up
+   unclicked — so the button goes back to normal instead of flashing
+   forever, but the visitor still has a plain-text pointer to it.
+   flex-basis: 100% drops it onto its own line within the button row's
+   flex-wrap container instead of squeezing beside the buttons. */
+.whatsapp-btn-hint {
+  flex-basis: 100%;
+  margin-top: 2px;
+  font-size: 0.85rem;
+  color: var(--muted, #66726f);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+.whatsapp-btn-hint.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .whatsapp-btn-hint {
+    transition: none;
   }
 }
 

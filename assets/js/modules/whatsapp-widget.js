@@ -4,10 +4,15 @@ import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 
 const ATTENTION_DELAY_MS = 15000;
-// The standalone "Book on WhatsApp" buttons run on their own, shorter timing
-// (turn black at 10s, then the CSS animation swaps color every 7s) — separate
-// from the FAB's 15s auto-popup delay above.
-const BTN_ATTENTION_DELAY_MS = 10000;
+// The standalone "Book on WhatsApp" buttons run on their own timing (turn
+// black at 15s, then the CSS animation swaps color every 7s) — independent
+// of the FAB's own 15s auto-popup delay above, even though the numbers
+// currently match. If the button still hasn't been clicked
+// BTN_ATTENTION_TIMEOUT_MS after that, the effect stops and a short hint
+// takes its place instead of flashing forever at a visitor who's ignoring it.
+const BTN_ATTENTION_DELAY_MS = 15000;
+const BTN_ATTENTION_TIMEOUT_MS = 40000;
+const BTN_ATTENTION_HINT_TEXT = "👉 Still here — tap anytime to book on WhatsApp.";
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -308,6 +313,13 @@ export function setupWhatsAppWidget() {
   // earlier load in the same tab, which was confusing during testing and
   // easy to mistake for a bug.
   let userOpenedWidget = false;
+  // Set the moment a visitor shows any real intent toward booking — clicking
+  // a "Book on WhatsApp" CTA, opening the widget, or typing into its form
+  // (which can happen without userOpenedWidget ever being set, since the
+  // desktop auto-popup opens the widget for them without a click). Checked
+  // once, at the attention-timeout mark below, so it never forces the
+  // attention effect to stop or hides it behind a hint while genuinely in use.
+  let formEngaged = false;
 
   // Loads flatpickr/libphonenumber (if not already present) and wires up
   // the date pickers + country phone field. Safe to call multiple times —
@@ -324,13 +336,26 @@ export function setupWhatsAppWidget() {
 
   function setupAutoPopup() {
     // Draw attention to every visible "Book on WhatsApp" CTA on the page on
-    // its own, shorter timer — independent of the FAB's popup delay below.
-    // Color-only effect (no scale/box-shadow, unlike the FAB's pulse) since
-    // scaling this inline button visually overlapped its neighbor.
+    // its own timer — independent of the FAB's popup delay below. Color-only
+    // effect (no scale/box-shadow, unlike the FAB's pulse) since scaling this
+    // inline button visually overlapped its neighbor. If it still hasn't
+    // been clicked BTN_ATTENTION_TIMEOUT_MS later, stop flashing (rather
+    // than nagging a visitor who's ignoring it forever) and leave a short
+    // text hint behind so they can still find it.
     setTimeout(() => {
       if (userOpenedWidget) return;
       document.querySelectorAll('a.btn-whatsapp').forEach((btn) => {
         btn.classList.add('whatsapp-btn-attention');
+        let clicked = false;
+        btn.addEventListener('click', () => { clicked = true; }, { once: true });
+        setTimeout(() => {
+          // Any sign of real intent — clicked this button, opened the
+          // widget, or started typing into its form — leaves the effect
+          // exactly as it is instead of stopping it.
+          if (clicked || userOpenedWidget || formEngaged) return;
+          btn.classList.remove('whatsapp-btn-attention');
+          showWhatsAppButtonHint(btn);
+        }, BTN_ATTENTION_TIMEOUT_MS);
       });
     }, BTN_ATTENTION_DELAY_MS);
 
@@ -354,6 +379,23 @@ export function setupWhatsAppWidget() {
         openWidgetPopup();
       }
     }, ATTENTION_DELAY_MS);
+  }
+
+  // Leaves a short, plain-text pointer to the button behind once the
+  // attention effect above has given up unclicked, so it's still findable
+  // even though it stopped flashing.
+  function showWhatsAppButtonHint(btn) {
+    if (btn.nextElementSibling?.classList.contains('whatsapp-btn-hint')) return;
+    const hint = document.createElement('span');
+    hint.className = 'whatsapp-btn-hint';
+    hint.setAttribute('role', 'status');
+    hint.textContent = BTN_ATTENTION_HINT_TEXT;
+    btn.insertAdjacentElement('afterend', hint);
+    // Two rAFs so the browser paints the opacity:0 starting state first —
+    // otherwise the transition has nothing to animate from and just snaps in.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => hint.classList.add('is-visible'));
+    });
   }
 
   let checkinPicker = null;
@@ -419,6 +461,12 @@ export function setupWhatsAppWidget() {
     const nameError = document.getElementById('whatsapp-name-error');
     const phoneError = document.getElementById('whatsapp-phone-error');
     const datesError = document.getElementById('whatsapp-dates-error');
+
+    // First keystroke/selection/date pick anywhere in the form counts as
+    // "taking action" even if the widget auto-opened rather than the visitor
+    // clicking it themselves (see formEngaged above).
+    form?.addEventListener('input', () => { formEngaged = true; }, { once: true });
+    form?.addEventListener('change', () => { formEngaged = true; }, { once: true });
 
     function hideNudge() {
       nudge.hidden = true;
