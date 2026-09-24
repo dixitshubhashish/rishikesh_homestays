@@ -268,6 +268,12 @@ textarea {
   color: #fff;
   border: 2px solid #25D366;
   transition: all 0.3s ease;}
+.whatsapp-inline-icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: 0 0 auto;
+  fill: currentColor;
+  vertical-align: -0.16em;}
 .btn-whatsapp:hover {
   background: #1ebe5d;
   border-color: #1ebe5d;
@@ -338,6 +344,9 @@ textarea {
    the subject remains inspectable and the text never competes with it. */
 .hero {
   --hero-panel-bg: #123f38;
+  --hero-gradient-a: #236b72;
+  --hero-gradient-b: #123f38;
+  --hero-gradient-c: #0b2731;
   display: block;
   min-height: 0;
   background: var(--hero-panel-bg);}
@@ -345,7 +354,9 @@ textarea {
   position: relative;
   height: clamp(360px, 48vw, 620px);}
 .hero-slide {
-  background-size: cover;}
+  background-size: cover;
+  background-repeat: no-repeat;
+  transition: none;}
 .hero::before {
   inset: 0 0 auto;
   height: clamp(360px, 48vw, 620px);
@@ -355,7 +366,8 @@ textarea {
   max-width: none;
   margin: 0;
   padding: 48px max(24px, calc((100% - var(--max)) / 2)) 56px;
-  background: var(--hero-panel-bg);
+  background-color: var(--hero-panel-bg);
+  background-image: radial-gradient(circle at 0% 0%, var(--hero-gradient-a) 0%, transparent 64%), radial-gradient(circle at 100% 18%, var(--hero-gradient-b) 0%, transparent 68%), radial-gradient(circle at 82% 100%, var(--hero-gradient-c) 0%, transparent 70%);
   box-sizing: border-box;}
 .hero > .hero-inner h1 {
   font-size: clamp(2rem, 4vw, 3.8rem);
@@ -1407,7 +1419,8 @@ main > section:last-child {
     margin-left: 0;
     margin-right: 0;
     padding: 28px 16px 34px;
-    background: var(--hero-panel-bg);}
+    background-color: var(--hero-panel-bg);
+    background-image: radial-gradient(circle at 0% 0%, var(--hero-gradient-a) 0%, transparent 66%), radial-gradient(circle at 100% 22%, var(--hero-gradient-b) 0%, transparent 70%), radial-gradient(circle at 78% 100%, var(--hero-gradient-c) 0%, transparent 72%);}
   .hero > .hero-inner .hero-actions .btn-whatsapp {
     margin-left: auto;
     margin-right: auto;}
@@ -1416,13 +1429,13 @@ main > section:last-child {
     width: calc((100% - 8px) / 2);
     min-width: 0;
     white-space: nowrap;}
-  .hero.hero-slide-1 { --hero-panel-bg: #1d5060; }
-  .hero.hero-slide-2 { --hero-panel-bg: #104b4b; }
-  .hero.hero-slide-3 { --hero-panel-bg: #28243b; }
-  .hero.hero-slide-4 { --hero-panel-bg: #68452f; }
-  .hero.hero-slide-5 { --hero-panel-bg: #214534; }
-  .hero.hero-slide-6 { --hero-panel-bg: #642f22; }
-  .hero.hero-slide-7 { --hero-panel-bg: #263e37; }
+.hero.hero-slide-1 { --hero-panel-bg: #173e4b; --hero-gradient-a: #38a6a0; --hero-gradient-b: #2869a0; --hero-gradient-c: #0b2736; }
+.hero.hero-slide-2 { --hero-panel-bg: #104344; --hero-gradient-a: #28a18e; --hero-gradient-b: #2b668f; --hero-gradient-c: #092938; }
+.hero.hero-slide-3 { --hero-panel-bg: #29233b; --hero-gradient-a: #5d4a8d; --hero-gradient-b: #b26545; --hero-gradient-c: #151d35; }
+.hero.hero-slide-4 { --hero-panel-bg: #633c2d; --hero-gradient-a: #c17a43; --hero-gradient-b: #8d463a; --hero-gradient-c: #292034; }
+.hero.hero-slide-5 { --hero-panel-bg: #214334; --hero-gradient-a: #77a85f; --hero-gradient-b: #357e96; --hero-gradient-c: #102d43; }
+.hero.hero-slide-6 { --hero-panel-bg: #622d24; --hero-gradient-a: #d06b38; --hero-gradient-b: #914139; --hero-gradient-c: #211a32; }
+.hero.hero-slide-7 { --hero-panel-bg: #263e37; --hero-gradient-a: #62a66f; --hero-gradient-b: #377d99; --hero-gradient-c: #102d3b; }
 .hero-stats,
   .card-grid,
   .info-grid,
@@ -2127,4 +2140,39 @@ main > section:last-child {
     object-fit:contain;
     display:block;
     flex-shrink:0;
+}
+
+/* Final hero panel treatment: keep the three scene colors visible after
+   the older responsive hero rules above, without placing imagery behind text. */
+.hero > .hero-inner {
+    background-color: var(--hero-panel-bg) !important;
+    background-image: radial-gradient(circle at 0% 0%, var(--hero-gradient-a) 0%, transparent 64%), radial-gradient(circle at 100% 18%, var(--hero-gradient-b) 0%, transparent 68%), radial-gradient(circle at 82% 100%, var(--hero-gradient-c) 0%, transparent 70%) !important;
+}
+.hero.hero-slide-1 > .hero-inner { background-image: radial-gradient(circle at 0% 0%, #38a6a0 0%, transparent 64%), radial-gradient(circle at 100% 18%, #2869a0 0%, transparent 68%), radial-gradient(circle at 82% 100%, #0b2736 0%, transparent 70%) !important; }
+.hero.hero-slide-2 > .hero-inner { background-image: radial-gradient(circle at 0% 0%, #28a18e 0%, transparent 64%), radial-gradient(circle at 100% 18%, #2b668f 0%, transparent 68%), radial-gradient(circle at 82% 100%, #092938 0%, transparent 70%) !important; }
+.hero.hero-slide-3 > .hero-inner { background-image: radial-gradient(circle at 0% 0%, #5d4a8d 0%, transparent 64%), radial-gradient(circle at 100% 18%, #b26545 0%, transparent 68%), radial-gradient(circle at 82% 100%, #151d35 0%, transparent 70%) !important; }
+.hero.hero-slide-4 > .hero-inner { background-image: radial-gradient(circle at 0% 0%, #c17a43 0%, transparent 64%), radial-gradient(circle at 100% 18%, #8d463a 0%, transparent 68%), radial-gradient(circle at 82% 100%, #292034 0%, transparent 70%) !important; }
+.hero.hero-slide-5 > .hero-inner { background-image: radial-gradient(circle at 0% 0%, #77a85f 0%, transparent 64%), radial-gradient(circle at 100% 18%, #357e96 0%, transparent 68%), radial-gradient(circle at 82% 100%, #102d43 0%, transparent 70%) !important; }
+.hero.hero-slide-6 > .hero-inner { background-image: radial-gradient(circle at 0% 0%, #d06b38 0%, transparent 64%), radial-gradient(circle at 100% 18%, #914139 0%, transparent 68%), radial-gradient(circle at 82% 100%, #211a32 0%, transparent 70%) !important; }
+.hero.hero-slide-7 > .hero-inner { background-image: radial-gradient(circle at 0% 0%, #62a66f 0%, transparent 64%), radial-gradient(circle at 100% 18%, #377d99 0%, transparent 68%), radial-gradient(circle at 82% 100%, #102d3b 0%, transparent 70%) !important; }
+@media (max-width: 680px) {
+    .hero {
+        background-image: none;
+    }
+    /* Keep Kunjapuri's spire and flag inside the portrait frame. */
+    .hero-slide:nth-child(4) {
+        background-size: cover;
+        background-position: center top;
+    }
+    .hero-slide:nth-child(7) {
+        background-size: cover;
+        background-position: center top;
+    }
+    .hero-slide:nth-child(3) {
+        background-position: 42% center;
+    }
+    .hero-slide:nth-child(6) {
+        background-size: cover;
+        background-position: center top;
+    }
 }

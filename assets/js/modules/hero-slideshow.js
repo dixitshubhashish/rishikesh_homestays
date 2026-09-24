@@ -1,6 +1,15 @@
 const SLIDE_INTERVAL_MS = 5000; // industry-standard hero slideshow pace (4-6s/slide)
 const TEXT_FADE_MS = 400;
 const MOBILE_QUERY = '(max-width: 680px)';
+const PANEL_GRADIENTS = [
+  ['#38a6a0', '#2869a0', '#0b2736', '#173e4b'],
+  ['#28a18e', '#2b668f', '#092938', '#104344'],
+  ['#5d4a8d', '#b26545', '#151d35', '#29233b'],
+  ['#c17a43', '#8d463a', '#292034', '#633c2d'],
+  ['#77a85f', '#357e96', '#102d43', '#214334'],
+  ['#d06b38', '#914139', '#211a32', '#622d24'],
+  ['#62a66f', '#377d99', '#102d3b', '#263e37']
+];
 
 function parseJSONList(el, attr) {
   if (!el) return [];
@@ -30,9 +39,10 @@ function pickBg(slide) {
 // otherwise all seven full-size hero photos would download on every load
 // even though the slideshow only ever shows one at a time.
 function ensureLoaded(slide) {
-  if (!slide || slide.dataset.loaded) return;
+  if (!slide) return;
   const url = pickBg(slide);
   if (!url) return;
+  if (slide.dataset.loaded) return;
   slide.style.backgroundImage = `url('${url}')`;
   slide.dataset.loaded = 'true';
 }
@@ -82,8 +92,9 @@ export function setupHeroSlideshow() {
   function showSlide(nextIndex) {
     ensureLoaded(slides[nextIndex]);
     setHeroSlideState(hero, nextIndex);
-    slides[activeIndex].classList.remove('is-active');
-    slides[nextIndex].classList.add('is-active');
+    slides.forEach((slide, index) => {
+      slide.classList.toggle('is-active', index === nextIndex);
+    });
     fadeSwap(caption, captions[nextIndex]);
     fadeSwap(headline, headlines[nextIndex]);
     fadeSwap(copy, copies[nextIndex]);
@@ -104,6 +115,7 @@ export function setupHeroSlideshow() {
     if (document.hidden) {
       clearInterval(timer);
     } else {
+      clearInterval(timer);
       timer = start();
     }
   });
@@ -114,4 +126,10 @@ function setHeroSlideState(hero, index) {
   hero.className = hero.className.replace(/\bhero-slide-\d+\b/g, '').replace(/\s{2,}/g, ' ').trim();
   hero.classList.add(`hero-slide-${index + 1}`);
   hero.classList.toggle('hero-light-slide', index === 3);
+  const panel = hero.querySelector('.hero-inner');
+  const colors = PANEL_GRADIENTS[index];
+  if (panel && colors) {
+    panel.style.backgroundColor = colors[3];
+    panel.style.setProperty('background-image', `radial-gradient(circle at 0% 0%, ${colors[0]} 0%, transparent 64%), radial-gradient(circle at 100% 18%, ${colors[1]} 0%, transparent 68%), radial-gradient(circle at 82% 100%, ${colors[2]} 0%, transparent 70%)`, 'important');
+  }
 }

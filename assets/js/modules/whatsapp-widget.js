@@ -3,7 +3,8 @@ import { validatePhone, validateDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
 
-const AUTO_POPUP_DELAY_MS = 20000;
+const AUTO_POPUP_DELAY_MS = 15000;
+const FAB_PULSE_DELAY_MS = 10000;
 const AUTO_POPUP_SESSION_KEY = 'whatsapp_auto_shown';
 
 function loadScript(src) {
@@ -71,6 +72,7 @@ export function setupWhatsAppWidget() {
     requestAnimationFrame(() => {
       popup.classList.add('is-open');
       backdrop?.classList.add('is-open');
+      if (!isMobileDevice()) document.body.classList.add('whatsapp-drawer-open');
     });
   }
 
@@ -80,6 +82,7 @@ export function setupWhatsAppWidget() {
     if (!popup) return;
     popup.classList.remove('is-open');
     backdrop?.classList.remove('is-open');
+    document.body.classList.remove('whatsapp-drawer-open');
     const onTransitionEnd = () => {
       popup.hidden = true;
       if (backdrop) backdrop.hidden = true;
@@ -310,6 +313,12 @@ export function setupWhatsAppWidget() {
     } catch {
       // sessionStorage unavailable (privacy mode, etc.) — treat as not shown.
     }
+    setTimeout(() => {
+      if (alreadyShown || userOpenedWidget || !isMobileDevice()) return;
+      const fab = document.getElementById('whatsapp-fab');
+      fab?.classList.add('whatsapp-fab-pulse');
+    }, FAB_PULSE_DELAY_MS);
+
     if (alreadyShown) return;
 
     // Claim the "shown" flag immediately, not inside the timeout callback.
@@ -334,11 +343,9 @@ export function setupWhatsAppWidget() {
 
       if (isMobileDevice()) {
         // Small, dismissible nudge instead of forcing the form open.
-        fab?.classList.add('whatsapp-fab-pulse');
         if (nudge) {
           nudge.hidden = false;
           setTimeout(() => {
-            fab?.classList.remove('whatsapp-fab-pulse');
             nudge.hidden = true;
           }, 8000);
         }
