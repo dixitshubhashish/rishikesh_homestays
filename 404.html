@@ -458,6 +458,29 @@
         font-style: italic;
         line-height: 1.5;
         transform: rotate(-0.7deg);}
+      /* Second "sighting" note, tilted the other way; the script at the bottom
+         picks the Kumbh lost-and-found or akhada version at random. */
+      .error-sighting {
+        width: fit-content;
+        max-width: 560px;
+        margin: -6px 0 18px 14px;
+        padding: 9px 12px;
+        color: #d9f3ee;
+        border-left: 3px solid #5fc7b8;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 0.94rem;
+        font-style: italic;
+        line-height: 1.5;
+        transform: rotate(0.6deg);}
+      .error-sighting a {
+        display: inline-block;
+        margin-left: 4px;
+        color: #ffd286;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        font-style: normal;
+        font-weight: 800;
+        white-space: nowrap;}
+      .error-sighting a:hover { color: #fff; }
       /* Same zig-zag as the headline, gentler so body text stays readable. */
       /* Phrases stay inline so the text wraps at any word (first line fills,
          the rest continues on the next) instead of whole phrases jumping
@@ -795,6 +818,7 @@
             <h1 class="error-title"><span>This page went</span><span>for a dip in the Ganga</span><span>and never came back.</span></h1>
             <p class="error-copy error-zigzag"><span>Even the signpost can’t agree which way it went.</span> <span>A confused traveller is checking the map,</span> <span>Famous Chotiwala bhai ji is sure it’s “just 5 minutes ahead” on the Kedarnath trek,</span> <span>and the rafters who went looking have already flipped twice.</span></p>
             <p class="error-last-seen">Last seen: airborne over the Ganga. Status: presumed enlightened.</p>
+            <p class="error-sighting">Possible sighting: <span id="error-sighting-text">separated from its twin at the Kumbh Mela, Bollywood-style. Last heard at the Haridwar lost-and-found tent.</span> <a href="/haridwar-kumbh-2027">Plan your Kumbh 2027 visit →</a></p>
             <div class="error-actions">
               <a class="btn btn-primary" href="/">Return home</a>
               <a class="btn btn-secondary" href="/homestays">Find a homestay</a>
@@ -1053,6 +1077,19 @@
           diveLoop.remove();
           noteEl.remove();
         });
+      })();
+    </script>
+    <script>
+      // Kumbh "possible sighting": lost-and-found or akhada, picked at random
+      // per visit. The lost-and-found line is also the no-JS default in the HTML.
+      (function () {
+        var el = document.getElementById('error-sighting-text');
+        if (!el) return;
+        var sightings = [
+          'separated from its twin at the Kumbh Mela, Bollywood-style. Last heard at the Haridwar lost-and-found tent.',
+          'joined a Naga akhada procession at Har Ki Pauri and hasn’t looked back.'
+        ];
+        el.textContent = sightings[Math.floor(Math.random() * sightings.length)];
       })();
     </script>
     <script>
