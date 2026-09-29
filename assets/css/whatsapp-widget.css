@@ -139,11 +139,15 @@
   }
 }
 
-/* Small, dismissible nudge shown on mobile after the auto-popup delay,
-   instead of forcing the full form open over page content. */
+/* Small speech-bubble nudge above the FAB ("Planning a trip?", "Psst…
+   still here!"), with a tail on its bottom edge pointing down at the
+   WhatsApp icon. --nudge-tail-right is the tail's center measured from the
+   bubble's right edge, i.e. FAB center (widget right + half FAB width)
+   minus the bubble's own right offset. */
 .whatsapp-nudge {
+  --nudge-tail-right: 30px;
   position: fixed;
-  bottom: 88px;
+  bottom: 96px;
   right: 20px;
   max-width: 220px;
   background: white;
@@ -158,6 +162,19 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
   z-index: 998;
   animation: whatsapp-nudge-in 0.3s ease;
+}
+
+.whatsapp-nudge::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  right: calc(var(--nudge-tail-right) - 7px);
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-right: 1px solid var(--line, #ddd);
+  border-bottom: 1px solid var(--line, #ddd);
+  transform: rotate(45deg);
 }
 
 .whatsapp-nudge[hidden] {
@@ -494,6 +511,12 @@
   .whatsapp-fab {
     width: 56px;
     height: 56px;
+  }
+
+  .whatsapp-nudge {
+    bottom: 88px;
+    right: 16px;
+    --nudge-tail-right: 28px;
   }
 
   .whatsapp-popup-header h3 {

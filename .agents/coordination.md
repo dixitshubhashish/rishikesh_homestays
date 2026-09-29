@@ -181,6 +181,8 @@ Claude has done the prep work (images downloaded + licensed, sibling page rebuil
 
 Add completed work here with the agent, date, files, and verification command or result. Keep entries concise.
 
+- 2026-09-29 (Claude): Gave the WhatsApp nudge bubble ("Planning a trip?" / "Psst… still here!") a speech-bubble tail pointing down at the FAB, aligned to the FAB center on desktop and ≤480px; lifted the bubble slightly for clearance. CSS-only in `assets/css/whatsapp-widget.css` (touches the file under Codex's WhatsApp drawer claim — nudge rules only, no JS changes). Verified via Playwright screenshots at 1440x900 and 390x844; `npm test` passes 239/239.
+
 - 2026-09-23: Added distinct generated hero images for the Things to Do and About Rishikesh pages, wired page-specific hero classes and social preview images, and verified the full test suite.
 - 2026-09-23: Compressed both page hero images from PNG to same-dimension WebP (1672x941), reducing them from 2.4/2.7 MB to 295/400 KB; `npm test` passes with 152/152.
 - 2026-09-23: Compressed the remaining 19 generated Things to Do/About images from 1536x1024 PNGs to same-dimension WebPs, updated all page references, removed stale PNGs, and verified no generated PNG paths remain; `npm test` passes with 152/152.

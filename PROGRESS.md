@@ -2,6 +2,13 @@
 
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
+## ✅ Shipped — WhatsApp nudge speech-bubble tail + Edge/Windows rendering check (Claude, 2026-09-29)
+
+- **Nudge bubble tail**: the "Planning a Rishikesh trip?" / "Psst… still here!" bubble above the WhatsApp FAB now has a speech-bubble tail on its bottom edge pointing at the icon. It's a CSS-only `::after` in `assets/css/whatsapp-widget.css`, aligned to the FAB center through a `--nudge-tail-right` custom property (30px desktop, 28px at ≤480px), with the bubble raised slightly (96px / 88px) so the tail clears the button. Verified with Playwright screenshots at 1440x900 and 390x844; `npm test` passes 239/239.
+- **Edge "haziness" investigation**: Edge and Chrome share the Chromium engine, so a difference between them almost always comes from Windows rather than the browser. Playwright on this Mac can't reproduce Windows text rendering. What it could test:
+  - Windows display scaling: homepage at 1366x768 with deviceScaleFactor 1 / 1.25 / 1.5 stayed sharp, so scaling was ruled out.
+  - Actual rendered font (queried through CDP `CSS.getPlatformFontsForNode`): body/nav text renders as **San Francisco** (`.SF NS`) on macOS and headings as Georgia. The `Inter` in the font stack is **never loaded** (no `@font-face`, no webfont link), so Windows visitors get **Segoe UI** with ClearType, which looks softer and lighter, especially small muted text. This is the most likely cause of the haziness.
+
 ## ✅ Shipped — page rename + SEO gap audit
 
 - **`pages/things-to-do.html` renamed to `pages/things-to-do-in-rishikesh.html`** (URL keyword reinforcement for search). All ~48 internal link references updated across every page, `sitemap.xml`, `llms.txt`. Old URLs (both `/pages/things-to-do` and `/pages/things-to-do.html`) 301-redirect to the new one in both `server.js` (local dev) and `_redirects` (Netlify production) — nothing that was ever indexed or bookmarked breaks.
@@ -113,6 +120,7 @@ There are **two different enquiry forms** on this site, and I initially enhanced
 
 ## 📋 Pending
 
+- [ ] **Self-host Inter** (woff2 in `assets/vendor/`, `@font-face` in `styles.css`) so text renders identically on macOS and Windows/Edge instead of falling back to San Francisco vs Segoe UI. Proposed 2026-09-29, waiting on user go-ahead. Also waiting on an Edge/Windows screenshot of the user's "other minor issues".
 - [x] Reorganized and refreshed `404.html` with dedicated desktop and portrait mobile WebP scenes, vertical 4/0/4 signboards, confused woman traveler and Chotiwala-style guide sharing an upside-down map marked `RISHIKESH`, Kedarnath walking stick, restored “dip in the Ganga” headline and “Last seen” punchline, and the Hindi chant with a flowing Ganga underline repositioned into open clouds. Laptop/desktop now uses the requested horizontal 70:30 image/content split; mobile remains stacked. The articulated diver and a capsizing raft with three jumping passengers land in the visible river channel with individual splash rings, foam, droplets, and reflected shimmer until the 20-second home redirect. Reduced-motion visitors do not see the raft incident. Verified at 1440x900 and 390x844, including impact frames, with `npm test` passing 233/233.
 - [x] Corrected the desktop WhatsApp drawer behavior: it still auto-opens after 15 seconds, but now auto-closes at 55 seconds total if ignored, stays open after genuine user/form engagement, overlays the page without changing body width or rearranging hero imagery, and uses a softer 0.9-second slide. Browser verification confirmed identical 404 image bounds before and after opening; regression tests cover idle close, engagement persistence, and no body resize. `npm test` passes 233/233.
 - [x] Rebuilt the Restaurants & Cafes venue list with ten identifiable, source-documented photos: Little Buddha, Om Freedom, The 60's Cafe, Shambala, Devraj, The Arches, Ramana's Organic Cafe, Pure Soul, Bistro Nirvana, and Chotiwala. All card assets are optimized 900x600 WebP files; the two ambiguous listings were replaced with verifiable venues. Also added a versioned WebP Rajaji National Park editorial safari scene with a jeep, Asian elephants, and spotted deer. Verified with `npm test` passing 225/225.
