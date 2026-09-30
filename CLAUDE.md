@@ -24,7 +24,7 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
 - `hotels/` — Dedicated pages for individual bookable listings (still its own folder, with the segment in the URL — e.g. `/hotels/<slug>` maps to `hotels/<slug>.html`, unlike the root-level content pages above). Currently one: `advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html`. A `STAYS` entry in `data.js` gets a clickable card (photo + title link to the page) by adding a `detailUrl: "/hotels/<slug>"` field; entries without one render as plain (non-linked) cards, same as before.
 - `assets/css/styles.css` — Main site styles
 - `assets/css/whatsapp-widget.css` — WhatsApp widget popup styles
-- `assets/js/analytics.js` — Google Tag Manager loader and the single place the GTM container ID lives. Every page includes it as `<script async src="/assets/js/analytics.js"></script>` immediately after `<meta charset>` — **add that line to any new page** (`tests/integration/analytics.test.js` scans all root + `hotels/` pages and fails if it's missing or if a `GTM-` ID is hardcoded in HTML). GA4 and any other tags are configured inside the GTM dashboard, not in code. Google's `<noscript>` iframe is intentionally omitted (can't be shared from a JS file; GA4 needs JS anyway).
+- `assets/js/analytics.js` — Google Analytics 4 (gtag.js) loader and the single place the measurement ID (`G-L82BSZMRLW`) lives. It's the site's only Google tag (GTM was removed 2026-09-30 in favor of direct GA4; never add both, or page views double-count). Every page includes it as `<script async src="/assets/js/analytics.js"></script>` immediately after `<meta charset>` — **add that line to any new page** (`tests/integration/analytics.test.js` scans all root + `hotels/` pages and fails if it's missing or if a Google tag ID is hardcoded in HTML).
 - `assets/js/site.js` / `assets/js/contact.js` — backward-compat shims that import from `assets/js/modules/` and re-export onto `window`. Both are real ES modules (they use `import`), so every page loads them with `<script type="module" src="...">` — **never as a plain `<script src="...">`**, or the browser throws `Cannot use import statement outside a module` and silently breaks nav/search/forms on that page.
 - `assets/js/modules/` — the actual modular source (see `docs/ARCHITECTURE.md` for full breakdown). Notable ones:
   - `data.js` — AREAS/STAYS data
@@ -71,7 +71,7 @@ When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coo
 - **Contact Email:** `api/contact.js` → from/to addresses in the Resend calls
 - **Property/Site Data:** `assets/js/modules/data.js` — AREAS and STAYS listings (the single source of truth; `site.js` just re-exports it)
 - **WhatsApp Number:** `WHATSAPP_PHONE` const in `assets/js/modules/whatsapp-widget.js`, and the `wa.me/...` hrefs in `index.html` (hero button, footer social icon) / `contact.html`
-- **Analytics / GTM container ID:** `GTM_ID` in `assets/js/analytics.js` (GA4, conversions, pixels are set up in the GTM dashboard)
+- **Analytics / GA4 measurement ID:** `GA_MEASUREMENT_ID` in `assets/js/analytics.js`
 - **Hero Images:** Replace PNGs in `assets/images/`
 - **Styling:** `assets/css/styles.css` (site-wide) / `assets/css/whatsapp-widget.css` (widget only)
 - **Contact Form Endpoint:** `assets/js/modules/contact-form.js` — client-side submission logic, validation, date pickers

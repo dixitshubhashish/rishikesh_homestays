@@ -1,22 +1,18 @@
-// Google Tag Manager loader, shared by every page. Each page includes it as
-// the first thing after <meta charset>:
+// Google Analytics 4 (gtag.js), shared by every page. Each page includes it
+// as the first thing after <meta charset>:
 //   <script async src="/assets/js/analytics.js"></script>
-// Change the container ID here, once, rather than in every HTML file.
-// GA4 and any other tags (conversions, pixels) are configured inside GTM
-// itself — no further code changes needed to add them.
-//
-// Google's snippet also has a <noscript> iframe for JS-disabled visitors;
-// it's intentionally omitted — it can't live in a shared JS file, and GA4
-// records nothing without JavaScript anyway.
-const GTM_ID = 'GTM-M4KQ9TNN';
+// Change the measurement ID here, once, rather than in every HTML file.
+// This is the site's only Google tag — don't also paste Google's gtag
+// snippet (or a GTM container that fires GA4) into pages, or every page
+// view gets counted twice.
+const GA_MEASUREMENT_ID = 'G-L82BSZMRLW';
 
-(function (w, d, s, l, i) {
-  w[l] = w[l] || [];
-  w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-  const f = d.getElementsByTagName(s)[0];
-  const j = d.createElement(s);
-  const dl = l !== 'dataLayer' ? '&l=' + l : '';
-  j.async = true;
-  j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
-  f.parentNode.insertBefore(j, f);
-})(window, document, 'script', 'dataLayer', GTM_ID);
+window.dataLayer = window.dataLayer || [];
+window.gtag = function gtag() { window.dataLayer.push(arguments); };
+window.gtag('js', new Date());
+window.gtag('config', GA_MEASUREMENT_ID);
+
+const tag = document.createElement('script');
+tag.async = true;
+tag.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
+document.head.appendChild(tag);

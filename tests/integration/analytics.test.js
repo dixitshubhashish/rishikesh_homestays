@@ -13,7 +13,7 @@ const pages = [
 ];
 const INCLUDE = '<script async src="/assets/js/analytics.js"></script>';
 
-test('every page loads the shared GTM include near the top of <head>', () => {
+test('every page loads the shared analytics include near the top of <head>', () => {
   assert(pages.length > 0);
   for (const page of pages) {
     const html = readFileSync(join(root, page), 'utf-8');
@@ -24,12 +24,13 @@ test('every page loads the shared GTM include near the top of <head>', () => {
     // Only whitespace between <meta charset> and the include.
     const between = head.slice(head.indexOf('>', charsetAt) + 1, includeAt);
     assert.strictEqual(between.trim(), '', `${page}: include should come right after <meta charset>`);
-    assert(!html.includes('GTM-'), `${page} should not hardcode the GTM ID — it lives in assets/js/analytics.js`);
+    assert(!/GTM-|G-[A-Z0-9]{6,}|gtag\/js/.test(html), `${page} should not hardcode a Google tag — it lives in assets/js/analytics.js (one tag per page)`);
   }
 });
 
-test('analytics.js holds the GTM container ID', () => {
+test('analytics.js holds the GA4 measurement ID and loads only gtag.js', () => {
   const js = readFileSync(join(root, 'assets/js/analytics.js'), 'utf-8');
-  assert.match(js, /const GTM_ID = 'GTM-[A-Z0-9]+';/);
-  assert(js.includes('googletagmanager.com/gtm.js'));
+  assert.match(js, /const GA_MEASUREMENT_ID = 'G-[A-Z0-9]+';/);
+  assert(js.includes('googletagmanager.com/gtag/js'));
+  assert(!js.includes('gtm.js'), 'GTM must not also load, or page views double-count');
 });

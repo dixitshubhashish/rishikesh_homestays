@@ -9,7 +9,7 @@ rishikesh_homestays/
 │   │   └── styles.css              # All styling (design tokens, components)
 │   ├── js/
 │   │   ├── index.js                # Main entry point (ES modules)
-│   │   ├── analytics.js            # Google Tag Manager loader (GTM ID lives here)
+│   │   ├── analytics.js            # GA4 gtag.js loader (measurement ID lives here)
 │   │   ├── site.js                 # Backward compatibility shim
 │   │   ├── contact.js              # Backward compatibility shim
 │   │   └── modules/

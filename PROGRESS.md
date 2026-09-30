@@ -2,7 +2,11 @@
 
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
-## ✅ Shipped — Google Tag Manager on every page (Claude, 2026-09-30)
+## ✅ Shipped — switched GTM → direct GA4 (Claude, 2026-09-30)
+
+- At the user's request, `assets/js/analytics.js` now loads GA4's gtag.js directly (`G-L82BSZMRLW`) instead of the GTM container `GTM-M4KQ9TNN`. Pages are unchanged (same single include line), so there's exactly one Google tag per page and no double counting. `analytics.test.js` now also fails on any hardcoded `G-`/`GTM-`/gtag snippet in HTML, and fails if `gtm.js` loads alongside GA4. The GTM container is no longer used by the site.
+
+## ✅ Shipped (superseded above) — Google Tag Manager on every page (Claude, 2026-09-30)
 
 - Container `GTM-M4KQ9TNN` is loaded from one shared file, `assets/js/analytics.js`, not pasted inline 13 times. Each page has a single `<script async src="/assets/js/analytics.js"></script>` right after `<meta charset>`, so changing the ID later is a one-file edit. Google's `<noscript>` iframe is omitted on purpose: it can't be shared from JS, and GA4 records nothing without JavaScript.
 - New guard `tests/integration/analytics.test.js` discovers every root and `hotels/` page from disk (a new page is covered automatically). It fails if the include is missing or misplaced, or if a `GTM-` ID is hardcoded in HTML.

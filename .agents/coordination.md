@@ -181,6 +181,7 @@ Claude has done the prep work (images downloaded + licensed, sibling page rebuil
 
 Add completed work here with the agent, date, files, and verification command or result. Keep entries concise.
 
+- 2026-09-30 (Claude): Switched `assets/js/analytics.js` from GTM to direct GA4 gtag.js (`G-L82BSZMRLW`); pages untouched; tests updated. Only one Google tag per page, so don't add GTM or another gtag snippet.
 - 2026-09-30 (Claude): Added Google Tag Manager site-wide via a shared `assets/js/analytics.js` (holds `GTM_ID`), included with one `<script async>` line after `<meta charset>` in all 13 pages (touches `index.html` and the `hotels/` page, which are under Codex claims; head-only one-line change). New `tests/integration/analytics.test.js` requires the include on every page. Verified that `gtm.js` loads (200) and `dataLayer` fires in Chromium; `npm test` passes 241/241. **Any new page must include the analytics line.**
 
 - 2026-09-29 (Claude): Gave the WhatsApp nudge bubble ("Planning a trip?" / "Psst… still here!") a speech-bubble tail pointing down at the FAB, aligned to the FAB center on desktop and ≤480px; lifted the bubble slightly for clearance. CSS-only in `assets/css/whatsapp-widget.css` (touches the file under Codex's WhatsApp drawer claim — nudge rules only, no JS changes). Verified via Playwright screenshots at 1440x900 and 390x844; `npm test` passes 239/239.
