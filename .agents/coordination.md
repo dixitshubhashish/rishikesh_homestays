@@ -181,6 +181,7 @@ Claude has done the prep work (images downloaded + licensed, sibling page rebuil
 
 Add completed work here with the agent, date, files, and verification command or result. Keep entries concise.
 
+- 2026-09-30 (Claude): Added `?notrack=1` / `?notrack=0` owner opt-out to `assets/js/analytics.js` (localStorage per browser). Verified in browser; `npm test` 241/241.
 - 2026-09-30 (Claude): Switched `assets/js/analytics.js` from GTM to direct GA4 gtag.js (`G-L82BSZMRLW`); pages untouched; tests updated. Only one Google tag per page, so don't add GTM or another gtag snippet.
 - 2026-09-30 (Claude): Added Google Tag Manager site-wide via a shared `assets/js/analytics.js` (holds `GTM_ID`), included with one `<script async>` line after `<meta charset>` in all 13 pages (touches `index.html` and the `hotels/` page, which are under Codex claims; head-only one-line change). New `tests/integration/analytics.test.js` requires the include on every page. Verified that `gtm.js` loads (200) and `dataLayer` fires in Chromium; `npm test` passes 241/241. **Any new page must include the analytics line.**
 

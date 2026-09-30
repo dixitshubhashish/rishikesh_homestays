@@ -2,6 +2,10 @@
 
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
+## ✅ Shipped — owner opt-out from GA4 (Claude, 2026-09-30)
+
+- `?notrack=1` on any page stores a localStorage flag, and that browser then sends nothing to GA4 (gtag.js isn't loaded, and `ga-disable-G-L82BSZMRLW` is set). `?notrack=0` resumes. The setting is per browser and is reset by clearing site data or using a private window. Verified in Chromium: no requests while opted out, and a `page_view` again after resuming. `npm test` passes 241/241.
+
 ## ✅ Shipped — switched GTM → direct GA4 (Claude, 2026-09-30)
 
 - At the user's request, `assets/js/analytics.js` now loads GA4's gtag.js directly (`G-L82BSZMRLW`) instead of the GTM container `GTM-M4KQ9TNN`. Pages are unchanged (same single include line), so there's exactly one Google tag per page and no double counting. `analytics.test.js` now also fails on any hardcoded `G-`/`GTM-`/gtag snippet in HTML, and fails if `gtm.js` loads alongside GA4. The GTM container is no longer used by the site.
