@@ -2,6 +2,13 @@
 
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
+## ✅ Shipped — Google Tag Manager on every page (Claude, 2026-09-30)
+
+- Container `GTM-M4KQ9TNN` is loaded from one shared file, `assets/js/analytics.js`, not pasted inline 13 times. Each page has a single `<script async src="/assets/js/analytics.js"></script>` right after `<meta charset>`, so changing the ID later is a one-file edit. Google's `<noscript>` iframe is omitted on purpose: it can't be shared from JS, and GA4 records nothing without JavaScript.
+- New guard `tests/integration/analytics.test.js` discovers every root and `hotels/` page from disk (a new page is covered automatically). It fails if the include is missing or misplaced, or if a `GTM-` ID is hardcoded in HTML.
+- Verified in Chromium against the dev server: `gtm.js` returns 200 and `dataLayer` gets `gtm.js`/`gtm.dom`/`gtm.load` on `/`, `/contact`, and the `hotels/` page. `npm test` passes 241/241.
+- **Still needed in the GTM dashboard (user action):** add a GA4 Configuration ("Google tag") with the G- measurement ID, triggered on Initialization – All Pages, then **Submit/Publish** the container. Until it's published, GTM loads but sends nothing.
+
 ## ✅ Shipped — WhatsApp nudge speech-bubble tail + Edge/Windows rendering check (Claude, 2026-09-29)
 
 - **Nudge bubble tail**: the "Planning a Rishikesh trip?" / "Psst… still here!" bubble above the WhatsApp FAB now has a speech-bubble tail on its bottom edge pointing at the icon. It's a CSS-only `::after` in `assets/css/whatsapp-widget.css`, aligned to the FAB center through a `--nudge-tail-right` custom property (30px desktop, 28px at ≤480px), with the bubble raised slightly (96px / 88px) so the tail clears the button. Verified with Playwright screenshots at 1440x900 and 390x844; `npm test` passes 239/239.
