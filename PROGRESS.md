@@ -2,7 +2,11 @@
 
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
-## ✅ Shipped — owner opt-out from GA4 (Claude, 2026-09-30)
+## ✅ Shipped — owner opt-out now needs a secret phrase (Claude, 2026-09-30)
+
+- Replaced the guessable `?notrack=1` with `?baba=<owner phrase>`. The code stores only the phrase's SHA-256 (compared via `crypto.subtle`), so the phrase isn't exposed in the public code; the owner has it. `?baba=wapas` resumes tracking. Verified: `?notrack=1` and wrong phrases are tracked normally, the right phrase stops all hits on later pages, and `wapas` restores them. All other visitors are always tracked.
+
+## ✅ Shipped (superseded above) — owner opt-out from GA4 (Claude, 2026-09-30)
 
 - `?notrack=1` on any page stores a localStorage flag, and that browser then sends nothing to GA4 (gtag.js isn't loaded, and `ga-disable-G-L82BSZMRLW` is set). `?notrack=0` resumes. The setting is per browser and is reset by clearing site data or using a private window. Verified in Chromium: no requests while opted out, and a `page_view` again after resuming. `npm test` passes 241/241.
 

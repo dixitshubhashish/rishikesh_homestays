@@ -7,28 +7,41 @@
 // view gets counted twice.
 const GA_MEASUREMENT_ID = 'G-L82BSZMRLW';
 
-// Owner opt-out, remembered per browser: open any page with ?notrack=1 once
-// to stop this browser from being tracked, ?notrack=0 to resume. Stored in
-// localStorage, so clearing site data or a private window resets it.
+// Owner-only opt-out, remembered per browser. Opening any page with
+// ?baba=<owner phrase> once stops that browser from being tracked;
+// ?baba=wapas resumes. Only the phrase's SHA-256 is stored here, so the
+// phrase itself isn't in this public code; ask the site owner for it. Every
+// other visitor is always tracked. Stored in localStorage, so clearing site
+// data or using a private window resets it.
 const OPT_OUT_KEY = 'rh-analytics-opt-out';
+const OWNER_PHRASE_SHA256 = 'faec231c287dbb6271ab7d6b8980b089b033004ab7d4fa1866261efee0cb11a8';
 
-function isOptedOut() {
+async function sha256Hex(text) {
+  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function isOptedOut() {
   try {
-    const flag = new URLSearchParams(window.location.search).get('notrack');
-    if (flag === '1') localStorage.setItem(OPT_OUT_KEY, '1');
-    if (flag === '0') localStorage.removeItem(OPT_OUT_KEY);
+    const phrase = new URLSearchParams(window.location.search).get('baba');
+    if (phrase === 'wapas') localStorage.removeItem(OPT_OUT_KEY);
+    else if (phrase && (await sha256Hex(phrase.trim().toLowerCase())) === OWNER_PHRASE_SHA256) {
+      localStorage.setItem(OPT_OUT_KEY, '1');
+    }
     return localStorage.getItem(OPT_OUT_KEY) === '1';
   } catch {
     return false;
   }
 }
 
-if (isOptedOut()) {
-  // Google's official per-ID kill switch; also skip loading gtag.js at all.
-  window['ga-disable-' + GA_MEASUREMENT_ID] = true;
-} else {
-  loadGoogleAnalytics();
-}
+isOptedOut().then((optedOut) => {
+  if (optedOut) {
+    // Google's official per-ID kill switch; also skip loading gtag.js at all.
+    window['ga-disable-' + GA_MEASUREMENT_ID] = true;
+  } else {
+    loadGoogleAnalytics();
+  }
+});
 
 function loadGoogleAnalytics() {
   window.dataLayer = window.dataLayer || [];
