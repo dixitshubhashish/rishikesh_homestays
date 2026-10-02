@@ -69,7 +69,9 @@ export default async function handler(req, res) {
       check_out: data.check_out || null,
       adults: adults,
       children: children,
-      guests: `${adults} adult(s), ${children} child(ren)${petCount > 0 ? ', ' + petCount + ' pet(s)' : ''}`,
+      guests: parseInt(data.guests_total) > 0
+        ? `${parseInt(data.guests_total)} guest(s) in total incl. kids`
+        : `${adults} adult(s), ${children} child(ren)${petCount > 0 ? ', ' + petCount + ' pet(s)' : ''}`,
       property_slug: data.preferred_stay || null,
       area: data.area || null,
       coming_from_city: data.coming_from_city || null,
@@ -94,6 +96,11 @@ export default async function handler(req, res) {
     // notice — a well-designed confirmation reads as more trustworthy than
     // a plain data dump.
     const isHostApplication = data.source === 'host_application';
+    // Leads from the "Book this stay" popup on /stay pages (stay_redirect_*,
+    // stay_enquiry) are for our awareness only: never email the guest, even
+    // if they typed an address.
+    const isStayLead = String(data.source || '').startsWith('stay_');
+    const totalGuests = parseInt(data.guests_total) || 0;
     const contactEmail = process.env.CONTACT_EMAIL || 'hello@rishikeshhomestays.com';
     const LOGO_URL = 'https://rishikeshhomestays.com/assets/images/logo.png';
     const BRAND_DARK = '#0f2f2b';
@@ -116,7 +123,7 @@ export default async function handler(req, res) {
           ${row('Preferred Property', data.preferred_stay || 'Open to suggestions')}
           ${row('Preferred Area', data.area || 'Not specified')}
           ${row('Coming from (City)', data.coming_from_city || 'Not specified')}
-          ${row('Guests', `${adults} adult(s), ${children} child(ren)`)}
+          ${row('Guests', totalGuests ? `${totalGuests} in total (kids included)` : `${adults} adult(s), ${children} child(ren)`)}
           ${row('Pets', petCount > 0 ? `${petType} (${petCount})` : 'None')}
           ${row('Trip Details', `<span style="font-weight: 400; white-space: pre-wrap;">${data.details}</span>`)}
           ${row('Submitted At', new Date().toLocaleString())}
@@ -165,7 +172,38 @@ export default async function handler(req, res) {
           <p style="margin: 0; color: #314b47; font-size: 14px; line-height: 1.6;">Book directly with us (like you just did!) and there's no middleman fee baked into your price — plus you get a real human on WhatsApp who actually knows the ghats, the good chai stalls, and which room has the best sunrise view. Airbnb can't tell you that. 😉</p>
         </td></tr></table>`;
 
-    if (data.email) {
+    // One-tap reply for us: opens WhatsApp to the guest's number with a
+    // friendly opener about the stay they asked for.
+    const guestWaDigits = String(data.phone || '').replace(/\D/g, '');
+    const stayName = data.stay_name || data.preferred_stay || 'your Rishikesh stay';
+    // Deliberately doesn't name the listing they clicked: the goal is to steer
+    // them to our own homestay network, so just ask for dates and offer picks.
+    // The book-direct pitch ends with one random way to enjoy the commission
+    // they save by not booking through a platform.
+    const SAVED_COMMISSION_IDEAS = [
+      'a proper feast at Chotiwala',
+      'a white-water rafting trip on the Ganga',
+      'an offering at the Triveni Ghat aarti',
+      'a donation at Triveni Ghat',
+      'a sunrise yoga class by the river',
+      'kulhad chai and hot jalebis by the ghat, every evening',
+      'a sunrise taxi up to Kunjapuri Devi',
+      'a diya (or ten) at the Parmarth Niketan aarti',
+      'an Ayurvedic massage after the trek',
+      'a cafe crawl through Tapovan'
+    ];
+    const savedIdea = SAVED_COMMISSION_IDEAS[Math.floor(Math.random() * SAVED_COMMISSION_IDEAS.length)];
+    const guestOpener = `Hi ${data.name}! 🙏 This is Rishikesh Homestays. Thanks for reaching out about your Rishikesh trip` +
+      `${totalGuests ? ` for ${totalGuests} guest${totalGuests > 1 ? 's' : ''}` : ''}. ` +
+      'Could you share your check-in and check-out dates? We\'ll line up our best handpicked homestays and hotels for you. ' +
+      `Book direct with us and skip the booking-site commission. Spend what you save on ${savedIdea} instead! 🌊`;
+    const replyOnWhatsAppHtml = guestWaDigits ? `
+        <table role="presentation" style="width: 100%; margin: 6px 0 18px;"><tr><td align="center">
+          <a href="https://wa.me/${guestWaDigits}?text=${encodeURIComponent(guestOpener)}" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 30px; border-radius: 999px;">💬 WhatsApp ${data.name} now</a>
+        </td></tr></table>
+        <p style="text-align: center; color: #66726f; font-size: 12px; margin: 0 0 8px;">Opens a chat with ${data.phone}, with a ready-to-send opener you can edit.</p>` : '';
+
+    if (data.email && !isStayLead) {
       // One shared thread instead of two disconnected emails: the guest is
       // the primary recipient (so it reads as "your enquiry", not an
       // internal notice) and we're CC'd on the same message, so replying
@@ -195,8 +233,11 @@ export default async function handler(req, res) {
       // No guest email to make the primary recipient — just notify us
       // internally, same branded shell but framed as an internal alert.
       const internalHtml = `
-          <h1 style="color: ${BRAND}; font-size: 20px; margin: 0 0 6px;">${isHostApplication ? 'New Homestay Listing Application' : 'New Rishikesh Homestay Enquiry'}</h1>
-          <p style="color: #66726f; font-size: 14px; margin: 0 0 4px;">No email on file for this guest — reach out by phone or WhatsApp.</p>
+          <h1 style="color: ${BRAND}; font-size: 20px; margin: 0 0 6px;">${isHostApplication ? 'New Homestay Listing Application' : isStayLead ? `New stay lead: ${stayName}` : 'New Rishikesh Homestay Enquiry'}</h1>
+          <p style="color: #66726f; font-size: 14px; margin: 0 0 4px;">${isStayLead
+            ? `For your eyes only: the guest was not emailed.${data.source.startsWith('stay_redirect_') ? ' They were sent on to the booking site after this.' : ''}`
+            : 'No email on file for this guest — reach out by phone or WhatsApp.'}</p>
+          ${replyOnWhatsAppHtml}
           ${detailsCardHtml}
           <p style="color: #66726f; font-size: 12px; margin-top: 20px;">This enquiry has been logged in your database.</p>`;
 
@@ -205,7 +246,9 @@ export default async function handler(req, res) {
         to: contactEmail,
         subject: isHostApplication
           ? `New Listing Application from ${data.name} - Rishikesh Homestays`
-          : `New Enquiry from ${data.name} - Rishikesh Homestay`,
+          : isStayLead
+            ? `Stay lead: ${data.name}${totalGuests ? ` (${totalGuests} guests)` : ''} → ${stayName}`
+            : `New Enquiry from ${data.name} - Rishikesh Homestay`,
         html: emailShell(internalHtml)
       });
 

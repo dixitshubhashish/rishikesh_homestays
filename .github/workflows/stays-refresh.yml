@@ -1,0 +1,36 @@
+# Daily check for the best-*-in-rishikesh pages. scripts/stays/refresh.py
+# decides whether anything is due (gap grows 7 -> 56 days while the source
+# listing doesn't change), so most days this exits in seconds.
+name: Refresh stays pages
+
+on:
+  schedule:
+    - cron: '30 0 * * *'   # 06:00 IST daily
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Re-crawl now, ignoring the gap'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 scripts/stays/refresh.py ${{ inputs.force && '--force' || '' }}
+      - name: Commit if anything changed
+        run: |
+          git config user.name "stays-refresh bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add scripts/stays/refresh.state scripts/stays/listing-urls.txt assets/js/modules/stays-index-data.js best-*-in-rishikesh.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Stays pages: scheduled refresh ($(date -u +%F))"
+          git push

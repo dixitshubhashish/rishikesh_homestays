@@ -269,6 +269,36 @@
       .rr-s4 .rr-bubble { left: auto; right: 0; transform: scale(0.4); transform-origin: 90% 100%; }
       .rr-s4 .rr-bubble.is-shouting { transform: scale(1); }
       .rr-s4 .rr-bubble::after { left: auto; right: 14px; }
+      .error-choti {
+        position: absolute;
+        left: var(--choti-left, 36.1%);
+        top: var(--choti-top, 28.9%);
+        width: var(--choti-width, 5.2%);
+        aspect-ratio: 1.7 / 1;
+        transform: translate(-88%, -52%) rotate(var(--choti-rotate, -10deg));
+        transform-origin: 90% 56%;
+        z-index: 2;
+        pointer-events: none;
+        filter: drop-shadow(0 4px 2px rgba(53, 26, 12, 0.28));}
+      .error-choti svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;}
+      .error-choti .choti-root {
+        fill: #1e120b;
+        stroke: rgba(255, 210, 146, 0.45);
+        stroke-width: 0.9;}
+      .error-choti .choti-tail {
+        fill: #180d07;
+        stroke: rgba(255, 210, 146, 0.3);
+        stroke-linejoin: round;
+        stroke-width: 0.8;}
+      .error-choti .choti-highlight {
+        fill: none;
+        stroke: rgba(111, 61, 26, 0.62);
+        stroke-linecap: round;
+        stroke-width: 1.2;}
       /* 0-38% paddle in; 38-44% tip over; 44-50% land upside down. */
       /* Riding the swell: every step rises/falls a little and rolls
          with the wave while it paddles in (0-38%), tips over (38-44%),
@@ -628,6 +658,11 @@
           aspect-ratio: 1922 / 818;}
         .error-art picture { display: none; }
         .error-stage-image-wide { display: block; }
+        .error-choti {
+          --choti-left: 22.55%;
+          --choti-top: 35.6%;
+          --choti-width: 4.4%;
+          --choti-rotate: -12deg;}
         /* Thin fade only, so the travellers' feet on the path stay visible. */
         .error-art::after {
           background: linear-gradient(0deg, #173a35 0%, rgba(23, 58, 53, 0.55) 3%, transparent 9%);}
@@ -661,6 +696,11 @@
           aspect-ratio: 1922 / 818;}
         .error-stage.is-stacked .error-art picture { display: none; }
         .error-stage.is-stacked .error-stage-image-wide { display: block; }
+        .error-stage.is-stacked .error-choti {
+          --choti-left: 22.55%;
+          --choti-top: 35.6%;
+          --choti-width: 4.4%;
+          --choti-rotate: -12deg;}
         /* Thin fade only, so the travellers' feet on the path stay visible. */
         .error-stage.is-stacked .error-art::after {
           background: linear-gradient(0deg, #173a35 0%, rgba(23, 58, 53, 0.55) 3%, transparent 9%);}
@@ -692,6 +732,11 @@
           aspect-ratio: 3 / 4;}
         .error-stage-image {
           object-position: 50% 58%;}
+        .error-choti {
+          --choti-left: 43.4%;
+          --choti-top: 40.6%;
+          --choti-width: 9.2%;
+          --choti-rotate: -14deg;}
         .error-art::after {
           background:
             linear-gradient(0deg, #071816 0%, rgba(7, 24, 22, 0.82) 7%, rgba(7, 24, 22, 0.22) 18%, transparent 30%);}
@@ -749,6 +794,7 @@
         .error-status::before,
         .error-chant::before,
         .error-chant::after,
+        .error-choti,
         .error-diver,
         .error-splash,
         .error-splash-reflection,
@@ -789,6 +835,14 @@
             <img class="error-stage-image" src="/assets/images/404/rishikesh-wrong-turn.webp" alt="" width="1600" height="900" fetchpriority="high">
           </picture>
           <img class="error-stage-image-wide" src="/assets/images/404/rishikesh-wrong-turn-wide-v2.webp" alt="" width="1922" height="818" loading="lazy">
+          <span class="error-choti" aria-hidden="true">
+            <svg viewBox="0 0 150 88" xmlns="http://www.w3.org/2000/svg" focusable="false">
+              <ellipse class="choti-root" cx="135" cy="54" rx="12" ry="8"/>
+              <path class="choti-tail" d="M130 49 C103 26 59 12 6 3 C45 25 82 47 128 62 Z"/>
+              <path class="choti-highlight" d="M121 49 C89 32 56 19 20 9"/>
+              <path class="choti-highlight" d="M120 57 C88 46 57 31 29 16"/>
+            </svg>
+          </span>
           <p class="error-chant" lang="hi" aria-label="Om Namah Shivaya, Har Har Gange"><span>ॐ नमः शिवाय</span><span aria-hidden="true">&bull;</span><span>हर हर गंगे</span></p>
           <div class="error-dive-loop" id="error-dive-loop" aria-hidden="true">
             <svg class="error-diver" viewBox="0 0 48 72" xmlns="http://www.w3.org/2000/svg">
@@ -930,6 +984,9 @@
             <h3>Stay</h3>
 
             <a href="/homestays">Browse Homestays</a>
+            <a href="/best-hotels-in-rishikesh">Best Hotels in Rishikesh</a>
+            <a href="/best-homestays-in-rishikesh">Best Homestays in Rishikesh</a>
+            <a href="/best-camps-in-rishikesh">Camps in Rishikesh</a>
             <a href="/contact">Plan My Stay</a>
             <a href="/contact">Group Booking</a>
             <a href="/list-your-homestay">List Your Homestay</a>

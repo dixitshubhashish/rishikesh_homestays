@@ -2696,3 +2696,419 @@ a.homestay-photo:hover {
   .btn-spinner {
     animation: none;}
 }
+
+/* Rishikesh Stays Index (/best-hotels-in-rishikesh) — market listings browser. */
+.sx-title {
+  margin: 4px 0 0;
+  color: var(--river);
+  text-wrap: balance;}
+.sx-lede {
+  max-width: 62ch;
+  color: var(--muted);}
+.sx-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;}
+.sx-stats b {
+  color: var(--ink);}
+.sx-controls {
+  position: sticky;
+  top: 72px;
+  z-index: 5;
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-block: 14px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);}
+.sx-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;}
+.sx-label {
+  margin-right: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;}
+.sx-input {
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;}
+input.sx-input {
+  flex: 1 1 240px;}
+.sx-seg {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);}
+.sx-seg button {
+  padding: 7px 12px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;}
+.sx-seg button[aria-pressed="true"] {
+  background: var(--river);
+  color: #fff;}
+.sx-chip {
+  padding: 4px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;}
+.sx-chip[aria-pressed="true"] {
+  border-color: var(--river-2);
+  background: var(--sky);
+  color: var(--river);
+  font-weight: 600;}
+.sx-clear {
+  border: 0;
+  background: none;
+  color: var(--river-2);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;}
+.sx-group {
+  margin-top: 26px;}
+.sx-group h2 {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-size: 1.25rem;}
+.sx-group h2 span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: normal;
+  font-variant-numeric: tabular-nums;}
+.sx-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--line);}
+.sx-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--line);}
+.sx-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;}
+.sx-meta {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;}
+.sx-stars-ico {
+  color: var(--marigold);
+  letter-spacing: 1px;}
+.sx-go {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 7px 16px;
+  border-radius: var(--radius);
+  background: var(--river);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;}
+.sx-go:hover {
+  background: var(--river-2);}
+.sx-more {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--river);
+  font: inherit;
+  cursor: pointer;}
+.sx-empty,
+.sx-note {
+  color: var(--muted);
+  font-size: 0.85rem;}
+.sx-note {
+  margin-top: 36px;}
+@media (max-width: 680px) {
+  .sx-controls {
+    position: static;}}
+/* Category strip + "explore more" block shared by every best-*-in-rishikesh page. */
+.sx-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 18px;}
+.sx-cats a {
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.88rem;
+  text-decoration: none;}
+.sx-cats a small {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;}
+.sx-cats a:hover {
+  border-color: var(--river-2);}
+.sx-cats a[aria-current="page"] {
+  border-color: var(--river);
+  background: var(--river);
+  color: #fff;}
+.sx-cats a[aria-current="page"] small {
+  color: rgba(255, 255, 255, 0.8);}
+.sx-explore {
+  margin-top: 48px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);}
+.sx-explore h2 {
+  margin: 0 0 12px;
+  font-size: 1.3rem;}
+.sx-explore ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 8px 24px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;}
+.sx-explore li span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;}
+.sx-explore a {
+  color: var(--river);}
+/* Expanded section scrolls in place instead of pushing the page miles down. */
+.sx-scroll {
+  max-height: 70vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;}
+.sx-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  margin-top: 10px;}
+.sx-actions .sx-more {
+  margin-top: 0;}
+.sx-open {
+  color: var(--river);
+  font-weight: 600;}
+/* Pinned "Our homestays" block on every best-*-in-rishikesh page. */
+.sx-own {
+  margin-top: 22px;
+  padding: 14px 16px 6px;
+  border: 1px solid var(--marigold);
+  border-radius: var(--radius);
+  background: var(--panel);}
+.sx-own h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 6px;
+  font-size: 1.2rem;}
+.sx-own h2 span {
+  color: var(--marigold);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;}
+.sx-own .sx-list {
+  border-top: 0;}
+.sx-own .sx-item:last-child {
+  border-bottom: 0;}
+/* Editorial blocks on best-*-in-rishikesh pages: breadcrumb, guide, data
+   insights and FAQ (all rendered in the HTML for crawlers). */
+.sx-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;}
+.sx-crumbs a {
+  color: var(--river);}
+.sx-updated {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;}
+.sx-guide {
+  max-width: 72ch;
+  margin-top: 8px;}
+.sx-guide h2,
+.sx-faq h2 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  text-wrap: balance;}
+.sx-insights {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding-left: 1.1em;
+  color: var(--ink);}
+.sx-faq {
+  max-width: 72ch;
+  margin-top: 48px;}
+.sx-faq-item {
+  border-bottom: 1px solid var(--line);}
+.sx-faq-item summary {
+  padding: 12px 0;
+  font-weight: 600;
+  cursor: pointer;}
+.sx-faq-item p {
+  margin: 0 0 14px;
+  color: var(--muted);}
+.sx-loading #sx-out {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;}
+/* Single-stay guide pages (/stays/<slug>). */
+.sp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 18px;
+  margin-top: 24px;}
+.sp-card {
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);}
+.sp-card h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;}
+.sp-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 16px;
+  margin: 0;}
+.sp-facts dt {
+  color: var(--muted);
+  font-size: 0.85rem;}
+.sp-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;}
+.sp-links {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;}
+.sp-links a {
+  color: var(--river);
+  font-weight: 600;}
+.sp-ok,
+.sp-warn {
+  margin-left: 6px;
+  font-size: 0.78rem;}
+.sp-ok {
+  color: var(--leaf);}
+.sp-warn {
+  color: var(--clay);}
+.sp-small {
+  color: var(--muted);
+  font-size: 0.88rem;}
+/* /stay?s=<id> info page + its lead popup actions. */
+.sp-book p {
+  margin: 0 0 14px;
+  color: var(--muted);}
+.sp-gate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;}
+.sp-gate-actions .btn {
+  flex: 1 1 200px;}
+.sp-fac {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;}
+.sp-fac li {
+  padding: 4px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  font-size: 0.86rem;}
+/* Leaflet map on /stay pages (this stay, our homestays, stays nearby). */
+.sp-map {
+  margin-top: 28px;}
+.sp-map h2 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;}
+.sp-map-slot {
+  height: 420px;
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--sky);}
+.sp-map-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 10px 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  list-style: none;}
+.sp-map-key i {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: -1px;}
+.sp-map-key .k-this {
+  background: #b5573f;}
+.sp-map-key .k-own {
+  background: #d98b2b;}
+.sp-map-key .k-near {
+  background: #0f6f74;
+  opacity: 0.6;}
+@media (max-width: 680px) {
+  .sp-map-slot {
+    height: 340px;}}
+/* Total-guests stepper in the /stay lead popup. */
+.sp-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;}
+.sp-stepper button {
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--river);
+  font-size: 1.2rem;
+  cursor: pointer;}
+.sp-stepper input {
+  width: 64px;
+  text-align: center;}
+.sp-stepper-hint {
+  color: var(--muted);
+  font-size: 0.82rem;}
