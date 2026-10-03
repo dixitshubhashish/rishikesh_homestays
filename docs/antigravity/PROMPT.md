@@ -4,6 +4,8 @@ Paste everything below the line into Antigravity (opened on this repo).
 
 ---
 
+First read `docs/antigravity/RULES.md` completely and follow it exactly (output format, matching rules, pacing, don'ts); if anything below differs, RULES.md wins.
+
 You're helping rishikeshhomestays.com find the booking-site page of each stay in `docs/antigravity/no-link-stays.tsv` (1,396 stays in Rishikesh and Haridwar, best first: work top to bottom). Read `CLAUDE.md` and `docs/HANDOFF.md` first, and add a row for yourself in `.agents/coordination.md` (Active Claims) claiming `docs/antigravity/results-*.tsv` only.
 
 For each stay:

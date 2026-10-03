@@ -24,7 +24,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 
 ## Antigravity helping with booking links
 
-`docs/antigravity/PROMPT.md` is a ready prompt for Antigravity to find booking pages for the 1,396 stays in `docs/antigravity/no-link-stays.tsv` (best first) via Google + its browser. It writes `docs/antigravity/results-*.tsv` in our `key / verified|none / Platform / url / title` format. To merge: `python3 scripts/stays/postcheck_matches.py <out.tsv> docs/antigravity/results-*.tsv`, re-check Booking.com/EaseMyTrip/Agoda rows with `scripts/stays/verify_platform.mjs` where possible, then `merge_ota.py <out.tsv>`, rebuild both cities and `push_bigquery.mjs`. Booking.com rows get the CJ link automatically.
+`docs/antigravity/RULES.md` (the rulebook: output format, match rules, pacing) + `docs/antigravity/PROMPT.md` are a ready prompt for Antigravity to find booking pages for the 1,396 stays in `docs/antigravity/no-link-stays.tsv` (best first) via Google + its browser. It writes `docs/antigravity/results-*.tsv` in our `key / verified|none / Platform / url / title` format. To merge: `python3 scripts/stays/postcheck_matches.py <out.tsv> docs/antigravity/results-*.tsv`, re-check Booking.com/EaseMyTrip/Agoda rows with `scripts/stays/verify_platform.mjs` where possible, then `merge_ota.py <out.tsv>`, rebuild both cities and `push_bigquery.mjs`. Booking.com rows get the CJ link automatically.
 
 ## Ideas not started
 
