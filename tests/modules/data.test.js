@@ -62,7 +62,7 @@ test('Data Module Tests', async (t) => {
   await t.test('STAYS - price format should be consistent', () => {
     STAYS.forEach((stay, index) => {
       assert(stay.price.includes('₹'), `Stay ${index} price should include rupee symbol`);
-      assert(stay.price.includes('From'), `Stay ${index} price format should start with "From"`);
+      assert(/^Starting ₹[\d,]+ onwards$/.test(stay.price), `Stay ${index} price should read "Starting ₹X onwards"`);
     });
   });
 

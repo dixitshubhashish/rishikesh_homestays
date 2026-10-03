@@ -1,4 +1,4 @@
-// Shared script for every best-<category>-in-rishikesh page.
+// Shared script for every best-<category>-in-<city> page (Rishikesh by default).
 //
 // The lists are already in the HTML (written by scripts/stays/build_pages.py)
 // in a fixed order, so search engines, AI crawlers and no-JS visitors see
@@ -7,6 +7,9 @@
 // uses a control, not on page load. #sx-root's data-filter narrows the data:
 // "all" | "k:<type>" | "t:<theme tag>".
 
+// City of this page (#sx-root data-city; Rishikesh by default): picks the
+// data module and adds &c=<city> to /stay links for cities other than Rishikesh.
+let CQ = '';
 const PAGE_SIZE = 20; // rows per section before "Show all" on the master page
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -18,13 +21,35 @@ function matchFilter(d, filter) {
   return kind === 'k' ? d.ks.includes(value) : d.t.includes(value);
 }
 
+// Our stays mixed into every list: after the 3rd row, then every 7th,
+// rotating; in hostel lists pitched as the private, not-shared option.
+// Must stay in step with mix_html() in scripts/stays/build_pages.py.
+const MIX_FIRST = 3, MIX_EVERY = 7;
+const PRIVATE_ALT = ['k:Hostels', 't:backpacker']; // lists where ours read as "Private stay"
+// Same look as every other row; real guest rating only, and only if 9+.
+function ownMixHtml(o, isPrivate) {
+  const parts = ['<span>Unrated</span>', `<span>${esc(o.a)}</span>`, `<span>${isPrivate ? 'Private stay' : esc(o.k)}</span>`];
+  if (o.g >= 9) parts.push(`<span>Guests ${o.g}/10${o.c ? ` · ${o.c} reviews` : ''}</span>`);
+  if (o.p) parts.push(`<span>Starting ₹${inr(o.p)} onwards</span>`);
+  return `<li class="sx-item"><span class="sx-name">${esc(o.n)}</span><span class="sx-meta">${parts.join('')}</span>` +
+    `<a class="sx-go" href="${esc(o.u)}">View property</a></li>`;
+}
+function mixHtml(items, own, isPrivate) {
+  let k = 0;
+  return items.map((d, idx) => {
+    const i = idx + 1;
+    const mix = own.length && i < items.length && (i === MIX_FIRST || (i > MIX_FIRST && (i - MIX_FIRST) % MIX_EVERY === 0));
+    return itemHtml(d) + (mix ? ownMixHtml(own[k++ % own.length], isPrivate) : '');
+  }).join('');
+}
+
 // Must stay in step with item_html() in scripts/stays/build_pages.py.
 function itemHtml(d) {
   const parts = [d.s ? `<span class="sx-stars-ico">${'★'.repeat(d.s)}</span>` : '<span>Unrated</span>', `<span>${esc(d.a)}</span>`, `<span>${esc(d.k)}</span>`];
   if (d.g) parts.push(`<span>Guests ${d.g}/10${d.c ? ` · ${d.c} reviews` : ''}</span>`);
-  if (d.p) parts.push(`<span>From ₹${inr(d.p)}</span>`);
+  if (d.p) parts.push(`<span>Starting ₹${inr(d.p)} onwards</span>`);
   return `<li class="sx-item"><span class="sx-name">${esc(d.n)}</span><span class="sx-meta">${parts.join('')}</span>` +
-    `<a class="sx-go" href="/stay?s=${esc(d.id)}" aria-label="View ${esc(d.n)}">View property</a></li>`;
+    `<a class="sx-go" href="/hotels/stay?s=${esc(d.id)}${CQ}" aria-label="View ${esc(d.n)}">View property</a></li>`;
 }
 
 export function setupStaysIndex() {
@@ -32,6 +57,8 @@ export function setupStaysIndex() {
   const out = $('sx-out');
   if (!root || !out) return;
   const pageFilter = root.dataset.filter || 'all';
+  const city = root.dataset.city || 'rishikesh';
+  CQ = city === 'rishikesh' ? '' : `&c=${city}`;
   const isMaster = pageFilter === 'all';
   const allTitle = root.dataset.allTitle || 'All stays';
   const state = { q: '', g: isMaster ? 'c' : 'all', stars: new Set(), area: '', kind: '', fac: new Set(), open: new Set() };
@@ -46,9 +73,9 @@ export function setupStaysIndex() {
     if (data) return Promise.resolve(data);
     if (!loading) {
       root.classList.add('sx-loading');
-      loading = import('./stays-index-data.js').then((m) => {
+      loading = import(city === 'rishikesh' ? './stays-index-data.js' : `./stays-index-data-${city}.js`).then((m) => {
         const base = m.STAYS_INDEX.filter((d) => matchFilter(d, pageFilter));
-        data = { base, meta: m.STAYS_INDEX_META };
+        data = { base, meta: m.STAYS_INDEX_META, own: m.STAYS_OWN };
         buildControls(base);
         root.classList.remove('sx-loading');
         return data;
@@ -112,7 +139,7 @@ export function setupStaysIndex() {
   });
 
   function render() {
-    const { base, meta } = data;
+    const { base, meta, own } = data;
     const rows = base.filter((d) =>
       (!state.q || d.n.toLowerCase().includes(state.q)) && (!state.stars.size || state.stars.has(d.s)) &&
       (!state.area || d.a === state.area) && (!state.kind || d.ks.includes(state.kind)) &&
@@ -134,15 +161,15 @@ export function setupStaysIndex() {
         .map((k) => ({ title: state.g === 's' ? (k === '0' ? 'Unrated' : `${k}-star`) : k, list: groups[k], slug: null }));
     }
     const limit = isMaster && state.g === 'c';
-    out.innerHTML = sections.map(({ title, list, slug }) => {
+    out.innerHTML = sections.map(({ title, list, slug, filter }) => {
       const key = `${state.g}:${title}`, open = !limit || state.open.has(key);
       const shown = open ? list : list.slice(0, PAGE_SIZE);
       const actions = limit ? [
         list.length > PAGE_SIZE && !open && !slug ? `<button type="button" class="sx-more" data-k="${esc(key)}">Show all ${inr(list.length)}</button>` : '',
-        slug ? `<a class="sx-open" href="/best-${slug}-in-rishikesh">View all ${inr(list.length)} ${esc(title.toLowerCase())}</a>` : ''
+        slug ? `<a class="sx-open" href="/hotels/best-${slug}-in-${root.dataset.city || 'rishikesh'}">View all ${inr(list.length)} ${esc(title.toLowerCase())}</a>` : ''
       ].join('') : '';
       return `<section class="sx-group"><h2>${esc(title)} <span>${inr(list.length)}</span></h2>` +
-        `<ul class="sx-list${limit && open && list.length > PAGE_SIZE ? ' sx-scroll' : ''}">${shown.map(itemHtml).join('')}</ul>` +
+        `<ul class="sx-list${limit && open && list.length > PAGE_SIZE ? ' sx-scroll' : ''}">${mixHtml(shown, own, PRIVATE_ALT.includes(pageFilter) || PRIVATE_ALT.includes(filter))}</ul>` +
         `${actions ? `<div class="sx-actions">${actions}</div>` : ''}</section>`;
     }).join('');
   }

@@ -15,42 +15,88 @@ Rishikesh Homestays is not a single property — it is a curated shortlist servi
 - [Places to Visit / Restaurants & Cafes](https://rishikeshhomestays.com/places-to-visit): two tabs on one page — must-see local sights (Triveni Ghat, Parmarth Niketan, Beatles Ashram, Neer Garh Waterfall, Neelkanth Mahadev Temple, and more), and where to eat (riverside cafes, German bakeries, Israeli food, organic cafes, local thali spots, and why every menu is vegetarian and alcohol-free). The restaurants tab is at `/places-to-visit#restaurants`.
 - [Triveni Ghat](https://rishikeshhomestays.com/triveni-ghat): dedicated guide to the evening Ganga Aarti at Triveni Ghat and how to visit respectfully.
 - [Kedarnath & Garhwal](https://rishikeshhomestays.com/kedarnath-yatra): routes, distances, best season, and sample itineraries for Kedarnath, Badrinath, Gangotri, Yamunotri, and Auli from Rishikesh.
-- [Haridwar Kumbh Mela 2027](https://rishikeshhomestays.com/haridwar-kumbh-2027): reported bathing dates, tithi, Kumbh significance, Amrit Snan planning, long weekends, and why Rishikesh is a good nearby base.
+- [Haridwar Kumbh Mela 2027](https://rishikeshhomestays.com/haridwar-kumbh-2027): reported bathing dates, tithi, Kumbh significance, Amrit Snan planning, long weekends, where to stay (Haridwar near the ghats, dharamshalas, or Rishikesh as a calmer base), and why Rishikesh is a good nearby base.
 - [List Your Homestay](https://rishikeshhomestays.com/list-your-homestay): for property owners in Rishikesh who want to list their homestay/guest house with us — application form, no listing fee.
 
 ## Where to stay: compare every listed stay in Rishikesh
 
 Comparison pages for every kind of stay in Rishikesh. Each shows counts by area, typical price ranges, pet-friendly and Ganga-facing shares, FAQs, and our own book-direct homestays first.
 <!-- stays-pages:start -->
-- [Best Hotels in Rishikesh (all stays)](https://rishikeshhomestays.com/best-hotels-in-rishikesh): 1,608 stays of every type, grouped by category. Every hotel, homestay, resort, camp, hostel and villa we found listed in Rishikesh, from simple rooms to 5-star stays, grouped by category.
-- [Best Homestays in Rishikesh](https://rishikeshhomestays.com/best-homestays-in-rishikesh): 130 homestays. Family-run homes where you stay with locals, often with home-cooked food and a quieter street.
-- [Best Resorts in Rishikesh](https://rishikeshhomestays.com/best-resorts-in-rishikesh): 156 resorts. Resorts with gardens, pools and river or hill views, mostly along the Neelkanth and Badrinath roads.
-- [Best Camps in Rishikesh](https://rishikeshhomestays.com/best-camps-in-rishikesh): 19 camps. Riverside and jungle camps and glamping tents, mostly along the Shivpuri rafting stretch.
-- [Best Hostels in Rishikesh](https://rishikeshhomestays.com/best-hostels-in-rishikesh): 143 hostels. Backpacker hostels with dorms and private rooms, most of them in Tapovan and around Laxman Jhula.
-- [Best Villas in Rishikesh](https://rishikeshhomestays.com/best-villas-in-rishikesh): 45 villas. Private villas for groups and families, many with a garden, terrace or pool.
-- [Best Apartments in Rishikesh](https://rishikeshhomestays.com/best-apartments-in-rishikesh): 305 apartments. Serviced 1BHK to 4BHK apartments with kitchens, good for long stays and families.
-- [Best Guest Houses in Rishikesh](https://rishikeshhomestays.com/best-guest-houses-in-rishikesh): 86 guest houses. Small guest houses with simple rooms, usually close to the ghats and markets.
-- [Best Cottages in Rishikesh](https://rishikeshhomestays.com/best-cottages-in-rishikesh): 45 cottages. Cottages in the hills and gardens around Rishikesh, away from the town crowds.
-- [Best Bed & Breakfasts in Rishikesh](https://rishikeshhomestays.com/best-bed-and-breakfasts-in-rishikesh): 35 bed & breakfasts. Bed & breakfasts where the morning meal comes with the room.
-- [Best Holiday Rentals in Rishikesh](https://rishikeshhomestays.com/best-holiday-rentals-in-rishikesh): 14 holiday rentals. Whole homes and flats to rent for a holiday, booked as one unit.
-- [Best Ashram Stays in Rishikesh](https://rishikeshhomestays.com/best-ashram-stays-in-rishikesh): 14 ashram stays. Ashrams that take guests, with simple rooms and daily yoga, satsang or aarti.
-- [Best Aparthotels in Rishikesh](https://rishikeshhomestays.com/best-aparthotels-in-rishikesh): 16 aparthotels. Hotel-run apartments: a kitchen and living space with hotel housekeeping and a front desk.
-- [Best Lodges in Rishikesh](https://rishikeshhomestays.com/best-lodges-in-rishikesh): 7 lodges. Simple lodges with basic rooms, usually close to the main roads and markets.
-- [Best Pet-Friendly Stays in Rishikesh](https://rishikeshhomestays.com/best-pet-friendly-stays-in-rishikesh): 445 pet-friendly stays. Stays that list pets as allowed, so you can bring your dog to Rishikesh.
-- [Best Ganga View Stays in Rishikesh](https://rishikeshhomestays.com/best-ganga-view-stays-in-rishikesh): 247 ganga view stays. Stays on or facing the Ganga: river views, private ghats and riverside rooms.
-- [Best Luxury Stays in Rishikesh](https://rishikeshhomestays.com/best-luxury-stays-in-rishikesh): 321 luxury stays. 4 and 5-star properties and premium stays from ₹8,000 a night.
-- [Best Budget Stays in Rishikesh](https://rishikeshhomestays.com/best-budget-stays-in-rishikesh): 187 budget stays. Rooms and beds from ₹1,500 a night or less.
-- [Best Yoga Stays in Rishikesh](https://rishikeshhomestays.com/best-yoga-stays-in-rishikesh): 226 yoga stays. Stays with yoga classes on site, from ashram-style retreats to hotels with a daily session.
-- [Best Spa & Wellness Stays in Rishikesh](https://rishikeshhomestays.com/best-spa-and-wellness-stays-in-rishikesh): 195 spa & wellness stays. Stays with a spa, wellness centre or massage, including Ayurveda-focused retreats.
-- [Best Family-Friendly Stays in Rishikesh](https://rishikeshhomestays.com/best-family-friendly-stays-in-rishikesh): 58 family-friendly stays. Stays that welcome families, with family rooms and space for children.
-- [Best Long Stays with a Kitchen in Rishikesh](https://rishikeshhomestays.com/best-long-stays-with-kitchen-in-rishikesh): 264 long stays with a kitchen. Stays with a private or shared kitchen, good for weeks-long yoga courses and workations.
-- [Best Stays with Airport Pickup in Rishikesh](https://rishikeshhomestays.com/best-stays-with-airport-pickup-in-rishikesh): 327 stays with airport pickup. Stays that arrange a transfer from Dehradun's Jolly Grant airport, about 35 km from Rishikesh.
-- [Best Business Hotels in Rishikesh](https://rishikeshhomestays.com/best-business-hotels-in-rishikesh): 124 business hotels. Hotels with a business centre or meeting and banquet halls, for work trips, retreats and events.
-- [Best Boutique Hotels in Rishikesh](https://rishikeshhomestays.com/best-boutique-hotels-in-rishikesh): 14 boutique hotels. Small, design-led hotels with a distinct character.
-- [Best Stays with a Jacuzzi in Rishikesh](https://rishikeshhomestays.com/best-stays-with-jacuzzi-in-rishikesh): 25 stays with a jacuzzi. Stays that list a jacuzzi among their facilities, often in suites and villas.
-- [Best Stays with a Pool in Rishikesh](https://rishikeshhomestays.com/best-stays-with-pool-in-rishikesh): 137 stays with a pool. Properties that list a swimming pool among their facilities.
+- [Best Hotels in Rishikesh (all stays)](https://rishikeshhomestays.com/hotels/best-hotels-in-rishikesh): 1,608 stays of every type, grouped by category. Every hotel, homestay, resort, camp, hostel and villa we found listed in Rishikesh, from simple rooms to 5-star stays, grouped by category.
+- [Best Homestays in Rishikesh](https://rishikeshhomestays.com/hotels/best-homestays-in-rishikesh): 130 homestays. Family-run homes where you stay with locals, often with home-cooked food and a quieter street.
+- [Best Resorts in Rishikesh](https://rishikeshhomestays.com/hotels/best-resorts-in-rishikesh): 156 resorts. Resorts with gardens, pools and river or hill views, mostly along the Neelkanth and Badrinath roads.
+- [Best Camps in Rishikesh](https://rishikeshhomestays.com/hotels/best-camps-in-rishikesh): 19 camps. Riverside and jungle camps and glamping tents, mostly along the Shivpuri rafting stretch.
+- [Best Hostels in Rishikesh](https://rishikeshhomestays.com/hotels/best-hostels-in-rishikesh): 143 hostels. Backpacker hostels with dorms and private rooms, most of them in Tapovan and around Laxman Jhula.
+- [Best Villas in Rishikesh](https://rishikeshhomestays.com/hotels/best-villas-in-rishikesh): 45 villas. Private villas for groups and families, many with a garden, terrace or pool.
+- [Best Apartments in Rishikesh](https://rishikeshhomestays.com/hotels/best-apartments-in-rishikesh): 305 apartments. Serviced 1BHK to 4BHK apartments with kitchens, good for long stays and families.
+- [Best Guest Houses in Rishikesh](https://rishikeshhomestays.com/hotels/best-guest-houses-in-rishikesh): 86 guest houses. Small guest houses with simple rooms, usually close to the ghats and markets.
+- [Best Cottages in Rishikesh](https://rishikeshhomestays.com/hotels/best-cottages-in-rishikesh): 45 cottages. Cottages in the hills and gardens around Rishikesh, away from the town crowds.
+- [Best Bed & Breakfasts in Rishikesh](https://rishikeshhomestays.com/hotels/best-bed-and-breakfasts-in-rishikesh): 35 bed & breakfasts. Bed & breakfasts where the morning meal comes with the room.
+- [Best Holiday Rentals in Rishikesh](https://rishikeshhomestays.com/hotels/best-holiday-rentals-in-rishikesh): 14 holiday rentals. Whole homes and flats to rent for a holiday, booked as one unit.
+- [Best Ashram Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-ashram-stays-in-rishikesh): 14 ashram stays. Ashrams that take guests, with simple rooms and daily yoga, satsang or aarti.
+- [Best Aparthotels in Rishikesh](https://rishikeshhomestays.com/hotels/best-aparthotels-in-rishikesh): 16 aparthotels. Hotel-run apartments: a kitchen and living space with hotel housekeeping and a front desk.
+- [Best Lodges in Rishikesh](https://rishikeshhomestays.com/hotels/best-lodges-in-rishikesh): 7 lodges. Simple lodges with basic rooms, usually close to the main roads and markets.
+- [Best Backpacker Hostels in Rishikesh](https://rishikeshhomestays.com/hotels/best-backpacker-hostels-in-rishikesh): 145 backpacker hostels. Hostels, dorm beds and backpacker chains such as Zostel, The Hosteller and goSTOPS, mostly in Tapovan and around Laxman Jhula.
+- [Best Pet-Friendly Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-pet-friendly-stays-in-rishikesh): 445 pet-friendly stays. Stays that list pets as allowed, so you can bring your dog to Rishikesh.
+- [Best Ganga View Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-ganga-view-stays-in-rishikesh): 247 ganga view stays. Stays on or facing the Ganga: river views, private ghats and riverside rooms.
+- [Best Luxury Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-luxury-stays-in-rishikesh): 321 luxury stays. 4 and 5-star properties and premium stays from ₹8,000 a night.
+- [Best Budget Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-budget-stays-in-rishikesh): 187 budget stays. Rooms and beds from ₹1,500 a night or less.
+- [Best Yoga Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-yoga-stays-in-rishikesh): 226 yoga stays. Stays with yoga classes on site, from ashram-style retreats to hotels with a daily session.
+- [Best Spa & Wellness Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-spa-and-wellness-stays-in-rishikesh): 195 spa & wellness stays. Stays with a spa, wellness centre or massage, including Ayurveda-focused retreats.
+- [Best Family-Friendly Stays in Rishikesh](https://rishikeshhomestays.com/hotels/best-family-friendly-stays-in-rishikesh): 58 family-friendly stays. Stays that welcome families, with family rooms and space for children.
+- [Best Long Stays with a Kitchen in Rishikesh](https://rishikeshhomestays.com/hotels/best-long-stays-with-kitchen-in-rishikesh): 264 long stays with a kitchen. Stays with a private or shared kitchen, good for weeks-long yoga courses and workations.
+- [Best Stays with Airport Pickup in Rishikesh](https://rishikeshhomestays.com/hotels/best-stays-with-airport-pickup-in-rishikesh): 327 stays with airport pickup. Stays that arrange a transfer from Dehradun's Jolly Grant airport, about 35 km from Rishikesh.
+- [Best Business Hotels in Rishikesh](https://rishikeshhomestays.com/hotels/best-business-hotels-in-rishikesh): 124 business hotels. Hotels with a business centre or meeting and banquet halls, for work trips, retreats and events.
+- [Best Boutique Hotels in Rishikesh](https://rishikeshhomestays.com/hotels/best-boutique-hotels-in-rishikesh): 14 boutique hotels. Small, design-led hotels with a distinct character.
+- [Best Stays with a Jacuzzi in Rishikesh](https://rishikeshhomestays.com/hotels/best-stays-with-jacuzzi-in-rishikesh): 25 stays with a jacuzzi. Stays that list a jacuzzi among their facilities, often in suites and villas.
+- [Best Stays with a Pool in Rishikesh](https://rishikeshhomestays.com/hotels/best-stays-with-pool-in-rishikesh): 137 stays with a pool. Properties that list a swimming pool among their facilities.
+- [Best stays near Triveni Ghat](https://rishikeshhomestays.com/hotels/best-stays-near-triveni-ghat): 210 stays within 2 km of Triveni Ghat, sorted by real distance, with a map.
+- [Best stays near Laxman Jhula](https://rishikeshhomestays.com/hotels/best-stays-near-laxman-jhula): 956 stays within 2 km of Laxman Jhula, sorted by real distance, with a map.
+- [Best stays near Ram Jhula](https://rishikeshhomestays.com/hotels/best-stays-near-ram-jhula): 1051 stays within 2 km of Ram Jhula, sorted by real distance, with a map.
+- [Best stays near Parmarth Niketan](https://rishikeshhomestays.com/hotels/best-stays-near-parmarth-niketan): 1050 stays within 2 km of Parmarth Niketan, sorted by real distance, with a map.
+- [Best stays near Beatles Ashram](https://rishikeshhomestays.com/hotels/best-stays-near-beatles-ashram): 249 stays within 2 km of Beatles Ashram, sorted by real distance, with a map.
+- [Best stays near Janki Setu](https://rishikeshhomestays.com/hotels/best-stays-near-janki-setu): 352 stays within 2 km of Janki Setu, sorted by real distance, with a map.
+- [Best stays near AIIMS Rishikesh](https://rishikeshhomestays.com/hotels/best-stays-near-aiims-rishikesh): 139 stays within 2 km of AIIMS Rishikesh, sorted by real distance, with a map.
+- [Best stays near Rishikesh Railway Station](https://rishikeshhomestays.com/hotels/best-stays-near-rishikesh-railway-station): 111 stays within 2 km of Rishikesh Railway Station, sorted by real distance, with a map.
+- [Best stays near Rishikesh ISBT (bus stand)](https://rishikeshhomestays.com/hotels/best-stays-near-rishikesh-isbt): 235 stays within 2 km of Rishikesh ISBT (bus stand), sorted by real distance, with a map.
 
 <!-- stays-pages:end -->
+## Where to stay in Haridwar
+
+<!-- stays-pages-haridwar:start -->
+- [Best Hotels in Haridwar (all stays)](https://rishikeshhomestays.com/hotels/best-hotels-in-haridwar): 809 stays of every type, grouped by category. Every hotel, dharamshala, homestay, guest house and apartment we found listed in Haridwar, from simple pilgrim rooms to riverside hotels, grouped by category.
+- [Best Homestays in Haridwar](https://rishikeshhomestays.com/hotels/best-homestays-in-haridwar): 32 homestays. Homestays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Resorts in Haridwar](https://rishikeshhomestays.com/hotels/best-resorts-in-haridwar): 28 resorts. Resorts across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Hostels in Haridwar](https://rishikeshhomestays.com/hotels/best-hostels-in-haridwar): 6 hostels. Hostels across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Villas in Haridwar](https://rishikeshhomestays.com/hotels/best-villas-in-haridwar): 11 villas. Villas across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Apartments in Haridwar](https://rishikeshhomestays.com/hotels/best-apartments-in-haridwar): 27 apartments. Apartments across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Guest Houses in Haridwar](https://rishikeshhomestays.com/hotels/best-guest-houses-in-haridwar): 41 guest houses. Guest Houses across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Cottages in Haridwar](https://rishikeshhomestays.com/hotels/best-cottages-in-haridwar): 6 cottages. Cottages across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Bed & Breakfasts in Haridwar](https://rishikeshhomestays.com/hotels/best-bed-and-breakfasts-in-haridwar): 11 bed & breakfasts. Bed & Breakfasts across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Holiday Rentals in Haridwar](https://rishikeshhomestays.com/hotels/best-holiday-rentals-in-haridwar): 7 holiday rentals. Holiday Rentals across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Ashram Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-ashram-stays-in-haridwar): 7 ashram stays. Ashram Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Lodges in Haridwar](https://rishikeshhomestays.com/hotels/best-lodges-in-haridwar): 10 lodges. Lodges across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Backpacker Hostels in Haridwar](https://rishikeshhomestays.com/hotels/best-backpacker-hostels-in-haridwar): 6 backpacker hostels. Backpacker Hostels across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Dharamshalas in Haridwar](https://rishikeshhomestays.com/hotels/best-dharamshalas-in-haridwar): 6 dharamshalas. Dharamshalas: simple, low-cost pilgrim lodges run by trusts and communities, usually close to the ghats.
+- [Best Pet-Friendly Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-pet-friendly-stays-in-haridwar): 148 pet-friendly stays. Pet-Friendly Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Ganga View Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-ganga-view-stays-in-haridwar): 134 ganga view stays. Ganga View Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Luxury Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-luxury-stays-in-haridwar): 235 luxury stays. Luxury Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Budget Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-budget-stays-in-haridwar): 151 budget stays. Budget Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Yoga Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-yoga-stays-in-haridwar): 18 yoga stays. Yoga Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Spa & Wellness Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-spa-and-wellness-stays-in-haridwar): 30 spa & wellness stays. Spa & Wellness Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Family-Friendly Stays in Haridwar](https://rishikeshhomestays.com/hotels/best-family-friendly-stays-in-haridwar): 59 family-friendly stays. Family-Friendly Stays across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Long Stays with a Kitchen in Haridwar](https://rishikeshhomestays.com/hotels/best-long-stays-with-kitchen-in-haridwar): 89 long stays with a kitchen. Long Stays with a Kitchen across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Stays with Airport Pickup in Haridwar](https://rishikeshhomestays.com/hotels/best-stays-with-airport-pickup-in-haridwar): 140 stays with airport pickup. Stays with Airport Pickup across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Business Hotels in Haridwar](https://rishikeshhomestays.com/hotels/best-business-hotels-in-haridwar): 76 business hotels. Business Hotels across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Stays with a Jacuzzi in Haridwar](https://rishikeshhomestays.com/hotels/best-stays-with-jacuzzi-in-haridwar): 9 stays with a jacuzzi. Stays with a Jacuzzi across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best Stays with a Pool in Haridwar](https://rishikeshhomestays.com/hotels/best-stays-with-pool-in-haridwar): 26 stays with a pool. Stays with a Pool across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.
+- [Best stays near Har Ki Pauri](https://rishikeshhomestays.com/hotels/best-stays-near-har-ki-pauri): 285 stays within 2 km of Har Ki Pauri, sorted by real distance, with a map.
+- [Best stays near Haridwar Railway Station](https://rishikeshhomestays.com/hotels/best-stays-near-haridwar-railway-station): 278 stays within 2 km of Haridwar Railway Station, sorted by real distance, with a map.
+- [Best stays near Mansa Devi Temple](https://rishikeshhomestays.com/hotels/best-stays-near-mansa-devi-temple): 291 stays within 2 km of Mansa Devi Temple, sorted by real distance, with a map.
+- [Best stays near Chandi Devi Temple](https://rishikeshhomestays.com/hotels/best-stays-near-chandi-devi-temple): 248 stays within 3 km of Chandi Devi Temple, sorted by real distance, with a map.
+- [Best stays near Daksh Mahadev Temple, Kankhal](https://rishikeshhomestays.com/hotels/best-stays-near-daksh-mahadev-temple): 122 stays within 2 km of Daksh Mahadev Temple, Kankhal, sorted by real distance, with a map.
+
+<!-- stays-pages-haridwar:end -->
 ## Contact
 
 - Phone: +91 9027212484 / +91 8050091290

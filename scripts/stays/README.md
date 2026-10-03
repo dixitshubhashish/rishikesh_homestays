@@ -3,6 +3,28 @@
 Builds the market-index pages (`best-hotels-in-rishikesh.html` and its sibling
 category pages) from the public Rishikesh listings on uttarakhand-hotels.com.
 
+## Cities
+
+Config: [`cities.py`](cities.py) (`CITIES`, `DEFAULT_CITY = 'rishikesh'`).
+Every step takes `--city <key>`; without it, Rishikesh. Rishikesh keeps its
+cache at `.cache/`; other cities use `.cache/<city>/`. Current cities:
+
+| City | Directory listing | Stays | listing_id | Pages |
+|---|---|---|---|---|
+| Rishikesh (default) | `rishikesh-hotels-32481` | 1,608 | 1–1,608 | 29 |
+| Haridwar | `haridwar-hotels-32456` | 806 | 1,609–2,414 | 26 |
+
+Add a city: add it to `CITIES` (directory id and map centre), add its areas
+to `AREAS_BY_CITY` in `process.py` and its copy and area notes to
+`CITY_COPY` / `AREA_NOTES` in `build_pages.py`, then run
+`crawl.py --city X`, `process.py --city X`, `build_pages.py --city X`, then
+`build_pages.py` (Rishikesh last, so its city switcher links to the new city),
+then `push_bigquery.mjs` (it loads every city at once).
+
+Pages are written to `hotels/` (`/hotels/best-<category>-in-<city>`, property
+page `/hotels/stay?s=<slug>&c=<city>`). Haridwar pages add a Kumbh 2027
+section and FAQ, and the Kumbh guide links back to them.
+
 ## Steps
 
 | Step | Command | Output |
@@ -10,6 +32,7 @@ category pages) from the public Rishikesh listings on uttarakhand-hotels.com.
 | 1. Crawl | `python3 scripts/stays/crawl.py [--fresh]` | `.cache/props.jsonl` (raw, one record per property, not committed) |
 | 2. Clean | `python3 scripts/stays/process.py [--names]` | `.cache/stays.json` |
 | 3. Build | `python3 scripts/stays/build_pages.py` | `best-*-in-rishikesh.html` + `assets/js/modules/stays-index-data.js` |
+| 3b. Match | `node scripts/stays/guess_booking_slugs.mjs [--shard i/N] [--workers n] [--limit n] [--out file]` | tries likely booking.com/hotel/in/<slug>.html pages (built from the stay's slug, name and city) for every stay without a verified link, in all cities, in a real browser (no web searches). Matches go to `.cache/slug-guesses.tsv` (or `--out`) and are merged into `ota-links.tsv`; stays tried without a match go to `<out>.tried` so re-runs skip them. `--shard i/N` splits the stays so N runs can go at once. Matching rule shared with `verify_candidates.mjs` in `booking-match.mjs` |
 | 4. Snapshot | `node scripts/stays/push_bigquery.mjs` | one row per stay into BigQuery `rishikesh_homestays.market_properties` (partitioned by `snapshot_date`; re-running the same day replaces that day) |
 | Auto | `python3 scripts/stays/refresh.py [--force]` | runs 1–4 only when due and the listing changed |
 
@@ -44,6 +67,15 @@ one section per category, with 20 rows visible per section before "Show all"
 (which then scrolls in place) and an "Open page" link to the category page.
 
 ## Ordering and our own stays
+
+Besides the pinned "Our homestays" block, our stays are **mixed into every
+list**: after the 3rd row, then after every 7th, rotating through `OWN`
+(`mix_html()` in `build_pages.py`, mirrored by `mixHtml()` in
+`stays-index.js` for filtered views). On `/stay` pages they sit after the 2nd
+and 4th "Similar stays". They look exactly like the other rows (no badge or
+border). In hostel lists, and next to a hostel, their type reads "Private
+stay" (the not-shared alternative to a dorm). Only their real guest rating
+is shown, and only when it's 9 or more: never invent ratings.
 
 There is no ranking. Each visit shuffles the list into a fresh random order
 (the Stars / Area / Type views only group it). Our own properties (`OWN` in
@@ -92,6 +124,47 @@ no web searches. The 200-search cap is shared by the whole session. The
 remaining ~1,280 stays need the Google Programmable Search API (owner to add
 GOOGLE_CSE_ID/KEY). Always finish with `node scripts/stays/check_links.mjs`.
 
+## Landmark pages ("stays near …")
+
+`hotels/best-stays-near-<landmark>.html` (`/hotels/best-stays-near-<slug>`),
+built by `build_landmark_pages()` in `build_pages.py` from
+[`landmarks.tsv`](landmarks.tsv) (slug, name, city, lat/lng, related guide,
+coordinate source). Coordinates came from OpenStreetMap (Overpass/Nominatim)
+and, for Laxman Jhula, structurae/bridgemeister. Check any new landmark's
+coordinates against two sources: geocoders often return a nearby cafe or
+the town centre instead of the place itself.
+
+Each page lists every stay within 2 km (3 km where fewer than 10 are that
+close), sorted by straight-line distance in bands ("a short walk" ≤ 500 m,
+within 1 km, 1–2 km), up to 100 rows, plus a Leaflet map
+(`assets/js/modules/landmark-map.js`), FAQs, and JSON-LD (CollectionPage
+about a TouristAttraction with geo, BreadcrumbList, ItemList, FAQPage).
+**Our own homestays always appear** as "A calmer base", with their real
+distance and a rough drive time (`drive_minutes()`: roads ~1.35× the
+straight line, 20 km/h in town, 35 km/h on the highway). When one is
+genuinely within the radius (e.g. Yoga Retreat, 1.6 km from AIIMS), it also
+appears in the distance list. Category pages link to every landmark page of
+their city ("Stay near …"), and all landmark pages are in `sitemap.xml` and
+`llms.txt`. Current: 9 in Rishikesh, 5 in Haridwar.
+
+## Listing IDs (primary key)
+
+Every stay has a permanent numeric **`listing_id`**, kept in the committed
+registry [`listing-ids.tsv`](listing-ids.tsv) (`listing_id`, `slug`,
+`active`). Our own stays are 1 (Advaitam), 2 (Elysium) and 3 (Yoga Retreat).
+`process.py` keeps every existing id, gives new stays the next number, and
+marks stays that disappear `active = 0`; ids are never reused. The `slug`
+(e.g. `zostel-rishikesh-tapovan`) is the unique text key used in page URLs
+(`/stay?s=<slug>`), in `ota-links.tsv` and in BigQuery's `id` column.
+
+| File / table | Key |
+|---|---|
+| `listing-ids.tsv` | `listing_id` ↔ `slug` |
+| `.cache/stays.json`, `stays-index-data.js` | `lid` (listing_id), `id` (slug) |
+| `ota-links.tsv` | `slug` (column `key`) |
+| BigQuery `market_properties` | `listing_id`, `id` (slug), `snapshot_date` |
+| BigQuery view `stays_sheet` | `listing_id`, `slug` |
+
 ## BigQuery: market_properties
 
 Each snapshot holds every stay with name, area, types, themes, stars, guest
@@ -107,6 +180,14 @@ WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM rishikesh_homestays.market
   AND 'Homestays' IN UNNEST(types)
 GROUP BY area ORDER BY stays DESC;
 ```
+
+**View `rishikesh_homestays.stays_sheet`** is the latest snapshot as one
+flat row per stay: listing_id, slug, property, area, types, stars, rating,
+reviews, price, `ours`, `our_page` (`/stay?s=…`), booking status/site, the
+booking URL (Booking.com links with `?aid=7854081`), the directory listing,
+and latitude/longitude. Open it in Google Sheets via **Data → Data
+connectors → Connect to BigQuery → `keen-device-610` → `rishikesh_homestays`
+→ `stays_sheet`**. The view always shows the newest snapshot.
 
 The GitHub workflow pushes a snapshot after each rebuild if the repo secret
 `GOOGLE_APPLICATION_CREDENTIALS_JSON` is set (same JSON as on Vercel).
@@ -124,3 +205,7 @@ it fetches only the listing page and diffs its links against
 The workflow commits any changed pages/data and pushes, and Vercel then
 deploys. Run it by hand from GitHub's Actions tab (with **force** to re-crawl
 immediately), or locally with `python3 scripts/stays/refresh.py --force`.
+
+**Parallel checks:** `node verify_candidates.mjs <candidates.tsv> --out <results.tsv>` checks only that file and appends matches to `results.tsv` instead of rewriting `ota-links.tsv`, so many runs can go at once (split the candidates into shards, then `python3 merge_ota.py results-*.tsv`). Each stay only accepts a page in its own city, a title that adds its own distinctive words to a one-word name is rejected, and a different BHK count is rejected. Booking's 429 is backed off and retried. Before merging, drop pages claimed by several stays whose names differ, or that already belong to another verified stay.
+
+**Other platforms (sitemaps):** `python3 sitemap_candidates.py <easemytrip|agoda> <urls.txt>` matches stays without a verified link against a platform's public sitemap URL list (EaseMyTrip: `.cache/easemytrip-hotels.txt`, 197,897 hotels; Agoda: `.cache/agoda-hotels.txt`, Rishikesh + Haridwar only), then `node verify_platform.mjs <candidates.tsv> --out <results.tsv> [--shard i/N] [--slow]` checks each page's title in a browser (same rule, `titleMatches` in `booking-match.mjs`), and `python3 postcheck_matches.py <out.tsv> <results.tsv>…` drops pages claimed by differently named stays before `merge_ota.py`. Agoda answers 502 to bursts: use `--slow` (one page at a time); the run stops itself after 8 refusals in a row. Goibibo/MakeMyTrip sitemaps sit behind bot protection and Airbnb's list only bare room ids, so those need a search API.

@@ -11,7 +11,7 @@
 // with a message when neither is set, so refresh.py never fails because of it.
 import 'dotenv/config';
 import { BigQuery } from '@google-cloud/bigquery';
-import { readFileSync, writeFileSync, mkdtempSync } from 'fs';
+import { readFileSync, writeFileSync, mkdtempSync, existsSync, readdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
@@ -33,7 +33,9 @@ function clientOptions() {
 
 const SCHEMA = [
   { name: 'snapshot_date', type: 'DATE', mode: 'REQUIRED' },
-  { name: 'id', type: 'STRING', mode: 'REQUIRED' },
+  { name: 'id', type: 'STRING', mode: 'REQUIRED' }, // slug (stable text key)
+  { name: 'listing_id', type: 'INTEGER' }, // stable numeric primary key (scripts/stays/listing-ids.tsv)
+  { name: 'city', type: 'STRING' }, // rishikesh | haridwar | …
   { name: 'name', type: 'STRING', mode: 'REQUIRED' },
   { name: 'is_own', type: 'BOOLEAN', mode: 'REQUIRED' },
   { name: 'area', type: 'STRING' },
@@ -62,7 +64,13 @@ async function main() {
     console.log('BigQuery credentials not set; skipping market_properties snapshot.');
     return;
   }
-  const stays = JSON.parse(readFileSync(join(HERE, '.cache/stays.json'), 'utf8'));
+  // Every city in one load: Rishikesh at .cache/stays.json (legacy layout),
+  // others at .cache/<city>/stays.json. Loading all together matters because
+  // the load replaces the whole day's partition.
+  const cityFiles = [['rishikesh', join(HERE, '.cache/stays.json')],
+    ...readdirSync(join(HERE, '.cache'), { withFileTypes: true }).filter((e) => e.isDirectory())
+      .map((e) => [e.name, join(HERE, '.cache', e.name, 'stays.json')]).filter(([, f]) => existsSync(f))];
+  const stays = cityFiles.flatMap(([city, f]) => JSON.parse(readFileSync(f, 'utf8')).map((s) => ({ ...s, cy: s.cy || city })));
   const links = {};
   for (const line of readFileSync(join(HERE, 'ota-links.tsv'), 'utf8').trim().split('\n').slice(1)) {
     const [key, status, site, url] = line.split('\t');
@@ -72,7 +80,7 @@ async function main() {
   const rows = stays.map((s) => {
     const l = links[s.id];
     return {
-      snapshot_date: today, id: s.id, name: s.n, is_own: OWN_KEYS.some((k) => s.u.includes(k)),
+      snapshot_date: today, id: s.id, listing_id: s.lid, city: s.cy, name: s.n, is_own: OWN_KEYS.some((k) => s.u.includes(k)),
       area: s.a, primary_type: s.k, types: s.ks, themes: s.t,
       stars: s.s || null, guest_rating: s.g ?? null, reviews: s.c ?? null, price_from_inr: s.p ?? null,
       facilities: s.f, address: s.ad || null, latitude: s.ll?.[0] ?? null, longitude: s.ll?.[1] ?? null,
@@ -100,11 +108,13 @@ async function main() {
   const partition = `${TABLE_ID}$${today.replaceAll('-', '')}`;
   const [job] = await dataset.table(partition).load(file, {
     sourceFormat: 'NEWLINE_DELIMITED_JSON', writeDisposition: 'WRITE_TRUNCATE', schema: { fields: SCHEMA },
+    schemaUpdateOptions: ['ALLOW_FIELD_ADDITION'],
   });
   const errors = job.status?.errors;
   if (errors?.length) throw new Error(JSON.stringify(errors.slice(0, 3)));
   const counts = rows.reduce((m, r) => ((m[r.booking_status] = (m[r.booking_status] || 0) + 1), m), {});
-  console.log(`Loaded ${rows.length} stays into ${DATASET_ID}.${TABLE_ID} for ${today}:`, counts);
+  const byCity = rows.reduce((m, r) => ((m[r.city] = (m[r.city] || 0) + 1), m), {});
+  console.log(`Loaded ${rows.length} stays into ${DATASET_ID}.${TABLE_ID} for ${today}:`, byCity, counts);
 }
 
 main().catch((err) => { console.error('push_bigquery failed:', err.message); process.exit(1); });

@@ -68,6 +68,14 @@ def main():
     print(f'{len(added)} new, {len(removed)} removed ({len(current)} total). Re-crawling.')
     run('crawl.py', '--fresh')
     run('process.py')
+    # Match never-searched stays to Booking.com pages by slug (browser-checked),
+    # then merge only the confirmed matches.
+    subprocess.run(['node', os.path.join(HERE, 'guess_booking_slugs.mjs'), '--workers', '8'], check=False)
+    guesses = os.path.join(HERE, '.cache', 'slug-guesses.tsv')
+    if os.path.exists(guesses):
+        verified = os.path.join(HERE, '.cache', 'slug-guesses-verified.tsv')
+        open(verified, 'w').write(''.join(l for l in open(guesses) if '\tverified\t' in l))
+        run('merge_ota.py', verified)
     run('build_pages.py')
     # Snapshot into BigQuery (market_properties); skips itself without credentials.
     subprocess.run(['node', os.path.join(HERE, 'push_bigquery.mjs')], check=False)

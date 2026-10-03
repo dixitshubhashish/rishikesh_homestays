@@ -1,13 +1,17 @@
 """Step 1: crawl every Rishikesh listing on uttarakhand-hotels.com.
 
-Usage: python3 scripts/stays/crawl.py [--fresh]
+Usage: python3 scripts/stays/crawl.py [--fresh] [--city <key>]   (default city: rishikesh)
 Writes .cache/props.jsonl (one JSON record per property). Resumable: re-run
 to continue where it stopped; --fresh starts over. Polite by design (4
 workers, a pause after each page; robots.txt allows crawling). ~15 minutes.
 """
 import re, json, time, os, sys, gzip, urllib.request, concurrent.futures as cf, html as H
-S=os.path.join(os.path.dirname(os.path.abspath(__file__)),'.cache'); os.makedirs(S,exist_ok=True)
-LISTING='https://www.uttarakhand-hotels.com/en/rishikesh-hotels-32481/all-accommodations/'
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from cities import city_from_argv, cache_dir, listing_url, CITIES
+CITY=city_from_argv()   # --city <key>; default rishikesh
+S=cache_dir(CITY)
+LISTING=listing_url(CITY)
+DIRECTORY=CITIES[CITY]['directory']
 if '--fresh' in sys.argv:
     import shutil
     for f in ('props.jsonl','all-accommodations.html'):
@@ -22,7 +26,7 @@ src=open(f'{S}/all-accommodations.html').read()
 # The directory's own type and theme pages (first ~50 members each; the rest
 # load by script). process.py uses them as official evidence for categories.
 os.makedirs(f'{S}/official',exist_ok=True)
-for path in sorted(set(re.findall(r'href="(/en/rishikesh-hotels-32481/(?:type|theme)/[a-z0-9-]+/)"',src))):
+for path in sorted(set(re.findall(r'href="(/en/'+DIRECTORY+r'/(?:type|theme)/[a-z0-9-]+/)"',src))):
     name=path.rstrip('/').split('/')[-2]+'_'+path.rstrip('/').split('/')[-1]+'.html'
     if os.path.exists(f'{S}/official/{name}'): continue
     try:

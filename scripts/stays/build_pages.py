@@ -26,6 +26,35 @@ import re
 import statistics
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys_path_added = __import__('sys').path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from cities import CITIES, DEFAULT_CITY, city_from_argv, cache_dir  # noqa: E402
+
+# Current city (set in __main__ from --city; Rishikesh by default). Rishikesh
+# keeps its data file and slugs (hotels/best-*-in-rishikesh, /hotels/stay?s=<slug>);
+# other cities get best-*-in-<city>, /hotels/stay?s=<slug>&c=<city> and
+# stays-index-data-<city>.js.
+CITY = DEFAULT_CITY
+CN = CITIES[DEFAULT_CITY]['name']
+
+
+# Generated pages live under hotels/ (URL /hotels/<file>); root-level copies
+# from before the move are deleted on build and 301-redirected in vercel.json,
+# _redirects and server.js.
+STAYS_DIR = os.path.join(ROOT, 'hotels')  # shared with hand-made listing pages; only generated files are ever removed
+
+
+def city_qs():
+    return '' if CITY == DEFAULT_CITY else f'&c={CITY}'
+
+
+def data_module_name(city=None):
+    city = city or CITY
+    return 'stays-index-data.js' if city == DEFAULT_CITY else f'stays-index-data-{city}.js'
+
+
+def marker(city=None):
+    city = city or CITY
+    return 'stays-pages' if city == DEFAULT_CITY else f'stays-pages-{city}'
 SITE = 'https://rishikeshhomestays.com'
 MIN_PAGE = 5          # skip categories too thin to be worth a page
 MASTER_SECTION = 20   # rows per section on the master page before "view all"
@@ -90,6 +119,12 @@ CATEGORIES = [
     ('lodges', 'Lodges', 'lodge', 'k:Lodges',
      'Simple lodges with basic rooms, usually close to the main roads and markets.',
      'Lodges are no-frills rooms for a night or two, often near the bus stand or the highway. Good for an early start towards the Char Dham route; check hot water and noise from the road.'),
+    ('backpacker-hostels', 'Backpacker Hostels', 'backpacker hostel', 't:backpacker',
+     'Hostels, dorm beds and backpacker chains such as Zostel, The Hosteller and goSTOPS, mostly in Tapovan and around Laxman Jhula.',
+     'Backpacker hostels are where solo travellers find rafting buddies, trek partners and the best cafe tips. Most sit in Tapovan, walkable to Laxman Jhula and the yoga schools. Compare mixed and female-only dorms, check for lockers and hot water, and book ahead for long weekends and the New Year rush.'),
+    ('dharamshalas', 'Dharamshalas', 'dharamshala', 'k:Dharamshalas',
+     'Dharamshalas: simple, low-cost pilgrim lodges run by trusts and communities, usually close to the ghats.',
+     'Dharamshalas are built for pilgrims: clean, basic rooms at low prices, often with a canteen and set timings. Many ask for ID and prefer families or groups, and some only confirm bookings in person or by phone. They fill fast around big snan days and festivals, so book early.'),
     ('pet-friendly-stays', 'Pet-Friendly Stays', 'pet-friendly stay', 't:pet',
      'Stays that list pets as allowed, so you can bring your dog to Rishikesh.',
      'Pet policies change, so confirm by message before you book and ask about size limits and any extra fee. Stays with a garden or ground-floor rooms are easier with a dog, and the quieter areas away from the crowded ghats are calmer for walks.'),
@@ -132,7 +167,48 @@ CATEGORIES = [
 ]
 
 # Short, general area notes used in each page's "where to stay" copy.
+# Copy for cities other than Rishikesh (the CATEGORIES intro/guide text is
+# written for Rishikesh). Data-driven insights and FAQs are generated per city.
+CITY_COPY = {
+    'haridwar': {
+        'master_intro': 'Every hotel, dharamshala, homestay, guest house and apartment we found listed in Haridwar, from simple pilgrim rooms to riverside hotels, grouped by category.',
+        'intro': '{title} across Haridwar, from the ghats around Har Ki Pauri to calmer Kankhal and the road towards Rishikesh.',
+        'guide': 'Haridwar is built around its ghats. Har Ki Pauri and the Upper Road are the walkable pilgrim centre, closest to the evening Ganga aarti and the busiest at festivals; Kankhal and Bhupatwala are calmer, ashram-lined neighbourhoods; Shantikunj and Saptrishi sit along the river towards Rishikesh; Jwalapur, Ranipur and the Delhi Road are practical bases with easier parking. For big snan days, stay within walking distance of the ghat you plan to bathe at.',
+        'area_tip': 'For the evening aarti and the main snans, stay near Har Ki Pauri or the Upper Road; for a calmer base, Kankhal, Bhupatwala or Shantikunj; for driving in and out, the Delhi Road or Rishikesh Road.',
+        'note': 'Our area lines are drawn with a local\'s pencil, not a surveyor\'s, so a stay near the border might sit one neighbourhood over. Rates jump around the Kumbh, Kanwar Yatra, Ganga Dussehra and big snan days, so give the property a quick check before you pack.',
+        'kumbh': True,
+    },
+}
+AREA_TIP_RISHIKESH = 'For the evening aarti and ashrams, stay near Swarg Ashram, Muni Ki Reti or Triveni Ghat; for rafting, stay towards Shivpuri.'
+NOTE_RISHIKESH = "Our area lines are drawn with a local's pencil, not a surveyor's, so a stay near the border might sit one neighbourhood over. Rates rise and fall with rafting season, festivals and the monsoon, so give the property a quick check before you pack."
+KUMBH_FAQ = ('Where should I stay in Haridwar for the Kumbh 2027?',
+             'Stay within walking distance of the ghat you plan to bathe at: Har Ki Pauri and the Upper Road for the main snans, or Kankhal, Bhupatwala and Shantikunj for calmer bases a short walk or ride away. Roads close to vehicles around the big bathing days, so a walkable stay matters more than a fancy one. Book as early as you can; for a quieter base, Rishikesh is about 25 km upriver. Our Haridwar Kumbh 2027 guide covers the reported dates and planning.')
+
+
+def city_copy(slug, title, intro, guide):
+    c = CITY_COPY.get(CITY)
+    if not c:
+        return intro, guide
+    if slug == 'hotels':
+        return c['master_intro'], c['guide']
+    if slug == 'dharamshalas':
+        return intro, guide  # already city-neutral
+    return c['intro'].format(title=title), c['guide']
+
+
 AREA_NOTES = {
+    'Har Ki Pauri': 'the main ghat and pilgrim centre, closest to the evening Ganga aarti',
+    'Upper Road & Mayapur': 'the bazaar strip behind the ghats, walkable to Har Ki Pauri',
+    'Kankhal': 'an older, quieter neighbourhood of ashrams and temples south of the centre',
+    'Bhupatwala': 'an ashram-lined stretch on the way towards Rishikesh, calmer than the centre',
+    'Shantikunj & Saptrishi': 'the riverside stretch towards Rishikesh around Shantikunj and Saptrishi',
+    'Kharkhari': 'close to the river between the centre and Bhupatwala',
+    'Railway Station': 'handy for trains, a short ride from the ghats',
+    'Jwalapur': 'a busy residential town area, practical rather than scenic',
+    'Ranipur & BHEL': 'the BHEL township side, quieter and good for driving in',
+    'SIDCUL': 'the industrial-park side, mostly business hotels',
+    'Delhi Road': 'on the highway towards Delhi and Roorkee, easy for road trips',
+    'Rishikesh Road & Motichur': 'on the road towards Rishikesh, near Motichur and Chandi Devi',
     'Tapovan': 'the busy cafe, yoga-school and backpacker hub above Laxman Jhula; walkable and lively',
     'Laxman Jhula': 'around the Laxman Jhula bridge, close to temples, cafes and the river',
     'Nirmal Bagh near Ganges': 'a quieter residential pocket close to the river and ghats',
@@ -179,16 +255,16 @@ def meta_html(d):
     parts = [f'<span class="sx-stars-ico">{"★" * d["s"]}</span>' if d['s'] else '<span>Unrated</span>',
              f'<span>{esc(d["a"])}</span>', f'<span>{esc(d["k"])}</span>']
     if d.get('g'):
-        parts.append(f'<span>Guests {d["g"]}/10{f" · {d["c"]} reviews" if d.get("c") else ""}</span>')
+        parts.append(f'<span>Guests {d["g"]:g}/10{f" · {d["c"]} reviews" if d.get("c") else ""}</span>')
     if d.get('p'):
-        parts.append(f'<span>From ₹{inr(d["p"])}</span>')
+        parts.append(f'<span>Starting ₹{inr(d["p"])} onwards</span>')
     return ''.join(parts)
 
 
 def item_html(d):
     # Must stay in step with itemHtml() in assets/js/modules/stays-index.js.
     return (f'<li class="sx-item"><span class="sx-name">{esc(d["n"])}</span><span class="sx-meta">{meta_html(d)}</span>'
-            f'<a class="sx-go" href="/stay?s={esc(d["id"])}" aria-label="View {esc(d["n"])}">View property</a></li>')
+            f'<a class="sx-go" href="/hotels/stay?s={esc(d["id"])}{city_qs()}" aria-label="View {esc(d["n"])}">View property</a></li>')
 
 
 def load_ota_links():
@@ -208,8 +284,39 @@ def load_ota_links():
     return links
 
 
+# Our own stays are also mixed INTO every list (not only pinned on top):
+# after the 3rd row, then after every 7th, rotating through OWN. In hostel
+# lists they're pitched as the private (not shared) alternative to a dorm.
+MIX_FIRST, MIX_EVERY = 3, 7
+# Lists where our stays are offered as the private (not shared) alternative.
+PRIVATE_ALT = ('k:Hostels', 't:backpacker')
+
+
+def own_mix_html(o, private):
+    # Same look as every other row (no badge or border). In hostel lists the
+    # type reads "Private stay" (the not-shared alternative to a dorm). The
+    # rating shown is the stay's real guest score, and only when it's 9+.
+    parts = ['<span>Unrated</span>', f'<span>{esc(o["a"])}</span>', f'<span>{"Private stay" if private else esc(o["k"])}</span>']
+    if o.get('g') and o['g'] >= 9:
+        parts.append(f'<span>Guests {o["g"]:g}/10{f" · {o["c"]} reviews" if o.get("c") else ""}</span>')
+    if o.get('p'):
+        parts.append(f'<span>Starting ₹{inr(o["p"])} onwards</span>')
+    return (f'<li class="sx-item"><span class="sx-name">{esc(o["n"])}</span><span class="sx-meta">{"".join(parts)}</span>'
+            f'<a class="sx-go" href="{esc(o["u"])}">View property</a></li>')
+
+
+def mix_html(items, own, private=False):
+    """items: list of stays -> <li> html with our stays interleaved."""
+    out, k = [], 0
+    for i, d in enumerate(items, 1):
+        out.append(item_html(d))
+        if own and (i == MIX_FIRST or (i > MIX_FIRST and (i - MIX_FIRST) % MIX_EVERY == 0)) and i < len(items):
+            out.append(own_mix_html(own[k % len(own)], private)); k += 1
+    return ''.join(out)
+
+
 def own_html(d):
-    rating = f'<span>Guests {d["g"]}/10{f" · {d["c"]} reviews" if d.get("c") else ""}</span>' if d.get('g') else ''
+    rating = f'<span>Guests {d["g"]:g}/10{f" · {d["c"]} reviews" if d.get("c") else ""}</span>' if d.get('g') else ''
     label = 'Enquire' if d['u'] == '/contact' else 'View'
     return (f'<li class="sx-item sx-item-own"><span class="sx-name">{esc(d["n"])}</span><span class="sx-meta"><span>{esc(d["a"])}</span>{rating}<span>Book direct, best price</span></span>'
             f'<a class="sx-go" href="{esc(d["u"])}">{label}</a></li>')
@@ -220,7 +327,7 @@ def stats_for(members):
     areas = {}
     for d in members:
         areas[d['a']] = areas.get(d['a'], 0) + 1
-    top_areas = [(a, c) for a, c in sorted(areas.items(), key=lambda kv: -kv[1]) if a not in ('Elsewhere in Rishikesh', 'Outside Rishikesh')][:3]
+    top_areas = [(a, c) for a, c in sorted(areas.items(), key=lambda kv: -kv[1]) if a not in (f'Elsewhere in {CN}', f'Outside {CN}')][:3]
     q = lambda p: prices[min(len(prices) - 1, int(len(prices) * p))] if prices else None
     rated = [d for d in members if d.get('g') and (d.get('c') or 0) >= 5]
     return {
@@ -258,24 +365,199 @@ def insights(title, plural, st):
 def faqs(title, singular, plural, st, date):
     out = []
     areas_txt = ', '.join(f'{name} ({c})' for name, c in st['top_areas']) or 'several areas'
-    out.append((f'How many {plural} are there in Rishikesh?',
-                f'There are {st["n"]:,} {plural} in Rishikesh on this page, spread across {len(st["areas"])} areas. The biggest clusters are {areas_txt}.'))
+    out.append((f'How many {plural} are there in {CN}?',
+                f'There are {st["n"]:,} {plural} in {CN} on this page, spread across {len(st["areas"])} areas. The biggest clusters are {areas_txt}.'))
     if st['top_areas']:
         notes = '; '.join(f'{name} is {AREA_NOTES[name]}' for name, _ in st['top_areas'] if name in AREA_NOTES)
-        out.append((f'Which area of Rishikesh is best for {plural}?',
-                    f'It depends on the trip. {notes + ". " if notes else ""}For the evening aarti and ashrams, stay near Swarg Ashram, Muni Ki Reti or Triveni Ghat; for rafting, stay towards Shivpuri.'))
+        tip = CITY_COPY.get(CITY, {}).get('area_tip', AREA_TIP_RISHIKESH)
+        out.append((f'Which area of {CN} is best for {plural}?',
+                    f'It depends on the trip. {notes + ". " if notes else ""}{tip}'))
     if st['median']:
-        out.append((f'How much does a {singular} in Rishikesh cost per night?',
+        out.append((f'How much does a {singular} in {CN} cost per night?',
                     f'Listed starting prices put a typical {singular} at about ₹{round_price(st["median"])} a night, with most between ₹{round_price(st["p25"])} and ₹{round_price(st["p75"])}. Prices rise on weekends, long weekends and festivals, and fall in the monsoon.'))
-    out.append((f'Are there pet-friendly {plural} in Rishikesh?',
+    out.append((f'Are there pet-friendly {plural} in {CN}?',
                 f'Yes. {st["pet"]} of the {st["n"]:,} {plural} here list pets as allowed. Confirm the pet policy and any extra fee with the property before booking.'))
     out.append((f'How do I book one of these {plural}?',
-                'Press Go to see the listing, or skip the search: send your dates, group size and budget through our contact form or WhatsApp and we will suggest suitable stays, including our own homestays, which you can book direct.'))
+                'Press View property to see the listing, or skip the search: send your dates, group size and budget through our contact form or WhatsApp and we will suggest suitable stays, including our own homestays, which you can book direct.'))
+    if CITY_COPY.get(CITY, {}).get('kumbh'):
+        out.insert(1, KUMBH_FAQ)
     return out
+
+
+# ---------- landmark pages: hotels/best-stays-near-<landmark>.html ----------
+LANDMARK_RADIUS_KM = 2.0      # widened to 3 km where fewer than 10 stays are that close
+LANDMARK_MAX_ROWS = 100
+
+
+def load_landmarks(city):
+    import csv
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'landmarks.tsv')
+    return [r for r in csv.DictReader(open(path), delimiter='\t') if r['city'] == city]
+
+
+def km_between(a, b):
+    import math
+    p = math.radians
+    dl, dg = p(b[0] - a[0]), p(b[1] - a[1])
+    h = math.sin(dl / 2) ** 2 + math.cos(p(a[0])) * math.cos(p(b[0])) * math.sin(dg / 2) ** 2
+    return 2 * 6371 * math.asin(math.sqrt(h))
+
+
+def dist_label(k):
+    if k < 0.05:
+        return 'right next to it'
+    return f'{int(round(k * 1000 / 50.0) * 50)} m' if k < 1 else f'{k:.1f} km'
+
+
+def drive_minutes(k):
+    """Rough drive for a straight-line distance: roads ~1.35x longer; ~20 km/h
+    in town, ~35 km/h on the highway; rounded to 5 minutes."""
+    road = k * 1.35
+    speed = 20 if road < 10 else 35
+    return max(5, int(round(road / speed * 60 / 5.0) * 5))
+
+
+def with_dist(row_html, label):
+    return row_html.replace('<span class="sx-meta">', f'<span class="sx-meta"><span class="sx-dist">{label}</span>', 1)
+
+
+def build_landmark_pages(stays, own, landmarks, top, bottom, today):
+    """One page per landmark in this city: stays by real distance in bands,
+    plus our own homestays pitched as the calmer base with an honest distance
+    and rough drive time (they also appear in the bands when genuinely close,
+    e.g. near AIIMS)."""
+    made = []
+    pool = [s for s in stays if s.get('ll')]
+    home_city = CITIES[DEFAULT_CITY]['name']
+    others_all = landmarks
+    for lm in landmarks:
+        here = (float(lm['lat']), float(lm['lng']))
+        name, slug = lm['name'], lm['slug']
+        dist = sorted(((km_between(here, s['ll']), s) for s in pool), key=lambda t: (t[0], t[1]['id']))
+        radius = LANDMARK_RADIUS_KM if sum(1 for k, _ in dist if k <= LANDMARK_RADIUS_KM) >= 10 else 3.0
+        near = [(k, s) for k, s in dist if k <= radius]
+        if len(near) < 5:
+            continue
+        own_d = sorted(((km_between(here, o['ll']), o) for o in own if o.get('ll')), key=lambda t: t[0])
+        own_ids = {id(o) for _, o in own_d}
+        rows = sorted(near[:LANDMARK_MAX_ROWS] + [(k, o) for k, o in own_d if k <= radius], key=lambda t: t[0])
+        band_html = ''
+        for label, lo, hi in [('A short walk (under 500 m)', -1, 0.5), ('Within 1 km', 0.5, 1.0), (f'1–{radius:g} km', 1.0, radius)]:
+            grp = [(k, s) for k, s in rows if lo < k <= hi]
+            if not grp:
+                continue
+            items = ''.join(with_dist(own_html(s) if id(s) in own_ids else item_html(s), (dist_label(k) if k < 0.05 else f'{dist_label(k)} away')) for k, s in grp)
+            band_html += f'<section class="sx-group"><h2>{esc(label)} <span>{len(grp):,}</span></h2><ul class="sx-list">{items}</ul></section>'
+        within1 = sum(1 for k, _ in near if k <= 1)
+        prices = sorted(s['p'] for k, s in near if k <= 1 and s.get('p'))
+        closest_k, closest = near[0]
+        base_line, own_block = '', ''
+        if own_d:
+            ok, oo = own_d[0]
+            if ok <= radius:
+                base_line = f'Our own homestays are genuinely close: {oo["n"]} is about {dist_label(ok)} away, roughly {drive_minutes(ok)} minutes by car or auto.'
+            elif CITY == DEFAULT_CITY:
+                base_line = (f"Prefer quiet nights over walking distance? Our Ganga-view homestays in {home_city}'s Nirmal Bagh are about {ok:.0f} km away, "
+                             f'roughly {drive_minutes(ok)} minutes by car or auto. Come in for {name} and go home to the river.')
+            else:
+                base_line = (f'Coming for {name} but want calm nights? Base yourself at our homestays in {home_city}, about {ok:.0f} km upriver '
+                             f'(roughly {drive_minutes(ok)} minutes by car), and skip the crowds after dark.')
+            own_rows = ''.join(with_dist(own_html(o), f'{dist_label(k)} from {esc(name)} · ~{drive_minutes(k)} min drive') for k, o in own_d)
+            own_block = ('<section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">A calmer base <span>Book direct with us</span></h2>'
+                         f'<p class="sx-base">{esc(base_line)}</p><ul class="sx-list">{own_rows}</ul></section>')
+        url = f'{SITE}/hotels/best-stays-near-{slug}'
+        h1 = f'Best Stays near {name}'
+        title = f'Stays near {name}, {CN} | {within1:,} within 1 km, by Distance'
+        closest_txt = (', one right next to it' if closest_k < 0.05 else f', the closest {dist_label(closest_k)} away') if closest_k < 1 else ''
+        desc = f'{len(near):,} stays within {radius:g} km of {name} in {CN}, sorted by real distance: {within1:,} within 1 km{closest_txt}. Map, prices and tips.'
+        faq = [(f'How many stays are near {name}?',
+                f'We count {within1:,} stays within 1 km of {name} and {len(near):,} within {radius:g} km. The closest, {closest["n"]}, is {"right next to it" if closest_k < 0.05 else f"about {dist_label(closest_k)} away"}.')]
+        if prices:
+            faq.append((f'What does a stay near {name} cost?',
+                        f'Listed starting prices within 1 km run from about ₹{round_price(prices[0])} to ₹{round_price(prices[-1])} a night, with a typical stay around ₹{round_price(statistics.median(prices))}. Expect more on weekends and festival days.'))
+        faq.append((f'Is it better to stay right next to {name}?',
+                    'Walking distance is handy for early mornings and evening aartis, but the busiest lanes are noisy and hard to drive into on festival days. '
+                    + (base_line or 'A stay 1–2 km away is often quieter and easier to reach by car.')))
+        if slug == 'har-ki-pauri':
+            faq.insert(1, KUMBH_FAQ)
+        guide = f'<a href="{lm["guide"]}">Read our {esc(name)} guide</a> · ' if lm.get('guide') else ''
+        mapdata = {'center': here, 'name': name, 'cq': city_qs(),
+                   'stays': [[s['ll'][0], s['ll'][1], s['n'], s['id'], dist_label(k)] for k, s in near[:120]],
+                   'own': [[o['ll'][0], o['ll'][1], o['n'], o['u']] for o in own if o.get('ll')]}
+        ld = [
+            {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': h1, 'url': url, 'description': desc, 'dateModified': today.isoformat(),
+             'about': {'@type': 'TouristAttraction', 'name': name, 'geo': {'@type': 'GeoCoordinates', 'latitude': here[0], 'longitude': here[1]},
+                       'address': {'@type': 'PostalAddress', 'addressLocality': CN, 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}},
+             'isPartOf': {'@type': 'WebSite', 'name': 'Rishikesh Homestays', 'url': f'{SITE}/'}},
+            {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
+                {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': f'{SITE}/'},
+                {'@type': 'ListItem', 'position': 2, 'name': f'Best Hotels in {CN}', 'item': f'{SITE}/hotels/best-hotels-in-{CITY}'},
+                {'@type': 'ListItem', 'position': 3, 'name': h1, 'item': url}]},
+            {'@context': 'https://schema.org', '@type': 'ItemList', 'name': h1, 'numberOfItems': len(near), 'itemListElement': [
+                {'@type': 'ListItem', 'position': i + 1, 'item': {'@type': 'LodgingBusiness', 'name': s['n'],
+                 'geo': {'@type': 'GeoCoordinates', 'latitude': s['ll'][0], 'longitude': s['ll'][1]},
+                 'address': {'@type': 'PostalAddress', 'addressLocality': f'{s["a"]}, {CN}', 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}}}
+                for i, (k, s) in enumerate(near[:30])]},
+            {'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [
+                {'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in faq]},
+        ]
+        head_extra = '\n    '.join([
+            f'<meta name="description" content="{esc(desc)}">', f'<meta property="og:title" content="{esc(title)}">',
+            f'<meta property="og:description" content="{esc(desc)}">', f'<meta property="og:image" content="{OG_IMAGE}">',
+            '<meta property="og:type" content="website">', '<meta property="og:locale" content="en_US">',
+            f'<meta property="og:url" content="{url}">', '<meta property="og:site_name" content="Rishikesh Homestays">',
+            '<meta name="twitter:card" content="summary_large_image">'])
+        page_top = (top.replace('<title>Thanks | Rishikesh Homestays</title>', f'<title>{esc(title)}</title>\n    {head_extra}')
+                    .replace('<meta name="robots" content="noindex, follow">', '<meta name="robots" content="index, follow, max-image-preview:large">')
+                    .replace(f'{SITE}/thanks', url)
+                    .replace('  </head>', '    ' + '\n    '.join(jsonld(o) for o in ld) + '\n  </head>', 1))
+        others_near = ', '.join(f'<a href="/hotels/best-stays-near-{l["slug"]}">{esc(l["name"])}</a>' for l in others_all if l['slug'] != slug)
+        faq_html = ''.join(f'<details class="sx-faq-item"><summary>{esc(q)}</summary><p>{esc(a)}</p></details>' for q, a in faq)
+        lede_closest = ('; one is right next to it' if closest_k < 0.05 else f'; the closest is {dist_label(closest_k)} away') if closest_k < 1 else ''
+        mapjson = json.dumps(mapdata, ensure_ascii=False).replace('</', '<\\/')
+        note = esc(CITY_COPY.get(CITY, {}).get('note', NOTE_RISHIKESH))
+        main_html = (
+            f'<main class="sx-page" id="main" data-city="{CITY}" data-landmark="{slug}">\n'
+            '      <section class="section">\n        <div class="container">\n'
+            f'          <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/hotels/best-hotels-in-{CITY}">Best Hotels in {CN}</a> <span aria-hidden="true">›</span> <span>{esc(h1)}</span></nav>\n'
+            f'          <p class="eyebrow">Where to stay · {esc(CN)}</p>\n'
+            f'          <h1 class="sx-title">{esc(h1)}</h1>\n'
+            f'          <p class="sx-lede">Every stay within {radius:g} km of {esc(name)}, sorted by real distance. {within1:,} are within 1 km{lede_closest}.</p>\n'
+            f'          <p class="sx-cities">{guide}<a href="/hotels/best-hotels-in-{CITY}">All stays in {CN}</a></p>\n'
+            f'          {own_block}\n'
+            '          <section class="sp-map" aria-labelledby="lm-map-h">\n            <h2 id="lm-map-h">On the map</h2>\n'
+            f'            <div class="sp-map-slot" id="lm-map"><a href="https://www.google.com/maps?q={here[0]},{here[1]}" target="_blank" rel="noopener">Open {esc(name)} in Google Maps</a></div>\n'
+            f'            <ul class="sp-map-key" aria-hidden="true"><li><i class="k-this"></i>{esc(name)}</li><li><i class="k-own"></i>Our homestays</li><li><i class="k-near"></i>Stays nearby</li></ul>\n'
+            '          </section>\n'
+            f'          <script type="application/json" id="lm-data">{mapjson}</script>\n'
+            f'          <div id="sx-out">{band_html}</div>\n'
+            '          <section class="sx-faq" aria-labelledby="sx-faq-h">\n'
+            f'            <h2 id="sx-faq-h">Staying near {esc(name)}: questions travellers ask</h2>\n            {faq_html}\n          </section>\n'
+            '          <section class="sx-explore" aria-labelledby="sx-explore-h">\n'
+            f'            <h2 id="sx-explore-h">Stay near other places in {CN}</h2>\n            <p>{others_near}</p>\n'
+            f'            <p>Or browse <a href="/hotels/best-hotels-in-{CITY}">all stays in {CN}</a>, or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>\n'
+            '          </section>\n'
+            f'          <p class="sx-note">Distances are straight-line from {esc(name)}; walking and driving routes are longer, and drive times are rough. {note}</p>\n'
+            '        </div>\n      </section>\n    </main>')
+        page_bottom = bottom.replace('/assets/js/modules/stays-index.js', '/assets/js/modules/landmark-map.js')
+        open(f'{STAYS_DIR}/best-stays-near-{slug}.html', 'w').write(page_top + main_html + page_bottom)
+        made.append({'slug': slug, 'name': name, 'near': len(near), 'radius': radius})
+    print('landmark pages:', ', '.join(f"{m['slug']} ({m['near']})" for m in made) or 'none')
+    return made
 
 
 def jsonld(obj):
     return '<script type="application/ld+json">\n' + json.dumps(obj, ensure_ascii=False, indent=2).replace('</', '<\\/') + '\n</script>'
+
+
+def ensure_markers(path, before, indent, heading=''):
+    """Add this city's start/end markers ahead of `before` the first time."""
+    s = open(path).read()
+    if f'<!-- {marker()}:start -->' in s:
+        return
+    block = f'{heading}{indent}<!-- {marker()}:start -->\n{indent}<!-- {marker()}:end -->\n'
+    s = s.replace(before, block + before, 1)
+    open(path, 'w').write(s)
 
 
 def replace_between(path, start, end, body):
@@ -292,11 +574,18 @@ def main(data_path, crawled):
     date = today.strftime('%-d %B %Y')
     stays = json.load(open(data_path))
     own = []
+    # Our stays are in Rishikesh; other cities borrow them from Rishikesh's data
+    # (labelled with the town) so every city's pages still pin and mix them in.
+    home = stays if CITY == DEFAULT_CITY else json.load(open(os.path.join(cache_dir(DEFAULT_CITY), 'stays.json')))
     for key, name, href in OWN:
-        hit = next((s for s in stays if key in s['u']), None)
+        hit = next((s for s in home if key in s['u']), None)
         if hit:
-            own.append({**hit, 'n': name, 'u': href})
-            stays.remove(hit)
+            o = {**hit, 'n': name, 'u': href}
+            if CITY != DEFAULT_CITY:
+                o['a'] = f'{CITIES[DEFAULT_CITY]["name"]} · {hit["a"]}'
+            own.append(o)
+            if CITY == DEFAULT_CITY:
+                stays.remove(hit)
         else:
             print(f'warning: own property not found in crawl: {key}')
     ota = load_ota_links()
@@ -316,7 +605,7 @@ def main(data_path, crawled):
             'categories': [{'slug': c[0], 'title': c[1], 'filter': c[3], 'count': counts[c[0]]} for c in live],
             'sections': sections}
     dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-    with open(f'{ROOT}/assets/js/modules/stays-index-data.js', 'w') as fh:
+    with open(f'{ROOT}/assets/js/modules/{data_module_name()}', 'w') as fh:
         fh.write('// Generated by scripts/stays/build_pages.py. Do not hand-edit.\n')
         fh.write(f'export const STAYS_INDEX_META = {dump(meta)};\n')
         fh.write(f'export const STAYS_OWN = {dump(own)};\n')
@@ -329,32 +618,42 @@ def main(data_path, crawled):
         '    <script type="module" src="/assets/js/site.js"></script>\n',
         '    <script type="module" src="/assets/js/site.js"></script>\n    <script type="module" src="/assets/js/modules/stays-index.js"></script>\n', 1)
 
-    live_files = {f'best-{c[0]}-in-rishikesh.html' for c in live}
-    for f in os.listdir(ROOT):
-        if re.fullmatch(r'best-[a-z-]+-in-rishikesh\.html', f) and f not in live_files:
+    os.makedirs(STAYS_DIR, exist_ok=True)
+    live_files = {f'best-{c[0]}-in-{CITY}.html' for c in live}
+    for f in os.listdir(STAYS_DIR):
+        if re.fullmatch(r'best-[a-z-]+-in-' + CITY + r'\.html', f) and f not in live_files:
+            os.remove(f'{STAYS_DIR}/{f}')
+    for f in os.listdir(ROOT):  # pre-move root copies
+        if re.fullmatch(r'best-[a-z-]+-in-' + CITY + r'\.html', f):
             os.remove(f'{ROOT}/{f}')
 
     star_counts = {}
+    others = [(k, v['name']) for k, v in CITIES.items() if k != CITY and os.path.exists(f'{STAYS_DIR}/best-hotels-in-{k}.html')]
+    landmarks = load_landmarks(CITY)
+    near_nav = ('<p class="sx-cities">Stay near ' + ', '.join(
+        f'<a href="/hotels/best-stays-near-{l["slug"]}">{esc(l["name"])}</a>' for l in landmarks) + '</p>') if landmarks else ''
     for slug, title, singular, flt, intro, guide in live:
+        intro, guide = city_copy(slug, title, intro, guide)
         is_master = flt == 'all'
-        url = f'{SITE}/best-{slug}-in-rishikesh'
+        url = f'{SITE}/hotels/best-{slug}-in-{CITY}'
         members = [s for s in stays if matches(s, flt)]
         st = stats_for(members + [o for o in own if matches(o, flt)])
         n = st['n']
         plural = 'stays' if is_master else title.lower().replace('stays with a pool', 'stays with a pool')
-        h1 = 'Best Hotels in Rishikesh' if is_master else f'Best {title} in Rishikesh'
-        page_title = (f'Best Hotels in Rishikesh | All {n:,} Stays by Area & Category' if is_master
-                      else f'Best {title} in Rishikesh | {n:,} Compared by Area & Price')
-        desc = (f'{n:,} Rishikesh stays compared: hotels, homestays, resorts, camps and hostels by area, price and facilities, '
+        h1 = f'Best Hotels in {CN}' if is_master else f'Best {title} in {CN}'
+        page_title = (f'Best Hotels in {CN} | All {n:,} Stays by Area & Category' if is_master
+                      else f'Best {title} in {CN} | {n:,} Compared by Area & Price')
+        kinds_txt = 'hotels, dharamshalas, homestays, guest houses and apartments' if CITY == 'haridwar' else 'hotels, homestays, resorts, camps and hostels'
+        desc = (f'{n:,} {CN} stays compared: {kinds_txt} by area, price and facilities, '
                 f'with local tips on where to stay.') if is_master else (
-                f'Compare {n:,} {title.lower()} in Rishikesh by area, price and facilities. {intro}')[:300]
+                f'Compare {n:,} {title.lower()} in {CN} by area, price and facilities. {intro}')[:300]
         faq = faqs(title, 'stay' if is_master else singular, plural, st, date)
 
         strip = ''.join(
-            f'<a href="/best-{c[0]}-in-rishikesh"{" aria-current=\"page\"" if c[0] == slug else ""}>{"All stays" if c[3] == "all" else esc(c[1])} <small>{counts[c[0]]:,}</small></a>'
+            f'<a href="/hotels/best-{c[0]}-in-{CITY}"{" aria-current=\"page\"" if c[0] == slug else ""}>{"All stays" if c[3] == "all" else esc(c[1])} <small>{counts[c[0]]:,}</small></a>'
             for c in live)
         explore = ''.join(
-            f'<li><a href="/best-{c[0]}-in-rishikesh">{"Best hotels in Rishikesh (all stays)" if c[3] == "all" else f"Best {esc(c[1])} in Rishikesh"}</a> <span>{counts[c[0]]:,}</span></li>'
+            f'<li><a href="/hotels/best-{c[0]}-in-{CITY}">{f"Best hotels in {CN} (all stays)" if c[3] == "all" else f"Best {esc(c[1])} in {CN}"}</a> <span>{counts[c[0]]:,}</span></li>'
             for c in live if c[0] != slug)
 
         if is_master:
@@ -363,16 +662,16 @@ def main(data_path, crawled):
                 lst = [s for s in stays if matches(s, sec['filter'])]
                 if not lst:
                     continue
-                more = (f'<a class="sx-open" href="/best-{sec["slug"]}-in-rishikesh">View all {len(lst):,} {esc(sec["title"].lower())}</a>' if sec['slug']
+                more = (f'<a class="sx-open" href="/hotels/best-{sec["slug"]}-in-{CITY}">View all {len(lst):,} {esc(sec["title"].lower())}</a>' if sec['slug']
                         else (f'<button type="button" class="sx-more" data-k="c:{esc(sec["title"])}">Show all {len(lst):,}</button>' if len(lst) > MASTER_SECTION else ''))
                 blocks.append(f'<section class="sx-group"><h2>{esc(sec["title"])} <span>{len(lst):,}</span></h2>'
-                              f'<ul class="sx-list">{"".join(item_html(d) for d in lst[:MASTER_SECTION])}</ul>'
+                              f'<ul class="sx-list">{mix_html(lst[:MASTER_SECTION], own, sec["filter"] in PRIVATE_ALT)}</ul>'
                               f'{f"<div class=\"sx-actions\">{more}</div>" if more else ""}</section>')
             listing = ''.join(blocks)
             list_items = [d for d in stays][:30]
         else:
             listing = (f'<section class="sx-group"><h2>All {esc(title.lower())} <span>{len(members):,}</span></h2>'
-                       f'<ul class="sx-list">{"".join(item_html(d) for d in members)}</ul></section>')
+                       f'<ul class="sx-list">{mix_html(members, own, flt in PRIVATE_ALT)}</ul></section>')
             list_items = members[:30]
 
         ld_breadcrumb = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
@@ -383,7 +682,7 @@ def main(data_path, crawled):
                    'itemListElement': [{'@type': 'ListItem', 'position': i + 1, 'item': {
                        '@type': 'LodgingBusiness', 'name': d['n'],
                        **({'url': SITE + d['u']} if d['u'].startswith('/') else {}),
-                       'address': {'@type': 'PostalAddress', 'addressLocality': f'{d["a"]}, Rishikesh', 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}}}
+                       'address': {'@type': 'PostalAddress', 'addressLocality': f'{d["a"]}, {CITIES[d.get("cy", CITY)]["name"]}', 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}}}
                        for i, d in enumerate(own_here + list_items)]}
         ld_faq = {'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [
             {'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in faq]}
@@ -413,22 +712,35 @@ def main(data_path, crawled):
         seg = (('<button type="button" data-g="c">Category</button>' if is_master else '<button type="button" data-g="all">All</button>')
                + '<button type="button" data-g="s">Stars</button><button type="button" data-g="a">Area</button>'
                + ('<button type="button" data-g="k">Type</button>' if not flt.startswith('k:') else ''))
+        cities_nav = ('<p class="sx-cities">Also compare stays in ' + ', '.join(
+            f'<a href="/hotels/best-{slug if os.path.exists(f"{STAYS_DIR}/best-{slug}-in-{k}.html") else "hotels"}-in-{k}">{esc(nm)}</a>' for k, nm in others) + '</p>') if others else ''
+        kumbh_html = ('''<section class="sx-kumbh" aria-labelledby="sx-kumbh-h">
+            <h2 id="sx-kumbh-h">Coming for the Kumbh 2027?</h2>
+            <p>Haridwar fills up months ahead of the Kumbh. Stay within walking distance of the ghat you plan to bathe at, expect road closures around the big snan days, and book early. For a calmer base, Rishikesh is about 25 km upriver.</p>
+            <p><a href="/haridwar-kumbh-2027">Read our Haridwar Kumbh 2027 guide</a> for reported dates and planning, see <a href="/hotels/best-dharamshalas-in-haridwar">dharamshalas</a> and <a href="/hotels/best-hotels-in-haridwar">all Haridwar stays</a>, or compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a>.</p>
+          </section>''' if CITY_COPY.get(CITY, {}).get('kumbh') else '')
+        explore_more = ('<p>Want a hand choosing? <a href="/homestays">See our handpicked homestays</a>, read <a href="/about-rishikesh">about Rishikesh\'s areas</a>, <a href="/places-to-visit">places to visit</a> and <a href="/things-to-do-in-rishikesh">things to do</a>, plan for the <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027</a>, or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>'
+                        if CITY == DEFAULT_CITY else
+                        '<p>Planning a pilgrimage? Read our <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027 guide</a> and the <a href="/triveni-ghat">Ganga Aarti guide</a>, compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a> (25 km upriver), or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>')
         main_html = f'''<main class="sx-page" id="main">
       <section class="section">
-        <div class="container" id="sx-root" data-filter="{esc(flt)}" data-all-title="All {esc(title.lower())}">
+        <div class="container" id="sx-root" data-city="{CITY}" data-filter="{esc(flt)}" data-all-title="All {esc(title.lower())}">
           <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>{esc(h1)}</span></nav>
           <p class="eyebrow">Where to stay</p>
           <h1 class="sx-title">{esc(h1)}</h1>
           <p class="sx-lede">{esc(intro)}</p>
           <p class="sx-updated">{n:,} {esc(plural)} to compare</p>
           <nav class="sx-cats" aria-label="Browse stays by category">{strip}</nav>
+          {cities_nav}
+          {near_nav}
           <section class="sx-guide" aria-labelledby="sx-guide-h">
-            <h2 id="sx-guide-h">{'Where to stay in Rishikesh' if is_master else f'Choosing {esc(title.lower())} in Rishikesh'}</h2>
+            <h2 id="sx-guide-h">{f'Where to stay in {CN}' if is_master else f'Choosing {esc(title.lower())} in {CN}'}</h2>
             <p>{esc(guide)}</p>
             <ul class="sx-insights">{insight_html}</ul>
           </section>
+          {kumbh_html}
           <section class="sx-own" aria-labelledby="sx-own-h">
-            <h2 id="sx-own-h">Our homestays <span>Book direct with us</span></h2>
+            <h2 id="sx-own-h">Our homestays <span>{'Book direct with us' if CITY == DEFAULT_CITY else 'Book direct · in Rishikesh, about 25 km upriver'}</span></h2>
             <ul class="sx-list" id="sx-own">{"".join(own_html(o) for o in own)}</ul>
           </section>
           <div class="sx-controls">
@@ -449,45 +761,63 @@ def main(data_path, crawled):
             {faq_html}
           </section>
           <section class="sx-explore" aria-labelledby="sx-explore-h">
-            <h2 id="sx-explore-h">Explore more stays in Rishikesh</h2>
+            <h2 id="sx-explore-h">Explore more stays in {CN}</h2>
             <ul>{explore}</ul>
-            <p>Want a hand choosing? <a href="/homestays">See our handpicked homestays</a>, read <a href="/about-rishikesh">about Rishikesh's areas</a>, <a href="/places-to-visit">places to visit</a> and <a href="/things-to-do-in-rishikesh">things to do</a>, or <a href="/contact">send us your dates</a> and we'll suggest a stay.</p>
+            {explore_more}
           </section>
-          <p class="sx-note">Our area lines are drawn with a local's pencil, not a surveyor's, so a stay near the border might sit one neighbourhood over. Rates rise and fall with rafting season, festivals and the monsoon, so give the property a quick check before you pack.</p>
+          <p class="sx-note">{esc(CITY_COPY.get(CITY, {}).get('note', NOTE_RISHIKESH))}</p>
         </div>
       </section>
     </main>'''
-        open(f'{ROOT}/best-{slug}-in-rishikesh.html', 'w').write(page_top + main_html + bottom)
+        open(f'{STAYS_DIR}/best-{slug}-in-{CITY}.html', 'w').write(page_top + main_html + bottom)
+
+    near_pages = build_landmark_pages(stays, own, landmarks, top, bottom, today)
 
     # sitemap.xml + llms.txt sections (regenerated between markers)
     sm = ''.join(f'''
   <url>
-    <loc>{SITE}/best-{c[0]}-in-rishikesh</loc>
+    <loc>{SITE}/hotels/best-{c[0]}-in-{CITY}</loc>
     <lastmod>{today.isoformat()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>{"0.8" if c[3] == "all" else "0.6"}</priority>
-  </url>''' for c in live)
-    replace_between(f'{ROOT}/sitemap.xml', '<!-- stays-pages:start -->', '<!-- stays-pages:end -->', sm + '\n  ')
+  </url>''' for c in live) + ''.join(f'''
+  <url>
+    <loc>{SITE}/hotels/best-stays-near-{np['slug']}</loc>
+    <lastmod>{today.isoformat()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>''' for np in near_pages)
+    ensure_markers(f'{ROOT}/sitemap.xml', '</urlset>', '  ')
+    replace_between(f'{ROOT}/sitemap.xml', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', sm + '\n  ')
     ll = '\n' + '\n'.join(
-        f'- [{"Best Hotels in Rishikesh (all stays)" if c[3] == "all" else f"Best {c[1]} in Rishikesh"}]({SITE}/best-{c[0]}-in-rishikesh): {counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else c[1].lower()}. {c[4]}'
-        for c in live) + '\n\n'
-    replace_between(f'{ROOT}/llms.txt', '<!-- stays-pages:start -->', '<!-- stays-pages:end -->', ll)
+        f'- [{f"Best Hotels in {CN} (all stays)" if c[3] == "all" else f"Best {c[1]} in {CN}"}]({SITE}/hotels/best-{c[0]}-in-{CITY}): {counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else c[1].lower()}. {city_copy(c[0], c[1], c[4], c[5])[0]}'
+        for c in live) + ''.join(
+        f"\n- [Best stays near {np['name']}]({SITE}/hotels/best-stays-near-{np['slug']}): {np['near']} stays within {np['radius']:g} km of {np['name']}, sorted by real distance, with a map."
+        for np in near_pages) + '\n\n'
+    ensure_markers(f'{ROOT}/llms.txt', '## Contact', '', heading=f'## Where to stay in {CN}\n\n')
+    replace_between(f'{ROOT}/llms.txt', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', ll)
 
-    # One shared info page for every stay (/stay?s=<id>), rendered from the
+    # One shared info page for every stay (/hotels/stay?s=<id>), rendered from the
     # data module by stay-page.js. noindex: thin per-stay pages would dilute
     # the category pages, which carry the SEO.
+    if CITY != DEFAULT_CITY:
+        print('verified booking links:', sum('o' in s for s in stays))
+        print('pages:', ', '.join(f'{c[0]} ({counts[c[0]]})' for c in live))
+        return
     stay_top = (top.replace('<title>Thanks | Rishikesh Homestays</title>', '<title>Stay details | Rishikesh Homestays</title>')
-                   .replace(f'{SITE}/thanks', f'{SITE}/stay'))
+                   .replace(f'{SITE}/thanks', f'{SITE}/hotels/stay'))
     stay_main = '''<main class="sx-page" id="main">
       <section class="section">
         <div class="container" id="sp-root">
           <p class="sx-note">Loading stay details…</p>
-          <noscript><p>This page needs JavaScript. <a href="/best-hotels-in-rishikesh">Browse all stays in Rishikesh</a> or <a href="/contact">send us your dates</a>.</p></noscript>
+          <noscript><p>This page needs JavaScript. <a href="/hotels/best-hotels-in-rishikesh">Browse all stays in Rishikesh</a> or <a href="/contact">send us your dates</a>.</p></noscript>
         </div>
       </section>
     </main>'''
     stay_bottom = bottom.replace('/assets/js/modules/stays-index.js', '/assets/js/modules/stay-page.js')
-    open(f'{ROOT}/stay.html', 'w').write(stay_top + stay_main + stay_bottom)
+    open(f'{STAYS_DIR}/stay.html', 'w').write(stay_top + stay_main + stay_bottom)
+    if os.path.exists(f'{ROOT}/stay.html'):
+        os.remove(f'{ROOT}/stay.html')  # pre-move copy
     print('verified booking links:', sum('o' in s for s in stays))
 
     print('pages:', ', '.join(f'{c[0]} ({counts[c[0]]})' for c in live))
@@ -495,6 +825,8 @@ def main(data_path, crawled):
 
 
 if __name__ == '__main__':
-    cache = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.cache')
+    CITY = city_from_argv()   # --city <key>; default rishikesh
+    CN = CITIES[CITY]['name']
+    cache = cache_dir(CITY)
     crawled = sum(1 for _ in open(f'{cache}/props.jsonl'))
     main(f'{cache}/stays.json', crawled)

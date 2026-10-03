@@ -1,0 +1,15 @@
+slug	name	city	lat	lng	guide	source
+triveni-ghat	Triveni Ghat	rishikesh	30.10366	78.30199	/triveni-ghat	OSM Overpass (pier "Triveni ghat")
+laxman-jhula	Laxman Jhula	rishikesh	30.12645	78.32975	/places-to-visit	structurae.net / bridgemeister.com
+ram-jhula	Ram Jhula	rishikesh	30.12333	78.31452	/places-to-visit	OSM Nominatim/Overpass ("Ram Jhula")
+parmarth-niketan	Parmarth Niketan	rishikesh	30.11869	78.31319	/places-to-visit	OSM Nominatim
+beatles-ashram	Beatles Ashram	rishikesh	30.11255	78.31223	/places-to-visit	OSM Overpass (museum "Beatles Ashram")
+janki-setu	Janki Setu	rishikesh	30.11643	78.30873	/places-to-visit	OSM Nominatim
+aiims-rishikesh	AIIMS Rishikesh	rishikesh	30.07799	78.28403		OSM Overpass (hospital)
+rishikesh-railway-station	Rishikesh Railway Station	rishikesh	30.10956	78.27790		OSM Overpass (station "Yog Nagari Rishikesh")
+rishikesh-isbt	Rishikesh ISBT (bus stand)	rishikesh	30.11294	78.29572		OSM Nominatim
+har-ki-pauri	Har Ki Pauri	haridwar	29.95664	78.17086	/haridwar-kumbh-2027	OSM Overpass (attraction "Har Ki Pauri")
+haridwar-railway-station	Haridwar Railway Station	haridwar	29.94747	78.15433		OSM Overpass (station "Haridwar")
+mansa-devi-temple	Mansa Devi Temple	haridwar	29.95793	78.16524		OSM Nominatim
+chandi-devi-temple	Chandi Devi Temple	haridwar	29.93355	78.18013		OSM Overpass (place_of_worship)
+daksh-mahadev-temple	Daksh Mahadev Temple, Kankhal	haridwar	29.92177	78.14605		OSM Overpass (place_of_worship)

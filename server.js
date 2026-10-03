@@ -53,6 +53,24 @@ app.get(/^\/pages\/([a-z0-9-]+)(?:\.html)?$/, (req, res) => {
   res.redirect(301, '/' + req.params[0] + query);
 });
 
+// Stays pages moved from the root into hotels/: 301 the old URLs (keeping the
+// query string) to match vercel.json and _redirects.
+app.get(/^\/(best-[a-z0-9-]+-in-[a-z]+)(?:\.html)?$/, (req, res) => {
+  const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  res.redirect(301, '/hotels/' + req.params[0] + query);
+});
+// /hotels/stay needs ?s=<stay>; without one, send visitors to the city's
+// stays page instead of an empty template (mirrors vercel.json).
+app.get(['/hotels/stay', '/hotels/stay.html'], (req, res, next) => {
+  if (req.query.s) return next();
+  const city = /^[a-z-]+$/.test(String(req.query.c || '')) ? req.query.c : 'rishikesh';
+  res.redirect(302, `/hotels/best-hotels-in-${city}`);
+});
+app.get(['/stay', '/stay.html'], (req, res) => {
+  const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+  res.redirect(301, '/hotels/stay' + query);
+});
+
 // Redirect old-style .html URLs to their clean equivalent (e.g.
 // /about-rishikesh.html -> /about-rishikesh) so there's a single canonical
 // URL and any bookmarked/indexed .html links still work.

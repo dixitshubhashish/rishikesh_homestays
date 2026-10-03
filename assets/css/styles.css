@@ -2987,8 +2987,9 @@ input.sx-input {
 /* Single-stay guide pages (/stays/<slug>). */
 .sp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
+  max-width: 760px;
   margin-top: 24px;}
 .sp-card {
   padding: 16px 18px;
@@ -3059,7 +3060,8 @@ input.sx-input {
   margin: 0 0 10px;
   font-size: 1.3rem;}
 .sp-map-slot {
-  height: 420px;
+  height: 300px;
+  max-width: 760px;
   max-width: 100%;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -3090,7 +3092,7 @@ input.sx-input {
   opacity: 0.6;}
 @media (max-width: 680px) {
   .sp-map-slot {
-    height: 340px;}}
+    height: 240px;}}
 /* Total-guests stepper in the /stay lead popup. */
 .sp-stepper {
   display: flex;
@@ -3112,3 +3114,91 @@ input.sx-input {
 .sp-stepper-hint {
   color: var(--muted);
   font-size: 0.82rem;}
+/* Keep the /stay map in line with the stacked cards above it. */
+.sp-map .sp-map-slot,
+.sp-map .sp-map-key,
+.sp-map .sp-small {
+  max-width: 760px;}
+/* /stay facilities: first 3 rows, then "View all" (max-height set in JS). */
+.sp-fac {
+  overflow: hidden;
+  transition: max-height 0.25s ease;}
+.sp-fac-toggle {
+  margin-top: 10px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--river);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;}
+@media (prefers-reduced-motion: reduce) {
+  .sp-fac {
+    transition: none;}}
+/* /hotels/stay: main column + sticky "book direct" sidebar on wide screens. */
+.sp-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 28px;}
+.sp-side {
+  display: grid;
+  align-content: start;
+  gap: 18px;}
+.sp-side .sx-own {
+  margin-top: 0;}
+.sp-why ul,
+.sp-more ul {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding-left: 1.1em;}
+.sp-more ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;}
+.sp-more a {
+  color: var(--river);
+  font-weight: 600;}
+.sp-more li span {
+  color: var(--muted);
+  font-size: 0.82rem;}
+.sp-why .btn {
+  width: 100%;}
+@media (min-width: 1100px) {
+  .sp-layout {
+    grid-template-columns: minmax(0, 760px) minmax(0, 1fr);}
+  .sp-side {
+    position: sticky;
+    top: 92px;}}
+/* Footer "Stays in Rishikesh / Haridwar" division (first row of the footer, above the main grid). */
+.rhs-footer-stays {
+  margin-bottom: 8px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);}
+.rhs-footer-stays + .rhs-footer-container {
+  padding-top: 32px;}
+.rhs-footer-stays-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px 40px;
+  max-width: 640px;}
+/* Landmark pages (hotels/best-stays-near-*): distance label + calmer-base pitch. */
+.sx-dist {
+  color: var(--river);
+  font-weight: 700;}
+.sx-base {
+  margin: 0 0 6px;
+  color: var(--ink);}
+/* AdSense units placed by assets/js/ads.js on guide pages (grid above the footer, etc.). */
+.rh-ad {
+  max-width: 1180px;
+  margin: 40px auto 32px;
+  padding: 0 16px;
+  overflow: hidden;}
+.rh-ad-label {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);}

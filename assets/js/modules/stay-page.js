@@ -1,12 +1,20 @@
-// Single-stay info page (/stay?s=<id>), shared by every listing on the
-// best-*-in-rishikesh pages. Renders the stay from stays-index-data.js, then
+// Single-stay info page (/hotels/stay?s=<id>), shared by every listing on the
+// best-*-in-${CITY} pages. Renders the stay from stays-index-data.js, then
 // "Book this stay" opens a lead popup (name, email, phone) with two choices:
 //   - Submit: the lead is emailed to us via /api/contact (awaited), then the
 //     guest goes to the stay's one verified booking page (Booking.com, MMT,
 //     Agoda or Airbnb, from scripts/stays/ota-links.tsv). Stays without a
 //     verified page go to /thanks.
 //   - Chat on WhatsApp: opens a chat with the stay prefilled.
-import { STAYS_INDEX, STAYS_INDEX_META, STAYS_OWN } from './stays-index-data.js';
+// City from ?c= (Rishikesh by default, so old /hotels/stay?s=<slug> links keep
+// working). Each city's data lives in its own module, loaded on demand.
+const CITY = (new URLSearchParams(location.search).get('c') || 'rishikesh').toLowerCase().replace(/[^a-z-]/g, '');
+const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar' };
+const CITY_NAME = CITY_NAMES[CITY] || CITY.charAt(0).toUpperCase() + CITY.slice(1);
+const CQ = CITY === 'rishikesh' ? '' : `&c=${CITY}`;
+let STAYS_INDEX = [];
+let STAYS_INDEX_META = { categories: [], sections: [] };
+let STAYS_OWN = [];
 import { validatePhone } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
@@ -129,16 +137,27 @@ const MODAL_HTML = `
     </form>
   </div>`;
 
+// "Similar stays": our own stays mixed in after the 2nd and 4th rows; next to
+// a hostel they're pitched as the private, not-shared alternative.
+function similarWithOwn(similar, isPrivate) {
+  const own = STAYS_OWN;
+  // Same look as the other rows; real guest rating only, and only if 9+.
+  const ownRow = (o) => `<li class="sx-item"><span class="sx-name">${esc(o.n)}</span><span class="sx-meta"><span>${isPrivate ? 'Private stay' : esc(o.k)}</span>${o.g >= 9 ? `<span>Guests ${o.g}/10${o.c ? ` · ${o.c} reviews` : ''}</span>` : ''}${o.p ? `<span>Starting ₹${inr(o.p)} onwards</span>` : ''}</span><a class="sx-go" href="${esc(o.u)}">View property</a></li>`;
+  const row = (x) => `<li class="sx-item"><span class="sx-name">${esc(x.n)}</span><span class="sx-meta"><span>${esc(x.k)}</span>${x.p ? `<span>Starting ₹${inr(x.p)} onwards</span>` : ''}</span><a class="sx-go" href="/hotels/stay?s=${esc(x.id)}${CQ}">View property</a></li>`;
+  let k = 0;
+  return similar.map((x, i) => row(x) + ((i === 1 || i === 3) && own.length ? ownRow(own[k++ % own.length]) : '')).join('');
+}
+
 function factRows(d) {
   const rows = [
     ['Type', esc(d.ks.join(', '))],
-    ['Area', `${esc(d.a)}, Rishikesh`],
+    ['Area', `${esc(d.a)}, ${CITY_NAME}`],
   ];
   if (d.ad && d.ad.length > 6) rows.push(['Address', esc(d.ad)]);
   if (d.ll) rows.push(['Map', `<a href="https://www.google.com/maps?q=${d.ll[0]},${d.ll[1]}" target="_blank" rel="noopener">Open in Google Maps</a>`]);
   rows.push(['Star rating', d.s ? `${'★'.repeat(d.s)} ${d.s}-star` : 'Not star-rated']);
   if (d.g) rows.push(['Guest rating', `${d.g}/10${d.c ? ` from ${d.c} reviews` : ''}`]);
-  if (d.p) rows.push(['Price', `From ₹${inr(d.p)} a night (listed starting price)`]);
+  if (d.p) rows.push(['Price', `Starting ₹${inr(d.p)} onwards a night`]);
   return rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
 }
 
@@ -146,12 +165,13 @@ function render(root, d, isOwn) {
   const cat = categoryFor(d);
   const similar = STAYS_INDEX.filter((x) => x.id !== d.id && x.a === d.a && x.ks.some((k) => d.ks.includes(k))).slice(0, 6);
   const ota = d.o;
-  document.title = `${d.n} | ${d.a}, Rishikesh | Rishikesh Homestays`;
+  document.title = `${d.n} | ${d.a}, ${CITY_NAME} | Rishikesh Homestays`;
   root.innerHTML = `
     <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span>
-      <a href="/best-${cat.slug}-in-rishikesh">${cat.filter === 'all' ? 'Best Hotels in Rishikesh' : `Best ${esc(cat.title)} in Rishikesh`}</a> <span aria-hidden="true">›</span> <span>${esc(d.n)}</span></nav>
+      <a href="/hotels/best-${cat.slug}-in-${CITY}">${cat.filter === 'all' ? `Best Hotels in ${CITY_NAME}` : `Best ${esc(cat.title)} in ${CITY_NAME}`}</a> <span aria-hidden="true">›</span> <span>${esc(d.n)}</span></nav>
     <p class="eyebrow">${esc(d.k)} · ${esc(d.a)}</p>
     <h1 class="sx-title">${esc(d.n)}</h1>
+    <div class="sp-layout"><div class="sp-main">
     <div class="sp-grid">
       <section class="sp-card" aria-labelledby="sp-facts-h">
         <h2 id="sp-facts-h">At a glance</h2>
@@ -173,15 +193,31 @@ function render(root, d, isOwn) {
       <ul class="sp-map-key" aria-hidden="true"><li><i class="k-this"></i>This stay</li><li><i class="k-own"></i>Our homestays</li><li><i class="k-near"></i>Other stays nearby</li></ul>
       <p class="sp-small"><a href="https://www.google.com/maps/dir/?api=1&amp;destination=${d.ll[0]},${d.ll[1]}" target="_blank" rel="noopener">Get directions in Google Maps</a></p>
     </section>` : ''}
-    ${d.f.length ? `<section class="sx-guide" aria-labelledby="sp-fac-h"><h2 id="sp-fac-h">Facilities</h2><ul class="sp-fac">${d.f.map((f) => `<li>${esc(f)}</li>`).join('')}</ul></section>` : ''}
-    ${isOwn ? '' : `<section class="sx-own" aria-labelledby="sx-own-h">
-      <h2 id="sx-own-h">Our homestays <span>Book direct with us</span></h2>
-      <ul class="sx-list">${STAYS_OWN.map((o) => `<li class="sx-item sx-item-own"><span class="sx-name">${esc(o.n)}</span><span class="sx-meta"><span>${esc(o.a)}</span><span>Book direct, best price</span></span><a class="sx-go" href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a></li>`).join('')}</ul>
-    </section>`}
+    ${d.f.length ? `<section class="sx-guide" aria-labelledby="sp-fac-h"><h2 id="sp-fac-h">Facilities</h2><ul class="sp-fac" id="sp-fac">${d.f.map((f) => `<li>${esc(f)}</li>`).join('')}</ul><button type="button" class="sp-fac-toggle" id="sp-fac-toggle" aria-controls="sp-fac" aria-expanded="false" hidden></button></section>` : ''}
     ${similar.length ? `<section class="sx-group" aria-labelledby="sp-sim-h"><h2 id="sp-sim-h">Similar stays in ${esc(d.a)}</h2>
-      <ul class="sx-list">${similar.map((x) => `<li class="sx-item"><span class="sx-name">${esc(x.n)}</span><span class="sx-meta"><span>${esc(x.k)}</span>${x.p ? `<span>From ₹${inr(x.p)}</span>` : ''}</span><a class="sx-go" href="/stay?s=${esc(x.id)}">View property</a></li>`).join('')}</ul>
-      <div class="sx-actions"><a class="sx-open" href="/best-${cat.slug}-in-rishikesh">See all ${cat.filter === 'all' ? 'stays' : esc(cat.title.toLowerCase())}</a></div></section>` : ''}
-    <p class="sx-note">Rishikesh moves with the seasons, and so do room rates. Prices, availability and facilities can shift between rafting season and the monsoon, so give the property a quick check before you pack.</p>`;
+      <ul class="sx-list">${similarWithOwn(similar, d.ks.includes('Hostels') || d.t.includes('backpacker'))}</ul>
+      <div class="sx-actions"><a class="sx-open" href="/hotels/best-${cat.slug}-in-${CITY}">See all ${cat.filter === 'all' ? 'stays' : esc(cat.title.toLowerCase())}</a></div></section>` : ''}
+    <p class="sx-note">${CITY === 'haridwar' ? 'Haridwar moves with the festival calendar, and so do room rates. Prices and availability jump around the Kumbh, Kanwar Yatra and big snan days, so give the property a quick check before you pack.' : 'Rishikesh moves with the seasons, and so do room rates. Prices, availability and facilities can shift between rafting season and the monsoon, so give the property a quick check before you pack.'}</p>
+    </div>
+    <aside class="sp-side" aria-label="Book direct with Rishikesh Homestays">
+      ${isOwn ? '' : `<section class="sx-own sp-side-card" aria-labelledby="sx-own-h">
+        <h2 id="sx-own-h">Our homestays <span>Book direct with us</span></h2>
+        <ul class="sx-list">${STAYS_OWN.map((o) => `<li class="sx-item sx-item-own"><span class="sx-name">${esc(o.n)}</span><span class="sx-meta"><span>${esc(o.a)}</span>${o.g >= 9 ? `<span>Guests ${o.g}/10</span>` : ''}</span><a class="sx-go" href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a></li>`).join('')}</ul>
+      </section>`}
+      <section class="sp-card sp-side-card sp-why" aria-labelledby="sp-why-h">
+        <h2 id="sp-why-h">Why plan with us</h2>
+        <ul>
+          <li>A local who answers on WhatsApp, not a call centre</li>
+          <li>Book direct and skip the booking-site commission</li>
+          <li>Help with dates, groups, long stays and ${CITY === 'haridwar' ? 'Kumbh and snan days' : 'rafting, yoga and Ganga Aarti plans'}</li>
+        </ul>
+        <button type="button" class="btn btn-whatsapp" data-sp-wa-direct>${WA_ICON} Ask us on WhatsApp</button>
+      </section>
+      ${STAYS_INDEX_META.categories.length ? `<nav class="sp-card sp-side-card sp-more" aria-labelledby="sp-more-h">
+        <h2 id="sp-more-h">More stays in ${CITY_NAME}</h2>
+        <ul>${STAYS_INDEX_META.categories.filter((c) => c.slug !== cat.slug).slice(0, 8).map((c) => `<li><a href="/hotels/best-${c.slug}-in-${CITY}">${c.filter === 'all' ? 'All stays' : esc(c.title)}</a> <span>${inr(c.count)}</span></li>`).join('')}</ul>
+      </nav>` : ''}
+    </aside></div>`;
 }
 
 function setupGate(root, d) {
@@ -225,14 +261,14 @@ function setupGate(root, d) {
     const who = nameIn.value.trim();
     const near = nearestOwn(d);
     const intro = [
-      `Hi Rishikesh Homestays! I'm interested in booking ${d.n} (${d.ks[0]}, ${d.a}, Rishikesh).`,
+      `Hi Rishikesh Homestays! I'm interested in booking ${d.n} (${d.ks[0]}, ${d.a}, ${CITY_NAME}).`,
       who ? `My name is ${who}.` : '',
       modal.hidden ? '' : `We're ${guests()} in total, kids included.`,
       'Could you help with availability and the best price?'
     ].filter(Boolean);
     const ref = [
       `Ref: ${d.id}`,
-      `${location.origin}/stay?s=${encodeURIComponent(d.id)}`,
+      `${location.origin}/hotels/stay?s=${encodeURIComponent(d.id)}${CQ}`,
       near ? `About ${near.km < 1 ? `${Math.round(near.km * 1000)} m` : `${near.km.toFixed(1)} km`} from ${near.o.n.split(' – ')[0]}` : ''
     ].filter(Boolean);
     const msg = `${intro.join('\n')}\n\n${ref.join('\n')}`;
@@ -240,7 +276,7 @@ function setupGate(root, d) {
   }
 
   root.querySelector('[data-sp-open]').addEventListener('click', open);
-  root.querySelector('[data-sp-wa-direct]').addEventListener('click', whatsapp);
+  root.querySelectorAll('[data-sp-wa-direct]').forEach((b) => b.addEventListener('click', whatsapp));
   $m('[data-sp-wa]').addEventListener('click', whatsapp);
   backdrop.addEventListener('click', close);
   $m('.ota-gate-close').addEventListener('click', close);
@@ -268,7 +304,7 @@ function setupGate(root, d) {
           preferred_stay: d.id, area: d.a, stay_name: d.n, guests_total: guests(),
           details: `Interested in ${d.n} (${d.ks.join(', ')}, ${d.a}).\nTotal guests (kids included): ${guests()}\n` +
             (ota ? `Sent on to ${ota.n}: ${ota.u}` : 'No verified booking page: please follow up with availability and price.') +
-            `\nStay page: ${location.origin}/stay?s=${d.id}`,
+            `\nStay page: ${location.origin}/hotels/stay?s=${d.id}${CQ}`,
           source: ota ? `stay_redirect_${ota.n.toLowerCase().replace(/[^a-z0-9]+/g, '_')}` : 'stay_enquiry'
         })
       });
@@ -318,7 +354,7 @@ function drawMap(el, d) {
   const pin = (ll, style, html) => L.circleMarker(ll, style).addTo(map).bindPopup(html);
   const nearby = STAYS_INDEX.filter((x) => x.ll && x.id !== d.id && kmBetween(d.ll, x.ll) <= NEARBY_KM).slice(0, 60);
   nearby.forEach((x) => pin(x.ll, { radius: 6, color: '#0f6f74', weight: 1, fillColor: '#0f6f74', fillOpacity: 0.55 },
-    `<b>${esc(x.n)}</b><br>${esc(x.k)}${x.p ? ` · from ₹${inr(x.p)}` : ''}<br><a href="/stay?s=${esc(x.id)}">View property</a>`));
+    `<b>${esc(x.n)}</b><br>${esc(x.k)}${x.p ? ` · starting ₹${inr(x.p)} onwards` : ''}<br><a href="/hotels/stay?s=${esc(x.id)}${CQ}">View property</a>`));
   const own = STAYS_OWN.filter((o) => o.ll && o.id !== d.id);
   own.forEach((o) => pin(o.ll, { radius: 9, color: '#9a5a10', weight: 2, fillColor: '#d98b2b', fillOpacity: 0.95 },
     `<b>${esc(o.n)}</b><br>Our homestay · book direct<br><a href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a>`));
@@ -328,17 +364,60 @@ function drawMap(el, d) {
   if (near && near.km <= 10) map.fitBounds(L.latLngBounds([d.ll, near.o.ll]).pad(0.25), { maxZoom: 16 });
 }
 
-export function setupStayPage() {
+// Facilities: show the first FAC_ROWS rows of chips, with a View all / Show
+// fewer toggle. The cut-off is measured from the real chip rows, so it holds
+// at any width; short lists get no toggle at all.
+const FAC_ROWS = 3;
+function setupFacilities(count) {
+  const list = document.getElementById('sp-fac');
+  const toggle = document.getElementById('sp-fac-toggle');
+  if (!list || !toggle) return;
+  let expanded = false;
+  const rowTops = () => [...new Set([...list.children].map((li) => li.offsetTop))].sort((a, b) => a - b);
+  function apply() {
+    list.style.maxHeight = '';
+    const tops = rowTops();
+    if (tops.length <= FAC_ROWS) { toggle.hidden = true; return; }
+    toggle.hidden = false;
+    toggle.setAttribute('aria-expanded', String(expanded));
+    toggle.textContent = expanded ? 'Show fewer' : `View all ${count} facilities`;
+    if (!expanded) {
+      const lastRowChip = [...list.children].find((li) => li.offsetTop === tops[FAC_ROWS - 1]);
+      list.style.maxHeight = `${lastRowChip.offsetTop - tops[0] + lastRowChip.offsetHeight}px`;
+    }
+  }
+  toggle.addEventListener('click', () => {
+    expanded = !expanded;
+    apply();
+    if (!expanded) list.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(apply, 150); });
+  apply();
+}
+
+export async function setupStayPage() {
+  const data = await import(CITY === 'rishikesh' ? './stays-index-data.js' : `./stays-index-data-${CITY}.js`).catch(() => null);
+  if (data) ({ STAYS_INDEX, STAYS_INDEX_META, STAYS_OWN } = data);
   const root = document.getElementById('sp-root');
   if (!root) return;
   const id = new URLSearchParams(location.search).get('s') || '';
+  // /hotels/stay with no stay chosen: go to the city's stays page (the server
+  // and vercel.json redirect this too; this covers static hosts like Netlify).
+  if (!id) { location.replace(`/hotels/best-hotels-in-${CITY}`); return; }
   const own = STAYS_OWN.find((o) => o.id === id);
   const stay = own || STAYS_INDEX.find((d) => d.id === id);
   if (!stay) {
-    root.innerHTML = `<h1 class="sx-title">Stay not found</h1><p>This stay may have been removed from the listings. <a href="/best-hotels-in-rishikesh">Browse all stays in Rishikesh</a> or <a href="/contact">send us your dates</a> and we'll suggest options.</p>`;
+    document.title = `Stay not found | ${CITY_NAME} | Rishikesh Homestays`;
+    root.innerHTML = `<h1 class="sx-title">This stay has checked out</h1>
+      <p class="sx-lede">We couldn't find it in our ${CITY_NAME} listings; it may have closed or changed its name. Here are good places to look instead, or <a href="/contact">send us your dates</a> and we'll suggest a stay.</p>
+      <nav class="sx-cats" aria-label="Browse stays">${STAYS_INDEX_META.categories.map((c) => `<a href="/hotels/best-${c.slug}-in-${CITY}">${c.filter === 'all' ? 'All stays' : esc(c.title)} <small>${inr(c.count)}</small></a>`).join('')}</nav>
+      <section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">Our homestays <span>Book direct with us</span></h2>
+        <ul class="sx-list">${STAYS_OWN.map((o) => `<li class="sx-item sx-item-own"><span class="sx-name">${esc(o.n)}</span><span class="sx-meta"><span>${esc(o.a)}</span></span><a class="sx-go" href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a></li>`).join('')}</ul></section>`;
     return;
   }
   render(root, stay, Boolean(own));
+  setupFacilities(stay.f.length);
   setupGate(root, stay);
   setupMap(stay);
 }

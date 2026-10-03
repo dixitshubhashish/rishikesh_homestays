@@ -2,19 +2,104 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/pages/restaurants-cafes.html", "destination": "/places-to-visit#restaurants", "permanent": true },
-    { "source": "/pages/restaurants-cafes", "destination": "/places-to-visit#restaurants", "permanent": true },
-    { "source": "/pages/things-to-do.html", "destination": "/things-to-do-in-rishikesh", "permanent": true },
-    { "source": "/pages/things-to-do", "destination": "/things-to-do-in-rishikesh", "permanent": true },
-    { "source": "/pages/gateway-to-kedarnath.html", "destination": "/kedarnath-yatra", "permanent": true },
-    { "source": "/pages/gateway-to-kedarnath", "destination": "/kedarnath-yatra", "permanent": true },
-    { "source": "/pages/advaitam-ganga-hill-view-luxury-3bhk.html", "destination": "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh", "permanent": true },
-    { "source": "/pages/advaitam-ganga-hill-view-luxury-3bhk", "destination": "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh", "permanent": true },
-
-    { "source": "/pages/:slug.html", "destination": "/:slug", "permanent": true },
-    { "source": "/pages/:slug", "destination": "/:slug", "permanent": true },
-
-    { "source": "/about", "destination": "/about-rishikesh", "permanent": false },
-    { "source": "/places", "destination": "/places-to-visit", "permanent": false }
+    {
+      "source": "/pages/restaurants-cafes.html",
+      "destination": "/places-to-visit#restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/pages/restaurants-cafes",
+      "destination": "/places-to-visit#restaurants",
+      "permanent": true
+    },
+    {
+      "source": "/pages/things-to-do.html",
+      "destination": "/things-to-do-in-rishikesh",
+      "permanent": true
+    },
+    {
+      "source": "/pages/things-to-do",
+      "destination": "/things-to-do-in-rishikesh",
+      "permanent": true
+    },
+    {
+      "source": "/pages/gateway-to-kedarnath.html",
+      "destination": "/kedarnath-yatra",
+      "permanent": true
+    },
+    {
+      "source": "/pages/gateway-to-kedarnath",
+      "destination": "/kedarnath-yatra",
+      "permanent": true
+    },
+    {
+      "source": "/pages/advaitam-ganga-hill-view-luxury-3bhk.html",
+      "destination": "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh",
+      "permanent": true
+    },
+    {
+      "source": "/pages/advaitam-ganga-hill-view-luxury-3bhk",
+      "destination": "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh",
+      "permanent": true
+    },
+    {
+      "source": "/pages/:slug.html",
+      "destination": "/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/pages/:slug",
+      "destination": "/:slug",
+      "permanent": true
+    },
+    {
+      "source": "/:page(best-[a-z0-9-]+-in-[a-z]+)",
+      "destination": "/hotels/:page",
+      "permanent": true
+    },
+    {
+      "source": "/hotels/stay",
+      "missing": [
+        {
+          "type": "query",
+          "key": "s"
+        }
+      ],
+      "has": [
+        {
+          "type": "query",
+          "key": "c",
+          "value": "(?<city>[a-z-]+)"
+        }
+      ],
+      "destination": "/hotels/best-hotels-in-:city",
+      "permanent": false
+    },
+    {
+      "source": "/hotels/stay",
+      "missing": [
+        {
+          "type": "query",
+          "key": "s"
+        }
+      ],
+      "destination": "/hotels/best-hotels-in-rishikesh",
+      "permanent": false
+    },
+    {
+      "source": "/stay",
+      "destination": "/hotels/stay",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/about-rishikesh",
+      "permanent": false
+    },
+    {
+      "source": "/places",
+      "destination": "/places-to-visit",
+      "permanent": false
+    }
   ]
 }

@@ -1,5 +1,38 @@
 # Progress Tracker
 
+## Deployed 404 Choti And Two-Line Offer (Codex, 2026-10-03)
+
+- Isolated release `7c6c4d7` pushed to `origin/main`; production now serves all three corrected, cache-versioned WebPs and the Advaitam offer heading `Stay 5+ days` / `and save 15%`.
+- Targeted artwork/navigation tests: 17/17 pass against isolated release. Production Chromium verified 11 CSS widths (320-3440px), /404.html, and root/nested nonexistent paths (real 404 responses). Live laptop screenshot inspected with visible ponytail.
+- Shared checkout was not pulled/rebased because another agent has active staged and unstaged work. Release checkout: `/tmp/rishikesh-choti-release`. Earlier deployment-pending notes below are superseded.
+
+## ✅ Built — booking links ×2, Google Maps sweep, AdSense, "Starting ₹X onwards" (Claude, 2026-10-03)
+
+- **Booking links:** 1,018 of 2,414 stays verified (Rishikesh 744, Haridwar 274): 938 Booking.com (aid 7854081), 70 EaseMyTrip, 10 MakeMyTrip/Agoda/Airbnb. Sources: Booking's public sitemaps (1,580 name candidates), Booking slug guessing for every unlinked stay (both cities), EaseMyTrip's sitemap (197,897 hotels). Every match is browser-checked by one shared rule (`scripts/stays/booking-match.mjs`: title names the stay, same town, no extra distinctive words, same BHK), then `postcheck_matches.py` drops pages claimed by differently named stays or other cities. Agoda answers 502 to automated browsers; Goibibo/MakeMyTrip sitemaps are bot-gated; Airbnb's list has no names — those need a search API.
+- **Google Maps (Places API (New), project keen-device-610, service account):** `places_sweep.mjs` found 4,947 lodging places within 20 km of Rishikesh (3,131) and Haridwar (1,816); 1,199 directory stays matched, 3,395 are new to us. `push_places.mjs` → BigQuery `places_lodging` (internal only; phones never on the site). Phones are fetched only for places worth contacting, after the owner approves the cost.
+- **AdSense:** `assets/js/ads.js` + `/ads.txt`; display + Multiplex units on the six guide pages only (never on pages that sell stays, localhost or the owner's opted-out browsers).
+- **Copy:** all prices read "Starting ₹X onwards"; footer stays division moved to the top of the footer.
+- `npm test` 382/382.
+
+## ✅ Built — Haridwar + multi-city stays, pages moved into hotels/ (Claude, 2026-10-04)
+
+- **Landmark pages (14):** `hotels/best-stays-near-<landmark>` for Triveni Ghat, Laxman Jhula, Ram Jhula, Parmarth Niketan, Beatles Ashram, Janki Setu, AIIMS, the railway station and ISBT (Rishikesh), and Har Ki Pauri, Haridwar station, Mansa Devi, Chandi Devi and Daksh Mahadev (Haridwar). Stays are listed by real distance with a map, FAQs and JSON-LD; our homestays always appear as "a calmer base" with honest distance and drive time (and are listed as genuinely close near AIIMS). Coordinates are verified from OSM/web in `scripts/stays/landmarks.tsv`. `npm test` 382/382.
+- **Haridwar:** crawled all 828 listings (0 errors), giving 806 unique stays (listing_id 1,609–2,414) across 12 Haridwar areas (Har Ki Pauri, Upper Road & Mayapur, Kankhal, Bhupatwala, Shantikunj & Saptrishi, Railway Station, Jwalapur, …) and 26 category pages, including a new **Dharamshalas** category, plus a Kumbh 2027 section and FAQ on every Haridwar page.
+- **City factor everywhere** (Rishikesh is the default): `scripts/stays/cities.py`; `--city` on crawl/process/build; one data module per city; `/hotels/stay?s=<slug>&c=<city>`; a city switcher on every stays page; per-city `sitemap.xml` / `llms.txt` sections; BigQuery `market_properties` + `stays_sheet` now carry `city` (2,414 rows).
+- **Moved into `hotels/`** (owner's request, one folder instead of two): `/hotels/best-<category>-in-<city>`. Old root URLs 301 in vercel.json, `_redirects` and server.js; `/hotels/stay` with no stay → the city's stays page.
+- **Kumbh:** a "Where should you stay for the Kumbh 2027?" section on the Kumbh guide, linking Haridwar stays, dharamshalas, budget/family pages and Rishikesh plus Advaitam; sidebar links; llms.txt updated.
+- **Footer:** a new "Stays in Rishikesh / Stays in Haridwar" division on every page. Property pages got a sticky sidebar (our homestays, "Why plan with us", more stays) and a proper "This stay has checked out" page.
+- **Booking links:** 432 verified for Rishikesh. Haridwar has 0 so far; 705 Haridwar plus 875 Rishikesh candidates from Booking.com's public sitemaps wait for a browser check (Booking.com is bot-checking automation, so a background agent retries gently).
+- `npm test` 354/354. All 54 stays pages are in the sitemap.
+
+## 404 Choti Corrected Locally (Codex, 2026-10-03)
+
+- Added natural ponytails directly to standard and wide artwork using built-in imagegen. Prompt: change only the guide's hair to match the approved mobile portrait, keeping the landscape scene and characters intact.
+- Saved optimized `rishikesh-wrong-turn-choti.webp`, `rishikesh-wrong-turn-wide-choti.webp`, and the approved `rishikesh-wrong-turn-mobile-choti.webp` in `assets/images/404/`; `404.html` now references these cache-versioned sources.
+- Added `tests/integration/404-artwork.test.js`: all three corrected sources must exist as valid WebPs, with no SVG hair overlay. Passes.
+- Local Chromium: decoded corrected artwork with no horizontal overflow at 320, 390, 760, 761, 768, 1024, 1280, 1366, 1440, 1920 and 3440px. Screenshots in `/tmp/choti-<width>.png`; visually inspected representative phone/tablet/MacBook/desktop views. `/404.html` resolves; root/nested missing routes return 404 with corrected artwork.
+- Live deployment remains pending. Navigation suite has unrelated failures for `/stays/best-*` links; did not change those files.
+
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
 ## 🐛 Bug fixed — WhatsApp sidebar left a 400px page gap after hiding (Claude, 2026-10-04)
@@ -20,11 +53,11 @@ Self-tracking log so work doesn't get lost across a long session. Update this fi
 - **Link check** (`node scripts/stays/check_links.mjs`) moved 41 more Booking.com links that redirect to the city search to doubtful (many hostels). **Now 166 verified** (160 Booking.com, 3 Agoda, 2 MakeMyTrip, 1 Airbnb), 120 doubtful, 42 none, out of 328 searched. About 1,280 stays are still unsearched.
 - Next: re-search the 53 left-out rows, then continue down the review count (each session's 200 searches cover roughly 200 stays), and add the new doubtful rows to the owner's review sheet.
 
-## ✅ Shipped — 404 Chotiwala ponytail corrected (Codex, 2026-10-03)
+## ⚠️ Paused — 404 Chotiwala ponytail needs artwork edit (Codex, 2026-10-03)
 
-- Added a responsive inline SVG choti overlay on the 404 page's Chotiwala-style guide, shaped as a long tapered ponytail rather than a top tuft.
-- Corrected the placement so it emerges from the back/top of the bald head and points backward, with separate positions/sizes for laptop/wide artwork and mobile portrait artwork. Verified with Playwright screenshots.
-- `npm test -- --runInBand` passes 297/297. The first sandboxed run failed only because the visual test could not bind its local server (`listen EPERM 0.0.0.0`); the escalated rerun passed.
+- Tried a responsive inline SVG choti overlay on the 404 page's Chotiwala-style guide, shaped as a long tapered ponytail rather than a top tuft.
+- Removed the overlay after laptop/mobile screenshots showed it still read as forehead placement. The correct next step is an artwork-level edit/regeneration so the ponytail is naturally behind the head instead of floating above the image.
+- `git diff --check -- 404.html .agents/coordination.md PROGRESS.md` passes after removing the overlay.
 
 ## ✅ Built, not yet pushed — stays pages, round 3: affiliate, map, copy, link check (Claude, 2026-10-03)
 

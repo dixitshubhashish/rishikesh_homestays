@@ -14,7 +14,11 @@ Usage: python3 scripts/stays/process.py [--names]
 --names prints a sample of raw -> cleaned names for eyeballing.
 """
 import json, re, math, statistics, os, sys
-S=os.path.join(os.path.dirname(os.path.abspath(__file__)),'.cache')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from cities import city_from_argv, cache_dir, CITIES, DEFAULT_CITY
+CITY=city_from_argv()            # --city <key>; default rishikesh
+CITY_NAME=CITIES[CITY]['name']
+S=cache_dir(CITY)
 rows=[json.loads(l) for l in open(f'{S}/props.jsonl')]
 rows=[r for r in rows if not r.get('error')]
 
@@ -39,11 +43,26 @@ def clean(n):
     n=' '.join(out)
     n=re.sub(r"\s*,\s*",', ',n); n=re.sub(r"\s+",' ',n).strip(' ,–-')
     # drop a trailing bare "Rishikesh" the directory appends (keep it when it's most of the name)
-    m=re.match(r"^(.*\S)[ ,]+Rishikesh$",n)
+    m=re.match(r"^(.*\S)[ ,]+"+CITY_NAME+r"$",n)
     if m and len(m.group(1).split())>=2 and not m.group(1).lower().endswith((' in',' of',' at',' near')): n=m.group(1).rstrip(' ,–')
     return n[0].upper()+n[1:] if n else n
 
-AREAS=[  # (area, keywords) — specific first; names match the site's AREAS where they exist
+AREAS_BY_CITY={}
+AREAS_BY_CITY['haridwar']=[  # specific first
+ ('Har Ki Pauri',['har ki pauri','har ki paudi','harkipauri','hari ki pauri','har-ki-pauri','brahmakund']),
+ ('Upper Road & Mayapur',['upper road','mayapur','moti bazar','vishnu ghat','subhash ghat','birla ghat']),
+ ('Kankhal',['kankhal','daksh','daksha']),
+ ('Bhupatwala',['bhupatwala','bhupat wala','bhopatwala']),
+ ('Shantikunj & Saptrishi',['shantikunj','shanti kunj','saptrishi','sapt rishi','saptarishi','sapta rishi','bharat mata']),
+ ('Kharkhari',['kharkhari','khadkhadi','khar khari']),
+ ('Railway Station',['railway station','station road','haridwar junction','rly station']),
+ ('Jwalapur',['jwalapur','jawalapur']),
+ ('Ranipur & BHEL',['bhel','ranipur','shivalik nagar','govindpuri','sector 1','sector 2','sector 4']),
+ ('SIDCUL',['sidcul','roshnabad']),
+ ('Delhi Road',['delhi road','delhi haridwar','bahadrabad','delhi highway','roorkee road']),
+ ('Rishikesh Road & Motichur',['rishikesh road','motichur','raiwala','haridwar rishikesh road','dudhadhari','chandi']),
+]
+AREAS=[  # Rishikesh (default) — specific first; names match the site's AREAS where they exist
  ('Tapovan',['tapovan','tapoban']),
  ('Laxman Jhula',['laxman jhula','lakshman jhula','laxmanjhula','lakshmanjhula']),
  ('Swarg Ashram',['swarg ashram','swargashram','swargashram']),
@@ -62,7 +81,9 @@ AREAS=[  # (area, keywords) — specific first; names match the site's AREAS whe
  ('Bypass Road',['bypass','by-pass','by pass']),
  ('Haridwar Road',['haridwar road']),
 ]
-CENTER=(30.103,78.297)
+AREAS_BY_CITY['rishikesh']=AREAS
+AREAS=AREAS_BY_CITY[CITY]
+CENTER=CITIES[CITY]['center']
 def km(a,b):
     R=6371; p=math.radians
     dlat=p(b[0]-a[0]); dlng=p(b[1]-a[1])
@@ -81,12 +102,12 @@ for a,_ in AREAS:
 for r in rows:
     if r['area'] or not r.get('lat'): continue
     p=(r['lat'],r['lng'])
-    if km(p,CENTER)>30: r['area']='Outside Rishikesh'; r['how']='map'; continue
+    if km(p,CENTER)>30: r['area']=f'Outside {CITY_NAME}'; r['how']='map'; continue
     best=min(cent.items(),key=lambda kv:km(p,kv[1]),default=None)
     if best and km(p,best[1])<=1.2: r['area']=best[0]; r['how']='map'
 for r in rows:
-    if not r['area']: r['area']='Elsewhere in Rishikesh'
-TYPE_WORDS=[('Camps & tents',['camp','tent','glamp','campsite']),('Hostels',['hostel','zostel','backpacker']),('Resorts',['resort']),('Homestays',['homestay','home stay']),
+    if not r['area']: r['area']=f'Elsewhere in {CITY_NAME}'
+TYPE_WORDS=[('Dharamshalas',['dharamshala','dharmshala','dharmashala','dharamsala','dharmsala','yatri niwas','yatri nivas']),('Camps & tents',['camp','tent','glamp','campsite']),('Hostels',['hostel','zostel','backpacker']),('Resorts',['resort']),('Homestays',['homestay','home stay']),
  ('Guest houses',['guest house','guesthouse']),('Cottages',['cottage','chalet','farm stay','country house']),('Ashrams',['ashram']),('Villas',['villa']),('Aparthotels',['aparthotel']),
  ('Apartments',['apartment','bhk','flat','condo']),('Lodges',['lodge']),('Hotels',['hotel','inn','residency','palace'])]
 TYPE_MAP={'Villas':'Villas','Apartments':'Apartments','Hostels':'Hostels','Bed and breakfasts':'B&Bs','Holiday rentals':'Holiday rentals'}
@@ -143,10 +164,35 @@ def tags(r):
     if 'yoga class' in f or re.search(r'\byoga\b',n): t.append('yoga')
     if any('airport shuttle' in x for x in f): t.append('airport')
     if re.search(r'\bfamily\b',n): t.append('family')
-    for th in official_themes.get(r['url'],()):
+    if 'Hostels' in r.get('ks',[]) or re.search(r'backpack|\bdorms?\b|\bbunks?\b|zostel|hosteller|gostops|moustache|madpackers',n): t.append('backpacker')
+    for th in sorted(official_themes.get(r['url'],())):
         if th not in t: t.append(th)
     return t
 data=[{'id':r['url'].split('//')[1].split('.')[0],'ad':r.get('address') or '','ll':[r['lat'],r['lng']] if r.get('lat') else None,'t':tags(r),'n':r['clean'],'u':r['url'],'s':int(r['stars'] or 0),'a':r['area'],'k':r['kind'],'ks':r['ks'],'g':r.get('guestRating'),'c':r.get('reviews'),'f':r.get('facilities') or [],'p':(int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None)} for r in out]
+# Stable numeric listing_id (primary key) per stay, kept in the committed
+# registry listing-ids.tsv: existing ids never change or get reused; new
+# stays get the next number; our own 3 stays are 1-3.
+REG=os.path.join(os.path.dirname(os.path.abspath(__file__)),'listing-ids.tsv')
+OWN_KEYS=['advaitam-ganga-hill-view-homestay-by-the-ganges-ghat','villa-elysium-the-himalayan-ganges-view-yoga-retreat','villa-yoga-retreat-at-the-ganges-in']
+reg={}; reg_city={}; reg_active={}
+if os.path.exists(REG):
+    for line in open(REG).read().splitlines()[1:]:
+        c=line.split('\t'); lid,slug=c[0],c[1]
+        reg[slug]=int(lid); reg_active[slug]=c[2] if len(c)>2 else '1'
+        reg_city[slug]=c[3] if len(c)>3 else DEFAULT_CITY
+nxt=max(reg.values(),default=3)+1
+if CITY==DEFAULT_CITY:
+    for k in OWN_KEYS:
+        if k not in reg and k in {x['id'] for x in data}: reg[k]=OWN_KEYS.index(k)+1; reg_city[k]=CITY
+for x in sorted(data,key=lambda x:x['id']):
+    if x['id'] not in reg: reg[x['id']]=nxt; reg_city[x['id']]=CITY; nxt+=1
+for x in data: x['lid']=reg[x['id']]; x['cy']=CITY
+live={x['id'] for x in data}
+for slug in reg:
+    if reg_city.get(slug)==CITY: reg_active[slug]='1' if slug in live else '0'
+with open(REG,'w') as fh:
+    fh.write('listing_id\tslug\tactive\tcity\n')
+    for slug,lid in sorted(reg.items(),key=lambda kv:kv[1]): fh.write(f"{lid}\t{slug}\t{reg_active.get(slug,'1')}\t{reg_city.get(slug,DEFAULT_CITY)}\n")
 data.sort(key=lambda d:d['n'].lower())
 json.dump(data,open(f'{S}/stays.json','w'),ensure_ascii=False,separators=(',',':'))
 from collections import Counter

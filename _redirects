@@ -62,3 +62,7 @@
 # already shared/indexed using these shorter paths).
 /about /about-rishikesh.html 200
 /places /places-to-visit.html 200
+
+# Stays pages moved into the hotels/ folder (query strings are kept).
+/best-*  /hotels/best-:splat  301
+/stay  /hotels/stay  301
