@@ -2,7 +2,6 @@ key	status	ota	url	note	checked
 1968-by-the-cardinal-beatles-inspired	verified	Booking.com	https://www.booking.com/hotel/in/rishikesh-1968-by-the-cardinal-beatles-inspired.html	browser-confirmed: page title "Rishikesh 1968 by The Cardinal Beatles-Inspired"	2026-10-03
 2-bhk-rustic-muse	verified	Booking.com	https://www.booking.com/hotel/in/2-bhk-rustic-muse.html	slug guess, browser-confirmed: "2 BHK Rustic muse"	2026-10-03
 4-you-with-open-rooftop-cafe	doubtful	Booking.com	https://www.booking.com/hotel/in/tapovan-rishikesh.html	no booking.com result; airpaz slug tapovan-rishikesh suggests previous URL (inferred)	2026-10-03
-85-the-ganges-2-bhk-apartment-for-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 aalaya-by-karamya-homes	verified	Booking.com	https://www.booking.com/hotel/in/aalaya-by-karamya-homes.html	slug guess, browser-confirmed: "Aalaya By Karamya Homes"	2026-10-03
 aalaya-suites-by-perfect-stayz	verified	Booking.com	https://www.booking.com/hotel/in/aalaya-suites-by-perfect-stayz.html	browser-confirmed: page title "Aalaya Suites By Perfect Stayz"	2026-10-03
 aarohan-by-ganga-kripa-a-luxury-cottage	verified	Booking.com	https://www.booking.com/hotel/in/aarohan-by-ganga-kripa.html	Google Maps place, browser-confirmed match	2026-10-03
@@ -14,7 +13,6 @@ aastha-height	verified	Booking.com	https://www.booking.com/hotel/in/aastha-heigh
 aavya-wellness-retreat-center	verified	Booking.com	https://www.booking.com/hotel/in/aavya-wellness-retreat-center.html	slug guess, browser-confirmed: "Aavya Creative Wellness Retreats"	2026-10-03
 adi-yoga-ashram	verified	Booking.com	https://www.booking.com/hotel/in/adi-yoga-ashram.html	slug guess, browser-confirmed: "Hare Rama Institute"	2026-10-03
 adi-yogpeeth	verified	Booking.com	https://www.booking.com/hotel/in/adi-yogpeeth.html	slug guess, browser-confirmed: "Adi Yogpeeth"	2026-10-03
-adinath-guest-house	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 aditya-cottage	verified	Booking.com	https://www.booking.com/hotel/in/aditya-cottage-rishikesh.html	slug guess, browser-confirmed: "Aditya Cottage"	2026-10-03
 adventure-bear-buddies	verified	Booking.com	https://www.booking.com/hotel/in/adventure-bear-buddies.html	Google Maps place, browser-confirmed match	2026-10-03
 adya-apartments	verified	Booking.com	https://www.booking.com/hotel/in/adya-apartments.html	slug guess, browser-confirmed: "Adya Apartments"	2026-10-03
@@ -40,8 +38,6 @@ amartarangini-haridwar	verified	Booking.com	https://www.booking.com/hotel/in/ama
 amaya	verified	Booking.com	https://www.booking.com/hotel/in/amaya-haridwar.html	browser-confirmed: page title "Hotel Amaya"	2026-10-03
 amaya-haridwar	verified	Booking.com	https://www.booking.com/hotel/in/amaya-haridwar.html	browser-confirmed: page title "Hotel Amaya"	2026-10-03
 ambrosia-sarovar-portico	verified	Booking.com	https://www.booking.com/hotel/in/ambrosia-sarovar-portico.html	browser-confirmed: page title "Ambrosia Sarovar Portico"	2026-10-03
-amoha-homes-yashas-3bhk-apartment	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
-amoha-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 amrit-bela	verified	Booking.com	https://www.booking.com/hotel/in/amrit-bela.html	browser-confirmed: page title "Amrit bela"	2026-10-03
 amritara-tapovan	verified	Booking.com	https://www.booking.com/hotel/in/amritara-tapovan-rishikesh.html	slug guess, browser-confirmed: "Amritara Tapovan"	2026-10-03
 anand-niketan	verified	Booking.com	https://www.booking.com/hotel/in/anand-niketan-haridwar1.html	browser-confirmed: page title "Hotel Anand Niketan"	2026-10-03
@@ -124,7 +120,6 @@ around-stays-the-golden-i-homestay-near-aiims	verified	Booking.com	https://www.b
 arsh-rfesidency	verified	Booking.com	https://www.booking.com/hotel/in/arsh-rfesidency-haridwar.html	browser-confirmed: page title "HOTEL ARSH RFESIDENCY"	2026-10-03
 arti-cottage	verified	Booking.com	https://www.booking.com/hotel/in/arti-cottage-feel-like-home.html	browser-confirmed: page title "Arti cottage feel like home"	2026-10-03
 arti-cottage-feel-like-home	verified	Booking.com	https://www.booking.com/hotel/in/arti-cottage-feel-like-home.html	slug guess, browser-confirmed: "Arti cottage feel like home"	2026-10-03
-artist-valley-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 aryaman	verified	Booking.com	https://www.booking.com/hotel/in/aryaman.html	browser-confirmed: page title "Hotel Aryaman"	2026-10-03
 asha-delight	verified	Booking.com	https://www.booking.com/hotel/in/asha-delight.html	Upper Tapovan	2026-10-03
 asha-heritage-restro	verified	Booking.com	https://www.booking.com/hotel/in/asha-heritage-amp-restro-haridwar.html	browser-confirmed: page title "Asha Heritage Hotel & Restro"	2026-10-03
@@ -150,7 +145,6 @@ azul-ganga	verified	Booking.com	https://www.booking.com/hotel/in/azul-ganga.html
 back-stayz-laxman-jhula	verified	Booking.com	https://www.booking.com/hotel/in/back-stayz-laxman-jhula.html	exact name (separate Apartments/Hostel listings exist)	2026-10-03
 back-stayz-laxman-jhula-apartments	verified	Booking.com	https://www.booking.com/hotel/in/back-stayz-laxman-jhula-apartments.html	slug guess, browser-confirmed: "Back Stayz Laxman Jhula Apartments"	2026-10-03
 bagga-kuteer	verified	EaseMyTrip	https://www.easemytrip.com/hotels/hotel-bagga-kuteer-2817556/	browser-confirmed: page title "Hotel Bagga Kuteer Haridwar"	2026-10-03
-baidehi-cottage-peaceful-nature-cottage-retreat	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 bamboo-garden-cottages-and-cafe	verified	Booking.com	https://www.booking.com/hotel/in/bamboo-garden-cottages-and-cafe.html	slug guess, browser-confirmed: "Bamboo Garden Cottages and Cafe"	2026-10-03
 basantidevi-yatri-nivas-haridwar	verified	OYO	http://www.oyorooms.com/h/oyos-in-Haridwar?utm_source=gmb_v0&utm_medium=Organic&utm_campaign=HRD170	Google Maps place: owner's own booking page	2026-10-03
 bedzzz-by-leisure-hotels	verified	Booking.com	https://www.booking.com/hotel/in/hideaway-rishikesh.html	title "Bedzzz Rishikesh by Leisure Hotels" (old slug hideaway)	2026-10-03
@@ -355,7 +349,6 @@ ganga-vilas-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/gang
 ganga-vista-homestay-in-haridwar	verified	Airbnb	http://www.airbnb.com/h/gangavista	Google Maps place: owner's own booking page	2026-10-03
 gangabagh-by-divine-trails	verified	Booking.com	https://www.booking.com/hotel/in/gangabagh-by-divine-trails.html	slug guess, browser-confirmed: "Gangabagh by Divine Trails - Hotel Near Har Ki Pauri"	2026-10-03
 gangabhumi-homestay-best-family-homestay-in	verified	Booking.com	https://www.booking.com/hotel/in/gangabhumi-homestay-best-family-homestay-in-haridwar-haridwar.html	slug guess, browser-confirmed: "Gangabhumi Homestay - Award winner"	2026-10-03
-gangdwaram-apartment	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 ganges-blossam-haridwar-rishikesh-road-a-four-star-luxury	doubtful	Booking.com	https://www.booking.com/hotel/in/omni-rishikesh.html	title "Ganges Blossam, Haridwar-Rishikesh Road - A Four Star Luxury Hotel" [link check: Booking.com redirects to Rishikesh search]	2026-10-03
 ganges-haven-by-evara	verified	Booking.com	https://www.booking.com/hotel/in/ganges-haven-by-evara.html	browser-confirmed: page title "Ganges Haven by Evara"	2026-10-03
 ganges-pride-haridwar	verified	Booking.com	https://www.booking.com/hotel/in/ganges-pride-haridwar1.html	browser-confirmed: page title "Ganges Pride Hotel"	2026-10-03
@@ -690,7 +683,6 @@ liveaway-rishikesh-laxman-jhula-by-pack	verified	MakeMyTrip	https://www.makemytr
 lords-valley	verified	Booking.com	https://www.booking.com/hotel/in/lords-valley.html	Hotel Lords Valley Rishikesh, Tapovan	2026-10-02
 lotus-infinity	verified	Booking.com	https://www.booking.com/hotel/in/lotus-infinity.html	browser-confirmed: page title "Hotel Lotus Infinity"	2026-10-03
 lotus-infinity-by-stayapart	verified	Booking.com	https://www.booking.com/hotel/in/lotus-infinity-by-stayapart.html	browser-confirmed: page title "Hotel Lotus Infinity By StayApart"	2026-10-03
-luxe-1-br-hideaway-apartment-by-the-manstays	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 luxurious-noise-free-1bhk-tapovan-near-laxmanjhula	verified	Booking.com	https://www.booking.com/hotel/in/luxurious-noise-free-1bhk-tapovan-near-laxmanjhula.html	browser-confirmed: page title "Luxurious"	2026-10-03
 luxury-2-bedrooms-appartment	verified	Booking.com	https://www.booking.com/hotel/in/luxury-2-bedrooms-appartment.html	slug guess, browser-confirmed: "Luxury 2 Bedroom's Appartment"	2026-10-03
 luxury-3-bedroom-s-apartment	verified	Expedia	https://www.expedia.com/Hotel.h114483140.Hotel-Information?mdpcid=META.HPA.WEB-ORGANIC.VR	Google Maps place: owner's own booking page	2026-10-03
@@ -700,8 +692,6 @@ luxury-4-bedroom-s-apartment-5dqj8	verified	Expedia	https://www.expedia.com/Hote
 luxury-aloha-apartments-1	verified	Booking.com	https://www.booking.com/hotel/in/aloha-by-ganges.html	browser-confirmed: page title "Aloha - Luxury Apartments by blissful Ganges"	2026-10-03
 luxury-aloha-apartments-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/luxury-aloha-apartments-rishikesh.html	browser-confirmed: page title "Luxury Aloha Apartments"	2026-10-03
 luxury-aloha-majestic-apartments	doubtful	Booking.com	https://www.booking.com/hotel/in/aloha-majestic-apartments.html	same flagged URL shown again	2026-10-03
-luxury-cottage-by-itvara-2-bedrooms-near-ganges	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
-luxury-cottage-by-itvara-4-bedrooms-near-ganges	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 luxury-ganges-blossom-rishikesh-highway	verified	Booking.com	https://www.booking.com/hotel/in/luxury-ganges-blossom-rishikesh-highway.html	slug guess, browser-confirmed: "Ganges Blossom Luxury Hotel Rishikesh Highway"	2026-10-03
 luxury-homestay-2-bedrooms-near-ganges	verified	Booking.com	https://www.booking.com/hotel/in/luxury-homestay-2-bedrooms-near-ganges.html	slug guess, browser-confirmed: "Ganges Grace by Evara Luxury Homestay"	2026-10-03
 luxury-penthouse-2br-terrace-ganga-view-parking	verified	Booking.com	https://www.booking.com/hotel/in/luxury-penthouse-2br-terrace-ganga-view-parking.html	browser-confirmed: page title "Luxury Penthouse 2BR Terrace Ganga View parking"	2026-10-03
@@ -766,7 +756,6 @@ natraj-homestay	verified	Booking.com	https://www.booking.com/hotel/in/natraj-hom
 nature-embrace-near-ganges	verified	Booking.com	https://www.booking.com/hotel/in/nature-embrace-near-ganges.html	slug guess, browser-confirmed: "NATURE EMBRACE NEAR GANGEs"	2026-10-03
 nature-nest-retreat	verified	Booking.com	https://www.booking.com/hotel/in/nature-nest-retreat.html	slug guess, browser-confirmed: "Nature Nest Retreat"	2026-10-03
 nature-view-retreat-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/nature-view-retreat-rishikesh.html	slug guess, browser-confirmed: "Nature View Retreat"	2026-10-03
-nature-village-resort	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 natures-paradise-homestay	verified	Booking.com	https://www.booking.com/hotel/in/natures-paradise-homestay.html	slug guess, browser-confirmed: "Nature's Paradise Homestay"	2026-10-03
 natures-walk	verified	Booking.com	https://www.booking.com/hotel/in/natures-walk.html	slug guess, browser-confirmed: "Natures walk"	2026-10-03
 ndbl-restaurant	verified	EaseMyTrip	https://www.easemytrip.com/hotels/hotel-ndbl-and-restaurant-2569009/	browser-confirmed: page title "Hotel Ndbl And Restaurant Haridwar"	2026-10-03
@@ -803,8 +792,6 @@ om-guesthouse	verified	Booking.com	https://www.booking.com/hotel/in/om-guesthous
 om-homestay-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/om-homestay-rishikesh2.html	slug guess, browser-confirmed: "Om Homestay"	2026-10-03
 om-tat-sat-homestay	verified	Booking.com	https://www.booking.com/hotel/in/om-tat-sat-homestay.html	slug guess, browser-confirmed: "Om Tat Sat Homestay"	2026-10-03
 orange-classic-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/orange-hostel.html	Hotel Orange Classic, 100m from Laxman Jhula; alt slug orange-classic-rishikesh also titled same	2026-10-03
-orraica-206-entire-apartment-in-tapovan	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
-orraica-207-apartment-in-tapovan	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 oslo-green-by-around-stays	verified	Booking.com	https://www.booking.com/hotel/in/oslo-green-by-around-stays.html	exact name	2026-10-03
 oslo-green-by-around-stays-tapovan	verified	Booking.com	https://www.booking.com/hotel/in/oslo-green-by-around-stays.html	title OSLO Green By Around stays, Rishikesh	2026-10-03
 oyo-12400-hotel-prem	verified	OYO	https://www.oyorooms.com/h/19672?utm_source=Google_gmb&utm_medium=Organic&utm_campaign=HRD127&latitude=29.94592&longitude=78.15669&locale=en	Google Maps place: owner's own booking page	2026-10-03
@@ -918,7 +905,6 @@ park-roots-haridwar	verified	Booking.com	https://www.booking.com/hotel/in/park-r
 parmarth-gyan-mandir-dharmshala-by-pandit-ji	verified	Booking.com	https://www.booking.com/hotel/in/parmarth-gyan-mandir-dharmshala-by-pandit-ji.html	browser-confirmed: page title "Parmarth gyan mandir Dharmshala by Pandit ji"	2026-10-03
 parvati-home-stay	verified	Booking.com	https://www.booking.com/hotel/in/parvati-home-stay-rishikesh.html	slug guess, browser-confirmed: "Parvati home stay near by ramjhula"	2026-10-03
 patnimal-guesthouse	verified	Booking.com	https://www.booking.com/hotel/in/patnimal-guesthouse.html	browser-confirmed: page title "Patnimal Guesthouse"	2026-10-03
-peaceful-homestay-in-haridwar-balcony-view	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 peaceful-poses-ayurveda-yoga-retreat	verified	Booking.com	https://www.booking.com/hotel/in/peaceful-poses-ayurveda-and-yoga-retreat.html	Google Maps place, browser-confirmed match	2026-10-03
 peacenest-stays-3bhk-fully-furnished	verified	Booking.com	https://www.booking.com/hotel/in/peacenest-stays-3bhk-fully-furnished.html	slug guess, browser-confirmed: "Peacenest stays 3bhk"	2026-10-03
 peepal-tree	none	-	-	no booking.com page shown; flagged URL not reconfirmed	2026-10-03
@@ -971,7 +957,6 @@ raj-palace-rishikesh	verified	EaseMyTrip	https://www.easemytrip.com/hotels/hotel
 rajaji-retreat	verified	Booking.com	https://www.booking.com/hotel/in/rajaji-retreat-rishikesh2.html	browser-confirmed: page title "Rajaji Retreat Resort"	2026-10-03
 ramana-on-the-ganges	verified	Booking.com	https://www.booking.com/hotel/in/ramana-on-the-ganges.html	slug guess, browser-confirmed: "Ramana on the Ganges"	2026-10-03
 ramaya-stay-a-luxurious-stay-at-home	verified	Booking.com	https://www.booking.com/hotel/in/ramaya-stay-a-luxurious-stay-at-home.html	browser-confirmed: page title "Ramaya Stay - A luxurious stay at home"	2026-10-03
-rasa-the-ganges-rishikesh-ganga-bhumi-apartment	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 rawat-homestay-1	verified	Booking.com	https://www.booking.com/hotel/in/rawat-homestay-rishikesh.html	browser-confirmed: page title "Rawat Homestay"	2026-10-03
 rawat-homestay-3	verified	Booking.com	https://www.booking.com/hotel/in/rawat-homestay-rishikesh.html	browser-confirmed: page title "Rawat Homestay"	2026-10-03
 rawat-homestay-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/rawat-homestay-rishikesh1.html	browser-confirmed: page title "Rawat homestay"	2026-10-03
@@ -1088,7 +1073,6 @@ saumya-a-natural-habitat	verified	Booking.com	https://www.booking.com/hotel/in/s
 savastays-tranquil-room-with-sharing-kitchen	verified	Booking.com	https://www.booking.com/hotel/in/savastays-tranquil-room-with-sharing-kitchen.html	browser-confirmed: page title "Savastays Tranquil room with sharing kitchen"	2026-10-03
 savaya	verified	Booking.com	https://www.booking.com/hotel/in/savaya.html	slug guess, browser-confirmed: "Hotel Savaya Luxury Stay Near AIIMS Rishikesh"	2026-10-03
 secret-cove	verified	Booking.com	https://www.booking.com/hotel/in/secret-cove.html	browser-confirmed: page title "Secret Cove"	2026-10-03
-serene-forest-escape-ashutosh-homestay-thano	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 serenity-by-the-ganges	verified	Booking.com	https://www.booking.com/hotel/in/serenity-by-the-ganges.html	slug guess, browser-confirmed: "Serenity By The Ganges"	2026-10-03
 serenity-home-2	verified	Booking.com	https://www.booking.com/hotel/in/serenity-home-2.html	slug guess, browser-confirmed: "Serenity Home 2"	2026-10-03
 serenity-rishikesh	none	-	-	no booking.com property page	2026-10-03
@@ -1121,10 +1105,7 @@ shivaye	verified	Booking.com	https://www.booking.com/hotel/in/shivaye.html	brows
 shivoham-palace-tapovan	verified	EaseMyTrip	https://www.easemytrip.com/hotels/hotel-shivoham-palace-tapovan-4389608/	browser-confirmed: page title "Hotel Shivoham Palace Tapovan Rishikesh"	2026-10-03
 shivpuri-hills-camps	verified	Booking.com	https://www.booking.com/hotel/in/shivpuri-hills-camp-badal.html	Google Maps place, browser-confirmed match	2026-10-03
 shivpuri-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/shivpuri.html	Google Maps place, browser-confirmed match	2026-10-03
-shiwalik-grand-5-bed-room-luxurious-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
-shiwalik-grand-7bedroom-luxurious-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 shree-amrit-ganga	verified	Booking.com	https://www.booking.com/hotel/in/shree-amrit-ganga.html	slug guess, browser-confirmed: "Hotel Shree Amrit Ganga"	2026-10-03
-shree-g-cottage-rishikesh	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 shree-hari	verified	Booking.com	https://www.booking.com/hotel/in/shree-hari-rishikesh.html	browser-confirmed: page title "Hotel Shree Hari"	2026-10-03
 shree-radha-heritage-house	verified	Booking.com	https://www.booking.com/hotel/in/shree-radha-heritage.html	browser-confirmed: page title "Shree Radha Heritage House"	2026-10-03
 shree-vatika	verified	Booking.com	https://www.booking.com/hotel/in/shree-vatika.html	slug guess, browser-confirmed: "Hotel Shree Vatika"	2026-10-03
@@ -1194,7 +1175,6 @@ sukoon-retreat-1bhk-flat-in-free-parking	verified	Booking.com	https://www.bookin
 sun	verified	Booking.com	https://www.booking.com/hotel/in/sun-haridwar2.html	browser-confirmed: page title "Sun Hotel"	2026-10-03
 sunburry-hotel-tapovan-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/sunburry-tapovan-rishikesh.html	Google Maps place, browser-confirmed match	2026-10-03
 sundowner-stay-homestay-in-rishikesh	verified	Airbnb	https://www.airbnb.co.in/rooms/1618532461160596607?source_impression_id=p3_1782279589_P3Lf5Kf2EGCWgsfD	Google Maps place: owner's own booking page	2026-10-03
-sunnyside-up-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 sunview-home-stay	verified	Booking.com	https://www.booking.com/hotel/in/sunview-home-stay.html	slug guess, browser-confirmed: "Sunview Home Stay"	2026-10-03
 super-oyo-flagship-hotel-ayansh-residency	verified	OYO	https://www.oyorooms.com/200475/	Google Maps place: owner's own booking page	2026-10-03
 suraj	verified	Booking.com	https://www.booking.com/hotel/in/suraj-rishikesh.html	browser-confirmed: page title "Hotel Suraj"	2026-10-03
@@ -1209,7 +1189,6 @@ tapovan-breeze-by-jabula-getaways	verified	Booking.com	https://www.booking.com/h
 tapovan-cascades-yogvillage-stay	doubtful	Booking.com	https://www.booking.com/hotel/in/tapovan-cascades.html	flagged URL; not taking reservations	2026-10-03
 tapovan-cottage	verified	Booking.com	https://www.booking.com/hotel/in/tapovan-cottage.html	slug guess, browser-confirmed: "Hotel Tapovan Cottage"	2026-10-03
 tapovan-home-by-jabula-getaways	verified	Booking.com	https://www.booking.com/hotel/in/tapovan-home-by-jabula-getaways.html	slug guess, browser-confirmed: "Tapovan home by Jabula Getaways"	2026-10-03
-tapovan-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 tapovan-lightning-room	none	-	-	only parent Yog Tapovan listing shown	2026-10-03
 tapovan-mountain-retreat	verified	Booking.com	https://www.booking.com/hotel/in/tapovan-mountain-retreat.html	browser-confirmed: page title "Tapovan Mountain Retreat"	2026-10-03
 tapovan-namaste	none	-	-	no booking.com property page for Tapovan Namaste	2026-10-03
@@ -1220,7 +1199,6 @@ thakur-ji	verified	Booking.com	https://www.booking.com/hotel/in/thakur-ji.html	b
 the-abhyudyam-ganga	verified	Booking.com	https://www.booking.com/hotel/in/abhyudyam-ganga.html	browser-confirmed: page title "The Abhyudyam Ganga"	2026-10-03
 the-abhyudyam-ganga-haridwar	verified	Booking.com	https://www.booking.com/hotel/in/abhyudyam-ganga.html	browser-confirmed: page title "The Abhyudyam Ganga"	2026-10-03
 the-amantara-luxury-2bhk	verified	Booking.com	https://www.booking.com/hotel/in/the-amantara-luxury-2bhk.html	browser-confirmed: page title "The Amantara Luxury 2BHK"	2026-10-03
-the-army-house-a-serene-homestay-with-river-views	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 the-ashok-vatika-farms-and-stay	verified	Booking.com	https://www.booking.com/hotel/in/the-ashok-vatika-farms-and-stay.html	browser-confirmed: page title "The Ashok Vatika Farms and Stay"	2026-10-03
 the-aurum-park-haridwar	verified	Booking.com	https://www.booking.com/hotel/in/the-aurum-park-haridwar.html	Google Maps place, browser-confirmed match	2026-10-03
 the-basera	verified	Booking.com	https://www.booking.com/hotel/in/the-basera.html	slug guess, browser-confirmed: "The Basera"	2026-10-03
@@ -1280,7 +1258,6 @@ the-neeraj-ganga-paradise	verified	Booking.com	https://www.booking.com/hotel/in/
 the-neeraj-ganga-rani-mahal	verified	Agoda	https://www.agoda.com/the-neeraj-ganga-rani-mahal/hotel/rishikesh-in.html	Exact name 'The Neeraj Ganga Ranimahal With Ganga Ghat Access', Veerbhadra/Nirmal Block; no Booking.com page URL found	2026-10-02
 the-neeraj-naturecure-on-ganga	verified	Booking.com	https://www.booking.com/hotel/in/the-neeraj-naturecure-stay-by-the-ganges.html	browser-confirmed: page title "The Shanti Naturecure On Ganga"	2026-10-03
 the-neeraj-palace	verified	EaseMyTrip	https://www.easemytrip.com/hotels/the-neeraj-ganga-heritage-palace-3473388/	browser-confirmed: page title "The Neeraj Ganga Heritage Palace Hotel Rishikesh"	2026-10-03
-the-odin-cottage-rishikesh	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 the-odin-cottages-rishikesh	verified	Airbnb	https://www.airbnb.com/h/theodincottage	Google Maps place: owner's own booking page	2026-10-03
 the-olivia-5-star-1bhk-luxury-suite	verified	Booking.com	https://www.booking.com/hotel/in/the-olivia-5-star-1bhk-luxury-suite.html	browser-confirmed: page title "The Olivia 5 Star 1BHK Luxury suite"	2026-10-03
 the-olivia-couple-suites-1bhk-luxury	verified	Booking.com	https://www.booking.com/hotel/in/the-olivia-rishikesh-couple-suites-1bhk-luxury.html	slug guess, browser-confirmed: "The Olivia Rishikesh Couple suites 1BHK Luxury"	2026-10-03
@@ -1304,7 +1281,6 @@ the-shore-by-blue-waves	verified	Booking.com	https://www.booking.com/hotel/in/th
 the-social-stays-formerly-artbuzz-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/artbuzz-rishikesh.html	The Social Stays Rishikesh formerly ArtBuzz	2026-10-03
 the-sonu-guesthouse-hostel	verified	Booking.com	https://www.booking.com/hotel/in/sonu-guesthouse.html	exact name, near Laxman Jhula	2026-10-03
 the-sukoon-house	verified	Booking.com	https://www.booking.com/hotel/in/the-sukoon-house-rishikesh6.html	slug guess, browser-confirmed: "The Sukoon house"	2026-10-03
-the-sunrise-villa-homestay	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 the-sweven-neervan	verified	Booking.com	https://www.booking.com/hotel/in/the-sweven-neervan.html	slug guess, browser-confirmed: "The Sweven NeerVan"	2026-10-03
 the-tapovan-hills	verified	EaseMyTrip	https://www.easemytrip.com/hotels/hotel-jp-hills-rishikesh-4382618/	browser-confirmed: page title "Hotel Jp Hills Rishikesh"	2026-10-03
 the-tapovan-nest	verified	Booking.com	https://www.booking.com/hotel/in/the-tapovan-nest.html	browser-confirmed: page title "The Tapovan Nest"	2026-10-03
@@ -1431,8 +1407,6 @@ yoga-stay-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/yoga-s
 yoga-wifi-travel-home-stay	verified	Booking.com	https://www.booking.com/hotel/in/yoga-wifi-travel-home-stay.html	slug guess, browser-confirmed: "Yoga Wifi Travel Home Stay"	2026-10-03
 yogasthali-tapovan	doubtful	Booking.com	https://www.booking.com/hotel/in/rising-hills-by-around-stays.html	same flagged URL; title matches	2026-10-03
 yogi-home-stay	verified	Booking.com	https://www.booking.com/hotel/in/yogi-home-stay-rishikesh.html	exact title "Yogi Home stay Gulab nagar Tapovan inter collage"	2026-10-03
-yogvan-holiday-s-1bhk-sunlit-apartment-tapovan	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
-yogvan-holiday-s-1bhk-sunrise-apartment-tapovan	verified	Agoda	https://www.agoda.com/	Google Maps place: owner's own booking page	2026-10-03
 yogvan-luxury-1bhk-apartments-tapovan	verified	Booking.com	https://www.booking.com/hotel/in/yogvan-hill-view-apartment.html	browser-confirmed: page title "Yogvan Luxury 1BHK Apartments Tapovan Rishikesh"	2026-10-03
 yugm-homes	verified	Booking.com	https://www.booking.com/hotel/in/yugm-homes.html	Google Maps place, browser-confirmed match	2026-10-03
 zana-by-the-ganges-tapovan	verified	Booking.com	https://www.booking.com/hotel/in/zana-by-the-ganges-tapovan-rishikesh.html	ZANA by the Ganges, Tapovan exact	2026-10-02

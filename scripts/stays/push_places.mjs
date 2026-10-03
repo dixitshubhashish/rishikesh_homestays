@@ -22,11 +22,13 @@ import { readFileSync, writeFileSync, mkdtempSync, existsSync, readdirSync } fro
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { words, distinctive } from './booking-match.mjs';
+import { affiliateLink } from '../../assets/js/modules/affiliate-links.js';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const DATASET_ID = process.env.BIGQUERY_DATASET || 'rishikesh_homestays';
 const TABLE_ID = 'places_lodging';
-const BOOKING_AID = '7854081';
+// Booking.com links: our CJ affiliate deep link (IDs in affiliate-links.js)
+const affiliate = affiliateLink;
 const DRY = process.argv.includes('--dry-run');
 
 const SCHEMA = [
@@ -49,7 +51,8 @@ const SCHEMA = [
   { name: 'slug', type: 'STRING' },
   { name: 'match_m', type: 'INTEGER' }, // distance to the matched directory stay
   { name: 'booking_site', type: 'STRING' },
-  { name: 'booking_url', type: 'STRING' },
+  { name: 'booking_page', type: 'STRING' }, // the booking site's own page
+  { name: 'booking_url', type: 'STRING' }, // link to use (Booking.com via our CJ affiliate link)
   { name: 'booking_source', type: 'STRING' },
   { name: 'agoda_url_unconfirmed', type: 'STRING' }, // exact-name Agoda page, not browser-checked // directory | matched (browser-verified) | google_website (owner's own link)
   { name: 'our_page', type: 'STRING' },
@@ -76,7 +79,7 @@ const placeLinks = {};
 const placeOta = join(HERE, '.cache/places/ota-links.tsv');
 if (existsSync(placeOta)) for (const line of readFileSync(placeOta, 'utf8').trim().split('\n')) {
   const [key, status, site, url] = line.split('\t');
-  if (status === 'verified') placeLinks[key.slice(2)] = { site, url: site === 'Booking.com' ? `${url.split('?')[0]}?aid=${BOOKING_AID}` : url };
+  if (status === 'verified') placeLinks[key.slice(2)] = { site, url: url.split('?')[0] };
 }
 // Agoda pages whose own URL carries exactly this stay's name in the same city
 // (agoda-exact.tsv). Unconfirmed: Agoda blocks automated checks, so these stay
@@ -93,11 +96,11 @@ const stays = [['rishikesh', join(HERE, '.cache/stays.json')],
   ...readdirSync(join(HERE, '.cache'), { withFileTypes: true }).filter((e) => e.isDirectory())
     .map((e) => [e.name, join(HERE, '.cache', e.name, 'stays.json')]).filter(([, f]) => existsSync(f))]
   .flatMap(([city, f]) => JSON.parse(readFileSync(f, 'utf8')).map((s) => ({ ...s, cy: s.cy || city })))
-  .filter((s) => s.ll);
+  .filter((s) => s.ll && !s.gm); // Google-sourced stays (gm) are the places themselves, not directory matches
 const links = {};
 for (const line of readFileSync(join(HERE, 'ota-links.tsv'), 'utf8').trim().split('\n').slice(1)) {
   const [key, status, site, url] = line.split('\t');
-  if (status === 'verified') links[key] = { site, url: site === 'Booking.com' ? `${url}?aid=${BOOKING_AID}` : url };
+  if (status === 'verified') links[key] = { site, url: url.split('?')[0] };
 }
 
 const rows = places.map((p) => {
@@ -118,15 +121,18 @@ const rows = places.map((p) => {
   const webOta = (OTA_HOSTS.find(([h]) => (h.endsWith('.') ? host.split('.').includes(h.slice(0, -1)) : host === h || host.endsWith(`.${h}`))) || [])[1] || null;
   // a place whose own Google website is a booking-site page: the owner's
   // link, used when we found none (Tripadvisor is reviews, not booking)
-  const own = !l && webOta && webOta !== 'Tripadvisor'
-    ? { site: webOta, url: webOta === 'Booking.com' ? `${ph.website.split('?')[0]}?aid=${BOOKING_AID}` : ph.website } : null;
+  // a booking-site homepage ("https://www.agoda.com/") isn't a link to this place
+  let path = '';
+  try { path = new URL(ph.website).pathname; } catch { /* no website */ }
+  const own = !l && webOta && webOta !== 'Tripadvisor' && path.length > 1
+    ? { site: webOta, url: webOta === 'Booking.com' ? ph.website.split('?')[0] : ph.website } : null;
   const link = l || own;
   return {
     place_id: p.id, city: p.city, km_from_centre: p.km, name: p.name, address: p.address, latitude: p.lat, longitude: p.lng,
     google_type: p.type, google_types: p.types || [], business_status: p.status, phone: ph.phone ?? null, website: ph.website ?? null,
     website_ota: webOta, google_maps_url: p.maps,
     in_directory: !!best, listing_id: best?.s.lid ?? null, slug: best?.s.id ?? null, match_m: best ? Math.round(best.m) : null,
-    booking_site: link?.site ?? null, booking_url: link?.url ?? null, booking_source: l ? (best && links[best.s.id] ? 'directory' : 'matched') : own ? 'google_website' : null,
+    booking_site: link?.site ?? null, booking_page: link?.url ?? null, booking_url: link ? affiliate(link.site, link.url) : null, booking_source: l ? (best && links[best.s.id] ? 'directory' : 'matched') : own ? 'google_website' : null,
     agoda_url_unconfirmed: agodaExact[`g-${p.id}`] || (best && agodaExact[best.s.id]) || null,
     our_page: best ? `https://rishikeshhomestays.com/hotels/stay?s=${best.s.id}${best.s.cy !== 'rishikesh' ? `&c=${best.s.cy}` : ''}` : null,
     fetched_date: p.fetched,
@@ -148,7 +154,7 @@ writeFileSync(join(HERE, '.cache/places/need-phones.json'), JSON.stringify(need)
 // (import_google_stays.py feeds them to process.py)
 const listable = rows.filter((r) => open(r) && !r.in_directory && r.booking_url && r.name && r.latitude)
   .map((r) => ({ place_id: r.place_id, name: r.name, city: r.city, lat: r.latitude, lng: r.longitude,
-    type: r.google_type, maps: r.google_maps_url, site: r.booking_site, url: r.booking_url.split('?aid=')[0], source: r.booking_source }));
+    type: r.google_type, maps: r.google_maps_url, site: r.booking_site, url: r.booking_page, source: r.booking_source }));
 writeFileSync(join(HERE, '.cache/places/new-with-link.json'), JSON.stringify(listable));
 console.log(`  new places with a booking link (listed on the site): ${listable.length}`);
 // open places without a booking link yet, as a stays file the matchers can read (STAYS_FILE=…)

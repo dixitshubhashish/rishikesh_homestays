@@ -6,6 +6,13 @@
 - Targeted artwork/navigation tests: 17/17 pass against isolated release. Production Chromium verified 11 CSS widths (320-3440px), /404.html, and root/nested nonexistent paths (real 404 responses). Live laptop screenshot inspected with visible ponytail.
 - Shared checkout was not pulled/rebased because another agent has active staged and unstaged work. Release checkout: `/tmp/rishikesh-choti-release`. Earlier deployment-pending notes below are superseded.
 
+## ✅ Built — CJ affiliate links, Google stays on the site, new pages (Claude, 2026-10-03, night)
+
+- **Booking.com commission:** every Booking.com link is now our CJ deep link (PID 101895722, link 17323528), from one constants file `assets/js/modules/affiliate-links.js`; it lands on the same property page (tested). The old `?aid=7854081` was Booking.com APAC's CJ advertiser ID and credited nobody. Owner: get Booking.com APAC to approve the CJ relationship.
+- **287 Google Maps stays listed** (new to us, confirmed booking link, real property page): "View on Google Maps", no map pins, off landmark pages. Totals: 2,701 stays (Rishikesh 1,743, Haridwar 958), 1,305 with a booking link. Fixes on the way: booking-site websites matched by domain (57 false "Hotels.com"-style matches), booking-site homepages rejected (26).
+- **New pages:** Bike & Taxi Rental (`rental_enquiry` form), Driving from Delhi guide, Studio/1 BHK, 2 BHK, 3 BHK & bigger stays; category links grouped (type / size / themes) and sorted by count; Advaitam offer "15% off stays of 5+ days" everywhere.
+- **AdSense:** competitor ads allowed (owner's call); ad clicks are never intercepted (AdSense policy).
+
 ## ✅ Built — Google Maps phones + links, ads per page type (Claude, 2026-10-03, evening)
 
 - **Google Maps (BigQuery `places_lodging`, internal):** 4,947 places; 2,036 phone numbers (Rishikesh 1,193, Haridwar 843) from 4,125 Enterprise lookups (≈$63, owner approved); 1,287 places with a booking link (directory match, browser-verified sitemap/slug match, or the owner's own booking-site website, e.g. 236 OYO pages).

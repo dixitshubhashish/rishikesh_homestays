@@ -14,6 +14,7 @@ import { BigQuery } from '@google-cloud/bigquery';
 import { readFileSync, writeFileSync, mkdtempSync, existsSync, readdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { affiliateLink } from '../../assets/js/modules/affiliate-links.js';
 
 const DATASET_ID = process.env.BIGQUERY_DATASET || 'rishikesh_homestays';
 const TABLE_ID = process.env.BIGQUERY_MARKET_TABLE || 'market_properties';
@@ -57,7 +58,8 @@ const SCHEMA = [
   // Bedrooms from the name (process.py bd): 0 = studio, 9 = 8+, NULL = unknown.
   // Last, so the load's ALLOW_FIELD_ADDITION adds it to the existing table.
   { name: 'bedrooms', type: 'INTEGER' },
-  { name: 'agoda_url_unconfirmed', type: 'STRING' }, // exact-name Agoda page (Agoda blocks automated checks; internal only)
+  { name: 'agoda_url_unconfirmed', type: 'STRING' },
+  { name: 'booking_link', type: 'STRING' }, // the link to use: Booking.com via our CJ affiliate link (affiliate-links.js) // exact-name Agoda page (Agoda blocks automated checks; internal only)
 ];
 
 const OWN_KEYS = ['advaitam-ganga-hill-view-homestay-by-the-ganges-ghat', 'villa-elysium-the-himalayan-ganges-view-yoga-retreat', 'villa-yoga-retreat-at-the-ganges-in'];
@@ -98,6 +100,7 @@ async function main() {
       booking_url: l?.status === 'verified' ? l.url : null, source_url: s.u,
       bedrooms: s.bd ?? null,
       agoda_url_unconfirmed: agodaExact[s.id] ?? null,
+      booking_link: l?.status === 'verified' && l.url ? affiliateLink(l.site, l.url) : null,
     };
   });
 
@@ -124,6 +127,16 @@ async function main() {
   });
   const errors = job.status?.errors;
   if (errors?.length) throw new Error(JSON.stringify(errors.slice(0, 3)));
+  // The sheet-facing view: latest snapshot, with page and (affiliate) booking links.
+  await bigquery.query(`CREATE OR REPLACE VIEW \`${options.projectId}.${DATASET_ID}.stays_sheet\` AS
+SELECT
+  listing_id, id AS slug, COALESCE(city, 'rishikesh') AS city, name AS property, area, ARRAY_TO_STRING(types, ', ') AS types, stars, guest_rating, reviews, price_from_inr,
+  bedrooms, is_own AS ours,
+  CONCAT('https://rishikeshhomestays.com/hotels/stay?s=', id, IF(COALESCE(city, 'rishikesh') = 'rishikesh', '', CONCAT('&c=', city))) AS our_page,
+  booking_status, booking_site, COALESCE(booking_link, booking_url) AS booking_url, booking_url AS booking_page, agoda_url_unconfirmed,
+  source_url AS directory_listing, latitude, longitude, snapshot_date
+FROM \`${options.projectId}.${DATASET_ID}.${TABLE_ID}\`
+WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM \`${options.projectId}.${DATASET_ID}.${TABLE_ID}\`)`);
   const counts = rows.reduce((m, r) => ((m[r.booking_status] = (m[r.booking_status] || 0) + 1), m), {});
   const byCity = rows.reduce((m, r) => ((m[r.city] = (m[r.city] || 0) + 1), m), {});
   console.log(`Loaded ${rows.length} stays into ${DATASET_ID}.${TABLE_ID} for ${today}:`, byCity, counts);

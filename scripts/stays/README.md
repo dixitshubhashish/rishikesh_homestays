@@ -110,7 +110,7 @@ stays are listed first on every page. Rows come from web searches checked on
 distinctive name + area, preferring Booking.com, then MakeMyTrip, Agoda,
 Airbnb. A URL that was pieced together rather than seen in a result is never
 `verified`. `merge_ota.py` merges new search results (never downgrading a
-verified row). `BOOKING_AID` in `build_pages.py` appends the Booking.com
+verified row). Booking.com links are wrapped in our CJ affiliate deep link (IDs in `assets/js/modules/affiliate-links.js`), not `?aid=`; the Booking.com
 affiliate ID to every Booking.com link.
 
 **Owner review sheet.** Doubtful and not-found stays are in the Google Sheet
@@ -189,7 +189,7 @@ GROUP BY area ORDER BY stays DESC;
 **View `rishikesh_homestays.stays_sheet`** is the latest snapshot as one
 flat row per stay: listing_id, slug, property, area, types, stars, rating,
 reviews, price, `ours`, `our_page` (`/stay?s=…`), booking status/site, the
-booking URL (Booking.com links with `?aid=7854081`), the directory listing,
+booking URL (Booking.com links via our CJ affiliate deep link; `booking_page` is the raw page), the directory listing,
 and latitude/longitude. Open it in Google Sheets via **Data → Data
 connectors → Connect to BigQuery → `keen-device-610` → `rishikesh_homestays`
 → `stays_sheet`**. The view always shows the newest snapshot.
@@ -232,4 +232,4 @@ Columns: place_id, city, km_from_centre, name, address, lat/lng, google_type(s),
 
 Latest run (2026-10-03): 4,947 places (Rishikesh 3,131, Haridwar 1,816); 1,199 directory stays matched, 3,395 new to us; 2,036 phones (of 4,125 looked up, ≈$63); 1,287 with a booking link.
 
-**Google Maps places on the site:** open places new to us with a confirmed booking link are listed like directory stays. `push_places.mjs` writes `.cache/places/new-with-link.json`; `python3 scripts/stays/import_google_stays.py` turns them into `<cache>/google-extra.jsonl` rows (slug from the name, Google type as a type hint, no Google address) and merges their links into `ota-links.tsv`; `process.py` appends those rows, so areas, types, tags and listing_ids come from our own logic, and marks them `gm` (their Google Maps link). Pages: a `gm` stay shows "View on Google Maps" instead of our OpenStreetMap map, is never pinned on our maps, and stays off the landmark pages (Google's terms). Booking-site websites are matched by domain (`ellbeehotels.com` is not hotels.com). First run (2026-10-03): 313 listed (Rishikesh 155, Haridwar 158).
+**Google Maps places on the site:** open places new to us with a confirmed booking link are listed like directory stays. `push_places.mjs` writes `.cache/places/new-with-link.json`; `python3 scripts/stays/import_google_stays.py` turns them into `<cache>/google-extra.jsonl` rows (slug from the name, Google type as a type hint, no Google address) and merges their links into `ota-links.tsv`; `process.py` appends those rows, so areas, types, tags and listing_ids come from our own logic, and marks them `gm` (their Google Maps link). Pages: a `gm` stay shows "View on Google Maps" instead of our OpenStreetMap map, is never pinned on our maps, and stays off the landmark pages (Google's terms). Booking-site websites are matched by domain (`ellbeehotels.com` is not hotels.com). A booking-site homepage ("https://www.agoda.com/") never counts as a link. Google-sourced stays (`gm`) are excluded from directory matching in `push_places.mjs`, so re-runs keep them. Listed (2026-10-03): 287 (Rishikesh 134, Haridwar 153).

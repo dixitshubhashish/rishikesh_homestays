@@ -60,8 +60,16 @@ MIN_PAGE = 5          # skip categories too thin to be worth a page
 MASTER_SECTION = 20   # rows per section on the master page before "view all"
 OG_IMAGE = f'{SITE}/assets/images/rishikesh-homestay-hero.webp'
 # Booking.com affiliate ID (Partner Centre). When set, every verified
-# Booking.com link gets ?aid=<id> so bookings earn commission.
-BOOKING_AID = '7854081'
+# Booking.com links go through our CJ affiliate deep link. The IDs live in one
+# place, assets/js/modules/affiliate-links.js (read here, imported by the JS).
+_AFF = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'assets', 'js', 'modules', 'affiliate-links.js')).read()
+CJ_PID, CJ_BOOKING_LINK, CJ_CLICK_HOST = (re.search(rf"export const {k} = '([^']+)'", _AFF).group(1)
+                                          for k in ('CJ_PID', 'CJ_BOOKING_LINK_ID', 'CJ_CLICK_HOST'))
+
+
+def booking_affiliate(url):
+    from urllib.parse import quote
+    return f'{CJ_CLICK_HOST}/click-{CJ_PID}-{CJ_BOOKING_LINK}?url={quote(url.split("?")[0], safe="")}'
 
 # Our own properties: pinned on top of every page with a book-direct link
 # (instead of the source listing). Matched by exact source URL, so no other
@@ -341,8 +349,8 @@ def load_ota_links():
             cols = line.split('\t')
             if len(cols) >= 4 and cols[1] == 'verified' and cols[3].startswith('https://'):
                 url = cols[3]
-                if cols[2] == 'Booking.com' and BOOKING_AID:
-                    url += ('&' if '?' in url else '?') + f'aid={BOOKING_AID}'
+                if cols[2] == 'Booking.com':
+                    url = booking_affiliate(url)
                 links[cols[0]] = {'n': cols[2], 'u': url}
     return links
 
