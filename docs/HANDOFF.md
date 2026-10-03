@@ -10,7 +10,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 
 - **2,701 stays**: Rishikesh 1,743, Haridwar 958 (directory crawl + 287 Google Maps places marked `gm`). **1,305 have a confirmed booking link** (Booking.com, EaseMyTrip, OYO, Airbnb, Agoda, MakeMyTrip…).
 - Generated pages in `hotels/`: `best-<category>-in-<city>` (types, sizes, themes), landmark pages `best-stays-near-<landmark>`, property page `stay?s=<slug>&c=<city>`. Category links are grouped (Accommodation type / By size / Themes & facilities) and sorted by count.
-- Hand-made pages: guides (about, places, things to do, Triveni Ghat, Kedarnath, Kumbh 2027, **Driving from Delhi**), **Bike & Taxi Rental** (form → `/api/contact` with `source: 'rental_enquiry'`), contact, homestays, Advaitam page, list-your-homestay.
+- Hand-made pages: guides (about, places, things to do, Triveni Ghat, Kedarnath, Kumbh 2027, **Driving from Delhi**), **Bike & Taxi Rental** (Claude owns it; form → `/api/contact` with `source: 'rental_enquiry'`; verified live end to end on 2026-10-04 — test with the POST intercepted, never send real enquiries), contact, homestays, Advaitam page, list-your-homestay.
 - Prices read "Starting ₹X onwards" everywhere.
 - **Booking.com links = CJ affiliate deep links** from `assets/js/modules/affiliate-links.js` (PID 101895722, link 17323528). Never use `?aid=`.
 - **AdSense** (`assets/js/ads.js`, `/ads.txt`): guides get side rails + mid-article + grid; homepage and stays lists get rails + grid; lead pages none; top of every page ad-free. Competitor ads allowed (owner's choice). Never intercept ad clicks (AdSense policy).

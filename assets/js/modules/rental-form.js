@@ -173,6 +173,15 @@ export function setupRentalForm({ redirect = (url) => window.location.assign(url
     event.preventDefault();
     const data = readForm(form);
 
+    // Name: checked here too, not only by the browser's `required`.
+    if (!String(data.name || '').trim()) {
+      const nameInput = form.querySelector('[name="name"]');
+      if (status) status.textContent = 'Please tell us your name.';
+      nameInput?.classList.add('field-invalid');
+      nameInput?.focus();
+      return;
+    }
+
     const phoneResult = validatePhone(data.phone, countrySelect?.value);
     if (!phoneResult.valid) {
       if (phoneError) {
