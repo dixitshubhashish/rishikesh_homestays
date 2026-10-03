@@ -81,6 +81,16 @@ test('Contact API Tests', async (t) => {
     assert(apiCode.includes('pending'), 'Should mark as pending');
   });
 
+  await t.test('API should accept bike/taxi rental enquiries (source rental_enquiry)', () => {
+    // Stored like any other enquiry, tagged with its source; same-day rentals
+    // pass (end >= start), and the email subject names the service.
+    assert(apiCode.includes("data.source === 'rental_enquiry'"), 'Should recognise rental enquiries by source');
+    assert(apiCode.includes('validateRentalDateRange(data.check_in, data.check_out)'), 'Should use the rental date rule for rentals');
+    assert(apiCode.includes("source: data.source || 'website_form'"), 'Should store the source in BigQuery');
+    assert(apiCode.includes('Rental enquiry: ${data.name} → ${rentalService}'), 'Should use a "Rental enquiry: <name> → <service>" subject');
+    assert(apiCode.includes('data.pickup_point'), 'Should include the pickup point in the email');
+  });
+
   await t.test('API should parse guest details', () => {
     assert(apiCode.includes('detailsText'), 'Should capture details');
     assert(apiCode.includes('check_in'), 'Should extract check-in info');
