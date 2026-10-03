@@ -6,6 +6,7 @@ A modern hospitality platform for discovering premium homestays in Rishikesh, In
 
 - `README.md`, `CLAUDE.md`, `AGENTS.md` — stay at repo root (GitHub/Claude Code/Codex all read these by convention from the root).
 - `.agents/coordination.md` — live multi-agent coordination ledger; stays under `.agents/` (see below).
+- `docs/HANDOFF.md` — **start here in a new session**: current state, owner to-dos, how to run the pipelines, hard-won rules.
 - `docs/ARCHITECTURE.md` — module/file breakdown.
 - `docs/TESTING.md` — how to run and write tests.
 - `docs/TEST_RESULTS.md` — latest recorded test run output.
