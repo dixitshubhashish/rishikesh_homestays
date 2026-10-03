@@ -283,3 +283,28 @@ Tests exit with code 0 on pass, non-zero on failure.
 **Last Updated**: 2026-09-23
 **Test Framework**: Node.js built-in test runner
 **Status**: All tests passing ✅
+
+## Current suite (2026-10)
+
+`npm test` runs **413 tests** in 19 files (all passing on 2026-10-04):
+
+| File | Tests | Covers |
+|---|---|---|
+| `tests/visual/no-horizontal-overflow.test.js` | 175 | Every page (incl. ~85 generated stays pages) at 375px and 1440px in real Chromium; fails if anything overflows |
+| `tests/integration/pages.test.js` | 33 | Page structure, logos, vendor scripts, new pages registered |
+| `tests/modules/validators.test.js` | 22 | Phone + date ranges (stay and same-day rental rules) |
+| `tests/integration/navigation.test.js` | 17 | Header/footer links (incl. Stays division, Driving from Delhi, Bike & Taxi Rental) |
+| `tests/modules/country-select.test.js` | 17 | Country-code select |
+| `tests/modules/currency.test.js`, `whatsapp-link.test.js`, `whatsapp-widget.test.js` | 16 each | Currency display, WhatsApp links, widget drawer |
+| `tests/api/contact-api.test.js` | 15 | `/api/contact` incl. `rental_enquiry` (Resend and BigQuery mocked) |
+| `tests/integration/styling.test.js` | 14 | CSS checks |
+| `tests/modules/rental-form.test.js`, `dom-helpers.test.js`, `stays-renderer.test.js` | 13 each | Rental form logic, DOM helpers, homestay cards |
+| `tests/modules/data.test.js` | 11 | STAYS/AREAS data (prices read "Starting ₹X onwards") |
+| `tests/api/otp-helpers.test.js` | 10 | Email OTP helpers |
+| `tests/modules/page-tabs.test.js`, `site-shim.test.js`, `integration/analytics.test.js`, `404-artwork.test.js` | 6, 3, 2, 1 | Tabs, shim, GA tag on every page, 404 art |
+
+**Setup notes**
+- The visual test needs Playwright's browser once: `npx playwright install chromium` (if it's missing the test fails instantly and the run can hang — reinstall).
+- Its limit is 360 s; heavy parallel browser jobs (link-matching agents) slow it down — run `npm test` after they finish.
+- Never let a test send real email: the `resend` SDK ignores a stubbed `fetch`; mock `Resend` or unset `RESEND_API_KEY`. Live-site checks must intercept `POST /api/contact` (Playwright `page.route`).
+- macOS has no `timeout`; use `perl -e 'alarm 300; exec @ARGV' node --test <file>` to cap a run.

@@ -1,5 +1,14 @@
 # Test Results Summary
 
+## Latest run — 2026-10-04: 413 / 413 passing
+
+`npm test` on main (after the stays guide, Haridwar, Google Maps stays, CJ affiliate links, AdSense, Driving from Delhi and Bike & Taxi Rental pages). Per file: visual overflow 175, pages 33, validators 22, navigation 17, country-select 17, currency 16, whatsapp-link 16, whatsapp-widget 16, contact API 15, styling 14, rental-form 13, dom-helpers 13, stays-renderer 13, data 11, otp-helpers 10, page-tabs 6, site-shim 3, analytics 2, 404 artwork 1. The live Bike & Taxi Rental page was also verified end to end (9/9 checks, form POST intercepted).
+
+---
+
+## Earlier run (kept for history)
+
+
 **Date**: 2026-09-23  
 **Status**: ✅ **PASSING** (62/67 tests)  
 **Coverage**: Core functionality validated

@@ -257,3 +257,31 @@ But for new pages, prefer:
 | **Total** | **262** | Better organized |
 
 *Slightly larger combined, but much more maintainable.*
+
+## Stays guide & revenue layer (2026-10)
+
+The site is now a Rishikesh/Haridwar travel guide that sells the owner's own homestays first. On top of the modules above:
+
+### Pages
+- **Hand-made (repo root):** guides `about-rishikesh`, `places-to-visit`, `things-to-do-in-rishikesh`, `triveni-ghat`, `kedarnath-yatra`, `haridwar-kumbh-2027`, `driving-from-delhi-to-rishikesh`; lead pages `contact`, `homestays`, `list-your-homestay`, `bike-and-taxi-rental-in-rishikesh`, `thanks`, `404`; own listing `hotels/advaitam-…`.
+- **Generated (`hotels/`, by `scripts/stays/build_pages.py`, never hand-edited):** `best-<category>-in-<city>` (type, size, theme categories for Rishikesh and Haridwar), `best-stays-near-<landmark>` (14), and the property page `stay.html` (`/hotels/stay?s=<slug>&c=<city>`). Category links are grouped (Accommodation type / By size / Themes & facilities) and sorted by count.
+
+### Modules (`assets/js/modules/`)
+| Module | Job |
+|---|---|
+| `stays-index.js` | Lists on the generated pages: search/filter (`k:` type, `t:` theme, `b:` bedrooms), our own stays mixed in, "View property" |
+| `stays-index-data.js`, `stays-index-data-haridwar.js` | Generated data per city (never hand-edit) |
+| `stay-page.js` | Property page: facts, lead popup → one booking redirect, WhatsApp, sidebar (our homestays, grouped "More stays in …"), Leaflet map (not for Google-sourced `gm` stays: "View on Google Maps") |
+| `landmark-map.js` | Map on landmark pages (lazy Leaflet) |
+| `affiliate-links.js` | **Only place for affiliate IDs**: CJ PID + Booking.com link id; `affiliateLink(site, url)` wraps Booking.com pages in the CJ deep link |
+| `rental-form.js` | Bike & taxi rental enquiry form (phone/date validation, `rental_enquiry` payload, WhatsApp prefill) |
+| `whatsapp-widget.js`, `whatsapp-link.js` | Floating WhatsApp popup; device-aware WhatsApp links |
+| `contact-form.js`, `validators.js`, `country-select.js`, `geo.js`, `currency.js`, `button-loading.js`, `ota-lead-gate.js` | Shared form/phone/date/currency helpers (see CLAUDE.md) |
+
+Top-level scripts: `assets/js/analytics.js` (GA4, owner opt-out) and `assets/js/ads.js` (AdSense: per page type, top of page ad-free, rails only on wide screens; lead pages none).
+
+### Data pipeline (`scripts/stays/`, see its README)
+crawl → `process.py` (areas, types, tags, bedrooms, permanent `listing_id`; also Google Maps places via `import_google_stays.py`) → booking-link matching (`booking-match.mjs` rule, `verify_candidates.mjs`, `guess_booking_slugs.mjs`, `sitemap_candidates.py` + `verify_platform.mjs`, `postcheck_matches.py`, `merge_ota.py` → `ota-links.tsv`) → `build_pages.py` (pages, sitemap, llms.txt) → BigQuery (`push_bigquery.mjs` → `market_properties` + view `stays_sheet`; `push_places.mjs` → `places_lodging`, internal, with phones).
+
+### `/api/contact` sources
+`website_form`, `whatsapp_widget`, `ota_redirect_<platform>`, `stay_*` (stay-page popup: internal-only email with a "WhatsApp <name> now" button), `host_application`, `rental_enquiry` (rental page: subject "Rental enquiry: <name> → <service>", same-day rentals allowed). All stored in BigQuery `enquiries`.
