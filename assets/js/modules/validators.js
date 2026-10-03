@@ -29,6 +29,30 @@ export function validatePhone(nationalNumber, countryIso2) {
   return { valid: true, normalized: parsed.number };
 }
 
+// Bike/taxi rentals: unlike a stay, a rental can start and end on the same
+// day (a one-day scooty, an airport drop), so the end date only has to be on
+// or after the start date. Used by rental-form.js and by api/contact.js for
+// `source: 'rental_enquiry'`.
+export function validateRentalDateRange(startValue, endValue) {
+  if (!startValue && !endValue) {
+    return { valid: true };
+  }
+  if (endValue && !startValue) {
+    return { valid: false, message: 'Please select a start date first.' };
+  }
+  if (startValue && endValue) {
+    const start = new Date(startValue);
+    const end = new Date(endValue);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return { valid: false, message: 'Enter valid dates.' };
+    }
+    if (end < start) {
+      return { valid: false, message: 'End date can\'t be before the start date.' };
+    }
+  }
+  return { valid: true };
+}
+
 // Check-out must be strictly after check-in when both are provided.
 export function validateDateRange(checkinValue, checkoutValue) {
   if (!checkinValue && !checkoutValue) {

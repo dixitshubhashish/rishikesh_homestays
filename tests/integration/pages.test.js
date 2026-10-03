@@ -15,6 +15,7 @@ const testPages = [
   { path: 'kedarnath-yatra.html', name: 'Kedarnath & Garhwal Gateway' },
   { path: 'list-your-homestay.html', name: 'List Your Homestay' },
   { path: 'haridwar-kumbh-2027.html', name: 'Kumbh 2027' },
+  { path: 'bike-and-taxi-rental-in-rishikesh.html', name: 'Bike & Taxi Rental' },
   { path: 'hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html', name: 'Advaitam Ganga Listing' }
 ];
 
@@ -289,8 +290,10 @@ test('Page Integration Tests', async (t) => {
     // visitors never open — whatsapp-widget.js lazy-loads them on first
     // open instead, so no other page should eager-load them via a plain
     // <script>/<link> tag.
-    const eagerFlatpickrPages = ['index.html', 'contact.html', 'homestays.html'];
-    const eagerLibphonenumberPages = ['contact.html', 'homestays.html'];
+    // The bike & taxi rental page has its own visible start/end dates and
+    // phone field (its enquiry form is the point of the page).
+    const eagerFlatpickrPages = ['index.html', 'contact.html', 'homestays.html', 'bike-and-taxi-rental-in-rishikesh.html'];
+    const eagerLibphonenumberPages = ['contact.html', 'homestays.html', 'bike-and-taxi-rental-in-rishikesh.html'];
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
       const hasEagerFlatpickr = content.includes('flatpickr.min.js');

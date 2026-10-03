@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { JSDOM } from 'jsdom';
-import { validatePhone, validateDateRange } from '../../assets/js/modules/validators.js';
+import { validatePhone, validateDateRange, validateRentalDateRange } from '../../assets/js/modules/validators.js';
 
 // Load the real libphonenumber-js vendor bundle the same way a browser
 // <script src="..."> tag would (a plain global-scope UMD execution), so
@@ -98,5 +98,31 @@ test('validateDateRange', async (t) => {
   await t.test('invalid when a date string cannot be parsed', () => {
     const result = validateDateRange('not-a-date', '2026-10-08');
     assert.strictEqual(result.valid, false);
+  });
+});
+
+test('validateRentalDateRange (bike/taxi rentals)', async (t) => {
+  await t.test('valid when no dates are given', () => {
+    assert.strictEqual(validateRentalDateRange('', '').valid, true);
+  });
+
+  await t.test('valid with only a start date', () => {
+    assert.strictEqual(validateRentalDateRange('2026-10-05', '').valid, true);
+  });
+
+  await t.test('same-day rental is allowed (unlike a stay)', () => {
+    assert.strictEqual(validateRentalDateRange('2026-10-05', '2026-10-05').valid, true);
+  });
+
+  await t.test('invalid when the end date is before the start date', () => {
+    const result = validateRentalDateRange('2026-10-08', '2026-10-05');
+    assert.strictEqual(result.valid, false);
+    assert.match(result.message, /before the start/i);
+  });
+
+  await t.test('invalid with an end date but no start date', () => {
+    const result = validateRentalDateRange('', '2026-10-05');
+    assert.strictEqual(result.valid, false);
+    assert.match(result.message, /start date/i);
   });
 });

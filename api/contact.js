@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
-import { validateDateRange } from '../assets/js/modules/validators.js';
+import { validateDateRange, validateRentalDateRange } from '../assets/js/modules/validators.js';
 import { insertEnquiry } from './bigquery.js';
 import { randomUUID } from 'crypto';
 
@@ -39,7 +39,13 @@ export default async function handler(req, res) {
   }
   data.phone = parsedPhone.number;
 
-  const dateRangeResult = validateDateRange(data.check_in, data.check_out);
+  // Bike/taxi rental enquiries (/bike-and-taxi-rental-in-rishikesh) send
+  // their start/end dates as check_in/check_out; a rental may start and end
+  // on the same day, so they get the looser end >= start check.
+  const isRental = data.source === 'rental_enquiry';
+  const dateRangeResult = isRental
+    ? validateRentalDateRange(data.check_in, data.check_out)
+    : validateDateRange(data.check_in, data.check_out);
   if (!dateRangeResult.valid) {
     return res.status(400).json({
       success: false,
@@ -51,7 +57,8 @@ export default async function handler(req, res) {
     // Parse details to extract check_in, check_out, guests info
     // Details format: "Arriving 15th July, staying 7 days. Family of 4 (2 adults, 2 kids). Need 2 rooms with kitchen..."
     const detailsText = data.details || '';
-    const adults = parseInt(data.adults) || 1;
+    const rentalPeople = isRental ? parseInt(data.people) || 0 : 0;
+    const adults = isRental ? rentalPeople || 1 : parseInt(data.adults) || 1;
     const children = parseInt(data.children) || 0;
     const petCount = parseInt(data.pet_count) || 0;
     const petType = data.pets || 'none';
@@ -69,7 +76,9 @@ export default async function handler(req, res) {
       check_out: data.check_out || null,
       adults: adults,
       children: children,
-      guests: parseInt(data.guests_total) > 0
+      guests: isRental
+        ? (rentalPeople ? `${rentalPeople} ${rentalPeople === 1 ? 'person' : 'people'}` : null)
+        : parseInt(data.guests_total) > 0
         ? `${parseInt(data.guests_total)} guest(s) in total incl. kids`
         : `${adults} adult(s), ${children} child(ren)${petCount > 0 ? ', ' + petCount + ' pet(s)' : ''}`,
       property_slug: data.preferred_stay || null,
@@ -113,7 +122,24 @@ export default async function handler(req, res) {
             <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #17211f; font-size: 14px; font-weight: 600; vertical-align: top;">${value}</td>
           </tr>`;
 
-    const detailsCardHtml = `
+    // Rentals show service/pickup/people instead of the stay-specific rows.
+    const rentalService = data.service || 'Bike / taxi';
+    const rentalRowsHtml = `
+          ${row('Name', data.name)}
+          ${row('Phone', data.phone)}
+          ${row('Email', data.email || 'Not provided')}
+          ${row('Service', rentalService)}
+          ${row('Start date', data.check_in || 'Not specified')}
+          ${row('End date', data.check_out || 'Not specified')}
+          ${row('Pickup point', data.pickup_point || 'Not specified')}
+          ${row('People', rentalPeople || 'Not specified')}
+          ${row('Details', `<span style="font-weight: 400; white-space: pre-wrap;">${data.details}</span>`)}
+          ${row('Submitted At', new Date().toLocaleString())}`;
+
+    const detailsCardHtml = isRental ? `
+        <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 22px 0; background: #fbfaf5; border: 1px solid #ded8ca; border-radius: 12px; padding: 4px 18px;">
+          ${rentalRowsHtml}
+        </table>` : `
         <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 22px 0; background: #fbfaf5; border: 1px solid #ded8ca; border-radius: 12px; padding: 4px 18px;">
           ${row('Name', data.name)}
           ${row('Phone', data.phone)}
@@ -193,7 +219,11 @@ export default async function handler(req, res) {
       'a cafe crawl through Tapovan'
     ];
     const savedIdea = SAVED_COMMISSION_IDEAS[Math.floor(Math.random() * SAVED_COMMISSION_IDEAS.length)];
-    const guestOpener = `Hi ${data.name}! 🙏 This is Rishikesh Homestays. Thanks for reaching out about your Rishikesh trip` +
+    const guestOpener = isRental
+      ? `Hi ${data.name}! 🙏 This is Rishikesh Homestays. Thanks for your ${rentalService} enquiry. ` +
+        'We\'re checking with our local partners and will share the options and a quote shortly. ' +
+        'Need a place to stay too? We can line up one of our handpicked homestays near your pickup. 🌊'
+      : `Hi ${data.name}! 🙏 This is Rishikesh Homestays. Thanks for reaching out about your Rishikesh trip` +
       `${totalGuests ? ` for ${totalGuests} guest${totalGuests > 1 ? 's' : ''}` : ''}. ` +
       'Could you share your check-in and check-out dates? We\'ll line up our best handpicked homestays and hotels for you. ' +
       `Book direct with us and skip the booking-site commission. Spend what you save on ${savedIdea} instead! 🌊`;
@@ -203,18 +233,22 @@ export default async function handler(req, res) {
         </td></tr></table>
         <p style="text-align: center; color: #66726f; font-size: 12px; margin: 0 0 8px;">Opens a chat with ${data.phone}, with a ready-to-send opener you can edit.</p>` : '';
 
+    const rentalSubject = `Rental enquiry: ${data.name} → ${rentalService}`;
+
     if (data.email && !isStayLead) {
       // One shared thread instead of two disconnected emails: the guest is
       // the primary recipient (so it reads as "your enquiry", not an
       // internal notice) and we're CC'd on the same message, so replying
       // all keeps guest and owner in the same conversation from message one.
       const greetingHtml = `
-          <h1 style="color: ${BRAND}; font-size: 22px; margin: 0 0 6px;">${isHostApplication ? `Thanks, ${data.name}! Let's get your homestay listed 🏡` : `Thanks, ${data.name} — your Rishikesh trip is taking shape! 🌊`}</h1>
+          <h1 style="color: ${BRAND}; font-size: 22px; margin: 0 0 6px;">${isHostApplication ? `Thanks, ${data.name}! Let's get your homestay listed 🏡` : isRental ? `Thanks, ${data.name}! Your wheels are being lined up 🛵` : `Thanks, ${data.name} — your Rishikesh trip is taking shape! 🌊`}</h1>
           <p style="color: #45534f; font-size: 15px; line-height: 1.6; margin: 0 0 4px;">${isHostApplication
             ? "We've received your application to list your property with us — there's no listing fee. Our team will review your details and reach out within 24 hours to confirm next steps."
+            : isRental
+            ? "We've got your rental enquiry and we're checking it with our trusted local partners. Expect a call or WhatsApp from us shortly with options and a quote. Helmets on, playlist ready 🏔️"
             : "We've got your enquiry and we're already matching it against our handpicked homestays. Expect personalized recommendations from our team within 24 hours — pack your sense of adventure (and maybe some flip-flops for the ghats) 🏔️"}</p>
           ${detailsCardHtml}
-          ${isHostApplication ? '' : bookDirectApppealHtml}
+          ${isHostApplication || isRental ? '' : bookDirectApppealHtml}
           ${whatsappCtaHtml}
           <p style="color: #45534f; font-size: 14px; margin: 26px 0 0;">Warm regards,<br><strong style="color: #17211f;">Rishikesh Homestays Team</strong></p>`;
 
@@ -224,7 +258,9 @@ export default async function handler(req, res) {
         cc: contactEmail,
         subject: isHostApplication
           ? 'Your Rishikesh Homestays listing application is received'
-          : 'We received your Rishikesh homestay enquiry!',
+          : isRental
+            ? rentalSubject
+            : 'We received your Rishikesh homestay enquiry!',
         html: emailShell(greetingHtml)
       });
 
@@ -233,7 +269,7 @@ export default async function handler(req, res) {
       // No guest email to make the primary recipient — just notify us
       // internally, same branded shell but framed as an internal alert.
       const internalHtml = `
-          <h1 style="color: ${BRAND}; font-size: 20px; margin: 0 0 6px;">${isHostApplication ? 'New Homestay Listing Application' : isStayLead ? `New stay lead: ${stayName}` : 'New Rishikesh Homestay Enquiry'}</h1>
+          <h1 style="color: ${BRAND}; font-size: 20px; margin: 0 0 6px;">${isHostApplication ? 'New Homestay Listing Application' : isRental ? `New rental enquiry: ${rentalService}` : isStayLead ? `New stay lead: ${stayName}` : 'New Rishikesh Homestay Enquiry'}</h1>
           <p style="color: #66726f; font-size: 14px; margin: 0 0 4px;">${isStayLead
             ? `For your eyes only: the guest was not emailed.${data.source.startsWith('stay_redirect_') ? ' They were sent on to the booking site after this.' : ''}`
             : 'No email on file for this guest — reach out by phone or WhatsApp.'}</p>
@@ -246,7 +282,9 @@ export default async function handler(req, res) {
         to: contactEmail,
         subject: isHostApplication
           ? `New Listing Application from ${data.name} - Rishikesh Homestays`
-          : isStayLead
+          : isRental
+            ? rentalSubject
+            : isStayLead
             ? `Stay lead: ${data.name}${totalGuests ? ` (${totalGuests} guests)` : ''} → ${stayName}`
             : `New Enquiry from ${data.name} - Rishikesh Homestay`,
         html: emailShell(internalHtml)

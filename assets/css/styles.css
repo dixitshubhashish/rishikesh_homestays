@@ -3222,3 +3222,70 @@ input.sx-input {
   visibility: hidden;}
 @media (max-width: 1579px) {
   .rh-ad-rail { display: none; }}
+/* Bike & taxi rental page (/bike-and-taxi-rental-in-rishikesh). Mobile
+   first; reuses .split/.contact-card/.booking-form/.field for the form,
+   .guide-copy/.info-grid for the guide and .sx-faq for the FAQ. */
+.page-hero.rentals::before {
+  background-image:
+    linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.2)),
+    url("../images/rentals/bike-rental-hero.webp");
+  background-position: center 62%;}
+.rental-intro {
+  align-items: start;}
+.rental-intro-copy h2 {
+  margin: 0 0 14px;}
+.rental-intro-copy h3 {
+  margin: 26px 0 0;}
+.rental-price {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 18px 0 0;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--sky);}
+.rental-price strong {
+  color: var(--river);
+  font-size: 1.35rem;
+  font-weight: 900;}
+.rental-price span {
+  color: var(--muted);
+  font-weight: 700;}
+.rental-form h2 {
+  margin: 0;
+  scroll-margin-top: 110px;}
+.rental-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;}
+.field-hint {
+  color: var(--muted);
+  font-weight: 600;}
+.field textarea.field-invalid {
+  border-color: var(--clay);}
+/* .field-error sets display:block, which beats the [hidden] attribute. */
+.rental-form .field-error[hidden] {
+  display: none;}
+.rental-form .form-status {
+  margin: 0;}
+.rental-form .form-status:empty {
+  display: none;}
+.rental-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;}
+.rental-form-actions .btn {
+  flex: 1 1 200px;}
+.rental-form .form-note {
+  margin: 0;}
+.rental-faq {
+  margin-top: 0;}
+@media (min-width: 520px) {
+  .rental-form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));}
+}
+@media (min-width: 681px) {
+  .guide-copy .rental-rides {
+    grid-template-columns: repeat(2, minmax(0, 1fr));}
+}
