@@ -4,7 +4,7 @@ Read `CLAUDE.md` first (architecture, page rules), then this file, then `scripts
 
 ## Goal
 
-rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **sell the owner's own homestays** (Advaitam — luxury 3BHK, Nirmal Bagh, 15% off stays of 5+ days; Elysium; Yoga Retreat at the Ganges) over third-party listings. Third-party stays are listed to attract search traffic and capture leads (lead popup → then one booking-site redirect, or WhatsApp).
+rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **sell the owner's own homestays** (Advaitam — luxury 3BHK, Nirmal Bagh, parking on site, 15% off stays of 5+ days; Elysium; Yoga Retreat at the Ganges) over third-party listings. Third-party stays are listed to attract search traffic and capture leads (lead popup → then one booking-site redirect, or WhatsApp).
 
 ## Live now (origin/main, Vercel)
 
@@ -21,7 +21,6 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 1. CJ: get **Booking.com APAC to approve** the relationship (clicks only earn after that); send the "Get HTML" code of link 17323528 if a Booking.com search widget is wanted (place it **below** the homestay sections on the homepage).
 2. AdSense: verify the site (meta tag), create a **vertical display unit** and give its slot → put it in `UNITS.rail` in `assets/js/ads.js`.
 3. Optional: a search API key (Google Programmable Search or Brave) to find Goibibo/MakeMyTrip/Airbnb/Hotels.com links for the ~1,400 stays still without one.
-4. Confirm whether Advaitam has parking (pages currently say "message us for the pin and where to park").
 
 ## Ideas not started
 

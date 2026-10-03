@@ -23,7 +23,7 @@ export const STAYS = [
     priceINR: 12800,
     imageClass: "advaitam-ganga",
     summary: "Three bedroom family stay with balcony breakfast, fast Wi-Fi, and easy access to cafes and yoga studios.",
-    tags: ["3 bedrooms","Sunrise View", "Balcony", "Kitchen access", "Walkable Cafes", "Nearby Ghats"],
+    tags: ["3 bedrooms","Sunrise View", "Balcony", "Kitchen access", "Parking", "Walkable Cafes", "Nearby Ghats"],
     detailUrl: "/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh"
   },
   {
