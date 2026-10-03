@@ -15,6 +15,7 @@ const testPages = [
   { path: 'kedarnath-yatra.html', name: 'Kedarnath & Garhwal Gateway' },
   { path: 'list-your-homestay.html', name: 'List Your Homestay' },
   { path: 'haridwar-kumbh-2027.html', name: 'Kumbh 2027' },
+  { path: 'driving-from-delhi-to-rishikesh.html', name: 'Driving from Delhi' },
   { path: 'hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html', name: 'Advaitam Ganga Listing' }
 ];
 
@@ -372,7 +373,8 @@ test('Page Integration Tests', async (t) => {
       '/about-rishikesh',
       '/haridwar-kumbh-2027',
       '/triveni-ghat',
-      '/kedarnath-yatra'
+      '/kedarnath-yatra',
+      '/driving-from-delhi-to-rishikesh'
     ];
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);

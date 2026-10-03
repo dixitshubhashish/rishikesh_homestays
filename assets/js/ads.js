@@ -17,7 +17,7 @@
 // enough for them to sit in the empty margins beside the 1180px content
 // (≥ 1580px), and they hide again over the footer.
 const ADSENSE_CLIENT = 'ca-pub-7016219170450293';
-const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027'];
+const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027', '/driving-from-delhi-to-rishikesh'];
 function pageType(path) {
   if (GUIDES.includes(path)) return 'guide';
   if (path === '') return 'home';
