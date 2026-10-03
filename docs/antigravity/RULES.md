@@ -2,6 +2,41 @@
 
 Read this whole file before starting, and re-read it if you're unsure. These rules exist because wrong links send guests to the wrong hotel and cost the owner bookings; a missing link costs nothing (the site still captures the lead).
 
+## 0. Quick start (one screen)
+
+**What to search** — for each row of `docs/antigravity/no-link-stays.tsv`, top to bottom, one Google search per platform (copy the stay's `name` and `city` exactly; drop words like "Hotel" only if nothing comes up):
+
+| Platform | Google query |
+|---|---|
+| MakeMyTrip | `site:makemytrip.com "<name>" <city>` |
+| Goibibo | `site:goibibo.com "<name>" <city>` |
+| Agoda | `site:agoda.com "<name>" <city>` |
+| Booking.com | `site:booking.com "<name>" <city>` |
+| Airbnb | `site:airbnb.co.in "<name>" <city>` (also try airbnb.com) |
+| EaseMyTrip | `site:easemytrip.com "<name>" <city>` |
+| Hotels.com / Expedia | `site:hotels.com "<name>" <city>` · `site:expedia.co.in "<name>" <city>` |
+| Trip.com, Cleartrip, Yatra | `site:trip.com …` · `site:cleartrip.com …` · `site:yatra.com …` |
+| OYO, Treebo, FabHotels | `site:oyorooms.com …` · `site:treebo.com …` · `site:fabhotels.com …` |
+| Own website | `"<name>" <city> official website book` |
+
+If the quoted name finds nothing, retry once without quotes. Stop after **3 good links** for a stay, or after all platforms.
+
+**How to decide** — open each candidate in the browser; keep it only if it's that platform's **property page**, the **name** matches (same distinctive words, same unit) and the **town** matches (section 4). If unsure → skip.
+
+**Where to write**
+
+| What | Where |
+|---|---|
+| Your results | `docs/antigravity/results-<batch>.tsv` (e.g. `results-ag1.tsv` for rows 1–200), tab-separated, no header, appended as you go (format: section 5) |
+| Your claim + final counts | a row in `.agents/coordination.md` → "Active Claims" |
+| Anything else in the repo | **nothing** — read-only for you |
+
+**One line per result:**
+```
+<key>	verified	<Platform>	<url>	page title as shown: "<title>"
+<key>	none	-	-	searched: <platforms>; nothing matched
+```
+
 ## 1. The job
 
 Input: `docs/antigravity/no-link-stays.tsv` — 1,396 stays in Rishikesh and Haridwar that have no confirmed booking-site page yet, sorted **best first** (most reviews, rated, priced). Work **top to bottom**; quality first, small homestays later.
