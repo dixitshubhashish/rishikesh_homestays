@@ -53,6 +53,11 @@ after each page; the source's robots.txt allows crawling. A full crawl of
   Residency" isn't also listed as a hotel.
 - **Theme tags** (`t`): `pet` (Pets allowed), `ganga` (Ganga/river/ghat in the
   name), `luxury` (4–5 stars or from ₹8,000), `budget` (≤ ₹1,500), `pool`.
+- **Bedrooms** (`bd`): from the name only ("2BHK", "3 bedroom", "2BR",
+  "Studio", "1RK"; the crawled facilities never give a count). 0 = studio,
+  1–8, 9 = 8+. Left out when the name doesn't say or gives two sizes
+  ("1 & 2 BHK"): never guessed. Feeds the size pages (`b:<min>-<max>`
+  filters: studio & 1 BHK, 2 BHK, 3 BHK and bigger) and BigQuery `bedrooms`.
 - Stars, guest rating, review count, starting price, facilities, as listed.
 
 ## Pages

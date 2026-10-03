@@ -54,6 +54,10 @@ const SCHEMA = [
   { name: 'booking_site', type: 'STRING' },
   { name: 'booking_url', type: 'STRING' },
   { name: 'source_url', type: 'STRING' },
+  // Bedrooms from the name (process.py bd): 0 = studio, 9 = 8+, NULL = unknown.
+  // Last, so the load's ALLOW_FIELD_ADDITION adds it to the existing table.
+  { name: 'bedrooms', type: 'INTEGER' },
+  { name: 'agoda_url_unconfirmed', type: 'STRING' }, // exact-name Agoda page (Agoda blocks automated checks; internal only)
 ];
 
 const OWN_KEYS = ['advaitam-ganga-hill-view-homestay-by-the-ganges-ghat', 'villa-elysium-the-himalayan-ganges-view-yoga-retreat', 'villa-yoga-retreat-at-the-ganges-in'];
@@ -76,6 +80,12 @@ async function main() {
     const [key, status, site, url] = line.split('\t');
     links[key] = { status, site: site === '-' ? null : site, url: url && url.startsWith('https://') ? url : null };
   }
+  const agodaExact = {};
+  const agodaFile = join(HERE, '.cache/places/agoda-exact.tsv');
+  if (existsSync(agodaFile)) for (const line of readFileSync(agodaFile, 'utf8').trim().split('\n')) {
+    const [key, url] = line.split('\t');
+    agodaExact[key] = url;
+  }
   const today = new Date().toISOString().slice(0, 10);
   const rows = stays.map((s) => {
     const l = links[s.id];
@@ -86,6 +96,8 @@ async function main() {
       facilities: s.f, address: s.ad || null, latitude: s.ll?.[0] ?? null, longitude: s.ll?.[1] ?? null,
       booking_status: l ? l.status : 'unsearched', booking_site: l?.site ?? null,
       booking_url: l?.status === 'verified' ? l.url : null, source_url: s.u,
+      bedrooms: s.bd ?? null,
+      agoda_url_unconfirmed: agodaExact[s.id] ?? null,
     };
   });
 

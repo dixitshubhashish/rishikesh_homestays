@@ -50,7 +50,8 @@ const SCHEMA = [
   { name: 'match_m', type: 'INTEGER' }, // distance to the matched directory stay
   { name: 'booking_site', type: 'STRING' },
   { name: 'booking_url', type: 'STRING' },
-  { name: 'booking_source', type: 'STRING' }, // directory | matched (browser-verified) | google_website (owner's own link)
+  { name: 'booking_source', type: 'STRING' },
+  { name: 'agoda_url_unconfirmed', type: 'STRING' }, // exact-name Agoda page, not browser-checked // directory | matched (browser-verified) | google_website (owner's own link)
   { name: 'our_page', type: 'STRING' },
   { name: 'fetched_date', type: 'DATE' },
 ];
@@ -76,6 +77,15 @@ const placeOta = join(HERE, '.cache/places/ota-links.tsv');
 if (existsSync(placeOta)) for (const line of readFileSync(placeOta, 'utf8').trim().split('\n')) {
   const [key, status, site, url] = line.split('\t');
   if (status === 'verified') placeLinks[key.slice(2)] = { site, url: site === 'Booking.com' ? `${url.split('?')[0]}?aid=${BOOKING_AID}` : url };
+}
+// Agoda pages whose own URL carries exactly this stay's name in the same city
+// (agoda-exact.tsv). Unconfirmed: Agoda blocks automated checks, so these stay
+// internal and are never used as the site's booking link.
+const agodaExact = {};
+const agodaFile = join(HERE, '.cache/places/agoda-exact.tsv');
+if (existsSync(agodaFile)) for (const line of readFileSync(agodaFile, 'utf8').trim().split('\n')) {
+  const [key, url] = line.split('\t');
+  agodaExact[key] = url;
 }
 const phonesFile = join(HERE, '.cache/places/phones.json');
 const phones = existsSync(phonesFile) ? JSON.parse(readFileSync(phonesFile, 'utf8')) : {};
@@ -114,6 +124,7 @@ const rows = places.map((p) => {
     website_ota: webOta, google_maps_url: p.maps,
     in_directory: !!best, listing_id: best?.s.lid ?? null, slug: best?.s.id ?? null, match_m: best ? Math.round(best.m) : null,
     booking_site: link?.site ?? null, booking_url: link?.url ?? null, booking_source: l ? (best && links[best.s.id] ? 'directory' : 'matched') : own ? 'google_website' : null,
+    agoda_url_unconfirmed: agodaExact[`g-${p.id}`] || (best && agodaExact[best.s.id]) || null,
     our_page: best ? `https://rishikeshhomestays.com/hotels/stay?s=${best.s.id}${best.s.cy !== 'rishikesh' ? `&c=${best.s.cy}` : ''}` : null,
     fetched_date: p.fetched,
   };

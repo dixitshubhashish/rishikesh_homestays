@@ -60,8 +60,14 @@ function ensureLibphonenumber() {
 function matchFilter(d, filter) {
   if (!filter || filter === 'all') return true;
   const [kind, value] = filter.split(':');
+  if (kind === 'b') { // bedrooms "b:<min>-<max>"; unknown size never matches
+    const [lo, hi] = value.split('-').map(Number);
+    return d.bd != null && d.bd >= lo && d.bd <= hi;
+  }
   return kind === 'k' ? d.ks.includes(value) : d.t.includes(value);
 }
+// Category title for running text, keeping "BHK" (lc() in build_pages.py).
+const lc = (t) => t.toLowerCase().replace(/\bbhk\b/g, 'BHK');
 
 // The most specific category page this stay belongs to, for the breadcrumb.
 function categoryFor(stay) {
@@ -196,7 +202,7 @@ function render(root, d, isOwn) {
     ${d.f.length ? `<section class="sx-guide" aria-labelledby="sp-fac-h"><h2 id="sp-fac-h">Facilities</h2><ul class="sp-fac" id="sp-fac">${d.f.map((f) => `<li>${esc(f)}</li>`).join('')}</ul><button type="button" class="sp-fac-toggle" id="sp-fac-toggle" aria-controls="sp-fac" aria-expanded="false" hidden></button></section>` : ''}
     ${similar.length ? `<section class="sx-group" aria-labelledby="sp-sim-h"><h2 id="sp-sim-h">Similar stays in ${esc(d.a)}</h2>
       <ul class="sx-list">${similarWithOwn(similar, d.ks.includes('Hostels') || d.t.includes('backpacker'))}</ul>
-      <div class="sx-actions"><a class="sx-open" href="/hotels/best-${cat.slug}-in-${CITY}">See all ${cat.filter === 'all' ? 'stays' : esc(cat.title.toLowerCase())}</a></div></section>` : ''}
+      <div class="sx-actions"><a class="sx-open" href="/hotels/best-${cat.slug}-in-${CITY}">See all ${cat.filter === 'all' ? 'stays' : esc(lc(cat.title))}</a></div></section>` : ''}
     <p class="sx-note">${CITY === 'haridwar' ? 'Haridwar moves with the festival calendar, and so do room rates. Prices and availability jump around the Kumbh, Kanwar Yatra and big snan days, so give the property a quick check before you pack.' : 'Rishikesh moves with the seasons, and so do room rates. Prices, availability and facilities can shift between rafting season and the monsoon, so give the property a quick check before you pack.'}</p>
     </div>
     <aside class="sp-side" aria-label="Book direct with Rishikesh Homestays">

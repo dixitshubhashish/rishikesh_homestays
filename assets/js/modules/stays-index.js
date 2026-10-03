@@ -5,7 +5,7 @@
 // every stay. This script only adds filtering, search and regrouping, and it
 // downloads the data module (stays-index-data.js) the first time someone
 // uses a control, not on page load. #sx-root's data-filter narrows the data:
-// "all" | "k:<type>" | "t:<theme tag>".
+// "all" | "k:<type>" | "t:<theme tag>" | "b:<min>-<max>" (bedrooms).
 
 // City of this page (#sx-root data-city; Rishikesh by default): picks the
 // data module and adds &c=<city> to /stay links for cities other than Rishikesh.
@@ -18,8 +18,14 @@ const inr = (n) => n.toLocaleString('en-IN');
 function matchFilter(d, filter) {
   if (!filter || filter === 'all') return true;
   const [kind, value] = filter.split(':');
+  if (kind === 'b') { // bedrooms "b:<min>-<max>"; unknown size never matches
+    const [lo, hi] = value.split('-').map(Number);
+    return d.bd != null && d.bd >= lo && d.bd <= hi;
+  }
   return kind === 'k' ? d.ks.includes(value) : d.t.includes(value);
 }
+// Category title for running text, keeping "BHK" (lc() in build_pages.py).
+const lc = (t) => t.toLowerCase().replace(/\bbhk\b/g, 'BHK');
 
 // Our stays mixed into every list: after the 3rd row, then every 7th,
 // rotating; in hostel lists pitched as the private, not-shared option.
@@ -161,12 +167,12 @@ export function setupStaysIndex() {
         .map((k) => ({ title: state.g === 's' ? (k === '0' ? 'Unrated' : `${k}-star`) : k, list: groups[k], slug: null }));
     }
     const limit = isMaster && state.g === 'c';
-    out.innerHTML = sections.map(({ title, list, slug, filter }) => {
+    out.innerHTML = sections.map(({ title, plural, list, slug, filter }) => {
       const key = `${state.g}:${title}`, open = !limit || state.open.has(key);
       const shown = open ? list : list.slice(0, PAGE_SIZE);
       const actions = limit ? [
         list.length > PAGE_SIZE && !open && !slug ? `<button type="button" class="sx-more" data-k="${esc(key)}">Show all ${inr(list.length)}</button>` : '',
-        slug ? `<a class="sx-open" href="/hotels/best-${slug}-in-${root.dataset.city || 'rishikesh'}">View all ${inr(list.length)} ${esc(title.toLowerCase())}</a>` : ''
+        slug ? `<a class="sx-open" href="/hotels/best-${slug}-in-${root.dataset.city || 'rishikesh'}">View all ${inr(list.length)} ${esc(plural || lc(title))}</a>` : ''
       ].join('') : '';
       return `<section class="sx-group"><h2>${esc(title)} <span>${inr(list.length)}</span></h2>` +
         `<ul class="sx-list${limit && open && list.length > PAGE_SIZE ? ' sx-scroll' : ''}">${mixHtml(shown, own, PRIVATE_ALT.includes(pageFilter) || PRIVATE_ALT.includes(filter))}</ul>` +

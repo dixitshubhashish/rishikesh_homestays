@@ -50,7 +50,7 @@ const verified = new Set(readFileSync(`${HERE}ota-links.tsv`, 'utf8').trim().spl
 const seen = (f) => new Set(existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t')[0]) : []);
 const tried = new Set([...seen(OUT), ...seen(TRIED)]);
 const todo = stays.filter((s) => !s.own && !verified.has(s.id))
-  .sort((a, b) => a.id.localeCompare(b.id))
+  .sort((a, b) => (b.q || 0) - (a.q || 0) || a.id.localeCompare(b.id)) // best first (q: quality score, if given)
   .filter((_, i) => i % SHARDS === SHARD - 1)
   .filter((s) => !tried.has(s.id))
   .slice(0, LIMIT);

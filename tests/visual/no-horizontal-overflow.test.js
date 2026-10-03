@@ -50,7 +50,8 @@ const VIEWPORTS = [
 // report a fraction of a pixel of "overflow" that isn't a real bug.
 const OVERFLOW_TOLERANCE_PX = 2;
 
-test('No page overflows horizontally on mobile or laptop', { timeout: 120000 }, async (t) => {
+// ~80 pages × 2 widths: a generous limit so a busy machine doesn't fail it
+test('No page overflows horizontally on mobile or laptop', { timeout: 360000 }, async (t) => {
   const pages = discoverPages();
   const app = express();
   app.use(express.static(ROOT));
