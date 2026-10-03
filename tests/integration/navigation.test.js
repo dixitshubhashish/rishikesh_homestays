@@ -14,6 +14,7 @@ const pagesToScan = [
   '404.html',
   'about-rishikesh.html',
   'contact.html',
+  'driving-from-delhi-to-rishikesh.html',
   'haridwar-kumbh-2027.html',
   'homestays.html',
   'kedarnath-yatra.html',
@@ -68,7 +69,7 @@ test('Navigation and internal links resolve to a real file', async (t) => {
       'about-rishikesh.html', 'contact.html', 'haridwar-kumbh-2027.html',
       'homestays.html', 'kedarnath-yatra.html', 'list-your-homestay.html',
       'places-to-visit.html', 'thanks.html', 'things-to-do-in-rishikesh.html',
-      'triveni-ghat.html'
+      'triveni-ghat.html', 'driving-from-delhi-to-rishikesh.html'
     ];
     rootPages.forEach((file) => {
       assert(existsSync(join(ROOT, file)), `${file} should exist at the repo root so its clean URL resolves natively on Vercel/Netlify`);
