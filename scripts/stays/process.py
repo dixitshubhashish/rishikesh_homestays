@@ -10,6 +10,8 @@ Usage: python3 scripts/stays/process.py [--names]
 - Types (ks): every type with evidence: the directory's own section plus each
   type word found as a whole word in the name. One stay can be in several.
 - Theme tags (t): pet, ganga, luxury, budget, pool (see tags()).
+- Bedrooms (bd): from the name only (2BHK, 3 bedroom, 2BR, Studio, 1RK);
+  0 = studio, 9 = 8+, left out when unknown or ambiguous (see bedrooms()).
 - Drops duplicates (same name within 150 m).
 --names prints a sample of raw -> cleaned names for eyeballing.
 """
@@ -168,7 +170,28 @@ def tags(r):
     for th in sorted(official_themes.get(r['url'],())):
         if th not in t: t.append(th)
     return t
+NUM_WORDS={'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10}
+BD_NUM=r'(\d{1,2}|'+'|'.join(NUM_WORDS)+r')'
+def bedrooms(r):
+    """bd: bedrooms stated in the name. 0 = studio / 1RK, 1-8, 9 = 8+.
+    None (field left out) when the name doesn't say, or says two different
+    sizes ("1 & 2 BHK"): never guessed. The crawled facilities never state
+    a bedroom count, so the name is the only evidence."""
+    n=r['clean'].lower(); found=set()
+    for pat in (BD_NUM+r'\s*-?\s*bhk\b', BD_NUM+r"\s*-?\s*bed\s?rooms?\b(?:'s)?", r'\b(\d)\s*-?\s*br\b'):
+        for m in re.finditer(pat,n):
+            v=m.group(1); found.add(NUM_WORDS.get(v) or int(v))
+    for m in re.finditer(r'\b(\d)\s*(?:&|and|or|/|,)\s*\d\s*-?\s*(?:bhk|bed\s?rooms?)\b',n): found.add(int(m.group(1)))  # "1 & 2BHK": mixed
+    if re.search(r'\b1\s*-?\s*rk\b',n): found.add(0)
+    # "Studio" as the unit, not a "pottery/yoga studio" on site
+    if not found and re.search(r'(?<!pottery )(?<!yoga )(?<!art )(?<!dance )(?<!music )(?<!photo )\bstudio\b',n): found.add(0)
+    if len(found)!=1: return None
+    v=found.pop()
+    return 9 if v>8 else v
 data=[{'id':r['url'].split('//')[1].split('.')[0],'ad':r.get('address') or '','ll':[r['lat'],r['lng']] if r.get('lat') else None,'t':tags(r),'n':r['clean'],'u':r['url'],'s':int(r['stars'] or 0),'a':r['area'],'k':r['kind'],'ks':r['ks'],'g':r.get('guestRating'),'c':r.get('reviews'),'f':r.get('facilities') or [],'p':(int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None)} for r in out]
+for x,r in zip(data,out):
+    b=bedrooms(r)
+    if b is not None: x['bd']=b
 # Stable numeric listing_id (primary key) per stay, kept in the committed
 # registry listing-ids.tsv: existing ids never change or get reused; new
 # stays get the next number; our own 3 stays are 1-3.
@@ -200,6 +223,7 @@ print('rows',len(rows),'kept',len(data))
 print('stars',sorted(Counter(d['s'] for d in data).items()))
 print('areas',Counter(d['a'] for d in data).most_common())
 print('kinds',Counter(d['k'] for d in data).most_common())
+print('bedrooms',sorted(Counter(d['bd'] for d in data if 'bd' in d).items()),'unknown',sum('bd' not in d for d in data))
 print('area by text/map/none',Counter(r['how'] for r in rows))
 if '--names' in sys.argv:
     for r in rows[:: max(1,len(rows)//40)]: print(f"{r['listName'][:60]:60} -> {r['clean']}")

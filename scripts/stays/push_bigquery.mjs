@@ -54,6 +54,9 @@ const SCHEMA = [
   { name: 'booking_site', type: 'STRING' },
   { name: 'booking_url', type: 'STRING' },
   { name: 'source_url', type: 'STRING' },
+  // Bedrooms from the name (process.py bd): 0 = studio, 9 = 8+, NULL = unknown.
+  // Last, so the load's ALLOW_FIELD_ADDITION adds it to the existing table.
+  { name: 'bedrooms', type: 'INTEGER' },
 ];
 
 const OWN_KEYS = ['advaitam-ganga-hill-view-homestay-by-the-ganges-ghat', 'villa-elysium-the-himalayan-ganges-view-yoga-retreat', 'villa-yoga-retreat-at-the-ganges-in'];
@@ -86,6 +89,7 @@ async function main() {
       facilities: s.f, address: s.ad || null, latitude: s.ll?.[0] ?? null, longitude: s.ll?.[1] ?? null,
       booking_status: l ? l.status : 'unsearched', booking_site: l?.site ?? null,
       booking_url: l?.status === 'verified' ? l.url : null, source_url: s.u,
+      bedrooms: s.bd ?? null,
     };
   });
 

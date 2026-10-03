@@ -73,7 +73,9 @@ OWN = [
 ]
 
 # (slug, title, singular, filter, intro, guide). filter "k:<type>" matches any
-# of the stay's types, "t:<tag>" a theme tag from process.py, "all" everything.
+# of the stay's types, "t:<tag>" a theme tag from process.py, "b:<min>-<max>"
+# the bedroom count bd from process.py (0 = studio, 9 = 8+; stays whose size
+# is unknown match no b: filter), "all" everything.
 # best-hotels-in-rishikesh is the master list: every stay, one section per
 # category (the Hotels and Other sections have no separate page).
 CATEGORIES = [
@@ -98,6 +100,15 @@ CATEGORIES = [
     ('apartments', 'Apartments', 'apartment', 'k:Apartments',
      'Serviced 1BHK to 4BHK apartments with kitchens, good for long stays and families.',
      'Apartments suit long stays, yoga teacher trainings and families who want a kitchen. Ask about power backup, lifts, parking and weekly or monthly rates, which are often much lower than nightly prices.'),
+    ('studio-and-1-bhk-stays', 'Studio & 1 BHK Stays', 'studio or 1 BHK stay', 'b:0-1',
+     'Studios and one-bedroom (1 BHK) flats and suites for couples, solo travellers and long yoga stays, often with a kitchen or kitchenette.',
+     'A studio or 1 BHK gives you your own front door and somewhere to cook for less than most hotel suites, which is why yoga students and remote workers settle into them for weeks. Most are in apartment blocks, so ask which floor it is on and whether there is a lift, whether the kitchen has a proper stove or just a kettle, how long the power backup lasts, and whether there is parking if you are driving up. Weekly and monthly rates are usually far below the nightly price, so always ask.'),
+    ('2-bhk-stays', '2 BHK Stays', '2 BHK stay', 'b:2-2',
+     'Two-bedroom flats, apartments and villas: room for a family with kids or two couples, with a living room and often a kitchen to share.',
+     'A 2 BHK is the sweet spot for a family of four or two couples travelling together: two real bedrooms, a shared living room and usually a kitchen, often for about the price of two hotel rooms. Before you book, check that both bedrooms have proper beds rather than a sofa-cum-bed, how many bathrooms there are, whether there is a lift and parking for your car, and what the power backup runs, as short cuts still happen.'),
+    ('3-bhk-and-bigger-stays', '3 BHK and Bigger Stays', '3 BHK or bigger stay', 'b:3-9',
+     'Three-bedroom and bigger homes, apartments and villas for families and groups, led by our own Advaitam, a luxury 3 BHK homestay with Ganga and hill views in Nirmal Bagh that you can book direct with us.',
+     'For a big family or a group of friends, one 3 BHK or larger home usually beats juggling several hotel rooms: everyone stays under one roof, shares a kitchen and living room, and the cost per person drops. Our own Advaitam is exactly that, a luxury 3 BHK by the Ganges ghat in quiet Nirmal Bagh, close to the river without the crowds; message us for direct rates. Wherever you book, ask how many bathrooms there are, whether the bedrooms are on one floor or up several flights of stairs (and if there is a lift), whether there is parking for more than one car, whether a caretaker or cook is on hand, and what the power backup covers.'),
     ('guest-houses', 'Guest Houses', 'guest house', 'k:Guest houses',
      'Small guest houses with simple rooms, usually close to the ghats and markets.',
      'Guest houses are simple and central, a step up from a hostel without hotel prices. Rooms vary a lot within one building, so ask for photos of the exact room and whether it has a window or balcony.'),
@@ -229,7 +240,29 @@ def matches(stay, flt):
     if flt == 'all':
         return True
     kind, value = flt.split(':', 1)
+    if kind == 'b':
+        lo, hi = (int(x) for x in value.split('-'))
+        return stay.get('bd') is not None and lo <= stay['bd'] <= hi
     return value in stay['ks'] if kind == 'k' else value in stay['t']
+
+
+# Extra words for a category's <h1> and <title> only (kept out of the short
+# title used in strips, lists and FAQs).
+TITLE_SUFFIX = {'3-bhk-and-bigger-stays': ' for Families & Groups'}
+
+
+def lc(title):
+    """Lower-case a category title for running text, keeping "BHK"."""
+    return re.sub(r'\bbhk\b', 'BHK', title.lower())
+
+
+# Running-text plural where a count comes first ("58 two-bedroom (2 BHK)
+# stays", not "58 2 BHK stays"); every other category uses lc(title).
+PLURAL = {'2-bhk-stays': 'two-bedroom (2 BHK) stays', '3-bhk-and-bigger-stays': 'stays with 3 or more bedrooms'}
+
+
+def plural_of(slug, title):
+    return PLURAL.get(slug) or lc(title)
 
 
 def stable_key(stay):
@@ -599,7 +632,7 @@ def main(data_path, crawled):
     counts = {c[0]: sum(matches(s, c[3]) for s in everyone) for c in CATEGORIES}
     live = [c for c in CATEGORIES if counts[c[0]] >= MIN_PAGE]
     sections = ([{'title': 'Hotels', 'filter': 'k:Hotels', 'slug': None}] +
-                [{'title': c[1], 'filter': c[3], 'slug': c[0]} for c in live if c[3] != 'all'] +
+                [{'title': c[1], 'filter': c[3], 'slug': c[0], **({'plural': PLURAL[c[0]]} if c[0] in PLURAL else {})} for c in live if c[3] != 'all'] +
                 [{'title': 'Other stays', 'filter': 'k:Other stays', 'slug': None}])
     meta = {
             'categories': [{'slug': c[0], 'title': c[1], 'filter': c[3], 'count': counts[c[0]]} for c in live],
@@ -639,14 +672,14 @@ def main(data_path, crawled):
         members = [s for s in stays if matches(s, flt)]
         st = stats_for(members + [o for o in own if matches(o, flt)])
         n = st['n']
-        plural = 'stays' if is_master else title.lower().replace('stays with a pool', 'stays with a pool')
-        h1 = f'Best Hotels in {CN}' if is_master else f'Best {title} in {CN}'
+        plural = 'stays' if is_master else plural_of(slug, title)
+        h1 = f'Best Hotels in {CN}' if is_master else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")}'
         page_title = (f'Best Hotels in {CN} | All {n:,} Stays by Area & Category' if is_master
-                      else f'Best {title} in {CN} | {n:,} Compared by Area & Price')
+                      else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")} | {n:,} Compared by Area & Price')
         kinds_txt = 'hotels, dharamshalas, homestays, guest houses and apartments' if CITY == 'haridwar' else 'hotels, homestays, resorts, camps and hostels'
         desc = (f'{n:,} {CN} stays compared: {kinds_txt} by area, price and facilities, '
                 f'with local tips on where to stay.') if is_master else (
-                f'Compare {n:,} {title.lower()} in {CN} by area, price and facilities. {intro}')[:300]
+                f'Compare {n:,} {plural} in {CN} by area, price and facilities. {intro}')[:300]
         faq = faqs(title, 'stay' if is_master else singular, plural, st, date)
 
         strip = ''.join(
@@ -662,7 +695,7 @@ def main(data_path, crawled):
                 lst = [s for s in stays if matches(s, sec['filter'])]
                 if not lst:
                     continue
-                more = (f'<a class="sx-open" href="/hotels/best-{sec["slug"]}-in-{CITY}">View all {len(lst):,} {esc(sec["title"].lower())}</a>' if sec['slug']
+                more = (f'<a class="sx-open" href="/hotels/best-{sec["slug"]}-in-{CITY}">View all {len(lst):,} {esc(plural_of(sec["slug"], sec["title"]))}</a>' if sec['slug']
                         else (f'<button type="button" class="sx-more" data-k="c:{esc(sec["title"])}">Show all {len(lst):,}</button>' if len(lst) > MASTER_SECTION else ''))
                 blocks.append(f'<section class="sx-group"><h2>{esc(sec["title"])} <span>{len(lst):,}</span></h2>'
                               f'<ul class="sx-list">{mix_html(lst[:MASTER_SECTION], own, sec["filter"] in PRIVATE_ALT)}</ul>'
@@ -670,7 +703,7 @@ def main(data_path, crawled):
             listing = ''.join(blocks)
             list_items = [d for d in stays][:30]
         else:
-            listing = (f'<section class="sx-group"><h2>All {esc(title.lower())} <span>{len(members):,}</span></h2>'
+            listing = (f'<section class="sx-group"><h2>All {esc(lc(title))} <span>{len(members):,}</span></h2>'
                        f'<ul class="sx-list">{mix_html(members, own, flt in PRIVATE_ALT)}</ul></section>')
             list_items = members[:30]
 
@@ -724,7 +757,7 @@ def main(data_path, crawled):
                         '<p>Planning a pilgrimage? Read our <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027 guide</a> and the <a href="/triveni-ghat">Ganga Aarti guide</a>, compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a> (25 km upriver), or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>')
         main_html = f'''<main class="sx-page" id="main">
       <section class="section">
-        <div class="container" id="sx-root" data-city="{CITY}" data-filter="{esc(flt)}" data-all-title="All {esc(title.lower())}">
+        <div class="container" id="sx-root" data-city="{CITY}" data-filter="{esc(flt)}" data-all-title="All {esc(lc(title))}">
           <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>{esc(h1)}</span></nav>
           <p class="eyebrow">Where to stay</p>
           <h1 class="sx-title">{esc(h1)}</h1>
@@ -734,7 +767,7 @@ def main(data_path, crawled):
           {cities_nav}
           {near_nav}
           <section class="sx-guide" aria-labelledby="sx-guide-h">
-            <h2 id="sx-guide-h">{f'Where to stay in {CN}' if is_master else f'Choosing {esc(title.lower())} in {CN}'}</h2>
+            <h2 id="sx-guide-h">{f'Where to stay in {CN}' if is_master else f'Choosing {esc(lc(title))} in {CN}'}</h2>
             <p>{esc(guide)}</p>
             <ul class="sx-insights">{insight_html}</ul>
           </section>
@@ -790,7 +823,7 @@ def main(data_path, crawled):
     ensure_markers(f'{ROOT}/sitemap.xml', '</urlset>', '  ')
     replace_between(f'{ROOT}/sitemap.xml', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', sm + '\n  ')
     ll = '\n' + '\n'.join(
-        f'- [{f"Best Hotels in {CN} (all stays)" if c[3] == "all" else f"Best {c[1]} in {CN}"}]({SITE}/hotels/best-{c[0]}-in-{CITY}): {counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else c[1].lower()}. {city_copy(c[0], c[1], c[4], c[5])[0]}'
+        f'- [{f"Best Hotels in {CN} (all stays)" if c[3] == "all" else f"Best {c[1]} in {CN}"}]({SITE}/hotels/best-{c[0]}-in-{CITY}): {counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else plural_of(c[0], c[1])}. {city_copy(c[0], c[1], c[4], c[5])[0]}'
         for c in live) + ''.join(
         f"\n- [Best stays near {np['name']}]({SITE}/hotels/best-stays-near-{np['slug']}): {np['near']} stays within {np['radius']:g} km of {np['name']}, sorted by real distance, with a map."
         for np in near_pages) + '\n\n'
