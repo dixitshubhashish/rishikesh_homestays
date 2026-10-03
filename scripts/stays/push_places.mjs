@@ -50,6 +50,7 @@ const SCHEMA = [
   { name: 'match_m', type: 'INTEGER' }, // distance to the matched directory stay
   { name: 'booking_site', type: 'STRING' },
   { name: 'booking_url', type: 'STRING' },
+  { name: 'booking_source', type: 'STRING' }, // directory | matched (browser-verified) | google_website (owner's own link)
   { name: 'our_page', type: 'STRING' },
   { name: 'fetched_date', type: 'DATE' },
 ];
@@ -101,12 +102,18 @@ const rows = places.map((p) => {
   const l = (best && links[best.s.id]) || placeLinks[p.id];
   const ph = phones[p.id] || {};
   const web = (ph.website || '').toLowerCase();
+  const webOta = (OTA_HOSTS.find(([h]) => web.includes(h)) || [])[1] || null;
+  // a place whose own Google website is a booking-site page: the owner's
+  // link, used when we found none (Tripadvisor is reviews, not booking)
+  const own = !l && webOta && webOta !== 'Tripadvisor'
+    ? { site: webOta, url: webOta === 'Booking.com' ? `${ph.website.split('?')[0]}?aid=${BOOKING_AID}` : ph.website } : null;
+  const link = l || own;
   return {
     place_id: p.id, city: p.city, km_from_centre: p.km, name: p.name, address: p.address, latitude: p.lat, longitude: p.lng,
     google_type: p.type, google_types: p.types || [], business_status: p.status, phone: ph.phone ?? null, website: ph.website ?? null,
-    website_ota: (OTA_HOSTS.find(([h]) => web.includes(h)) || [])[1] || null, google_maps_url: p.maps,
+    website_ota: webOta, google_maps_url: p.maps,
     in_directory: !!best, listing_id: best?.s.lid ?? null, slug: best?.s.id ?? null, match_m: best ? Math.round(best.m) : null,
-    booking_site: l?.site ?? null, booking_url: l?.url ?? null,
+    booking_site: link?.site ?? null, booking_url: link?.url ?? null, booking_source: l ? (best && links[best.s.id] ? 'directory' : 'matched') : own ? 'google_website' : null,
     our_page: best ? `https://rishikeshhomestays.com/hotels/stay?s=${best.s.id}${best.s.cy !== 'rishikesh' ? `&c=${best.s.cy}` : ''}` : null,
     fetched_date: p.fetched,
   };

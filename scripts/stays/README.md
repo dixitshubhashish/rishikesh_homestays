@@ -209,3 +209,20 @@ immediately), or locally with `python3 scripts/stays/refresh.py --force`.
 **Parallel checks:** `node verify_candidates.mjs <candidates.tsv> --out <results.tsv>` checks only that file and appends matches to `results.tsv` instead of rewriting `ota-links.tsv`, so many runs can go at once (split the candidates into shards, then `python3 merge_ota.py results-*.tsv`). Each stay only accepts a page in its own city, a title that adds its own distinctive words to a one-word name is rejected, and a different BHK count is rejected. Booking's 429 is backed off and retried. Before merging, drop pages claimed by several stays whose names differ, or that already belong to another verified stay.
 
 **Other platforms (sitemaps):** `python3 sitemap_candidates.py <easemytrip|agoda> <urls.txt>` matches stays without a verified link against a platform's public sitemap URL list (EaseMyTrip: `.cache/easemytrip-hotels.txt`, 197,897 hotels; Agoda: `.cache/agoda-hotels.txt`, Rishikesh + Haridwar only), then `node verify_platform.mjs <candidates.tsv> --out <results.tsv> [--shard i/N] [--slow]` checks each page's title in a browser (same rule, `titleMatches` in `booking-match.mjs`), and `python3 postcheck_matches.py <out.tsv> <results.tsv>…` drops pages claimed by differently named stays before `merge_ota.py`. Agoda answers 502 to bursts: use `--slow` (one page at a time); the run stops itself after 8 refusals in a row. Goibibo/MakeMyTrip sitemaps sit behind bot protection and Airbnb's list only bare room ids, so those need a search API.
+
+## Google Maps places (Places API, internal only)
+
+Every place to stay Google Maps knows within 20 km of Rishikesh and Haridwar, kept in BigQuery `rishikesh_homestays.places_lodging` for our own planning and outreach. **Never shown on the site** (phones especially). Uses the BigQuery service account against project keen-device-610 (Places API (New) is enabled there; billing applies).
+
+| Step | Command | Cost |
+|---|---|---|
+| 1. ids | `node scripts/stays/places_sweep.mjs --phase ids` — 662 tiles of ~2 km × one-word searches ("hotel", "homestay", "guest house", "dharamshala"…), tiles at the 60-result cap split in four; resumable (`.cache/places/tiles-done.json`) | IDs-only searches (free tier) |
+| 2. details | `--phase details` — name, address, location, type, open/closed per id, 6 at a time with per-minute 429 back-off | Pro, ≈5,000 free/month |
+| 3. phones | `--phase phones --ids .cache/places/need-phones.json` — phone + website only for places worth contacting (new to us or no booking link); **always `--dry-run` first** | Enterprise, ≈1,000 free/month then ≈$20/1,000 |
+| 4. load | `node scripts/stays/push_places.mjs` — matches each place to a directory stay (≤300 m + same name words, or exact name ≤1.5 km), attaches booking links, writes `need-phones.json` and `unlinked-stays.json`, replaces the BigQuery table | — |
+
+Booking links for Google places that aren't in the directory come from the same browser-checked matchers, pointed at them with `STAYS_FILE=.cache/places/unlinked-stays.json` (keys `g-<place_id>`): `sitemap_candidates.py booking|easemytrip` → `verify_platform.mjs`, and `guess_booking_slugs.mjs --out .cache/places/guess-<n>.tsv` (resumable via `.tried`); then `STAYS_FILE=.cache/places/all-stays.json postcheck_matches.py .cache/places/ota-links.tsv <results…>` and `push_places.mjs`. A place whose own Google website is a booking-site page (OYO, Agoda, Airbnb, Booking.com…) uses that link when we have none (`booking_source = google_website`).
+
+Columns: place_id, city, km_from_centre, name, address, lat/lng, google_type(s), business_status, phone, website, website_ota, google_maps_url, in_directory, listing_id, slug, match_m, booking_site, booking_url (Booking.com with aid), booking_source (directory | matched | google_website), our_page, fetched_date. Google's terms: keep place ids; re-run the sweep monthly rather than keeping other fields longer.
+
+Latest run (2026-10-03): 4,947 places (Rishikesh 3,131, Haridwar 1,816); 1,199 directory stays matched, 3,395 new to us; 2,036 phones (of 4,125 looked up, ≈$63); 1,287 with a booking link.

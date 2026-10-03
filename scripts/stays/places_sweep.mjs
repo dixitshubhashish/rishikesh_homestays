@@ -148,11 +148,16 @@ if (PHASE === 'ids') {
   console.log(`phones: ${todo.length} Place Details (Enterprise) calls to make (cap ${MAX_CALLS})`);
   if (DRY) process.exit(0);
   await auth();
+  const q = [...todo];
   try {
-    for (const id of todo) {
-      const p = await api(`https://places.googleapis.com/v1/places/${id}`, { method: 'GET', headers: { 'X-Goog-FieldMask': PHONE_FIELDS } });
-      phones[id] = { phone: p.internationalPhoneNumber || p.nationalPhoneNumber || null, website: p.websiteUri || null };
-    }
+    // 4 at a time; the per-minute quota is handled by api()'s 429 back-off
+    await Promise.all(Array.from({ length: 4 }, async () => {
+      while (q.length) {
+        const id = q.shift();
+        const p = await api(`https://places.googleapis.com/v1/places/${id}`, { method: 'GET', headers: { 'X-Goog-FieldMask': PHONE_FIELDS } });
+        phones[id] = { phone: p.internationalPhoneNumber || p.nationalPhoneNumber || null, website: p.websiteUri || null };
+      }
+    }));
   } finally {
     writeFileSync(`${DIR}/phones.json`, JSON.stringify(phones, null, 1));
     console.log(`phones saved for ${Object.keys(phones).length} places (${calls} calls)`);
