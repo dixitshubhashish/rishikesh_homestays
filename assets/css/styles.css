@@ -3382,3 +3382,72 @@ input.sx-input {
 .sx-city-switch a[aria-current="page"] {
   background: var(--river);
   color: #fff;}
+/* Stays pages: category filters as a left sidebar (collapsible "Filter stays" on phones). */
+.sx-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 250px) minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+  margin-top: 18px;}
+.sx-side {
+  position: sticky;
+  top: 90px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+  padding-right: 6px;}
+.sx-filters > summary {
+  display: none;}
+.sx-filters nav h3 {
+  margin: 18px 0 6px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;}
+.sx-filters ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;}
+.sx-filters li a {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 0.92rem;
+  text-decoration: none;}
+.sx-filters li a small {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;}
+.sx-filters li a:hover {
+  background: var(--panel);
+  color: var(--river);}
+.sx-filters li a[aria-current="page"] {
+  background: var(--river);
+  color: #fff;}
+.sx-filters li a[aria-current="page"] small {
+  color: rgba(255, 255, 255, 0.8);}
+.sx-f-all a {
+  font-weight: 700;}
+@media (max-width: 900px) {
+  .sx-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;}
+  .sx-side {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding: 0;}
+  .sx-filters {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    padding: 4px 12px;}
+  .sx-filters > summary {
+    display: block;
+    padding: 10px 2px;
+    font-weight: 700;
+    cursor: pointer;}
+  .sx-filters nav {
+    padding-bottom: 10px;}}

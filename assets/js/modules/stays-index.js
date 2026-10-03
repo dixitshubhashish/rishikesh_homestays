@@ -182,3 +182,8 @@ export function setupStaysIndex() {
 }
 
 setupStaysIndex();
+
+// Category filters sidebar: open on wide screens, folded into a "Filter stays"
+// button on phones so the stays come first.
+const filters = document.querySelector('details.sx-filters');
+if (filters && window.matchMedia('(max-width: 900px)').matches) filters.open = false;

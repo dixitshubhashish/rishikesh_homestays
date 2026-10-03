@@ -729,6 +729,14 @@ def main(data_path, crawled):
         strip = ''.join(f'<div class="sx-cats-row">{"".join(pill(c) for c in master)}</div>' for _ in master[:1]) + ''.join(
             f'<div class="sx-cats-row"><span class="sx-cats-label">{label}</span>{"".join(pill(c) for c in members)}</div>'
             for label, members in grouped(live, lambda c: counts[c[0]]))
+        fl = lambda c, label=None: (f'<li><a href="/hotels/best-{c[0]}-in-{CITY}"{" aria-current=\"page\"" if c[0] == slug else ""}>'
+                                    f'<span>{label or esc(c[1])}</span> <small>{counts[c[0]]:,}</small></a></li>')
+        filters = ('<details class="sx-filters" open><summary>Filter stays</summary>'
+                   '<nav aria-label="Browse stays by category">'
+                   + ''.join(f'<ul class="sx-f-all">{fl(c, f"All stays in {CN}")}</ul>' for c in master[:1])
+                   + ''.join(f'<h3>{label}</h3><ul>{"".join(fl(c) for c in members)}</ul>'
+                             for label, members in grouped(live, lambda c: counts[c[0]]))
+                   + '</nav></details>')
         explore = ''.join(f'<li><a href="/hotels/best-{c[0]}-in-{CITY}">Best hotels in {CN} (all stays)</a> <span>{counts[c[0]]:,}</span></li>'
                           for c in master if c[0] != slug)
         explore = (f'<ul>{explore}</ul>' if explore else '') + ''.join(
@@ -818,7 +826,9 @@ def main(data_path, crawled):
           <h1 class="sx-title">{esc(h1)}</h1>
           <p class="sx-lede">{esc(intro)}</p>
           <p class="sx-updated">{n:,} {esc(plural)} to compare</p>
-          <nav class="sx-cats" aria-label="Browse stays by category">{strip}</nav>
+          <div class="sx-layout">
+          <aside class="sx-side">{filters}</aside>
+          <div class="sx-main">
           {near_nav}
           <section class="sx-guide" aria-labelledby="sx-guide-h">
             <h2 id="sx-guide-h">{f'Where to stay in {CN}' if is_master else f'Choosing {esc(lc(title))} in {CN}'}</h2>
@@ -853,6 +863,8 @@ def main(data_path, crawled):
             {explore_more}
           </section>
           <p class="sx-note">{esc(CITY_COPY.get(CITY, {}).get('note', NOTE_RISHIKESH))}</p>
+          </div>
+          </div>
         </div>
       </section>
     </main>'''
