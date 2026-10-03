@@ -39,7 +39,7 @@ camp-aqua-forest	none	-	-	no booking.com page; only Yatra/Goibibo	2026-10-03
 capt-mount-stays	verified	Booking.com	https://www.booking.com/hotel/in/capt-mount-stays-rishikesh.html	Hostel Capt. Mount Stays near Laxman Jhula (seen as .en-gb)	2026-10-03
 chakrah-by-hermitage	doubtful	Booking.com	https://www.booking.com/hotel/in/hermitage-rishikesh1234.html	only result is the flagged URL	2026-10-03
 chhaya	none	-	-	no booking.com property page	2026-10-03
-clarks-express-inn	doubtful	Booking.com	https://www.booking.com/hotel/in/clarks-inn-express-rishikesh.html	no booking.com result; old Clarks slug inferred	2026-10-03
+clarks-express-inn	verified	Booking.com	https://www.booking.com/hotel/in/clarks-inn-express-rishikesh.html	browser-confirmed: page title "Ginger Rishikesh"	2026-10-03
 comfort-dewa-retreat	verified	Booking.com	https://www.booking.com/hotel/in/dewa-retreat.html	Hotel Dewa Retreat Tapovan	2026-10-03
 crescent-moon-homestay	verified	Booking.com	https://www.booking.com/hotel/in/naveen-kumar-house.html	title Crescent Moon Homestay, near Laxman Jhula	2026-10-03
 damini	doubtful	Booking.com	https://www.booking.com/hotel/in/damini.html	title Damini Hotel, Rishikesh [link check: Booking.com redirects to Rishikesh search]	2026-10-03
@@ -64,7 +64,7 @@ ganga-stay-by-the-ganges-at-triveni-ghat	none	-	-	results only Meeram Ganga / Ga
 ganga-tapovan-room	none	-	-	no booking.com page	2026-10-03
 ganga-vatika-boutique-hotel	verified	Booking.com	https://www.booking.com/hotel/in/ganga-vatika-boutique-guest-house.html	Ganga Vatika Boutique Hotel, Muni-ki-reti	2026-10-03
 ganges-blossam-haridwar-rishikesh-road-a-four-star-luxury	doubtful	Booking.com	https://www.booking.com/hotel/in/omni-rishikesh.html	title "Ganges Blossam, Haridwar-Rishikesh Road - A Four Star Luxury Hotel" [link check: Booking.com redirects to Rishikesh search]	2026-10-03
-gangotri-rishikesh	doubtful	Booking.com	https://www.booking.com/hotel/in/gangotri-rishikesh.html	no booking.com URL shown; previous candidate unconfirmed	2026-10-03
+gangotri-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/gangotri-rishikesh.html	browser-confirmed: page title "Sitara Premium Gangotri Palace"	2026-10-03
 gj-wellness-and-stay	verified	Agoda	https://www.agoda.com/gj-wellness-stay/hotel/rishikesh-in.html	Agoda slug gj-wellness-stay; Tapovan; not found on Booking.com	2026-10-02
 gostops-plus-tapovan	verified	Booking.com	https://www.booking.com/hotel/in/gostops-plus-rishikesh-tapovan.html	goSTOPS PLUS Rishikesh Tapovan	2026-10-03
 gostops-rishikesh-lakshman-jhula	verified	Booking.com	https://www.booking.com/hotel/in/gostops-rishikesh-lakshman-jhula.html	exact name	2026-10-03
@@ -117,7 +117,7 @@ hostel-the-sweven	none	-	-	no booking.com property page for Trippme	2026-10-03
 hostel-tiny-spot	none	-	-	only booking.com hostel city list	2026-10-03
 hostel-tulsi-ganga	verified	Booking.com	https://www.booking.com/hotel/in/tulsi-ganga-hostel.html	exact name (not the Homestay)	2026-10-03
 hostel-urban-loft	verified	Booking.com	https://www.booking.com/hotel/in/urban-loft-hostel.html	Urban Loft Hostel, Tapovan	2026-10-03
-hostel-vimal-ganga-rishikesh	doubtful	Agoda	https://www.agoda.com/yatram-hostel/hotel/rishikesh-in.html	Booking only shows reviews page 'Travoha by Yatram'; Agoda Yatram Hostel	2026-10-03
+hostel-vimal-ganga-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/travoha-by-yatram-rishikesh.html	browser-confirmed: page title "Travoha By Yatram"	2026-10-03
 hostel-zostel-rishikesh-laxman-jhula	verified	Booking.com	https://www.booking.com/hotel/in/ljr.html	exact title	2026-10-03
 hotel-birbhaddar-1	none	-	-	only other Neeraj properties on booking.com	2026-10-03
 hotel-haridwar-13	verified	Booking.com	https://www.booking.com/hotel/in/pradeep-resort.html	'Sitara Premium Dhakad Gold, Near Lakshman Jhula' (slug from Booking reviews page)	2026-10-02
@@ -143,7 +143,7 @@ karwaan-homestay	verified	Booking.com	https://www.booking.com/hotel/in/karwaan-h
 kinwani-house-narendranagar-araiya-anthology	verified	Booking.com	https://www.booking.com/hotel/in/kinwani-house.html	Kinwani House Narendranagar - Araiya Anthology	2026-10-02
 krishna-kunj-homestay	verified	Booking.com	https://www.booking.com/hotel/in/krishna-kunj-homestay-rishikesh.html	Krishna Kunj Homestay Rishikesh	2026-10-03
 krishna-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/krishna-rishikesh-rishikesh.html	Hotel Krishna Rishikesh, Tapovan	2026-10-03
-krishna-rooms	doubtful	Booking.com	https://www.booking.com/hotel/in/oyo-krishna-rooms.html	"Hotel O Krishna Rooms" Shivaji Nagar; title matches but says not bookable	2026-10-03
+krishna-rooms	verified	Booking.com	https://www.booking.com/hotel/in/oyo-krishna-rooms.html	browser-confirmed: page title "Hotel O Krishna Rooms"	2026-10-03
 krishnabalram-wellness-ayurveda-centre	verified	Booking.com	https://www.booking.com/hotel/in/krishnabalram-polyclinic-ayurveda-centre.html	Exact title match	2026-10-02
 kunwar-residency	doubtful	Booking.com	https://www.booking.com/hotel/in/kunwar-residency.html	only result is the flagged URL	2026-10-03
 kyarki-village-homestay-cafe	doubtful	Booking.com	https://www.booking.com/hotel/in/kyarki-village-homestay-amp-cafe.html	title matches but same flagged URL	2026-10-03
@@ -155,7 +155,7 @@ lemon-tree-hotel-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in
 lemon-tree-premier	verified	Booking.com	https://www.booking.com/hotel/in/lemon-tree-premier-rishikesh.html	Lemon Tree Premier, Rishikesh exact (distinct from Lemon Tree Hotel Tapovan / Keys Lite)	2026-10-02
 liveaway-rishikesh-laxman-jhula-by-pack	verified	MakeMyTrip	https://www.makemytrip.global/hotels/liveaway_rishikesh_laxman_jhula-details-rishikesh.html	MMT title LiveAway Rishikesh (Laxman Jhula) by PACK; no booking.com page	2026-10-03
 lords-valley	verified	Booking.com	https://www.booking.com/hotel/in/lords-valley.html	Hotel Lords Valley Rishikesh, Tapovan	2026-10-02
-luxury-aloha-apartments-1	doubtful	Booking.com	https://www.booking.com/hotel/in/aloha-by-ganges.html	alt Aloha listing; flagged one not taking reservations	2026-10-03
+luxury-aloha-apartments-1	verified	Booking.com	https://www.booking.com/hotel/in/aloha-by-ganges.html	browser-confirmed: page title "Aloha - Luxury Apartments by blissful Ganges"	2026-10-03
 luxury-aloha-majestic-apartments	doubtful	Booking.com	https://www.booking.com/hotel/in/aloha-majestic-apartments.html	same flagged URL shown again	2026-10-03
 madhuban-homestay-natraj-chowk	verified	Booking.com	https://www.booking.com/hotel/in/madhuban-homestay-rishikesh.html	Madhuban Homestay, Natraj Chowk	2026-10-03
 madhuban-inn	doubtful	Booking.com	https://www.booking.com/hotel/in/fabhotel-madhuvan-inn.html	"FabHotel Madhuban Inn", Haridwar Road; new URL (differs from flagged one) [link check: Booking.com redirects to Rishikesh search]	2026-10-03
@@ -164,9 +164,9 @@ mahadev-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/mahadev-
 maharishi-ayurveda-boutique-wellness-retreat	verified	Booking.com	https://www.booking.com/hotel/in/maharishi-ayurveda-boutique-wellness-retreat.html	Exact title match, Tapovan	2026-10-02
 meeram-ganga-a-heritage-stay-by-the-ganges-at-triveni-ghat	verified	Booking.com	https://www.booking.com/hotel/in/meeram-ganga-a-heritage-stay-by-the-ganges-rishikesh.html	exact title	2026-10-03
 modi-yoga-retreat	verified	Booking.com	https://www.booking.com/hotel/in/modi-yoga-retreat.html	Modi Yoga Retreat Rishikesh exact	2026-10-02
-montara-rishikesh	doubtful	Booking.com	https://www.booking.com/hotel/in/montara-rishikesh-rishikesh.html	inferred from reviews-page slug (Hotel The Montara Near Ganga Ghat)	2026-10-03
+montara-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/montara-rishikesh-rishikesh.html	browser-confirmed: page title "Hotel The Montara Near Ganga Ghat"	2026-10-03
 montreal-by-madhuban-inn	doubtful	Booking.com	https://www.booking.com/hotel/in/montreal-rishikesh.html	same flagged URL shown again	2026-10-03
-moonshiva-stay-and-cafe	doubtful	Booking.com	https://www.booking.com/hotel/in/moonshiva-stay-and-cafe.html	only booking.com reviews page shown; slug inferred	2026-10-03
+moonshiva-stay-and-cafe	verified	Booking.com	https://www.booking.com/hotel/in/moonshiva-stay-and-cafe.html	browser-confirmed: page title "Moonshiva stay and cafe"	2026-10-03
 mountain-view-retreat-in-tapovan	verified	Booking.com	https://www.booking.com/hotel/in/yog-tapovan-amp-restaurant.html	title Yog Tapovan -Mountain View Room (differs from prev)	2026-10-03
 mystara-hotels-jamb	none	-	-	no booking.com page	2026-10-03
 namoh-stay	verified	Booking.com	https://www.booking.com/hotel/in/namoh-stay.html	exact title, Tapovan	2026-10-03
@@ -192,7 +192,7 @@ perfectstayz-premium-forest-valley	doubtful	Booking.com	https://www.booking.com/
 perfectstayz-premium-heritage-near-neem-beach	verified	Booking.com	https://www.booking.com/hotel/in/perfectstyaz-heritage.html	PerfectStayz Heritage Near Neem Beach (not Laxmi Heritage)	2026-10-02
 perfectstayz-premium-laxmi-heritage-with-rooftop-pool-cafe	verified	Booking.com	https://www.booking.com/hotel/in/perfectstyaz-laxmi-heritage.html	exact title	2026-10-03
 perfectstayz-premium-pinaaki-ganges-view	verified	MakeMyTrip	https://www.makemytrip.com/hotels/hotel-details/?hotelId=202403082022569976&city=CTXRI	MMT title 'Perfectstayz Premium Pinaaki - Ganges view', Tapovan; hotelId-only URL (no slug page found)	2026-10-02
-pi-tapovan	doubtful	Booking.com	https://www.booking.com/hotel/in/pi-tapovan.html	only booking.com reviews page (reviews/in/hotel/pi-tapovan) shown	2026-10-03
+pi-tapovan	verified	Booking.com	https://www.booking.com/hotel/in/pi-tapovan.html	browser-confirmed: lands on property page titled "Hotel Pi-Tapovan" (name check skipped short words)	2026-10-03
 pocketchange-stays	doubtful	Booking.com	https://www.booking.com/hotel/in/pocketchange-stays.html	inferred from reviews-page slug	2026-10-03
 premium-mystic-falls-near-secret-waterfall	verified	Booking.com	https://www.booking.com/hotel/in/mystic-falls-by-perfectstayz.html	Premium Mystic Falls near Secret Waterfall	2026-10-03
 punyah-residency-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/punyah-residency-rishikesh.html	exact name (older slug camp-39-a-39-star also titled same)	2026-10-03
@@ -201,7 +201,7 @@ raga-on-the-ganges	verified	Booking.com	https://www.booking.com/hotel/in/bonfire
 raj-cottage-ganga-vatika	verified	Booking.com	https://www.booking.com/hotel/in/ganga-vaitka.html	Raj Cottage Ganga Vatika, Muni ki Reti	2026-10-03
 ramana-on-the-ganges	none	-	-	no booking.com page; Expedia/Tripadvisor only	2026-10-03
 resort-anandam	none	-	-	no booking.com property page; flagged prior; score 4.1	2026-10-03
-resort-anandvan-jungle-by-dev-group-of-hotels-rishikesh	doubtful	Booking.com	https://www.booking.com/hotel/in/anandvan-jungle-resort.html	multiple Anandvan branches; Rishikesh-titled one, branch unclear	2026-10-03
+resort-anandvan-jungle-by-dev-group-of-hotels-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/anandvan-jungle-resort-kuthar.html	Full-name search: first result titled 'Anandvan Jungle Resort by Leela Resort and Hotels'; browser check lands on property page	2026-10-03
 resort-anandvan-jungle-by-rfh	doubtful	Booking.com	https://www.booking.com/hotel/in/anandvan-jungle-resort.html	3 Anandvan Jungle Resort pages (also -kuthar Mohan Chatti, -paliyal-gaon); branch unclear	2026-10-03
 resort-arika-jamb	doubtful	MakeMyTrip	https://www.makemytrip.com/hotels-international/en-/india/rishikesh-hotels/arika_resort-details.html	MMT result shown, odd URL form; Jamb	2026-10-03
 resort-creek-forest-riverside-boutique	verified	Booking.com	https://www.booking.com/hotel/in/creek-forest-riverside-boutique-resort.html	exact name	2026-10-02
@@ -261,7 +261,7 @@ smart-stays-by-country-inn-tapovan	verified	Booking.com	https://www.booking.com/
 soh-sound-of-himalayas-rishikesh	doubtful	Booking.com	https://www.booking.com/hotel/in/soh-sound-of-himalayas.html	same flagged URL; title matches but not taking reservations	2026-10-03
 sri-bhagvatam-by-the-gnages	doubtful	Booking.com	https://www.booking.com/hotel/in/bhagvatam-rishikesh.html	title Bhagvatam by the Ganges but labelled Shivpuri	2026-10-03
 srinivasa-homestay-by-yatrimap	doubtful	Booking.com	https://www.booking.com/hotel/in/srinivasa-home-stay-rishikesh.html	title matches but same flagged URL	2026-10-03
-star-hill	doubtful	Booking.com	https://www.booking.com/hotel/in/star-hill.html	only Booking reviews page shown for 'Star hill'	2026-10-03
+star-hill	verified	Booking.com	https://www.booking.com/hotel/in/star-hill.html	browser-confirmed: page title "Star hill"	2026-10-03
 sterling-palm-bliss	verified	Booking.com	https://www.booking.com/hotel/in/palm-bliss-resorts.html	Title "Sterling Palm Bliss - Rishikesh", Tapovan bypass	2026-10-02
 stone-wood-hotel	verified	Booking.com	https://www.booking.com/hotel/in/stone-wood-rishikesh.html	Stone Wood Hotel, Rishikesh	2026-10-03
 sufi-stay	none	-	-	no booking.com page shown	2026-10-03
@@ -277,14 +277,14 @@ the-greenview-homestay	doubtful	Booking.com	https://www.booking.com/hotel/in/the
 the-heritage-rishikesh	none	-	-	no booking.com page in results	2026-10-03
 the-hosteller-bam-poshtel	verified	Booking.com	https://www.booking.com/hotel/in/the-hosteller-bam-rishikesh-neelkanth.html	exact title	2026-10-03
 the-hosteller-rishikesh-ganges	verified	Booking.com	https://www.booking.com/hotel/in/the-hosteller-rishikesh-ganges.html	exact name, near Laxman Jhula	2026-10-03
-the-hosteller-rishikesh-laxman-jhula	doubtful	Booking.com	https://www.booking.com/hotel/in/the-hosteller-rishikesh-laxman-jhula.html	inferred from reviews-page slug	2026-10-03
+the-hosteller-rishikesh-laxman-jhula	verified	Booking.com	https://www.booking.com/hotel/in/the-hosteller-rishikesh-laxman-jhula.html	browser-confirmed: page title "The Hosteller Rishikesh"	2026-10-03
 the-hosteller-rishikesh-upper-tapovan	doubtful	Booking.com	https://www.booking.com/hotel/in/musafir-hostels-jai-benison.html	same flagged URL; reportedly not listed on Booking now	2026-10-03
 the-moksham	verified	Booking.com	https://www.booking.com/hotel/in/the-moksham-rishikesh.html	Hotel The Moksham, Upper Tapovan	2026-10-03
 the-neeraj-ganga-cottages	verified	Booking.com	https://www.booking.com/hotel/in/the-neeraj-ganga-cottages.html	Exact title match	2026-10-02
 the-neeraj-ganga-heritage-palace	verified	Booking.com	https://www.booking.com/hotel/in/the-neeraj-ganga-heritage-palace.html	Exact name	2026-10-02
 the-neeraj-ganga-paradise	none	-	-	no booking.com page for Paradise in results	2026-10-03
 the-neeraj-ganga-rani-mahal	verified	Agoda	https://www.agoda.com/the-neeraj-ganga-rani-mahal/hotel/rishikesh-in.html	Exact name 'The Neeraj Ganga Ranimahal With Ganga Ghat Access', Veerbhadra/Nirmal Block; no Booking.com page URL found	2026-10-02
-the-neeraj-naturecure-on-ganga	doubtful	Booking.com	https://www.booking.com/hotel/in/the-neeraj-naturecure-stay-by-the-ganges.html	only booking.com reviews page shown (same slug)	2026-10-03
+the-neeraj-naturecure-on-ganga	verified	Booking.com	https://www.booking.com/hotel/in/the-neeraj-naturecure-stay-by-the-ganges.html	browser-confirmed: page title "The Shanti Naturecure On Ganga"	2026-10-03
 the-rampour-a-brigadiers-cottage-collection	verified	Airbnb	https://www.airbnb.co.in/rooms/1625532912191091843	Airbnb listing "The Rampour Rishikesh - Petfriendly hotel in Tapovan"; no Booking/MMT page URL surfaced	2026-10-02
 the-roseate-ganges	none	-	-	no booking.com page in results	2026-10-03
 the-shivaay-delight	verified	Booking.com	https://www.booking.com/hotel/in/the-shivaay-delight-inn.html	"Hotel The Shivaay - Delight Inn Rishikesh"	2026-10-03
@@ -301,7 +301,7 @@ townhouse-oak-tapovan	doubtful	Booking.com	https://www.booking.com/hotel/in/town
 townhouse-rooftop	doubtful	Booking.com	https://www.booking.com/hotel/in/townhouse-oyo-1261-rooftop.html	title matches near AIIMS but not bookable	2026-10-03
 trihari	verified	Booking.com	https://www.booking.com/hotel/in/trihari.html	title Hotel Trihari, Muni Ki Reti	2026-10-03
 tripli-hotels-ayushman-retreat	verified	Booking.com	https://www.booking.com/hotel/in/tripli-hotels-ayushman-retreat.html	exact title	2026-10-03
-tripli-hotels-ganga-heaven-laxman-jhula	doubtful	Booking.com	https://www.booking.com/hotel/in/tripli-hotels-ganga-heaven.html	inferred from reviews-page slug	2026-10-03
+tripli-hotels-ganga-heaven-laxman-jhula	verified	Booking.com	https://www.booking.com/hotel/in/tripli-hotels-ganga-heaven.html	browser-confirmed: page title "Tripli Hotels Ganga Heaven Rishikesh - Laxman Jhula"	2026-10-03
 tripli-hotels-solune	verified	Agoda	https://www.agoda.com/tripli-hotels-solune/hotel/rishikesh-in.html	Agoda 'Tripli Solune' Rishikesh; no Booking page	2026-10-03
 ubex-home	none	-	-	no booking.com page shown	2026-10-03
 v4y-4u-tapovan	none	-	-	no booking.com page in results	2026-10-03

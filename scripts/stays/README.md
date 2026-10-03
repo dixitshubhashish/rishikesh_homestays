@@ -82,14 +82,15 @@ affiliate ID to every Booking.com link.
 Mark *Confirmed* Y/N (optionally with your own site/URL), download it as CSV,
 and run `import_review.py <file.csv>`, then `build_pages.py`.
 
-Status on 2026-10-04: 328 of 1,605 stays searched. After a re-check of all
-doubtful/none rows and a third link check: 183 verified (173 Booking.com,
-4 Agoda, 4 MakeMyTrip, 2 Airbnb), 88 doubtful, 57 none. The 200-web-search cap
-is shared by the whole session (all agents), so one session covers about 200
-stays. The remaining ~1,280 need the Google Programmable Search API
-(GOOGLE_CSE_ID/GOOGLE_CSE_KEY, pending the owner). Run
-`node scripts/stays/check_links.mjs` after every round: about 20–25% of
-search-verified Booking.com links redirect to the city search.
+Status on 2026-10-04: 328 of 1,605 stays searched, with 196 verified,
+75 doubtful and 57 none. Two lessons: search by the **full property name,
+unquoted** (`<name> Rishikesh booking.com`), not by our URL key, which finds
+far more matches. And a candidate URL found any way (reviews page, slug) is
+confirmed by `node scripts/stays/verify_candidates.mjs [extra.tsv]`: it lands
+on Booking's property page, and the title names the property. That check uses
+no web searches. The 200-search cap is shared by the whole session. The
+remaining ~1,280 stays need the Google Programmable Search API (owner to add
+GOOGLE_CSE_ID/KEY). Always finish with `node scripts/stays/check_links.mjs`.
 
 ## BigQuery: market_properties
 
