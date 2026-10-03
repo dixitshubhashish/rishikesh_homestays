@@ -160,7 +160,10 @@ function factRows(d) {
     ['Area', `${esc(d.a)}, ${CITY_NAME}`],
   ];
   if (d.ad && d.ad.length > 6) rows.push(['Address', esc(d.ad)]);
-  if (d.ll) rows.push(['Map', `<a href="https://www.google.com/maps?q=${d.ll[0]},${d.ll[1]}" target="_blank" rel="noopener">Open in Google Maps</a>`]);
+  // Stays found on Google Maps (gm) link to their Google Maps page and are never
+  // drawn on our OpenStreetMap map (Google's terms).
+  if (d.gm) rows.push(['Map', `<a href="${esc(d.gm)}" target="_blank" rel="noopener">View on Google Maps</a>`]);
+  else if (d.ll) rows.push(['Map', `<a href="https://www.google.com/maps?q=${d.ll[0]},${d.ll[1]}" target="_blank" rel="noopener">Open in Google Maps</a>`]);
   rows.push(['Star rating', d.s ? `${'★'.repeat(d.s)} ${d.s}-star` : 'Not star-rated']);
   if (d.g) rows.push(['Guest rating', `${d.g}/10${d.c ? ` from ${d.c} reviews` : ''}`]);
   if (d.p) rows.push(['Price', `Starting ₹${inr(d.p)} onwards a night`]);
@@ -193,7 +196,10 @@ function render(root, d, isOwn) {
         </div>
       </section>
     </div>
-    ${d.ll ? `<section class="sp-map" aria-labelledby="sp-map-h">
+    ${d.gm ? `<section class="sp-map" aria-labelledby="sp-map-h">
+      <h2 id="sp-map-h">Where it is</h2>
+      <p><a class="btn btn-secondary" href="${esc(d.gm)}" target="_blank" rel="noopener">View ${esc(d.n)} on Google Maps</a></p>
+    </section>` : d.ll ? `<section class="sp-map" aria-labelledby="sp-map-h">
       <h2 id="sp-map-h">Where it is, and what's around it</h2>
       <div class="sp-map-slot" id="sp-map"><a href="https://www.google.com/maps?q=${d.ll[0]},${d.ll[1]}" target="_blank" rel="noopener">Open ${esc(d.n)} in Google Maps</a></div>
       <ul class="sp-map-key" aria-hidden="true"><li><i class="k-this"></i>This stay</li><li><i class="k-own"></i>Our homestays</li><li><i class="k-near"></i>Other stays nearby</li></ul>
@@ -346,7 +352,7 @@ function setupGate(root, d) {
 const NEARBY_KM = 1.5;
 function setupMap(d) {
   const el = document.getElementById('sp-map');
-  if (!el || !d.ll) return;
+  if (!el || !d.ll || d.gm) return;
   const start = () => {
     const css = document.createElement('link');
     css.rel = 'stylesheet'; css.href = '/assets/vendor/leaflet/leaflet.css';
@@ -369,7 +375,7 @@ function drawMap(el, d) {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(map);
   const pin = (ll, style, html) => L.circleMarker(ll, style).addTo(map).bindPopup(html);
-  const nearby = STAYS_INDEX.filter((x) => x.ll && x.id !== d.id && kmBetween(d.ll, x.ll) <= NEARBY_KM).slice(0, 60);
+  const nearby = STAYS_INDEX.filter((x) => x.ll && !x.gm && x.id !== d.id && kmBetween(d.ll, x.ll) <= NEARBY_KM).slice(0, 60);
   nearby.forEach((x) => pin(x.ll, { radius: 6, color: '#0f6f74', weight: 1, fillColor: '#0f6f74', fillOpacity: 0.55 },
     `<b>${esc(x.n)}</b><br>${esc(x.k)}${x.p ? ` · starting ₹${inr(x.p)} onwards` : ''}<br><a href="/hotels/stay?s=${esc(x.id)}${CQ}">View property</a>`));
   const own = STAYS_OWN.filter((o) => o.ll && o.id !== d.id);

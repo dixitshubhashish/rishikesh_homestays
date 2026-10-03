@@ -112,7 +112,10 @@ const rows = places.map((p) => {
   const l = (best && links[best.s.id]) || placeLinks[p.id];
   const ph = phones[p.id] || {};
   const web = (ph.website || '').toLowerCase();
-  const webOta = (OTA_HOSTS.find(([h]) => web.includes(h)) || [])[1] || null;
+  // match the website's own domain ("ellbeehotels.com" is not hotels.com)
+  let host = '';
+  try { host = new URL(ph.website).hostname.toLowerCase().replace(/^www\./, ''); } catch { /* no website */ }
+  const webOta = (OTA_HOSTS.find(([h]) => (h.endsWith('.') ? host.split('.').includes(h.slice(0, -1)) : host === h || host.endsWith(`.${h}`))) || [])[1] || null;
   // a place whose own Google website is a booking-site page: the owner's
   // link, used when we found none (Tripadvisor is reviews, not booking)
   const own = !l && webOta && webOta !== 'Tripadvisor'
@@ -141,6 +144,13 @@ console.log(`  directory stays also on Google Maps: ${matchedStays.size} of ${st
 const open = (r) => r.business_status !== 'CLOSED_PERMANENTLY';
 const need = rows.filter((r) => open(r) && (!r.in_directory || !r.booking_url)).map((r) => r.place_id);
 writeFileSync(join(HERE, '.cache/places/need-phones.json'), JSON.stringify(need));
+// open places new to us that have a confirmed booking link: listed on the site
+// (import_google_stays.py feeds them to process.py)
+const listable = rows.filter((r) => open(r) && !r.in_directory && r.booking_url && r.name && r.latitude)
+  .map((r) => ({ place_id: r.place_id, name: r.name, city: r.city, lat: r.latitude, lng: r.longitude,
+    type: r.google_type, maps: r.google_maps_url, site: r.booking_site, url: r.booking_url.split('?aid=')[0], source: r.booking_source }));
+writeFileSync(join(HERE, '.cache/places/new-with-link.json'), JSON.stringify(listable));
+console.log(`  new places with a booking link (listed on the site): ${listable.length}`);
 // open places without a booking link yet, as a stays file the matchers can read (STAYS_FILE=…)
 const unlinked = rows.filter((r) => open(r) && !r.booking_url && r.name && r.latitude)
   .map((r) => ({ id: `g-${r.place_id}`, n: r.name, cy: r.city, ll: [r.latitude, r.longitude] }));

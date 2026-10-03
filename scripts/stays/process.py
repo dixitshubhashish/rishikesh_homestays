@@ -23,6 +23,10 @@ CITY_NAME=CITIES[CITY]['name']
 S=cache_dir(CITY)
 rows=[json.loads(l) for l in open(f'{S}/props.jsonl')]
 rows=[r for r in rows if not r.get('error')]
+# Google Maps places new to us with a confirmed booking link
+# (import_google_stays.py): same row shape, marked with gm (their Maps link)
+if os.path.exists(f'{S}/google-extra.jsonl'):
+    rows+=[json.loads(l) for l in open(f'{S}/google-extra.jsonl') if l.strip()]
 
 SMALL={'in','on','by','the','and','of','at','with','near','to','for','from'}
 UPPER={'bhk':'BHK','ac':'AC','ii':'II','iii':'III','iv':'IV','yha':'YHA','gmvn':'GMVN','oyo':'OYO','bnb':'BnB','wifi':'WiFi','tv':'TV','dlx':'Dlx','aiims':'AIIMS','spa':'Spa','nh':'NH','vip':'VIP','b&b':'B&B','bbq':'BBQ'}
@@ -139,6 +143,8 @@ for r in rows:
     def add(t):
         if t and t not in ks: ks.append(t)
     if r['type'] in TYPE_MAP: add(TYPE_MAP[r['type']])
+    if r.get('gtype_word'):  # Google's type, for places without type words in the name
+        n=n+' '+r['gtype_word'].lower()
     for t in sorted(official_types.get(r['url'],())): add(t)
     add(SLUG_TYPE.get(r['url'].split('//')[1].split('-')[0].split('.')[0]))
     for t,kws in TYPE_WORDS:
@@ -190,6 +196,7 @@ def bedrooms(r):
     return 9 if v>8 else v
 data=[{'id':r['url'].split('//')[1].split('.')[0],'ad':r.get('address') or '','ll':[r['lat'],r['lng']] if r.get('lat') else None,'t':tags(r),'n':r['clean'],'u':r['url'],'s':int(r['stars'] or 0),'a':r['area'],'k':r['kind'],'ks':r['ks'],'g':r.get('guestRating'),'c':r.get('reviews'),'f':r.get('facilities') or [],'p':(int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None)} for r in out]
 for x,r in zip(data,out):
+    if r.get('gm'): x['gm']=r['gm']
     b=bedrooms(r)
     if b is not None: x['bd']=b
 # Stable numeric listing_id (primary key) per stay, kept in the committed

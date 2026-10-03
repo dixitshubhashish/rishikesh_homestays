@@ -490,7 +490,8 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
     and rough drive time (they also appear in the bands when genuinely close,
     e.g. near AIIMS)."""
     made = []
-    pool = [s for s in stays if s.get('ll')]
+    # Google Maps places (gm) stay off the landmark pages: they're map-based
+    pool = [s for s in stays if s.get('ll') and not s.get('gm')]
     home_city = CITIES[DEFAULT_CITY]['name']
     others_all = landmarks
     for lm in landmarks:
