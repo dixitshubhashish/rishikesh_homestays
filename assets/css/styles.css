@@ -3356,3 +3356,29 @@ input.sx-input {
     grid-column: 1 / -1;}
   .rhs-footer-grid > .rhs-footer-column:last-child {
     grid-column: auto;}}
+/* Rishikesh | Haridwar switch at the top of every stays page. */
+.sx-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 10px;}
+.sx-city-switch {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);}
+.sx-city-switch a {
+  padding: 6px 16px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;}
+.sx-city-switch a:hover {
+  color: var(--river);}
+.sx-city-switch a[aria-current="page"] {
+  background: var(--river);
+  color: #fff;}

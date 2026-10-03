@@ -793,8 +793,12 @@ def main(data_path, crawled):
         seg = (('<button type="button" data-g="c">Category</button>' if is_master else '<button type="button" data-g="all">All</button>')
                + '<button type="button" data-g="s">Stars</button><button type="button" data-g="a">Area</button>'
                + ('<button type="button" data-g="k">Type</button>' if not flt.startswith('k:') else ''))
-        cities_nav = ('<p class="sx-cities">Also compare stays in ' + ', '.join(
-            f'<a href="/hotels/best-{slug if os.path.exists(f"{STAYS_DIR}/best-{slug}-in-{k}.html") else "hotels"}-in-{k}">{esc(nm)}</a>' for k, nm in others) + '</p>') if others else ''
+        # City switch at the top: the same category in the other city when it
+        # exists there, else that city's main list.
+        city_switch = '<nav class="sx-city-switch" aria-label="Switch city">' + ''.join(
+            f'<a href="/hotels/best-{slug}-in-{k}" aria-current="page">{esc(v["name"])}</a>' if k == CITY else
+            f'<a href="/hotels/best-{slug if os.path.exists(f"{STAYS_DIR}/best-{slug}-in-{k}.html") else "hotels"}-in-{k}">{esc(v["name"])}</a>'
+            for k, v in CITIES.items()) + '</nav>'
         kumbh_html = ('''<section class="sx-kumbh" aria-labelledby="sx-kumbh-h">
             <h2 id="sx-kumbh-h">Coming for the Kumbh 2027?</h2>
             <p>Haridwar fills up months ahead of the Kumbh. Stay within walking distance of the ghat you plan to bathe at, expect road closures around the big snan days, and book early. For a calmer base, Rishikesh is about 25 km upriver.</p>
@@ -806,13 +810,15 @@ def main(data_path, crawled):
         main_html = f'''<main class="sx-page" id="main">
       <section class="section">
         <div class="container" id="sx-root" data-city="{CITY}" data-filter="{esc(flt)}" data-all-title="All {esc(lc(title))}">
-          <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>{esc(h1)}</span></nav>
+          <div class="sx-topbar">
+            <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>{esc(h1)}</span></nav>
+            {city_switch}
+          </div>
           <p class="eyebrow">Where to stay</p>
           <h1 class="sx-title">{esc(h1)}</h1>
           <p class="sx-lede">{esc(intro)}</p>
           <p class="sx-updated">{n:,} {esc(plural)} to compare</p>
           <nav class="sx-cats" aria-label="Browse stays by category">{strip}</nav>
-          {cities_nav}
           {near_nav}
           <section class="sx-guide" aria-labelledby="sx-guide-h">
             <h2 id="sx-guide-h">{f'Where to stay in {CN}' if is_master else f'Choosing {esc(lc(title))} in {CN}'}</h2>
