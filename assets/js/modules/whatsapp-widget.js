@@ -79,15 +79,38 @@ export function setupWhatsAppWidget() {
   // the slide-out finishes (so it isn't still tabbable/visible-to-screen-
   // readers mid-transition). Centralized here since ~10 call sites across
   // this file all need to open/close the same way.
+  // Whether the drawer should currently be open. The open steps run in a
+  // requestAnimationFrame, which browsers pause in background tabs: if the
+  // 15s auto-open fires while the tab is hidden and the idle timer closes it
+  // before the tab is shown again, the queued frame would otherwise re-add
+  // `is-open` / `whatsapp-drawer-open` after the close, leaving a hidden
+  // drawer whose 400px page gap never goes away.
+  let drawerWanted = false;
+  // The pending "hide after the slide-out" step of the last close, so a new
+  // open can cancel it. Without this, a close that never animated (paused
+  // frames, reduced motion) leaves its transitionend listener armed, and the
+  // NEXT open's slide-in transition fires it: the drawer hides right after
+  // opening while the page keeps its 400px gap.
+  let pendingHide = null;
+  function cancelPendingHide(popup) {
+    if (!pendingHide) return;
+    popup.removeEventListener('transitionend', pendingHide.finish);
+    clearTimeout(pendingHide.timer);
+    pendingHide = null;
+  }
+
   function openWidgetPopup(idleMs = MANUAL_OPEN_IDLE_MS) {
     const popup = document.getElementById('whatsapp-popup');
     const backdrop = document.getElementById('whatsapp-backdrop');
     if (!popup) return;
+    drawerWanted = true;
+    cancelPendingHide(popup);
     popup.hidden = false;
     // Desktop overlays the right edge without resizing the page underneath;
     // mobile also uses a backdrop because the drawer covers most of the view.
     if (isMobileDevice() && backdrop) backdrop.hidden = false;
     requestAnimationFrame(() => {
+      if (!drawerWanted) return; // closed again before this frame ran
       popup.classList.add('is-open');
       if (isMobileDevice()) {
         backdrop?.classList.add('is-open');
@@ -116,18 +139,22 @@ export function setupWhatsAppWidget() {
     const popup = document.getElementById('whatsapp-popup');
     const backdrop = document.getElementById('whatsapp-backdrop');
     if (!popup) return;
+    drawerWanted = false;
+    cancelPendingHide(popup);
     popup.classList.remove('is-open');
     backdrop?.classList.remove('is-open');
     document.body.classList.remove('whatsapp-drawer-open');
-    const onTransitionEnd = () => {
+    const finish = () => {
+      cancelPendingHide(popup);
+      if (drawerWanted) return; // reopened meanwhile: leave it visible
       popup.hidden = true;
       if (backdrop) backdrop.hidden = true;
     };
-    popup.addEventListener('transitionend', onTransitionEnd, { once: true });
     // Fallback in case transitionend doesn't fire (e.g. reduced-motion).
     // Matches the 1.4s slide transition in whatsapp-widget.css, plus a small
     // buffer — must not fire before it or the close gets cut off mid-slide.
-    setTimeout(onTransitionEnd, 1600);
+    pendingHide = { finish, timer: setTimeout(finish, 1600) };
+    popup.addEventListener('transitionend', finish);
   }
 
   function isWidgetPopupOpen() {

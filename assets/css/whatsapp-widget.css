@@ -122,14 +122,19 @@
   flex-basis: 100%;
   margin-top: 2px;
   font-size: 0.85rem;
-  color: var(--muted, #66726f);
+  /* Inherit the section's own text colour so the hint reads on both the
+     dark photo heroes (white text) and light sections (dark text); a grey
+     muted colour disappeared on the heroes. */
+  color: inherit;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   opacity: 0;
   transform: translateY(-4px);
   transition: opacity 500ms ease, transform 500ms ease;
 }
 
 .whatsapp-btn-hint.is-visible {
-  opacity: 1;
+  opacity: 0.92;
   transform: translateY(0);
 }
 

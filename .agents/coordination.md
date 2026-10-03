@@ -182,6 +182,8 @@ Claude has done the prep work (images downloaded + licensed, sibling page rebuil
 
 Add completed work here with the agent, date, files, and verification command or result. Keep entries concise.
 
+- 2026-10-04 (Claude): **Took over a fix inside Codex's WhatsApp-widget claim, at the owner's request.** Fixed the stuck 400px drawer gap (rAF/background-tab race plus a stale transitionend hide) in `assets/js/modules/whatsapp-widget.js`, added 2 regression tests in `tests/modules/whatsapp-widget.test.js`, and made `.whatsapp-btn-hint` inherit the section's colour in `assets/css/whatsapp-widget.css`. Verified on all 43 pages at 1,724 px; `npm test` passes. Codex: please rebase on this before further drawer work.
+
 - 2026-10-04 (Claude): Re-matched all doubtful/none booking links: 183 verified after a link check. Added BigQuery `market_properties` snapshots (`scripts/stays/push_bigquery.mjs`, wired into `refresh.py` and `.github/workflows/stays-refresh.yml`). Committed only my own files and hunks; Codex's 404 edits are untouched. `npm test` 297/297 (one flaky run while the link checker was busy).
 
 - 2026-10-04 (Claude): Live smoke test of the stays pages passed. Booking-link round 2 (5 agents, 197 stays searched) plus a browser link check: now 166 verified links (`scripts/stays/ota-links.tsv`), with the generated pages, data, sitemap and llms.txt rebuilt. Committed only my own files and my own hunks of PROGRESS.md and this file; Codex's in-progress 404 work stays uncommitted and untouched. `npm test` 297/297.

@@ -187,6 +187,39 @@ test('WhatsApp "Book on WhatsApp" button attention effect', async (t) => {
     assert(popup().classList.contains('is-open'), 'engaged drawer should remain open');
   });
 
+  await t.test('desktop: a drawer opened and closed while frames are paused leaves no page gap', async (t) => {
+    // Background tab: requestAnimationFrame callbacks don't run until the tab
+    // is visible again, but the auto-open and idle-close timers still fire.
+    await setup(t);
+    const queued = [];
+    global.requestAnimationFrame = (cb) => { queued.push(cb); };
+    t.mock.timers.tick(ATTENTION_DELAY_MS);
+    t.mock.timers.tick(AUTO_OPEN_IDLE_MS);
+    t.mock.timers.tick(2000); // close fallback hides the popup
+    queued.splice(0).forEach((cb) => cb()); // tab visible again: paused frames run
+    assert(!document.body.classList.contains('whatsapp-drawer-open'), 'page must not keep the drawer gap');
+    assert(!document.getElementById('whatsapp-popup').classList.contains('is-open'), 'closed drawer must stay closed');
+  });
+
+  await t.test('desktop: reopening after a close that never animated stays open', async (t) => {
+    // The first close had no slide-out (frames paused), so its "hide when the
+    // transition ends" step must not fire on the next open's slide-in.
+    await setup(t);
+    const queued = [];
+    global.requestAnimationFrame = (cb) => { queued.push(cb); };
+    t.mock.timers.tick(ATTENTION_DELAY_MS);
+    t.mock.timers.tick(AUTO_OPEN_IDLE_MS);
+    t.mock.timers.tick(2000);
+    queued.splice(0).forEach((cb) => cb());
+    global.requestAnimationFrame = (cb) => setTimeout(cb, 0);
+    document.getElementById('whatsapp-fab').click();
+    t.mock.timers.tick(0);
+    const popup = document.getElementById('whatsapp-popup');
+    popup.dispatchEvent(new window.Event('transitionend')); // the slide-in finishing
+    assert.strictEqual(popup.hidden, false, 'drawer must stay visible after reopening');
+    assert(document.body.classList.contains('whatsapp-drawer-open'), 'page gap matches the open drawer');
+  });
+
   await t.test('desktop: manual close shows the reopen hint', async (t) => {
     await setup(t);
     t.mock.timers.tick(ATTENTION_DELAY_MS);

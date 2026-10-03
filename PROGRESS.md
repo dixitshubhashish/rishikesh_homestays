@@ -2,6 +2,14 @@
 
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
+## 🐛 Bug fixed — WhatsApp sidebar left a 400px page gap after hiding (Claude, 2026-10-04)
+
+- **Symptom (owner, Chrome at ~1,720 px):** the drawer was gone but the header, hero and search bar stayed 400px short of the right edge.
+- **Root cause, two races in `assets/js/modules/whatsapp-widget.js`:** (1) the open adds `is-open`/`whatsapp-drawer-open` inside `requestAnimationFrame`, which browsers pause in background tabs. If the 15s auto-open fired in a background tab and the idle timer closed it before the tab was shown, the queued frame re-added the page gap after the close. (2) A close that never animated left its `transitionend` "hide" listener armed, so the **next** open's slide-in fired it and hid the drawer while the gap stayed.
+- **Fix:** a `drawerWanted` flag (the queued frame does nothing if the drawer was closed meanwhile), and a cancellable `pendingHide` (each open cancels the last close's hide, and hide never runs while the drawer should be open). There are two new regression tests in `tests/modules/whatsapp-widget.test.js`; the first fails without the fix.
+- **Verified in Chromium at 1,724 px on all 43 pages** (every root page, `hotels/`, `/stay`, the 404): open-and-close within one frame, then open, then close with × or Escape, each restores full width.
+- **Also:** the "👉 Still here — tap anytime to book on WhatsApp" hint now inherits its section's text colour (white on dark heroes) with a subtle shadow, so it no longer disappears on the homepage hero.
+
 ## ✅ Shipped — booking links round 2 + live smoke test (Claude, 2026-10-04)
 
 - **Re-check of all 162 doubtful/none rows** (4 agents, one search each, using the owner's rule "name Rishikesh booking.com → first booking.com result") plus a third link check: **183 verified** (173 Booking.com, 4 Agoda, 4 MakeMyTrip, 2 Airbnb), 88 doubtful, 57 none.
