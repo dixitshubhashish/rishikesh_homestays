@@ -22,6 +22,10 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 2. AdSense: **site ownership verified (ads.txt) and review requested on 2026-10-04** — status "Getting ready"; wait for Google's approval email (days to ~2 weeks). After that: create a **vertical display unit** and put its slot in `UNITS.rail` in `assets/js/ads.js`.
 3. Optional: a search API key (Google Programmable Search or Brave) to find Goibibo/MakeMyTrip/Airbnb/Hotels.com links for the ~1,400 stays still without one.
 
+## Antigravity helping with booking links
+
+`docs/antigravity/PROMPT.md` is a ready prompt for Antigravity to find booking pages for the 1,396 stays in `docs/antigravity/no-link-stays.tsv` (best first) via Google + its browser. It writes `docs/antigravity/results-*.tsv` in our `key / verified|none / Platform / url / title` format. To merge: `python3 scripts/stays/postcheck_matches.py <out.tsv> docs/antigravity/results-*.tsv`, re-check Booking.com/EaseMyTrip/Agoda rows with `scripts/stays/verify_platform.mjs` where possible, then `merge_ota.py <out.tsv>`, rebuild both cities and `push_bigquery.mjs`. Booking.com rows get the CJ link automatically.
+
 ## Ideas not started
 
 - Elysium and Yoga Retreat dedicated pages (need owner details/photos).
