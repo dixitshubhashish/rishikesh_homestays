@@ -3202,3 +3202,23 @@ input.sx-input {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted, #6b7280);}
+/* Side-rail ads in the empty margins on wide screens (assets/js/ads.js decides
+   when they show: past the first screen, never over the footer). */
+.rh-ad-rail {
+  position: fixed;
+  top: 110px;
+  z-index: 5;
+  width: var(--rail-w);
+  margin: 0;
+  padding: 0;
+  transition: opacity 0.25s ease;}
+.rh-ad-rail-left {
+  left: calc(50% - 590px - 24px - var(--rail-w));}
+.rh-ad-rail-right {
+  right: calc(50% - 590px - 24px - var(--rail-w));}
+.rh-ad-rail-hidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;}
+@media (max-width: 1579px) {
+  .rh-ad-rail { display: none; }}

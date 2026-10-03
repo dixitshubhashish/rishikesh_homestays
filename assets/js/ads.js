@@ -1,56 +1,94 @@
 // Google AdSense, shared by every page. Each page includes it right after
-// analytics.js:
+// analytics.js (generated stays pages get it from thanks.html's head):
 //   <script async src="/assets/js/ads.js"></script>
 // next to the verification tag <meta name="google-adsense-account" content="…">.
 // The publisher ID lives here, once (also in /ads.txt). This site isn't AMP:
 // AdSense hands out AMP snippets (amp-auto-ads, <amp-ad …>); don't paste
 // those into pages, add the unit to UNITS below instead.
 //
-// Ads only run on the guide pages (AD_PAGES). Pages that sell stays
-// (homepage, homestays, contact, our own listing, the hotels/ stays pages)
-// stay ad-free, so ads for other hotels and booking sites never compete with ours.
+// What each kind of page gets (never more than 4 ads on a wide screen, 2 on a phone):
+//   guide pages      side rails + one mid-article display + grid above the footer
+//   homepage         side rails + grid above the footer (nothing between its sections)
+//   stays lists      side rails + grid above the footer (hotels/best-*, landmark pages)
+//   everything else  no ads: the stay page, contact, homestays, our own listing,
+//                    list-your-homestay, thanks and 404 are where guests enquire or book.
+// The top of every page stays ad-free: side rails only appear once the
+// visitor has scrolled past the first screen, only when the window is wide
+// enough for them to sit in the empty margins beside the 1180px content
+// (≥ 1580px), and they hide again over the footer.
 const ADSENSE_CLIENT = 'ca-pub-7016219170450293';
-const AD_PAGES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027'];
+const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027'];
+function pageType(path) {
+  if (GUIDES.includes(path)) return 'guide';
+  if (path === '') return 'home';
+  if (/^\/hotels\/best-/.test(path)) return 'stays';
+  return null;
+}
+const PLAN = { guide: ['rails', 'display', 'grid'], home: ['rails', 'grid'], stays: ['rails', 'grid'] };
 
-// One entry per AdSense ad unit. Translating AdSense's AMP code:
-//   data-ad-slot → slot;  data-auto-format="mcrspv" (Multiplex/grid) → format 'autorelaxed';
-//   a display unit → format 'auto' (+ fullWidth: true for data-full-width);
-//   an in-article unit → format 'fluid', layout 'in-article'.
-// `place` says where it goes: 'before-footer', or 'after:<css selector>' (the
-// first match, e.g. 'after:main section:nth-of-type(2)'). Units whose spot
-// isn't on the page are skipped.
-const UNITS = [
-  // display (data-auto-format="rspv"): mid-article, after the 2nd section, once readers are into the page
-  { name: 'display', slot: '2403902056', format: 'auto', fullWidth: true, place: 'after:main > section:nth-of-type(2)' },
-  // Multiplex grid (data-auto-format="mcrspv"): after the content, just above the footer
-  { name: 'grid', slot: '9264823876', format: 'autorelaxed', place: 'before-footer' },
-];
+// AdSense units. Translating AdSense's AMP code: data-ad-slot → slot;
+// data-auto-format="mcrspv" (Multiplex/grid) → format 'autorelaxed';
+// "rspv" (display) → format 'auto' (+ fullWidth for data-full-width).
+const UNITS = {
+  display: { slot: '2403902056', format: 'auto', fullWidth: true }, // responsive display
+  grid: { slot: '9264823876', format: 'autorelaxed' }, // Multiplex
+  rail: { slot: '2403902056' }, // the display unit at a fixed tall size; swap for a vertical unit's slot if one is made
+};
+const CONTENT = 1180; // --max in styles.css
 
-function unitHtml(u) {
-  const attrs = [`class="adsbygoogle"`, `style="display:block${u.layout === 'in-article' ? ';text-align:center' : ''}"`,
-    `data-ad-client="${ADSENSE_CLIENT}"`, `data-ad-slot="${u.slot}"`, `data-ad-format="${u.format}"`];
-  if (u.layout) attrs.push(`data-ad-layout="${u.layout}"`);
-  if (u.fullWidth) attrs.push('data-full-width-responsive="true"');
-  return `<p class="rh-ad-label">Advertisement</p><ins ${attrs.join(' ')}></ins>`;
+const ins = (u, style = 'display:block') => `<ins class="adsbygoogle" style="${style}" data-ad-client="${ADSENSE_CLIENT}" data-ad-slot="${u.slot}"`
+  + `${u.format ? ` data-ad-format="${u.format}"` : ''}${u.fullWidth ? ' data-full-width-responsive="true"' : ''}></ins>`;
+const push = () => (window.adsbygoogle = window.adsbygoogle || []).push({});
+function block(name, html) {
+  const wrap = document.createElement('section');
+  wrap.className = `rh-ad rh-ad-${name}`;
+  wrap.setAttribute('aria-label', 'Advertisement');
+  wrap.innerHTML = `<p class="rh-ad-label">Advertisement</p>${html}`;
+  return wrap;
 }
 
-function placeUnits() {
-  for (const u of UNITS) {
-    const anchor = u.place === 'before-footer' ? document.querySelector('footer.rhs-footer')
-      : document.querySelector(u.place.replace(/^after:/, ''));
-    if (!anchor) continue;
-    const wrap = document.createElement('section');
-    wrap.className = `rh-ad rh-ad-${u.name}`;
-    wrap.setAttribute('aria-label', 'Advertisement');
-    wrap.innerHTML = unitHtml(u);
-    if (u.place === 'before-footer') anchor.before(wrap); else anchor.after(wrap);
-    (window.adsbygoogle = window.adsbygoogle || []).push({});
-  }
-}
+const PLACE = {
+  // mid-article, after the 2nd section, once readers are into the page
+  display() {
+    const anchor = document.querySelector('main > section:nth-of-type(2)');
+    if (!anchor) return;
+    anchor.after(block('display', ins(UNITS.display))); push();
+  },
+  // after all the content, just above the footer
+  grid() {
+    const footer = document.querySelector('footer.rhs-footer');
+    if (!footer) return;
+    footer.before(block('grid', ins(UNITS.grid))); push();
+  },
+  // tall ads fixed in the empty side margins, wide screens only
+  rails() {
+    const gutter = (window.innerWidth - CONTENT) / 2;
+    const width = gutter >= 340 ? 300 : gutter >= 200 ? 160 : 0;
+    if (!width) return;
+    const rails = ['left', 'right'].map((side) => {
+      const r = block(`rail rh-ad-rail-${side} rh-ad-rail-hidden`, ins(UNITS.rail, `display:inline-block;width:${width}px;height:600px`));
+      r.style.setProperty('--rail-w', `${width}px`);
+      document.body.append(r); push();
+      return r;
+    });
+    // shown only between the first screen and the footer
+    const footer = document.querySelector('footer.rhs-footer');
+    let footerInView = false;
+    const update = () => {
+      const show = window.scrollY > window.innerHeight * 0.8 && !footerInView;
+      rails.forEach((r) => r.classList.toggle('rh-ad-rail-hidden', !show));
+    };
+    if (footer && 'IntersectionObserver' in window) {
+      new IntersectionObserver(([e]) => { footerInView = e.isIntersecting; update(); }).observe(footer);
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+  },
+};
 
 (function loadAds() {
-  const path = window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
-  if (!AD_PAGES.includes(path)) return;
+  const type = pageType(window.location.pathname.replace(/\.html$/, '').replace(/\/$/, ''));
+  if (!type) return;
   // Not on local dev (keeps tests and previews clean), and not for the owner's
   // own browsers (the GA opt-out in analytics.js): never view or click your own ads.
   if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname)) return;
@@ -61,6 +99,7 @@ function placeUnits() {
   s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
   document.head.appendChild(s);
   // this script loads async from <head>: wait for the page before placing units
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', placeUnits);
-  else placeUnits();
+  const place = () => PLAN[type].forEach((p) => PLACE[p]());
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', place);
+  else place();
 })();

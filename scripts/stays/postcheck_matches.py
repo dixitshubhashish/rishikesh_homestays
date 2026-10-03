@@ -28,7 +28,9 @@ def page_title(row):
 def main():
     out, inputs = sys.argv[1], sys.argv[2:]
     names = {}
-    for f in [os.path.join(HERE, '.cache', 'stays.json')] + glob.glob(os.path.join(HERE, '.cache', '*', 'stays.json')):
+    # STAYS_FILE adds another list of stays (e.g. Google Maps places, keys g-<place_id>)
+    extra = [os.environ['STAYS_FILE']] if os.environ.get('STAYS_FILE') else []
+    for f in [os.path.join(HERE, '.cache', 'stays.json')] + glob.glob(os.path.join(HERE, '.cache', '*', 'stays.json')) + extra:
         for s in json.load(open(f)):
             names[s['id']] = (s['n'], s.get('cy') or 'rishikesh')
     rows = {}
