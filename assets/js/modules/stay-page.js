@@ -221,10 +221,21 @@ function render(root, d, isOwn) {
       </section>
       ${STAYS_INDEX_META.categories.length ? `<nav class="sp-card sp-side-card sp-more" aria-labelledby="sp-more-h">
         <h2 id="sp-more-h">More stays in ${CITY_NAME}</h2>
-        <ul>${STAYS_INDEX_META.categories.filter((c) => c.slug !== cat.slug).slice(0, 8).map((c) => `<li><a href="/hotels/best-${c.slug}-in-${CITY}">${c.filter === 'all' ? 'All stays' : esc(c.title)}</a> <span>${inr(c.count)}</span></li>`).join('')}</ul>
+        ${STAYS_INDEX_META.categories.filter((c) => c.filter === 'all' && c.slug !== cat.slug).map((c) => `<ul><li>${catLink(c)} <span>${inr(c.count)}</span></li></ul>`).join('')}
+        ${catGroups(cat.slug).map(([label, list]) => `<h3>${label}</h3><ul>${list.map((c) => `<li>${catLink(c)} <span>${inr(c.count)}</span></li>`).join('')}</ul>`).join('')}
       </nav>` : ''}
     </aside></div>`;
 }
+
+// Category links grouped (Accommodation type / By size / Themes & facilities),
+// each group sorted by count, biggest first: the same order as the stays pages.
+function catGroups(skipSlug) {
+  const cats = STAYS_INDEX_META.categories.filter((c) => c.slug !== skipSlug && c.filter !== 'all');
+  return (STAYS_INDEX_META.groups || []).map(([key, label]) => [label,
+    cats.filter((c) => c.group === key).sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))])
+    .filter(([, list]) => list.length);
+}
+const catLink = (c) => `<a href="/hotels/best-${c.slug}-in-${CITY}">${c.filter === 'all' ? 'All stays' : esc(c.title)}</a>`;
 
 function setupGate(root, d) {
   document.body.insertAdjacentHTML('beforeend', MODAL_HTML);
@@ -417,7 +428,7 @@ export async function setupStayPage() {
     document.title = `Stay not found | ${CITY_NAME} | Rishikesh Homestays`;
     root.innerHTML = `<h1 class="sx-title">This stay has checked out</h1>
       <p class="sx-lede">We couldn't find it in our ${CITY_NAME} listings; it may have closed or changed its name. Here are good places to look instead, or <a href="/contact">send us your dates</a> and we'll suggest a stay.</p>
-      <nav class="sx-cats" aria-label="Browse stays">${STAYS_INDEX_META.categories.map((c) => `<a href="/hotels/best-${c.slug}-in-${CITY}">${c.filter === 'all' ? 'All stays' : esc(c.title)} <small>${inr(c.count)}</small></a>`).join('')}</nav>
+      <nav class="sx-cats" aria-label="Browse stays">${STAYS_INDEX_META.categories.filter((c) => c.filter === 'all').map((c) => `<div class="sx-cats-row"><a href="/hotels/best-${c.slug}-in-${CITY}">All stays <small>${inr(c.count)}</small></a></div>`).join('')}${catGroups().map(([label, list]) => `<div class="sx-cats-row"><span class="sx-cats-label">${label}</span>${list.map((c) => `<a href="/hotels/best-${c.slug}-in-${CITY}">${esc(c.title)} <small>${inr(c.count)}</small></a>`).join('')}</div>`).join('')}</nav>
       <section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">Our homestays <span>Book direct with us</span></h2>
         <ul class="sx-list">${STAYS_OWN.map((o) => `<li class="sx-item sx-item-own"><span class="sx-name">${esc(o.n)}</span><span class="sx-meta"><span>${esc(o.a)}</span></span><a class="sx-go" href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a></li>`).join('')}</ul></section>`;
     return;

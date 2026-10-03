@@ -72,6 +72,30 @@ OWN = [
     ('villa-yoga-retreat-at-the-ganges-in', 'Yoga Retreat at the Ganges', '/contact'),
 ]
 
+# How category links are grouped (and each group sorted by count, biggest
+# first) everywhere they're listed: the strip, "Explore more" and the stay
+# page's "More stays in …" box.
+CAT_GROUPS = [('type', 'Accommodation type'), ('size', 'By size'), ('theme', 'Themes & facilities')]
+
+
+def cat_group(flt):
+    if flt == 'all':
+        return None
+    if flt.startswith('k:') or flt == 't:backpacker':
+        return 'type'
+    return 'size' if flt.startswith('b:') else 'theme'
+
+
+def grouped(cats, count):
+    """[(label, [categories sorted by count desc])] for the non-empty groups."""
+    out = []
+    for key, label in CAT_GROUPS:
+        members = sorted((c for c in cats if cat_group(c[3]) == key), key=lambda c: (-count(c), c[1]))
+        if members:
+            out.append((label, members))
+    return out
+
+
 # Other directory listings of our own properties (same place, older name):
 # never shown as a third-party stay next to the real one.
 OWN_ALIASES = {
@@ -642,7 +666,8 @@ def main(data_path, crawled):
                 [{'title': c[1], 'filter': c[3], 'slug': c[0], **({'plural': PLURAL[c[0]]} if c[0] in PLURAL else {})} for c in live if c[3] != 'all'] +
                 [{'title': 'Other stays', 'filter': 'k:Other stays', 'slug': None}])
     meta = {
-            'categories': [{'slug': c[0], 'title': c[1], 'filter': c[3], 'count': counts[c[0]]} for c in live],
+            'categories': [{'slug': c[0], 'title': c[1], 'filter': c[3], 'count': counts[c[0]], 'group': cat_group(c[3])} for c in live],
+            'groups': [[key, label] for key, label in CAT_GROUPS],
             'sections': sections}
     dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     with open(f'{ROOT}/assets/js/modules/{data_module_name()}', 'w') as fh:
@@ -689,12 +714,19 @@ def main(data_path, crawled):
                 f'Compare {n:,} {plural} in {CN} by area, price and facilities. {intro}')[:300]
         faq = faqs(title, 'stay' if is_master else singular, plural, st, date)
 
-        strip = ''.join(
-            f'<a href="/hotels/best-{c[0]}-in-{CITY}"{" aria-current=\"page\"" if c[0] == slug else ""}>{"All stays" if c[3] == "all" else esc(c[1])} <small>{counts[c[0]]:,}</small></a>'
-            for c in live)
-        explore = ''.join(
-            f'<li><a href="/hotels/best-{c[0]}-in-{CITY}">{f"Best hotels in {CN} (all stays)" if c[3] == "all" else f"Best {esc(c[1])} in {CN}"}</a> <span>{counts[c[0]]:,}</span></li>'
-            for c in live if c[0] != slug)
+        pill = lambda c: (f'<a href="/hotels/best-{c[0]}-in-{CITY}"{" aria-current=\"page\"" if c[0] == slug else ""}>'
+                          f'{"All stays" if c[3] == "all" else esc(c[1])} <small>{counts[c[0]]:,}</small></a>')
+        master = [c for c in live if c[3] == 'all']
+        strip = ''.join(f'<div class="sx-cats-row">{"".join(pill(c) for c in master)}</div>' for _ in master[:1]) + ''.join(
+            f'<div class="sx-cats-row"><span class="sx-cats-label">{label}</span>{"".join(pill(c) for c in members)}</div>'
+            for label, members in grouped(live, lambda c: counts[c[0]]))
+        explore = ''.join(f'<li><a href="/hotels/best-{c[0]}-in-{CITY}">Best hotels in {CN} (all stays)</a> <span>{counts[c[0]]:,}</span></li>'
+                          for c in master if c[0] != slug)
+        explore = (f'<ul>{explore}</ul>' if explore else '') + ''.join(
+            f'<h3>{label}</h3><ul>' + ''.join(
+                f'<li><a href="/hotels/best-{c[0]}-in-{CITY}">Best {esc(c[1])} in {CN}</a> <span>{counts[c[0]]:,}</span></li>'
+                for c in members if c[0] != slug) + '</ul>'
+            for label, members in grouped(live, lambda c: counts[c[0]]))
 
         if is_master:
             blocks = []
@@ -802,7 +834,7 @@ def main(data_path, crawled):
           </section>
           <section class="sx-explore" aria-labelledby="sx-explore-h">
             <h2 id="sx-explore-h">Explore more stays in {CN}</h2>
-            <ul>{explore}</ul>
+            {explore}
             {explore_more}
           </section>
           <p class="sx-note">{esc(CITY_COPY.get(CITY, {}).get('note', NOTE_RISHIKESH))}</p>

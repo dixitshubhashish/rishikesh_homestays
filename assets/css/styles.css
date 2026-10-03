@@ -3294,3 +3294,29 @@ input.sx-input {
   .guide-copy .rental-rides {
     grid-template-columns: repeat(2, minmax(0, 1fr));}
 }
+/* Category links grouped by kind (type / size / themes), each group sorted by count. */
+.sx-cats {
+  display: grid;
+  gap: 10px;}
+.sx-cats-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;}
+.sx-cats-label {
+  margin-right: 4px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;}
+.sx-explore h3,
+.sp-more h3 {
+  margin: 16px 0 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;}
+.sp-more ul + h3,
+.sp-more h3:first-of-type {
+  margin-top: 12px;}
