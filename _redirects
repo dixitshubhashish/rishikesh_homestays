@@ -66,3 +66,5 @@
 # Stays pages moved into the hotels/ folder (query strings are kept).
 /best-*  /hotels/best-:splat  301
 /stay  /hotels/stay  301
+/stays  /hotels/best-hotels-in-rishikesh  301
+/stays/best-*  /hotels/best-:splat  301

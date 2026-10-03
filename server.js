@@ -66,6 +66,9 @@ app.get(['/hotels/stay', '/hotels/stay.html'], (req, res, next) => {
   const city = /^[a-z-]+$/.test(String(req.query.c || '')) ? req.query.c : 'rishikesh';
   res.redirect(302, `/hotels/best-hotels-in-${city}`);
 });
+// /stays (a guessed URL) and old /stays/best-… links → the stays pages in hotels/
+app.get(['/stays', '/stays.html'], (req, res) => res.redirect(301, '/hotels/best-hotels-in-rishikesh'));
+app.get(/^\/stays\/(best-[a-z0-9-]+-in-[a-z]+)$/, (req, res) => res.redirect(301, `/hotels/${req.params[0]}`));
 app.get(['/stay', '/stay.html'], (req, res) => {
   const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
   res.redirect(301, '/hotels/stay' + query);
