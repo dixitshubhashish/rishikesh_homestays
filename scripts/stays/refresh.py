@@ -7,7 +7,7 @@ immediately unless a run is due. When due, it fetches only the directory's
 listing page and compares its property links with the last run's
 (listing-urls.txt):
   - changed (new or removed properties) -> full crawl + process + rebuild
-    the pages, and reset the gap to MIN_DAYS;
+    the pages + BigQuery snapshot (push_bigquery.mjs), and reset the gap to MIN_DAYS;
   - unchanged -> skip the crawl and double the gap, up to MAX_DAYS.
 State lives in refresh.state (committed, so CI and local runs share it).
 --force runs the full refresh now regardless of the gap.
@@ -69,6 +69,8 @@ def main():
     run('crawl.py', '--fresh')
     run('process.py')
     run('build_pages.py')
+    # Snapshot into BigQuery (market_properties); skips itself without credentials.
+    subprocess.run(['node', os.path.join(HERE, 'push_bigquery.mjs')], check=False)
     open(URLS, 'w').write('\n'.join(current) + '\n')
     st.update(last_crawl=today.isoformat(), gap_days=MIN_DAYS, last_added=len(added), last_removed=len(removed), total=len(current))
     save_state(st)

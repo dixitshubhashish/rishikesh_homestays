@@ -182,6 +182,8 @@ Claude has done the prep work (images downloaded + licensed, sibling page rebuil
 
 Add completed work here with the agent, date, files, and verification command or result. Keep entries concise.
 
+- 2026-10-04 (Claude): Re-matched all doubtful/none booking links: 183 verified after a link check. Added BigQuery `market_properties` snapshots (`scripts/stays/push_bigquery.mjs`, wired into `refresh.py` and `.github/workflows/stays-refresh.yml`). Committed only my own files and hunks; Codex's 404 edits are untouched. `npm test` 297/297 (one flaky run while the link checker was busy).
+
 - 2026-10-04 (Claude): Live smoke test of the stays pages passed. Booking-link round 2 (5 agents, 197 stays searched) plus a browser link check: now 166 verified links (`scripts/stays/ota-links.tsv`), with the generated pages, data, sitemap and llms.txt rebuilt. Committed only my own files and my own hunks of PROGRESS.md and this file; Codex's in-progress 404 work stays uncommitted and untouched. `npm test` 297/297.
 
 - 2026-10-03 (Claude): stays pages, round 3. Affiliate ID `7854081` (`BOOKING_AID`); `scripts/stays/check_links.mjs` (22 broken Booking links downgraded, 74 verified); `/stay` WhatsApp icon + per-listing message with distance to our nearest homestay; Leaflet map (`assets/vendor/leaflet/`, `leaflet` devDependency). Removed all visible dates, source/crawl mentions and "official/independent" wording; disclaimers rewritten in a quirky guide voice. Decisions (no copied photos, no framing Booking, old Booking widgets retired) are recorded in PROGRESS.md. `npm test` passes. Not pushed.

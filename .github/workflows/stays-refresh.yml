@@ -25,7 +25,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # Only needed for the BigQuery snapshot (push_bigquery.mjs).
+      - run: npm ci --ignore-scripts
       - run: python3 scripts/stays/refresh.py ${{ inputs.force && '--force' || '' }}
+        env:
+          # Optional repo secret (Settings → Secrets → Actions): the same service-account
+          # JSON as Vercel's GOOGLE_APPLICATION_CREDENTIALS_JSON. Without it the
+          # BigQuery snapshot step just skips.
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
       - name: Commit if anything changed
         run: |
           git config user.name "stays-refresh bot"

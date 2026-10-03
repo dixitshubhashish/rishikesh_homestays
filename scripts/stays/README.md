@@ -10,7 +10,8 @@ category pages) from the public Rishikesh listings on uttarakhand-hotels.com.
 | 1. Crawl | `python3 scripts/stays/crawl.py [--fresh]` | `.cache/props.jsonl` (raw, one record per property, not committed) |
 | 2. Clean | `python3 scripts/stays/process.py [--names]` | `.cache/stays.json` |
 | 3. Build | `python3 scripts/stays/build_pages.py` | `best-*-in-rishikesh.html` + `assets/js/modules/stays-index-data.js` |
-| Auto | `python3 scripts/stays/refresh.py [--force]` | runs 1–3 only when due and the listing changed |
+| 4. Snapshot | `node scripts/stays/push_bigquery.mjs` | one row per stay into BigQuery `rishikesh_homestays.market_properties` (partitioned by `snapshot_date`; re-running the same day replaces that day) |
+| Auto | `python3 scripts/stays/refresh.py [--force]` | runs 1–4 only when due and the listing changed |
 
 The crawl is resumable (re-run to continue) and polite: 4 workers with a pause
 after each page; the source's robots.txt allows crawling. A full crawl of
@@ -81,12 +82,33 @@ affiliate ID to every Booking.com link.
 Mark *Confirmed* Y/N (optionally with your own site/URL), download it as CSV,
 and run `import_review.py <file.csv>`, then `build_pages.py`.
 
-Status on 2026-10-04: 328 of 1,605 stays searched (most-reviewed first), with
-166 verified, 120 doubtful and 42 none after two link checks. Note: the
-200-web-search cap is shared by the whole session, including all its agents,
-so one session covers roughly 200 stays. Run `node scripts/stays/check_links.mjs`
-after every round: about 25% of search-verified Booking.com links redirect to
-Booking's city search.
+Status on 2026-10-04: 328 of 1,605 stays searched. After a re-check of all
+doubtful/none rows and a third link check: 183 verified (173 Booking.com,
+4 Agoda, 4 MakeMyTrip, 2 Airbnb), 88 doubtful, 57 none. The 200-web-search cap
+is shared by the whole session (all agents), so one session covers about 200
+stays. The remaining ~1,280 need the Google Programmable Search API
+(GOOGLE_CSE_ID/GOOGLE_CSE_KEY, pending the owner). Run
+`node scripts/stays/check_links.mjs` after every round: about 20–25% of
+search-verified Booking.com links redirect to the city search.
+
+## BigQuery: market_properties
+
+Each snapshot holds every stay with name, area, types, themes, stars, guest
+rating, reviews, starting price, facilities, address, lat/lng, booking-link
+status/site/URL, `is_own` and the source URL. Snapshots are dated, so changes
+can be tracked over time. Example:
+
+```sql
+SELECT area, COUNT(*) stays, COUNTIF('pet' IN UNNEST(themes)) pet_friendly,
+       APPROX_QUANTILES(price_from_inr, 2)[OFFSET(1)] median_price
+FROM rishikesh_homestays.market_properties
+WHERE snapshot_date = (SELECT MAX(snapshot_date) FROM rishikesh_homestays.market_properties)
+  AND 'Homestays' IN UNNEST(types)
+GROUP BY area ORDER BY stays DESC;
+```
+
+The GitHub workflow pushes a snapshot after each rebuild if the repo secret
+`GOOGLE_APPLICATION_CREDENTIALS_JSON` is set (same JSON as on Vercel).
 
 ## Auto-refresh
 
