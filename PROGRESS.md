@@ -2,6 +2,13 @@
 
 Self-tracking log so work doesn't get lost across a long session. Update this file whenever a feature ships or a bug is found.
 
+## ✅ Shipped — booking links round 2 + live smoke test (Claude, 2026-10-04)
+
+- **Live smoke test passed** on rishikeshhomestays.com: all stays pages, assets and `/api/contact` respond; the master page pins our 3 stays; search lazy-loads data; the `/stay` map draws; WhatsApp uses the live URL; the popup sends the lead (`stay_redirect_booking_com`, `guests_total`) before redirecting to `…/dewa-retreat.html?aid=7854081`. The API call was intercepted, so no real lead was created.
+- **Round 2 OTA search:** 5 agents covered the next 250 most-reviewed stays. The 200-search cap is **shared by the whole session**, so only 197 got searched; 53 unsearched or limit-cut rows were left out of `ota-links.tsv` so the next session re-searches them. Two name-mismatch rows were downgraded to doubtful.
+- **Link check** (`node scripts/stays/check_links.mjs`) moved 41 more Booking.com links that redirect to the city search to doubtful (many hostels). **Now 166 verified** (160 Booking.com, 3 Agoda, 2 MakeMyTrip, 1 Airbnb), 120 doubtful, 42 none, out of 328 searched. About 1,280 stays are still unsearched.
+- Next: re-search the 53 left-out rows, then continue down the review count (each session's 200 searches cover roughly 200 stays), and add the new doubtful rows to the owner's review sheet.
+
 ## ✅ Shipped — 404 Chotiwala ponytail corrected (Codex, 2026-10-03)
 
 - Added a responsive inline SVG choti overlay on the 404 page's Chotiwala-style guide, shaped as a long tapered ponytail rather than a top tuft.

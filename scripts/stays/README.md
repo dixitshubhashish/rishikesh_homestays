@@ -81,12 +81,12 @@ affiliate ID to every Booking.com link.
 Mark *Confirmed* Y/N (optionally with your own site/URL), download it as CSV,
 and run `import_review.py <file.csv>`, then `build_pages.py`.
 
-Status on 2026-10-03: 160 of 1,605 stays searched (all star-rated / most
-reviewed first). The link check (`node scripts/stays/check_links.mjs`, a real
-browser) moved 22 Booking.com links that redirect to Booking's city search
-back to doubtful, so 74 are verified, 57 doubtful and 29 none. Re-run the
-check before pushing; MakeMyTrip blocks bots, so its failures are inconclusive. Searching the rest needs
-a fresh session (the per-session web-search limit was reached).
+Status on 2026-10-04: 328 of 1,605 stays searched (most-reviewed first), with
+166 verified, 120 doubtful and 42 none after two link checks. Note: the
+200-web-search cap is shared by the whole session, including all its agents,
+so one session covers roughly 200 stays. Run `node scripts/stays/check_links.mjs`
+after every round: about 25% of search-verified Booking.com links redirect to
+Booking's city search.
 
 ## Auto-refresh
 
