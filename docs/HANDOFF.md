@@ -19,7 +19,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 ## Owner to do (blocked on them)
 
 1. CJ: get **Booking.com APAC to approve** the relationship (clicks only earn after that); send the "Get HTML" code of link 17323528 if a Booking.com search widget is wanted (place it **below** the homestay sections on the homepage).
-2. AdSense: verify the site (meta tag), create a **vertical display unit** and give its slot → put it in `UNITS.rail` in `assets/js/ads.js`.
+2. AdSense: **site ownership verified (ads.txt) and review requested on 2026-10-04** — status "Getting ready"; wait for Google's approval email (days to ~2 weeks). After that: create a **vertical display unit** and put its slot in `UNITS.rail` in `assets/js/ads.js`.
 3. Optional: a search API key (Google Programmable Search or Brave) to find Goibibo/MakeMyTrip/Airbnb/Hotels.com links for the ~1,400 stays still without one.
 
 ## Ideas not started

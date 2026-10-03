@@ -6,6 +6,10 @@
 - Targeted artwork/navigation tests: 17/17 pass against isolated release. Production Chromium verified 11 CSS widths (320-3440px), /404.html, and root/nested nonexistent paths (real 404 responses). Live laptop screenshot inspected with visible ponytail.
 - Shared checkout was not pulled/rebased because another agent has active staged and unstaged work. Release checkout: `/tmp/rishikesh-choti-release`. Earlier deployment-pending notes below are superseded.
 
+## AdSense verified (2026-10-04)
+
+- Site ownership verified in AdSense via the ads.txt snippet (`/ads.txt` live); review requested, status "Getting ready". Ads appear on the planned pages once Google approves the site. Next: a vertical display unit for the side rails (`UNITS.rail` in `assets/js/ads.js`).
+
 ## ✅ Built — CJ affiliate links, Google stays on the site, new pages (Claude, 2026-10-03, night)
 
 - **Booking.com commission:** every Booking.com link is now our CJ deep link (PID 101895722, link 17323528), from one constants file `assets/js/modules/affiliate-links.js`; it lands on the same property page (tested). The old `?aid=7854081` was Booking.com APAC's CJ advertiser ID and credited nobody. Owner: get Booking.com APAC to approve the CJ relationship.
