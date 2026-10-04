@@ -27,6 +27,8 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 
 `docs/antigravity/RULES.md` (the rulebook: output format, match rules, pacing) + `docs/antigravity/PROMPT.md` are a ready prompt for Antigravity to find booking pages for the 1,396 stays in `docs/antigravity/no-link-stays.tsv` (best first) via Google + its browser. It writes `docs/antigravity/results-*.tsv` in our `key / verified|none / Platform / url / title` format. To merge: `python3 scripts/stays/postcheck_matches.py <out.tsv> docs/antigravity/results-*.tsv`, re-check Booking.com/EaseMyTrip/Agoda rows with `scripts/stays/verify_platform.mjs` where possible, then `merge_ota.py <out.tsv>`, rebuild both cities and `push_bigquery.mjs`. Booking.com rows get the CJ link automatically.
 
+**Status 2026-10-04:** Antigravity's first run (batch `ag1`) was stopped and discarded — it scripted a DuckDuckGo library and never opened pages, so its 15 `none` lines were unreliable. RULES.md now has §7a with the hard no's; a restart must follow it (browser-opened pages only).
+
 ## Ideas not started
 
 - Elysium and Yoga Retreat dedicated pages (need owner details/photos).

@@ -103,6 +103,14 @@ tourist-rest-house	none	-	-	searched: MakeMyTrip, Goibibo, Agoda, Booking.com, A
 - Don't create bookings, accounts, or fill forms on the platforms.
 - Don't fabricate: if you didn't open the page, it's not `verified`.
 
-## 7. When you finish a batch
+## 7a. Hard no's learned from the first run (read twice)
+
+- **Do not write or run scripts that call search engines or search libraries** (no `duckduckgo_search`, no scraping of Google/Bing/DDG result pages in code). Use the browser/search tool the way a person would, one stay at a time.
+- **Do not create files outside `docs/antigravity/results-<batch>.tsv`** (no helper scripts in the repo root or anywhere else in the repo). Scratch work belongs outside the repo.
+- **A `verified` line needs a page you opened in the browser** and whose visible title/heading you copied. A search-result snippet or title is not enough.
+- **A `none` line means you opened and checked candidates on the platforms listed**; list only the platforms you actually checked. Never write `none` because a search failed, was rate-limited or returned nothing.
+- If something errors or gets blocked, stop and say so in your coordination row; do not mark stays `none` to keep moving.
+
+## 8. When you finish a batch
 
 Append nothing else to the results file. Update your row in `.agents/coordination.md`: rows covered, `verified` lines, stays with at least one link, `none` stays, any captcha stops. Then the owner tells Claude, which merges with: `scripts/stays/postcheck_matches.py` (drops pages shared by differently named stays or in the wrong town) → browser re-check where possible → `merge_ota.py` → rebuild pages → BigQuery.
