@@ -35,7 +35,7 @@
 //   --recheck FILE (re-open every 'verified' line of FILE and keep only those that still match).
 // Then:  python3 scripts/stays/postcheck_matches.py <out.tsv> docs/booking-links/found.tsv, merge_ota.py <out.tsv> (see docs/HANDOFF.md)
 import { chromium, firefox, webkit } from 'playwright';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmdirSync, statSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmdirSync, statSync, renameSync } from 'fs';
 import { coreName, coreWords, matchReason, cleanUrl, platformOf, PLATFORMS } from './ota-match.mjs';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
@@ -96,7 +96,20 @@ function tsv(file) {
   const [head, ...rows] = readFileSync(file, 'utf8').trim().split('\n').map((l) => l.split('\t'));
   return rows.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
 }
-const writeTsv = (file, cols, rows) => writeFileSync(file, [cols.join('\t'), ...rows.map((r) => cols.map((c) => String(r[c] ?? '').replace(/[\t\n]/g, ' ')).join('\t'))].join('\n') + '\n');
+// Atomic: written to a temp file, then renamed over the list, so an editor or another reader never sees a
+// half-written file. \r and Unicode line separators are flattened too (an editor would show them as breaks).
+// A field never carries a stray quote (a TSV viewer would read on into the next rows): \" -> ", and an
+// unmatched " is dropped.
+const cleanField = (v) => {
+  let s = String(v ?? '').replace(/[\t\n\r\u0085\u2028\u2029]/g, ' ').replace(/\\"/g, '"');
+  if ((s.match(/"/g) || []).length % 2) s = s.replace(/"([^"]*)$/, '$1');
+  return s;
+};
+const writeTsv = (file, cols, rows) => {
+  const tmp = `${file}.tmp-${process.pid}`;
+  writeFileSync(tmp, [cols.join('\t'), ...rows.map((r) => cols.map((c) => cleanField(r[c])).join('\t'))].join('\n') + '\n');
+  renameSync(tmp, file);
+};
 const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 function withLock(fn) {
   const dir = `${AG}.lists-lock`;
@@ -553,6 +566,9 @@ function candidates(res, tried) {
 
 // -> 'verified' | 'none' | 'retry' | 'manual' | 'unresolved'
 async function processStay(stay) {
+  // sorted meanwhile by another worker or by hand (lists are shared): never searched or written twice
+  const still = DEEP ? tsv(UNFOUND).some((r) => r.key === stay.key && r.status === 'retry') : tsv(QUEUE).some((r) => r.key === stay.key);
+  if (!still) { log('   already sorted elsewhere: skipped'); return 'skipped'; }
   if (!coreWords(stay.name).length) { // nothing in the name can identify it on a booking site
     log(`   name "${stay.name}" has nothing distinctive (core "${coreName(stay.name)}"): not searched, left for a person`);
     log('   lists:', JSON.stringify(record(stay, 'manual', { log: `name too generic to identify on a booking site (core "${coreName(stay.name)}"); check by hand` }) || 'dry run: not touched'));
@@ -664,7 +680,7 @@ if (SYNC_ONLY) {
   const retry = tsv(UNFOUND).filter((r) => r.status === 'retry' && mine(r));
   const todo = (DEEP ? shuffle(retry) : shuffle(fresh)).slice(OFFSET, OFFSET + LIMIT);
   log(`worker ${SHARD}/${SHARDS}: ${todo.length} stay(s) (${fresh.length} never searched, ${retry.length} retry); browsers ${BROWSERS.join('/')}; engines ${ENGINES_ON.join('/')} = ${combos.length} combinations${PROXY ? `; proxy ${PROXY}` : ''}${DRY ? '; DRY (nothing written)' : ''}`);
-  const tally = { verified: 0, none: 0, retry: 0, manual: 0, unresolved: 0 };
+  const tally = { verified: 0, none: 0, retry: 0, manual: 0, unresolved: 0, skipped: 0 };
   let i = 0;
   for (const stay of todo) {
     log(`[${++i}/${todo.length}] ${stay.name} (${stay.city}) key=${stay.key}`);

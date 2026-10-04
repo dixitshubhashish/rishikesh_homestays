@@ -7,7 +7,7 @@ import { words, STOP } from './booking-match.mjs';
 
 // Chain/brand words (and a chain's tier) say nothing about which stay it is
 // ("Perfectstayz Value Alpine" is not "Perfectstayz Value Hills"): never required, never "extra".
-export const BRANDS = new Set(('perfectstayz perfect stayz value goroomgo oyo o fabhotel fabhotels fab treebo townhouse ' +
+export const BRANDS = new Set(('perfectstayz perfect stayz value goroomgo oyo o spot fabhotel fabhotels fabexpress fab treebo townhouse ' +
   'collection capital flagship silverkey itsy zostel hosteller moustache bloomrooms bloom sitara aj group economy premium stayvista ihcl seleqtions').split(' '));
 // Unit/type words: a name and a title that each name a unit and share none are different
 // units ("Skyard Premium" vs "Skyard Hostel").
@@ -18,7 +18,7 @@ const HOTELISH = new Set('hotel hotels resort resorts inn lodge guesthouse suite
 // Words a booking site adds around the name ("Deals, Photos & Reviews", "Best Price on …").
 const PAGE_WORDS = new Set('best price deals photos photo reviews review offer offers updated prices book now rooms dorms address india uttarakhand trivago compare trip com'.split(' '));
 // Glue: free anywhere.
-const GLUE = new Set('the a an and of by in at on to for hotel hotels stay stays'.split(' '));
+const GLUE = new Set('the a an and of by in at on to for hotel hotels stay stays bed breakfast bnb'.split(' '));
 // Address words: never part of a name ("Hotel Ganga Azure@ Har Ki Pauri Road" is "Ganga Azure Hotel").
 const LOCATION = new Set('road station railway har ki ke pauri harkipauri ghat jhula chowk marg bypass sector near min mins minute minutes from walk walking distance opposite opp behind main market km kms mtr mtrs meters metres uttarakhand india dehradun'.split(' '));
 // Marketing words in a name's later parts ("– Prime Location – Luxury and Spacious Room").
@@ -27,7 +27,7 @@ const MARKETING = new Set(('prime location luxury luxurious spacious best top ra
   'airport pickup nights night point river ganga ganges view views ac room rooms family budget new pure deluxe ' +
   'clean comfortable cozy cosy beautiful amazing awesome perfect calm peaceful quiet scenic stunning private ' +
   'furnished fully member spa cafe rooftop terrace balcony bbq shared jacuzzi sauna gym equipped tranquil area ' +
-  'staycation forest award winner accommodation chain veg vegetarian couple friendly dining').split(' '));
+  'staycation forest award winner accommodation chain veg vegetarian couple friendly dining facing').split(' '));
 const CITY_WORDS = {
   rishikesh: /rish[iī]kesh|tapovan|lakshman|laxman|muni ki reti|shivpuri|narendra ?nagar|swarg|raiwala|byasi|kaudiyala|neelkanth|yamkeshwar|mohan ?chatti/i,
   haridwar: /har[iī]dw[aā]r|hardwar|kankhal|jwalapur|bhupatwala|bahadrabad|roorkee|motichur|raiwala/i,
@@ -36,14 +36,17 @@ const plain = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // "Ris
 const townIn = (city, s) => (CITY_WORDS[city] || CITY_WORDS.rishikesh).test(plain(s));
 const isTownWord = (w) => /^(?:rishikesh|haridwar|hardwar|tapovan|lakshman|laxman|shivpuri|swarg|raiwala|byasi|kaudiyala|neelkanth|yamkeshwar|kankhal|jwalapur|bhupatwala|bahadrabad|roorkee|motichur|muni|reti)$/.test(w);
 
-// A possessive is the word itself ("Sushma's Homestay" is "Sushma Homestay"), never a word "s".
-const unPossess = (s) => s.replace(/([a-z0-9])['’ʼ`]s\b/gi, '$1');
+// A possessive is the word itself ("Sushma's Homestay" is "Sushma Homestay"), never a word "s";
+// dharmshala / dharmsala / dharamsala are one word.
+const unPossess = (s) => s.replace(/([a-z0-9])['’ʼ`]s\b/gi, '$1').replace(/\bdhar?a?m\s?sh?ala\b/gi, 'dharamshala');
 
 // Tokens of every length ("KG", "Om", "W", "Pi" identify stays too): "2 BHK"/"2-BHK" -> "2bhk",
 // "K G"/"J.P." -> "kg"/"jp".
 export function tokens(s) {
   const out = [];
-  for (const w of words(unPossess(s).replace(/\b0*(\d)\s*-?\s*bhk\b/gi, '$1bhk'))) {
+  const num = { one: 1, two: 2, three: 3, four: 4, five: 5 }; // "Two-Bedroom" is a 2bhk too (unit clash check)
+  s = unPossess(s).replace(/\b(one|two|three|four|five|\d)[\s-]*bed(?:room)?s?\b/gi, (m, n) => `${num[n.toLowerCase()] || n}bhk`);
+  for (const w of words(s.replace(/\b0*(\d)\s*-?\s*bhk\b/gi, '$1bhk'))) {
     const prev = out[out.length - 1];
     if (/^[a-z]$/.test(w) && prev?.single) { prev.w += w; continue; }
     out.push({ w, single: /^[a-z]$/.test(w) });
@@ -55,7 +58,7 @@ const neutral = (w) => STOP.has(w) || GLUE.has(w) || BRANDS.has(w) || UNITS.has(
 
 // A later part of the name counts only if it names something: it does not open like a
 // tagline and has a word that is not generic, marketing or an address.
-const TAGLINE = /^(?:a|an|best|top|the best|luxury|budget|free|walking|new|family|pure|deluxe|near|opp|opposite|member|fully|no)\b|\b(?:star|property|selling|rated)\b|\b\d+\s*(?:km|kms|min|mins|minutes?|mtrs?|meters?|metres?)\b/i;
+const TAGLINE = /^(?:a|an|best|top|the best|luxury|budget|free|walking|new|family|pure|deluxe|near|opp|opposite|member|fully|no)\b|\b(?:star|property|selling|rated)\b|\b\d+\s*(?:km|kms|min|mins|minutes?|mtrs?|meters?|metres?|adults?|guests?|persons?|people|pax|child|children|kids?|beds?)\b|\b(?:one|two|three|four|five|\d+)[\s-]*(?:bedroom|bed)s?\b|\bdouble bed\b|\b(?:double|single|twin|triple|deluxe|superior|standard|family|premium)\s+(?:room|apartment|suite|cottage|villa)\b/i;
 const naming = (part) => !TAGLINE.test(part) && tokens(part).some((w) => !neutral(w) && !MARKETING.has(w));
 const CUT = /\s+(?:near|opposite|opp\.?|with|walking distance|close to|behind|next to|formerly)\s+/i;
 
@@ -134,7 +137,7 @@ export function matchReason(name, city, title) {
   const got = new Set(tokens(title));
   const nameUnits = tokens(coreName(name)).filter((w) => UNITS.has(w));
   const titleUnits = headT.filter((w) => UNITS.has(w));
-  if (nameUnits.length && titleUnits.length && !nameUnits.some((w) => got.has(w))) return { ok: false, why: 'unit-clash', detail: `${nameUnits} vs ${titleUnits}` };
+  if (nameUnits.length && titleUnits.length && !nameUnits.some((w) => got.has(w) || got.has(w.replace(/s$/, '')) || got.has(`${w}s`))) return { ok: false, why: 'unit-clash', detail: `${nameUnits} vs ${titleUnits}` };
   const nameKinds = kindsOf(name.split(CUT)[0]), headKinds = kindsOf(head);
   if (nameKinds.length && headKinds.length && !nameKinds.some((k) => sameKind(k, headKinds))) return { ok: false, why: 'kind-clash', detail: `${nameKinds} vs ${headKinds}` };
   // with one name word ("Krishna"), the title may not add a kind either ("Krishna Home" for

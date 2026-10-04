@@ -1,0 +1,115 @@
+# One row per search phrase people type (owner, 2026-10-04/05). Address and <h1> = the phrase; {City} = city name.
+# Columns: phrase, rule (see search_pages.py), group (blank | a area | s stars | k type | pb price band | c like the main page), cities (both | rishikesh | haridwar), intro,
+#   twin (only for a one-city phrase: the other city's phrase its city switch goes to; a 'both' phrase has its own twin).
+# Every 'both' phrase gets a page in BOTH cities once either city has enough stays, so the city switch always lands on the same page.
+# Add a row, then: npm run build:stays (rebuilds both cities, footers, sitemap, llms.txt) and npm run check:stays.
+phrase	rule	group	cities	intro	twin
+Cheap Homestays in {City}	home & price<3000	pb	both	Homestays, guest houses and small apartments in {City} that start under ₹3,000 a night, grouped by price band.	
+Luxury Stays in {City}	luxury	a	both	Luxury stays in {City}: upscale hotels, resorts, villas and homestays, grouped by area, with the ones you can book online first.	
+Airbnb in {City} near Ganga	entire & river	a	both	Airbnb-style stays near the Ganga in {City}: whole apartments, homestays, cottages and villas close to the river. Some are on Airbnb, others on other booking sites or direct with the owner.	
+Place to Stay in {City}	any	a	both	Every place to stay in {City}, grouped by area, so you can pick the part of town first and then the stay.	
+{City} Accommodation	any	c	both	All {City} accommodation in one place: hotels, homestays, guest houses, apartments and more, grouped by type.	
+Room Booking at {City}	linked		both	Stays in {City} you can book online right away, each checked against its own booking page.	
+{City} Homestay Price	home & priced	pb	both	What a homestay in {City} costs: homestay-style stays grouped by their starting price per night.	
+Homestay in {City} with Kitchen Price	home & kitchen	pb	both	Homestays and apartments in {City} with a kitchen you can use, grouped by price, for longer stays and self-cooking.	
+{City} Homestay for Family	home & family		both	Family-friendly homestays, villas and holiday homes in {City}, with room for parents, kids and grandparents.	
+Homestay in {City} near Ganga River	home & river	a	both	Homestays in {City} on or close to the Ganga, grouped by area.	
+Best Homestay in {City} near Ganga	home & gangaview		both	Homestays in {City} that look out on the Ganga, the ones with a verified booking page first.	
+Homestay in Rishikesh near Laxman Jhula	home & near:laxman-jhula:1.5		rishikesh	Homestays within about 1.5 km of Laxman Jhula, the walkable cafe-and-temple side of Rishikesh.	Homestay in Haridwar near Har Ki Pauri
+Homestay in Rishikesh near Triveni Ghat	home & near:triveni-ghat:1.5		rishikesh	Homestays within about 1.5 km of Triveni Ghat, the town centre with the big evening aarti.	Homestay in Haridwar near Har Ki Pauri
+Homestay in Haridwar near Har Ki Pauri	home & near:har-ki-pauri:2		haridwar	Homestays within about 2 km of Har Ki Pauri, for the evening aarti and an early holy dip.	Homestay in Rishikesh near Triveni Ghat
+{City} Hotels for Family	hotel & family		both	Hotels and resorts in {City} that suit families: family rooms, pools and space for kids.	
+{City} Hotels with Ganga View	hotel & gangaview	a	both	Hotels and resorts in {City} with rooms or terraces that look out on the Ganga.	
+{City} Hotels 5 Star	stars=5		both	The 5-star hotels and resorts of {City}.	
+{City} Hotels near Railway Station	hotel & near:{city}-railway-station:2		both	Hotels within about 2 km of {City} railway station, for late arrivals and early trains.	
+{City} Hotels Low Price	hotel & price<3000	pb	both	Low-price hotels in {City} that start under ₹3,000 a night, grouped by price.	
+{City} Hotels near River	hotel & river	a	both	Hotels in {City} by the river, grouped by the stretch of the Ganga they sit on.	
+{City} Hotels near Ganga	hotel & river		both	Hotels in {City} close to the Ganga and its ghats, the ones you can book online first.	
+{City} Hotels Price	hotel & priced	pb	both	What hotels in {City} cost: every hotel with a listed price, grouped by its starting price per night.	
+Rishikesh Hotels near Laxman Jhula	hotel & near:laxman-jhula:1.5		rishikesh	Hotels within about 1.5 km of Laxman Jhula, walking distance to the bridge, cafes and temples.	Haridwar Hotel Booking near Har Ki Pauri
+{City} Hotels Luxury	hotel & luxury	s	both	Luxury hotels and resorts in {City}, grouped by star rating.	
+{City} Rooms Low Price	price<3000	pb	both	Low-price rooms in {City} of every kind, from hostel beds to guest houses and hotels, all under ₹3,000 a night.	
+Hotel in {City} under 500	price<=500		both	Stays in {City} that start at ₹500 a night or less, mostly hostel beds and simple rooms.	
+{City} Rooms Price	priced	pb	both	Room prices in {City}: every stay with a listed price, grouped by its starting price per night.	
+{City} Rooms for Family	family		both	Family rooms in {City} across hotels, resorts, homestays and holiday homes.	
+OYO Rooms in {City}	oyo		both	OYO-branded stays in {City} (OYO, Townhouse, Capital O, Collection O and others). We are not linked to OYO; this list just gathers them in one place.	
+{City} Hotel Booking under 1000	price<=1000	pb	both	Stays in {City} you can book for ₹1,000 a night or less.	
+Rishikesh Hotel Booking near Triveni Ghat	hotel & near:triveni-ghat:1.5		rishikesh	Hotels within about 1.5 km of Triveni Ghat, close to the evening aarti, markets and the bus stand.	Haridwar Hotel Booking near Har Ki Pauri
+Haridwar Hotel Booking near Har Ki Pauri	hotel & near:har-ki-pauri:1.5		haridwar	Hotels within about 1.5 km of Har Ki Pauri, walking distance to the ghat and the evening aarti.	Rishikesh Hotel Booking near Triveni Ghat
+{City} Resorts near River	resort & river	a	both	Resorts in {City} by the river, grouped by area.	
+{City} Resorts near River with Swimming Pool	resort & river & pool		both	Riverside resorts in {City} that also have a swimming pool.	
+Best Riverside Resorts in {City}	resort & gangaview		both	Resorts in {City} right on the river, with Ganga views, the ones with a verified booking page first.	
+{City} Resort with Pool near Ganga	resort & pool & river	a	both	Resorts in {City} with a pool, close to the Ganga, grouped by area.	
+{City} Resorts 5 Star	resort & stars>=4	s	both	Five-star resorts in {City} first, then the four-star ones.	
+{City} Resorts Camp	resortcamp	k	both	Resorts and riverside camps in {City}, for rafting trips, bonfires and nights in the open.	
+Best Resort in {City} near Ganga	resort & gangaview	s	both	Resorts in {City} that look out on the Ganga, grouped by star rating.	
+Luxury Resorts in {City} near Ganga	resort & luxury & river		both	Luxury resorts in {City} close to the Ganga.	
+{City} Resorts near Ganga	resort & river		both	Resorts in {City} close to the Ganga, the ones you can book online first.	
+{City} Hotels and Resorts	hotel	k	both	Hotels and resorts in {City}, grouped by type.	
+5 Star Hotels in {City} near Ganga	stars=5 & river		both	5-star hotels and resorts in {City} close to the Ganga.	
+4 and 5 Star Hotels in {City}	stars>=4	s	both	Every 4-star and 5-star stay in {City}, five-star first.	
+{City} 5 Star Hotels with Pool	stars=5 & pool		both	5-star hotels and resorts in {City} with a swimming pool.	
+5 Star Hotels in {City} for Wedding	stars>=4 & wedding	s	both	5-star and 4-star hotels and resorts in {City} with lawns or banquet halls for a wedding. Ask each one about guest numbers, rooms and dates.	
+5 Star Hotels in {City} near River	stars>=4 & river	s	both	Top-rated hotels and resorts in {City} by the river, five-star first, then four-star.	
+5 Star Hotels in Rishikesh Tapovan	stars>=4 & area:Tapovan	s	rishikesh	Five-star and four-star stays in Tapovan, the cafe-and-yoga hub above Laxman Jhula.	4 and 5 Star Hotels in {City}
+7 Star Hotels in {City}	stars=5 & luxury		both	There is no official 7-star rating in India; these are the most luxurious 5-star stays in {City}.	
+4 Star Hotels in {City} near Ganga	stars=4 & river		both	4-star hotels and resorts in {City} close to the Ganga.	
+3 Star Hotels in {City}	stars=3	a	both	Every 3-star hotel and resort in {City}, grouped by area: proper rooms, a front desk and daily housekeeping without 5-star prices.	
+3 Star Hotels in {City} near Ganga	stars=3 & river		both	3-star hotels and resorts in {City} close to the Ganga, the ones you can book online first.	
+3 Star Hotels in Rishikesh near Laxman Jhula	stars=3 & near:laxman-jhula:1.5		rishikesh	3-star hotels within about 1.5 km of Laxman Jhula, walking distance to the bridge, cafes and temples.	3 Star Hotels in Haridwar near Har Ki Pauri
+3 Star Hotels in Haridwar near Har Ki Pauri	stars=3 & near:har-ki-pauri:1.5		haridwar	3-star hotels within about 1.5 km of Har Ki Pauri, walking distance to the ghat and the evening aarti.	3 Star Hotels in Rishikesh near Laxman Jhula
+3 Star Resorts in {City}	resort & stars=3		both	3-star resorts in {City}: gardens, pools and space at a mid-range price.	
+3, 4 and 5 Star Hotels in {City}	stars>=3	s	both	Every star-rated hotel and resort in {City} from 3-star up, five-star first.	
+Cheap Homestay in {City}	home & price<3000		both	A cheap homestay in {City}: homestay-style stays under ₹3,000 a night, the ones you can book online first.	
+Hotels in {City} near Ganga	hotel & river	s	both	Hotels in {City} near the Ganga, grouped by star rating.	
+{City} Room Booking	linked	a	both	Book a room in {City} online: stays with a checked booking page, grouped by area.	
+{City} Airbnb	entire	k	both	Airbnb-style stays in {City}: whole apartments, homestays, villas and cottages. Some are on Airbnb, others on other booking sites or direct with the owner.	
+Top 10 Hotels in {City}	kind:Hotels & top10		both	The 10 best-rated hotels in {City}, ranked by guest score (only hotels with at least 5 guest reviews count).	
+Top 10 Homestays in {City}	kind:Homestays & top10		both	The 10 best-rated homestays in {City}, ranked by guest score (only homestays with at least 5 guest reviews count).	
+Top 10 Resorts in {City}	kind:Resorts & top10		both	The 10 best-rated resorts in {City}, ranked by guest score (only resorts with at least 5 guest reviews count).	
+Top 10 Hostels in {City}	kind:Hostels & top10		both	The 10 best-rated hostels in {City}, ranked by guest score (only hostels with at least 5 guest reviews count).	
+Top 10 Guest Houses in {City}	kind:Guest houses & top10		both	The 10 best-rated guest houses in {City}, ranked by guest score (only guest houses with at least 5 guest reviews count).	
+Top 10 Villas in {City}	kind:Villas & top10		both	The 10 best-rated villas in {City}, ranked by guest score (only villas with at least 5 guest reviews count).	
+Top 10 Apartments in {City}	kind:Apartments & top10		both	The 10 best-rated apartments in {City}, ranked by guest score (only apartments with at least 5 guest reviews count).	
+Top 10 Cottages in {City}	kind:Cottages & top10		both	The 10 best-rated cottages in {City}, ranked by guest score (only cottages with at least 5 guest reviews count).	
+Top 10 Bed and Breakfasts in {City}	kind:B&Bs & top10		both	The 10 best-rated bed and breakfasts in {City}, ranked by guest score (only bed and breakfasts with at least 5 guest reviews count).	
+Top 10 Camps in {City}	camp & top10		both	The 10 best-rated camps in {City}, ranked by guest score (only camps with at least 5 guest reviews count).	
+Top 10 Dharamshalas in {City}	kind:Dharamshalas & top10		both	The 10 best-rated dharamshalas in {City}, ranked by guest score (only dharamshalas with at least 5 guest reviews count).	
+Top 10 Ashrams in {City}	kind:Ashrams & top10		both	The 10 best-rated ashrams in {City}, ranked by guest score (only ashrams with at least 5 guest reviews count).	
+Top 10 Holiday Rentals in {City}	kind:Holiday rentals & top10		both	The 10 best-rated holiday rentals in {City}, ranked by guest score (only holiday rentals with at least 5 guest reviews count).	
+Cheap Rooms in {City}	price<3000	pb	both	Cheap rooms in {City} of every kind, from hostel beds and guest houses to hotels, all starting under ₹3,000 a night, grouped by price.	
+Cheap Hotels in {City}	kind:Hotels & price<3000	pb	both	Cheap hotels in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Resorts in {City}	kind:Resorts & price<3000	pb	both	Cheap resorts in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Hostels in {City}	kind:Hostels & price<3000	pb	both	Cheap hostels in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Guest Houses in {City}	kind:Guest houses & price<3000	pb	both	Cheap guest houses in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Apartments in {City}	kind:Apartments & price<3000	pb	both	Cheap apartments in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Villas in {City}	kind:Villas & price<3000	pb	both	Cheap villas in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Cottages in {City}	kind:Cottages & price<3000	pb	both	Cheap cottages in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Camps in {City}	camp & price<3000	pb	both	Cheap camps in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Dharamshalas in {City}	kind:Dharamshalas & price<3000	pb	both	Cheap dharamshalas in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Bed and Breakfasts in {City}	kind:B&Bs & price<3000	pb	both	Cheap bed and breakfasts in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Holiday Rentals in {City}	kind:Holiday rentals & price<3000	pb	both	Cheap holiday rentals in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Lodges in {City}	kind:Lodges & price<3000	pb	both	Cheap lodges in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+Cheap Aparthotels in {City}	kind:Aparthotels & price<3000	pb	both	Cheap aparthotels in {City} that start under ₹3,000 a night, grouped by price band, the ones you can book online first in each band.	
+# Rooms / hotels near big places and institutions (owner, 2026-10-05): one city each, twin = the nearest equivalent in the other city.
+Rooms near AIIMS Rishikesh	near:aiims-rishikesh:2	pb	rishikesh	Rooms within about 2 km of AIIMS Rishikesh, grouped by price, for patients, families and visitors who need to be close to the hospital.	Rooms near Patanjali Haridwar
+Hotels near AIIMS Rishikesh	hotel & near:aiims-rishikesh:2	d	rishikesh	Hotels and lodges within about 2 km of AIIMS Rishikesh, grouped by distance from the hospital.	Hotels near Patanjali Haridwar
+Rooms near Himalayan Hospital Jolly Grant	near:himalayan-hospital-jolly-grant:5	d	rishikesh	Rooms within about 5 km of the Himalayan Hospital at Jolly Grant, grouped by distance, for patients and families.	Rooms near Patanjali Haridwar
+Hotels near Jolly Grant Airport	near:jolly-grant-airport:5	d	rishikesh	Stays within about 5 km of Jolly Grant Airport (Dehradun), the airport for Rishikesh and Haridwar, grouped by distance.	{City} Hotels near Railway Station
+Hotels near Neelkanth Mahadev Temple	near:neelkanth-mahadev-temple:3	d	rishikesh	Stays within about 3 km of Neelkanth Mahadev Temple in the hills above Rishikesh, grouped by distance.	Hotels near Mansa Devi Temple Haridwar
+Hotels near Ram Jhula Rishikesh	hotel & near:ram-jhula:1	d	rishikesh	Hotels within about 1 km of Ram Jhula, between Swarg Ashram and Muni Ki Reti, grouped by distance.	Haridwar Hotel Booking near Har Ki Pauri
+Hotels near Parmarth Niketan Rishikesh	hotel & near:parmarth-niketan:1	d	rishikesh	Hotels within about 1 km of Parmarth Niketan and its evening Ganga aarti, grouped by distance.	Hotels near Shantikunj Haridwar
+Rooms near Laxman Jhula Rishikesh	near:laxman-jhula:1	pb	rishikesh	Rooms within about 1 km of Laxman Jhula, grouped by price, from dorm beds to riverside suites.	Rooms near Har Ki Pauri Haridwar
+Rooms near Triveni Ghat Rishikesh	near:triveni-ghat:1.5	pb	rishikesh	Rooms within about 1.5 km of Triveni Ghat and its evening aarti, grouped by price.	Rooms near Har Ki Pauri Haridwar
+Rooms near Rishikesh Railway Station	near:rishikesh-railway-station:2	pb	rishikesh	Rooms within about 2 km of Yog Nagari Rishikesh, the main railway station, grouped by price.	Rooms near Haridwar Railway Station
+Hotels near ISBT Rishikesh	hotel & near:rishikesh-isbt:1.5	d	rishikesh	Hotels within about 1.5 km of the Rishikesh ISBT bus stand, grouped by distance, handy for early buses to the hills.	{City} Hotels near Railway Station
+Rooms near Patanjali Haridwar	near:patanjali-yogpeeth:5	d	haridwar	Rooms within about 5 km of Patanjali Yogpeeth on the Haridwar–Roorkee highway, grouped by distance, for patients, families and yoga visitors.	Rooms near AIIMS Rishikesh
+Hotels near Patanjali Haridwar	hotel & near:patanjali-yogpeeth:5	d	haridwar	Hotels within about 5 km of Patanjali Yogpeeth, grouped by distance.	Hotels near AIIMS Rishikesh
+Rooms near Shantikunj Haridwar	near:shantikunj:1.5	pb	haridwar	Rooms within about 1.5 km of Shantikunj and Dev Sanskriti Vishwavidyalaya on the Rishikesh road, grouped by price.	Hotels near Parmarth Niketan Rishikesh
+Hotels near Shantikunj Haridwar	hotel & near:shantikunj:1.5	d	haridwar	Hotels within about 1.5 km of Shantikunj, grouped by distance.	Hotels near Parmarth Niketan Rishikesh
+Hotels near Gurukul Kangri University Haridwar	near:gurukul-kangri-university:2	d	haridwar	Stays within about 2 km of Gurukul Kangri University, grouped by distance, for students, parents and exam days.	
+Hotels near BHEL Haridwar	near:bhel-haridwar:3	d	haridwar	Stays within about 3 km of BHEL Haridwar and its Ranipur township, grouped by distance, for business visits.	
+Hotels near SIDCUL Haridwar	near:sidcul-haridwar:3	d	haridwar	Stays within about 3 km of the SIDCUL industrial estate, grouped by distance, for business travellers.	
+Rooms near Har Ki Pauri Haridwar	near:har-ki-pauri:1	pb	haridwar	Rooms within about 1 km of Har Ki Pauri and the evening Ganga aarti, grouped by price.	Rooms near Triveni Ghat Rishikesh
+Rooms near Haridwar Railway Station	near:haridwar-railway-station:1	pb	haridwar	Rooms within about 1 km of Haridwar railway station and the bus stand beside it, grouped by price.	Rooms near Rishikesh Railway Station
+Hotels near Mansa Devi Temple Haridwar	hotel & near:mansa-devi-temple:1	d	haridwar	Hotels within about 1 km of the Mansa Devi ropeway and Har Ki Pauri below it, grouped by distance.	Hotels near Neelkanth Mahadev Temple

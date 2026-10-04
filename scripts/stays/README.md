@@ -63,13 +63,37 @@ after each page; the source's robots.txt allows crawling. A full crawl of
 ## Pages
 
 `CATEGORIES` in `build_pages.py` is the single list of pages. Each entry gives
-one `best-<slug>-in-rishikesh.html`. A category with fewer than 5 stays gets no
-page, and its old page file is deleted. All pages share one header/footer
+one `best-<slug>-in-<city>.html`. **Every page exists in both cities** (owner,
+2026-10-05) so the Rishikesh / Haridwar switch at the top of every page always
+lands on the same page: a category gets a page in each city once *either* city
+has 5 stays for it (both builds decide from the same data, `prepared_stays()`).
+Where a city has fewer (Haridwar has no camps), the page says so honestly, lists
+what there is, then the same page's stays in the other city ("about 25 km
+upriver") and similar stays in this city (`CATEGORY_FALLBACK`, or the
+best-reviewed). A category no city has 5 stays for gets no page, and its old
+page file is deleted. All pages share one header/footer
 (copied from `thanks.html` at build time), one script
 (`assets/js/modules/stays-index.js`) and the same category strip, so every page
 links to every other. `best-hotels-in-rishikesh` is the master list: all stays,
 one section per category, with 20 rows visible per section before "Show all"
 (which then scrolls in place) and an "Open page" link to the category page.
+
+## Search-phrase pages
+
+`search-pages.tsv` holds one row per phrase people search ("Rishikesh Hotels 5 Star", "Rooms near AIIMS Rishikesh", "Top 10 Homestays in Haridwar"…); `search_pages.py` loads it. Columns:
+
+- **phrase**: the page's address and `<h1>`, in the searcher's own words (never reworded); `{City}` = the city name.
+- **rule**, joined with ` & `: `home | hotel | resort | resortcamp | entire | camp`, `price<N`, `price<=N`, `priced`, `river`, `gangaview`, `family`, `kitchen`, `pool`, `luxury`, `wedding`, `oyo`, `linked`, `stars=N`, `stars>=N`, `area:<Area>`, `near:<landmark>:<km>` (a slug from `landmarks.tsv`), `kind:<Kind>` (a kind with ` & ` in its name needs an alias, e.g. `camp`), `top10`.
+- **group**: blank one list, `a` area, `s` stars, `k` type, `pb` price band, `d` distance from the rule's landmark, `c` like the main page.
+- **cities**: `both`, `rishikesh` or `haridwar`. A `both` phrase gets a page in both cities once either city has `MIN_PAGE` stays (Top 10: 10 with 5+ reviews), with the same thin-page fallback as categories.
+- **intro**: the one-line lede.
+- **twin** (one-city phrases only): the other city's phrase its city switch goes to, e.g. `Rooms near AIIMS Rishikesh` ↔ `Rooms near Patanjali Haridwar`; blank = that city's main list.
+
+`build_pages.py` renders each with the category template at `/hotels/<phrase-slug>`, adds the page's own tips, facts and FAQs (`page_content()`: what the rule means in practice, cheapest, best-reviewed, closest, where they are), lists the pages in the data module's meta (`searches`), sitemap.xml, llms.txt and every footer, and removes a phrase's page once it drops out. `stays-index.js` mirrors the rules (`ruleMatches`) and groupings (price and distance bands) so the page filters keep working: keep them in step.
+
+"Rooms near" / "Hotels near" pages for big places and institutions (AIIMS, Himalayan Hospital, Jolly Grant airport, Neelkanth, Patanjali Yogpeeth, Shantikunj, Gurukul Kangri, BHEL, SIDCUL, the ghats and stations) use `near:` rules on `landmarks.tsv`, which also makes each place's map page (`best-stays-near-<slug>`, 2 km, widened to 3 then 5 km, never past the row's `max_km`). Coordinates come from OpenStreetMap (Nominatim/Overpass), never a paid API; add a place's practical note to `LANDMARK_NOTES` in `search_pages.py`.
+
+Add a phrase or place: add a row, then `npm run build:stays` (both cities, footers, sitemap, llms.txt) and `npm run check:stays`: every stays page must have 450+ words of guide text outside the lists (landmark pages 300+), its own title, `<h1>`, lede and description, 2+ FAQs, one in-content ad slot after the lists, a working city switch and a sitemap entry.
 
 ## Ordering and our own stays
 

@@ -28,6 +28,8 @@ import statistics
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys_path_added = __import__('sys').path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cities import CITIES, DEFAULT_CITY, city_from_argv, cache_dir  # noqa: E402
+from search_pages import (PAGES as SEARCH_PAGES, TWINS, heading, path as phrase_path, twin_of, rule_matches, select, price_band,  # noqa: E402
+                          page_content, LANDMARK_NOTES, TOP_MIN_REVIEWS, PRICE_BANDS, RIVER_AREAS, KINDS as SEARCH_KINDS)
 
 # Current city (set in __main__ from --city; Rishikesh by default). Rishikesh
 # keeps its data file and slugs (hotels/best-*-in-rishikesh, /hotels/stay?s=<slug>);
@@ -235,13 +237,13 @@ KUMBH_FAQ = ('Where should I stay in Haridwar for the Kumbh 2027?',
 
 
 def city_copy(slug, title, intro, guide):
+    if slug == 'dharamshalas':
+        return intro.replace('Dharamshalas:', f'Dharamshalas in {CN}:', 1), guide  # otherwise city-neutral
     c = CITY_COPY.get(CITY)
     if not c:
         return intro, guide
     if slug == 'hotels':
         return c['master_intro'], c['guide']
-    if slug == 'dharamshalas':
-        return intro, guide  # already city-neutral
     return c['intro'].format(title=title), c['guide']
 
 
@@ -287,6 +289,8 @@ def matches(stay, flt):
 # Extra words for a category's <h1> and <title> only (kept out of the short
 # title used in strips, lists and FAQs).
 TITLE_SUFFIX = {'3-bhk-and-bigger-stays': ' for Families & Groups'}
+# Category pages whose <h1> is a search phrase as people type it, not "Best <title> in <city>".
+H1_PHRASE = {}  # e.g. {'luxury-stays': 'Luxury Stays in {City}'}; that phrase now has its own page (search-pages.tsv)
 
 
 def lc(title):
@@ -332,10 +336,12 @@ def meta_html(d):
     return ''.join(parts)
 
 
-def item_html(d):
+def item_html(d, city=None):
     # Must stay in step with itemHtml() in assets/js/modules/stays-index.js.
+    # city: a stay of another city (the "nearest in ..." lists on a thin page).
+    qs = city_qs() if city is None else ('' if city == DEFAULT_CITY else f'&c={city}')
     return (f'<li class="sx-item"><span class="sx-name">{esc(d["n"])}</span><span class="sx-meta">{meta_html(d)}</span>'
-            f'<a class="sx-go" href="/hotels/stay?s={esc(d["id"])}{city_qs()}" aria-label="View {esc(d["n"])}">View property</a></li>')
+            f'<a class="sx-go" href="/hotels/stay?s={esc(d["id"])}{qs}" aria-label="View {esc(d["n"])}">View property</a></li>')
 
 
 def load_ota_links():
@@ -353,6 +359,30 @@ def load_ota_links():
                     url = booking_affiliate(url)
                 links[cols[0]] = {'n': cols[2], 'u': url}
     return links
+
+
+def prepared_stays(city, ota):
+    """Another city's stays as its own pages list them: our stays and their aliases out,
+    verified booking links in, linked first (in step with the start of main())."""
+    keys = [k for k, _, _ in OWN]
+    out = [s for s in json.load(open(os.path.join(cache_dir(city), 'stays.json')))
+           if s['id'] not in OWN_ALIASES and not any(k in s['u'] for k in keys)]
+    for s in out:
+        if s['id'] in ota:
+            s['o'] = ota[s['id']]
+    out.sort(key=lambda s: (0 if 'o' in s else 1, stable_key(s)))
+    return out
+
+
+# Words kept as written when a phrase is used in running text.
+KEEP_CASE = {'OYO', 'Airbnb', 'Ganga', 'Ganges', 'AIIMS', 'BHK', 'ISBT', 'BHEL', 'SIDCUL'}
+# Where the other city is, seen from a page of this one (for the "nearest in ..." lists).
+CITY_AWAY = {'rishikesh': 'about 25 km upriver', 'haridwar': 'about 25 km downriver'}
+# A thin category page's "similar stays here" list: the closest category that has stays
+# (None: the city's best-reviewed stays).
+CATEGORY_FALLBACK = {'camps': 'resorts', 'studio-and-1-bhk-stays': 'apartments', '2-bhk-stays': 'apartments',
+                     '3-bhk-and-bigger-stays': 'holiday-rentals', 'aparthotels': 'apartments',
+                     'dharamshalas': 'ashram-stays', 'boutique-hotels': None}
 
 
 # Our own stays are also mixed INTO every list (not only pinned on top):
@@ -469,7 +499,7 @@ def faqs(title, singular, plural, st, date):
 
 
 # ---------- landmark pages: hotels/best-stays-near-<landmark>.html ----------
-LANDMARK_RADIUS_KM = 2.0      # widened to 3 km where fewer than 10 stays are that close
+LANDMARK_RADIUS_KM = 2.0      # widened to 3 km, then 5 km, where fewer than 10 stays are that close
 LANDMARK_MAX_ROWS = 100
 
 
@@ -501,8 +531,43 @@ def drive_minutes(k):
     return max(5, int(round(road / speed * 60 / 5.0) * 5))
 
 
+# "Near <place>" search pages grouped by distance (group 'd'); in step with DBANDS in stays-index.js.
+DIST_BANDS = [(0.5, 'Under 500 m'), (1.0, '500 m to 1 km'), (2.0, '1 to 2 km'), (3.0, '2 to 3 km'), (None, '3 km and more')]
+
+
+def dist_band(k):
+    return next(label for top, label in DIST_BANDS if top is None or k <= top)
+
+
 def with_dist(row_html, label):
     return row_html.replace('<span class="sx-meta">', f'<span class="sx-meta"><span class="sx-dist">{label}</span>', 1)
+
+
+# Practical advice on a landmark page, by kind of place (landmarks.tsv schema column).
+LANDMARK_TIPS = {
+    'Hospital': 'Coming for treatment or to look after a patient? Ask for a lift or a ground-floor room, a quiet room to rest in, flexible check-in and late check-out, and whether meals or a kitchen are available for longer stays.',
+    'TrainStation': 'Arriving late or leaving early? Confirm the check-in time, ask the stay to hold your room for a late arrival, and book a cab the evening before an early train.',
+    'BusStation': 'Arriving late or leaving early? Confirm the check-in time, ask the stay to hold your room for a late arrival, and keep an eye on luggage at the busy bus stand.',
+    'Airport': 'Flights land through the day, so confirm early check-in or late check-out if you need it, and book your cab in advance: taxis at the airport cost more than a pre-booked one.',
+    'CollegeOrUniversity': 'Coming for admissions, exams or a convocation? Rooms nearby fill up on those days, so book early, and ask for Wi-Fi and a desk if you need to study or work.',
+    'Place': 'On a work or campus visit? Ask about GST invoices, Wi-Fi, a work desk and parking, and whether breakfast starts early enough for your day.',
+    'TouristAttraction': 'Visiting on a festival day? Expect closed lanes and crowds around the ghats and temples, plan to walk the last stretch, and book ahead for weekends.',
+}
+
+
+def landmark_tips(lm, name, near, radius):
+    tips = [t for t in (LANDMARK_NOTES.get(lm['slug']), LANDMARK_TIPS.get(lm.get('schema') or 'TouristAttraction')) if t]
+    priced = sorted(s['p'] for _, s in near if s.get('p'))
+    linked = sum('o' in s for _, s in near)
+    kinds = {}
+    for _, s in near:
+        kinds[s['k']] = kinds.get(s['k'], 0) + 1
+    top_kinds = ', '.join(f'{k.lower()} ({n})' for k, n in sorted(kinds.items(), key=lambda kv: -kv[1])[:3])
+    tips.append(f'Within {radius:g} km of {name} we list {len(near):,} stays, mostly {top_kinds}. '
+                + (f'Listed starting prices run from about ₹{round_price(priced[0])} to ₹{round_price(priced[-1])} a night. ' if len(priced) > 1 else '')
+                + (f'{linked:,} of them have a booking page we have checked, so you can book online straight away.' if linked else
+                   'Send us your dates and we will help you book.'))
+    return tips
 
 
 def build_landmark_pages(stays, own, landmarks, top, bottom, today):
@@ -519,7 +584,10 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
         here = (float(lm['lat']), float(lm['lng']))
         name, slug = lm['name'], lm['slug']
         dist = sorted(((km_between(here, s['ll']), s) for s in pool), key=lambda t: (t[0], t[1]['id']))
-        radius = LANDMARK_RADIUS_KM if sum(1 for k, _ in dist if k <= LANDMARK_RADIUS_KM) >= 10 else 3.0
+        # 2 km, widened to 3 km (then 5 km, for places out of town such as the airport) where fewer than 10 stays are that close
+        # (never past the place's max_km in landmarks.tsv: Neelkanth is 5 km from Laxman Jhula as the crow flies, 30 km by road)
+        cap = float(lm.get('max_km') or 5.0)
+        radius = next((r for r in (LANDMARK_RADIUS_KM, 3.0) if r <= cap and sum(1 for k, _ in dist if k <= r) >= 10), cap)
         near = [(k, s) for k, s in dist if k <= radius]
         if len(near) < 5:
             continue
@@ -543,7 +611,8 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
                 base_line = f'Our own homestays are genuinely close: {oo["n"]} is about {dist_label(ok)} away, roughly {drive_minutes(ok)} minutes by car or auto.'
             elif CITY == DEFAULT_CITY:
                 base_line = (f"Prefer quiet nights over walking distance? Our Ganga-view homestays in {home_city}'s Nirmal Bagh are about {ok:.0f} km away, "
-                             f'roughly {drive_minutes(ok)} minutes by car or auto. Come in for {name} and go home to the river.')
+                             f'roughly {drive_minutes(ok)} minutes by car or auto.'
+                             + (f' Come in for {name} and go home to the river.' if (lm.get('schema') or 'TouristAttraction') == 'TouristAttraction' else ''))
             else:
                 base_line = (f'Coming for {name} but want calm nights? Base yourself at our homestays in {home_city}, about {ok:.0f} km upriver '
                              f'(roughly {drive_minutes(ok)} minutes by car), and skip the crowds after dark.')
@@ -571,7 +640,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
                    'own': [[o['ll'][0], o['ll'][1], o['n'], o['u']] for o in own if o.get('ll')]}
         ld = [
             {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': h1, 'url': url, 'description': desc, 'dateModified': today.isoformat(),
-             'about': {'@type': 'TouristAttraction', 'name': name, 'geo': {'@type': 'GeoCoordinates', 'latitude': here[0], 'longitude': here[1]},
+             'about': {'@type': lm.get('schema') or 'TouristAttraction', 'name': name, 'geo': {'@type': 'GeoCoordinates', 'latitude': here[0], 'longitude': here[1]},
                        'address': {'@type': 'PostalAddress', 'addressLocality': CN, 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}},
              'isPartOf': {'@type': 'WebSite', 'name': 'Rishikesh Homestays', 'url': f'{SITE}/'}},
             {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
@@ -604,7 +673,12 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
         main_html = (
             f'<main class="sx-page" id="main" data-city="{CITY}" data-landmark="{slug}">\n'
             '      <section class="section">\n        <div class="container">\n'
+            '          <div class="sx-topbar">\n'
             f'          <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <a href="/hotels/best-hotels-in-{CITY}">Best Hotels in {CN}</a> <span aria-hidden="true">›</span> <span>{esc(h1)}</span></nav>\n'
+            '          <nav class="sx-city-switch" aria-label="Switch city">' + ''.join(
+                (f'<a href="/hotels/best-stays-near-{slug}" aria-current="page">{esc(v["name"])}</a>' if k == CITY else
+                 f'<a href="/hotels/best-hotels-in-{k}">{esc(v["name"])}</a>') for k, v in CITIES.items()) + '</nav>\n'
+            '          </div>\n'
             f'          <p class="eyebrow">Where to stay · {esc(CN)}</p>\n'
             f'          <h1 class="sx-title">{esc(h1)}</h1>\n'
             f'          <p class="sx-lede">Every stay within {radius:g} km of {esc(name)}, sorted by real distance. {within1:,} are within 1 km{lede_closest}.</p>\n'
@@ -616,6 +690,11 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             '          </section>\n'
             f'          <script type="application/json" id="lm-data">{mapjson}</script>\n'
             f'          <div id="sx-out">{band_html}</div>\n'
+            '          <div class="rh-ad-slot" data-ad="display"></div>\n'
+            '          <section class="sx-guide sx-tips" aria-labelledby="lm-tips-h">\n'
+            f'            <h2 id="lm-tips-h">Staying near {esc(name)}: good to know</h2>\n'
+            + ''.join(f'            <p>{esc(t)}</p>\n' for t in landmark_tips(lm, name, near, radius))
+            + '          </section>\n'
             '          <section class="sx-faq" aria-labelledby="sx-faq-h">\n'
             f'            <h2 id="sx-faq-h">Staying near {esc(name)}: questions travellers ask</h2>\n            {faq_html}\n          </section>\n'
             '          <section class="sx-explore" aria-labelledby="sx-explore-h">\n'
@@ -682,17 +761,49 @@ def main(data_path, crawled):
     stays.sort(key=lambda s: (0 if 'o' in s else 1, stable_key(s)))
     everyone = stays + own
 
-    counts = {c[0]: sum(matches(s, c[3]) for s in everyone) for c in CATEGORIES}
-    live = [c for c in CATEGORIES if counts[c[0]] >= MIN_PAGE]
+    # Every page exists in every city (owner, 2026-10-05), so the Rishikesh / Haridwar switch always
+    # lands on the same page: a category or phrase gets a page in each city once ANY city has
+    # MIN_PAGE stays for it. Both cities' builds decide this from the same data, so they agree.
+    pools = {k: (stays if k == CITY else prepared_stays(k, ota)) for k in CITIES}
+    counts_in = {k: {c[0]: sum(matches(s, c[3]) for s in pools[k] + own) for c in CATEGORIES} for k in CITIES}
+    counts = counts_in[CITY]
+    live = [c for c in CATEGORIES if any(counts_in[k][c[0]] >= MIN_PAGE for k in CITIES)]
     sections = ([{'title': 'Hotels', 'filter': 'k:Hotels', 'slug': None}] +
                 [{'title': c[1], 'filter': c[3], 'slug': c[0], **({'plural': PLURAL[c[0]]} if c[0] in PLURAL else {})} for c in live if c[3] != 'all'] +
                 [{'title': 'Other stays', 'filter': 'k:Other stays', 'slug': None}])
+    # Pages for the phrases people search (search-pages.tsv, search_pages.py): one per phrase, made
+    # in every city the phrase is for once any of them has MIN_PAGE stays for it (a top 10 needs 10).
+    lm_all = {r['slug']: (float(r['lat']), float(r['lng'])) for c in CITIES for r in load_landmarks(c)}
+    lm_names = {r['slug']: r['name'] for c in CITIES for r in load_landmarks(c)}
+    search_rows = {p: (rule, cities) for p, rule, _g, _i, cities in SEARCH_PAGES}
+
+    def n_search(k, rule):
+        rule = rule.replace('{city}', k)
+        return len(select([x for x in pools[k] if rule_matches(x, rule, k, lm_all)], rule))
+
+    def phrase_live(phrase):
+        rule, cities = search_rows[phrase]
+        return any(n_search(k, rule) >= (10 if 'top10' in rule else MIN_PAGE) for k in cities)
+    searches = []
+    for phrase, rule_t, group, s_intro, cities in SEARCH_PAGES:
+        if CITY in cities and phrase_live(phrase):
+            rule = rule_t.replace('{city}', CITY)
+            searches.append({'h1': heading(phrase, CN), 'stem': phrase_path(phrase, CN), 'phrase': phrase, 'rule': rule,
+                             'rule_t': rule_t, 'group': group, 'intro': s_intro.replace('{City}', CN), 'count': n_search(CITY, rule)})
+    module_path = f'{ROOT}/assets/js/modules/{data_module_name()}'
+    old_meta = re.search(r'export const STAYS_INDEX_META = (\{.*?\});\n', open(module_path).read()) if os.path.exists(module_path) else None
+    old_stems = {x['stem'] for x in json.loads(old_meta.group(1)).get('searches', [])} if old_meta else set()
     meta = {
             'categories': [{'slug': c[0], 'title': c[1], 'filter': c[3], 'count': counts[c[0]], 'group': cat_group(c[3])} for c in live],
             'groups': [[key, label] for key, label in CAT_GROUPS],
-            'sections': sections}
+            'sections': sections,
+            'searches': [{'h1': x['h1'], 'stem': x['stem'], 'count': x['count']} for x in searches],
+            # for the search-page rules in stays-index.js
+            'landmarks': {k: list(v) for k, v in lm_all.items()},
+            'river': RIVER_AREAS.get(CITY, []),
+            'kinds': {k: sorted(v) for k, v in SEARCH_KINDS.items()}}
     dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-    with open(f'{ROOT}/assets/js/modules/{data_module_name()}', 'w') as fh:
+    with open(module_path, 'w') as fh:
         fh.write('// Generated by scripts/stays/build_pages.py. Do not hand-edit.\n')
         fh.write(f'export const STAYS_INDEX_META = {dump(meta)};\n')
         fh.write(f'export const STAYS_OWN = {dump(own)};\n')
@@ -713,28 +824,117 @@ def main(data_path, crawled):
     for f in os.listdir(ROOT):  # pre-move root copies
         if re.fullmatch(r'best-[a-z-]+-in-' + CITY + r'\.html', f):
             os.remove(f'{ROOT}/{f}')
+    for stem in old_stems - {x['stem'] for x in searches}:
+        if os.path.exists(f'{STAYS_DIR}/{stem}.html'):
+            os.remove(f'{STAYS_DIR}/{stem}.html')
 
     star_counts = {}
     others = [(k, v['name']) for k, v in CITIES.items() if k != CITY and os.path.exists(f'{STAYS_DIR}/best-hotels-in-{k}.html')]
     landmarks = load_landmarks(CITY)
     near_nav = ('<p class="sx-cities">Stay near ' + ', '.join(
         f'<a href="/hotels/best-stays-near-{l["slug"]}">{esc(l["name"])}</a>' for l in landmarks) + '</p>') if landmarks else ''
-    for slug, title, singular, flt, intro, guide in live:
-        intro, guide = city_copy(slug, title, intro, guide)
-        is_master = flt == 'all'
-        url = f'{SITE}/hotels/best-{slug}-in-{CITY}'
-        members = [s for s in stays if matches(s, flt)]
-        st = stats_for(members + [o for o in own if matches(o, flt)])
+    def render(slug, title, singular, flt, intro, guide, search=None):
+        # One stays page: a category (best-<slug>-in-<city>) or, with `search`, a search-phrase page
+        # whose address and <h1> are the phrase itself (search_pages.py).
+        if search:
+            match = lambda x: rule_matches(x, search['rule'], CITY, lm_all)
+        else:
+            intro, guide = city_copy(slug, title, intro, guide)
+            match = lambda x: matches(x, flt)
+        group = search['group'] if search else ''
+        is_master = (flt == 'all' and not search) or group == 'c'
+        stem = search['stem'] if search else f'best-{slug}-in-{CITY}'
+        url = f'{SITE}/hotels/{stem}'
+        members = [s for s in stays if match(s)]
+        top10 = bool(search) and 'top10' in search['rule']
+        if top10:
+            members = select(members, search['rule'])
+        st = stats_for(members + ([] if top10 else [o for o in own if match(o)]))
         n = st['n']
-        plural = 'stays' if is_master else plural_of(slug, title)
-        h1 = f'Best Hotels in {CN}' if is_master else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")}'
-        page_title = (f'Best Hotels in {CN} | All {n:,} Stays by Area & Category' if is_master
-                      else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")} | {n:,} Compared by Area & Price')
+        if search:
+            # running-text plural: the phrase without the city, lower case except names ("rooms near AIIMS")
+            bare = re.sub(r'\s+', ' ', re.sub(rf'\b(in|at)\s+{CN}\b|\b{CN},?\b', ' ', title)).strip()
+            head, sep, place = bare.partition(' near ')
+            plural = (' '.join(w if w in KEEP_CASE else w.lower() for w in head.split()) + sep + place) or 'stays'
+            h1 = title
+            page_title = f'{h1} | Ranked by Guest Score' if 'top10' in search['rule'] else f'{h1} | {n:,} to Compare by Area & Price'
+        else:
+            plural = 'stays' if is_master else plural_of(slug, title)
+            h1 = (H1_PHRASE[slug].replace('{City}', CN) if slug in H1_PHRASE else
+                  f'Best Hotels in {CN}' if is_master else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")}')
+            page_title = (f'Best Hotels in {CN} | All {n:,} Stays by Area & Category' if is_master
+                          else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")} | {n:,} Compared by Area & Price')
         kinds_txt = 'hotels, dharamshalas, homestays, guest houses and apartments' if CITY == 'haridwar' else 'hotels, homestays, resorts, camps and hostels'
-        desc = (f'{n:,} {CN} stays compared: {kinds_txt} by area, price and facilities, '
-                f'with local tips on where to stay.') if is_master else (
-                f'Compare {n:,} {plural} in {CN} by area, price and facilities. {intro}')[:300]
+        desc = ((intro if 'top10' in search['rule'] else f'{n:,} to compare. {intro}')[:300] if search else
+                (f'{n:,} {CN} stays compared: {kinds_txt} by area, price and facilities, '
+                 f'with local tips on where to stay.') if is_master else (
+                f'Compare {n:,} {plural} in {CN} by area, price and facilities. {intro}')[:300])
         faq = faqs(title, 'stay' if is_master else singular, plural, st, date)
+
+        # The same page in the other city (the city switch, and the "nearest in ..." list here).
+        def other_city(k):
+            if search:
+                p = search['phrase']   # the other city's row: this one ({City}), or a one-city phrase's twin
+                row = TWINS.get(p, p if '{City}' in p else None)
+                if row in search_rows and k in search_rows[row][1] and phrase_live(row):
+                    return phrase_path(row, CITIES[k]['name'])
+                return f'best-hotels-in-{k}'
+            return f'best-{slug}-in-{k}'
+        # A city with too few stays for this page still has it (so the switch always works): it lists
+        # what there is, then the same page's stays in the other city and similar stays in this one.
+        n_here = len(members)
+        thin = not is_master and n_here < (10 if top10 else MIN_PAGE)
+        alts = []   # [(h2, note, stays, city, href or None, ranked)]
+        if thin:
+            other = next(k for k in CITIES if k != CITY)
+            ON = CITIES[other]['name']
+            if search:
+                o_rule = search['rule_t'].replace('{city}', other)
+                there = [x for x in pools[other] if rule_matches(x, o_rule, other, lm_all)]
+                there = select(there, o_rule) if top10 else there
+            else:
+                there = [x for x in pools[other] if matches(x, flt)]
+            twin_stem = other_city(other)
+            twin_h1 = (twin_of(search['phrase'], ON) if search else f'Best {title} in {ON}')
+            if there:
+                alts.append((twin_h1, CITY_AWAY[other], there[:SHOW_MIN], other, f'/hotels/{twin_stem}', top10))
+            # similar stays in this city: the search minus its first condition (usually the kind), or
+            # the closest category; failing both, this city's best-reviewed stays
+            sim_h2, sim = None, []
+            if search:
+                rest = [c for c in search['rule'].split(' & ')[1:]]
+                if rest and rest != ['top10']:
+                    r2 = ' & '.join(rest)
+                    sim = [x for x in stays if rule_matches(x, r2, CITY, lm_all) and x not in members]
+                    sim = select(sim, r2) if 'top10' in rest else sim
+                    same = next((x for x in searches if x['rule'] == r2), None)
+                    sim_h2, sim_href = (same['h1'], f'/hotels/{same["stem"]}') if same else (f'Similar stays in {CN}', None)
+            else:
+                fb = next((c for c in live if c[0] == CATEGORY_FALLBACK.get(slug)), None)
+                if fb and counts[fb[0]] >= MIN_PAGE:
+                    sim = [x for x in stays if matches(x, fb[3]) and x not in members]
+                    sim_h2, sim_href = f'Best {fb[1]} in {CN}', f'/hotels/best-{fb[0]}-in-{CITY}'
+            if len(sim) < 3:
+                sim = sorted([x for x in stays if x.get('g') and (x.get('c') or 0) >= 10 and x not in members],
+                             key=lambda x: (-x['g'], -(x.get('c') or 0), x['n']))
+                sim_h2, sim_href = f'Best-reviewed stays in {CN}', f'/hotels/best-hotels-in-{CITY}'
+            if sim:
+                alts.insert(1 if n_here == 0 and alts else 0,
+                            (sim_h2, '', sim[:SHOW_MIN], CITY, sim_href, False))
+            there_txt = f' The nearest are in {ON}, {CITY_AWAY[other]}.' if there else ''
+            if top10:
+                thin_note = (f'Only {n_here} {plural} in {CN} have the {TOP_MIN_REVIEWS}+ guest reviews we need to rank them, so this list is shorter than ten.'
+                             if n_here else f'No {plural} in {CN} have enough guest reviews to rank yet.') + there_txt
+            else:
+                nm = [x['n'] for x in members]
+                names = (', '.join(nm[:-1]) + ' and ' + nm[-1]) if len(nm) > 1 else ''.join(nm)
+                thin_note = (f'{CN} has only {n_here} {plural} listed: {names}.' if n_here else f'We have not found {plural} listed in {CN} yet.') + there_txt
+            thin_note += ((' Below them: ' if n_here else ' Below: ') + ' and '.join(h for h, *_ in alts) + '.') if alts else ''
+            if not n_here:
+                intro = thin_note   # the city's usual intro would promise stays it does not have
+            page_title = f'{h1} | {"Nearest Options" if not n_here else f"{n_here} Here + Nearby Picks"} & Local Tips'
+            desc = (thin_note if not n_here else f'{thin_note} {intro}')[:300]
+            faq = [(f'Are there {plural} in {CN}?', thin_note)] + [qa for qa in faq if qa[0].startswith('How do I book') or qa is KUMBH_FAQ]
 
         pill = lambda c: (f'<a href="/hotels/best-{c[0]}-in-{CITY}"{" aria-current=\"page\"" if c[0] == slug else ""}>'
                           f'{"All stays" if c[3] == "all" else esc(c[1])} <small>{counts[c[0]]:,}</small></a>')
@@ -761,7 +961,7 @@ def main(data_path, crawled):
         if is_master:
             blocks = []
             for sec in sections:
-                lst = [s for s in stays if matches(s, sec['filter'])]
+                lst = [s for s in members if matches(s, sec['filter'])]
                 if not lst:
                     continue
                 more = (f'<a class="sx-open" href="/hotels/best-{sec["slug"]}-in-{CITY}">View all {len(lst):,} {esc(plural_of(sec["slug"], sec["title"]))}</a>' if sec['slug']
@@ -771,24 +971,68 @@ def main(data_path, crawled):
                               f'{f"<div class=\"sx-actions\">{more}</div>" if more else ""}</section>')
             listing = ''.join(blocks)
             list_items = [d for d in stays][:30]
+        elif top10:
+            # the ranking as is: no "View all" fold, no other stays mixed in, rank before each name
+            ranked = [{**d, 'n': f'{i}. {d["n"]}'} for i, d in enumerate(members, 1)]
+            listing = (f'<section class="sx-group"><h2>{esc(h1)} <span>ranked by guest score</span></h2>'
+                       f'<ol class="sx-list">{"".join(item_html(d) for d in ranked)}</ol></section>')
+            list_items = members
+        elif group in ('a', 's', 'k', 'pb', 'd'):
+            # sections by area / star rating / type / price band, each with its own "View all" fold
+            # by type: the page's own kinds first (a resort that is also listed as a hotel goes under Resorts)
+            kind_set = next((SEARCH_KINDS[t] for t in (search['rule'].split(' & ') if search else []) if t in SEARCH_KINDS), set())
+            near_c = next((c for c in (search['rule'].split(' & ') if search else []) if c.startswith('near:')), None)
+            here_ll = lm_all.get(near_c.split(':')[1]) if near_c else None
+            key = {'d': lambda d: dist_band(km_between(here_ll, d['ll'])) if here_ll and d.get('ll') else DIST_BANDS[-1][1],
+                   'a': lambda d: d['a'], 's': lambda d: d.get('s') or 0, 'k': lambda d: next((k for k in d['ks'] if k in kind_set), d['k']), 'pb': lambda d: price_band(d['p']) if d.get('p') else 'No price listed'}[group]
+            parts = {}
+            for d in members:
+                parts.setdefault(key(d), []).append(d)
+            if group == 's':
+                order = sorted(parts, reverse=True)
+            elif group == 'pb':
+                order = [label for _, label in PRICE_BANDS if label in parts] + (['No price listed'] if 'No price listed' in parts else [])
+            elif group == 'd':
+                order = [label for _, label in DIST_BANDS if label in parts]
+            else:
+                order = sorted(parts, key=lambda k: (-len(parts[k]), str(k)))
+            blocks = []
+            for k in order:
+                lst = parts[k]
+                name = (f'{k}-star' if k else 'Unrated') if group == 's' else str(k)
+                shown, rest = split_shown(lst)
+                more = (f'<details class="sx-rest"><summary>View all {len(lst):,} · {esc(name)}</summary>'
+                        f'<ul class="sx-list">{mix_html(rest, own)}</ul></details>') if rest else ''
+                blocks.append(f'<section class="sx-group"><h2>{esc(name)} <span>{len(lst):,}</span></h2>'
+                              f'<ul class="sx-list">{mix_html(shown, own)}</ul>{more}</section>')
+            listing = ''.join(blocks)
+            list_items = members[:30]
         else:
             shown, rest = split_shown(members)
             more = (f'<details class="sx-rest"><summary>View all {len(members):,} {esc(plural)}</summary>'
                     f'<ul class="sx-list">{mix_html(rest, own, flt in PRIVATE_ALT)}</ul></details>') if rest else ''
-            listing = (f'<section class="sx-group"><h2>All {esc(lc(title))} <span>{len(members):,}</span></h2>'
+            list_h2 = esc(h1) if search else f'All {esc(lc(title))}'
+            listing = (f'<section class="sx-group"><h2>{list_h2} <span>{len(members):,}</span></h2>'
                        f'<ul class="sx-list">{mix_html(shown, own, flt in PRIVATE_ALT)}</ul>{more}</section>')
             list_items = members[:30]
 
+        if search or not is_master:
+            basis = members or (alts[0][2] if alts else [])
+            tips, facts, more_faq = page_content(search['rule'] if search else '', CITY, basis, lm_all, lm_names, AREA_NOTES,
+                                                 'stay' if is_master else singular, plural)
+            faq = faq[:-1] + more_faq + faq[-1:] if faq else more_faq   # keep "How do I book" last
+        else:
+            tips, facts = [], []
         ld_breadcrumb = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
             {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': f'{SITE}/'},
             {'@type': 'ListItem', 'position': 2, 'name': h1, 'item': url}]}
-        own_here = [o for o in own if matches(o, flt)] or own
+        own_here = [o for o in own if match(o)] or own
         ld_list = {'@context': 'https://schema.org', '@type': 'ItemList', 'name': h1, 'numberOfItems': n,
                    'itemListElement': [{'@type': 'ListItem', 'position': i + 1, 'item': {
                        '@type': 'LodgingBusiness', 'name': d['n'],
                        **({'url': SITE + d['u']} if d['u'].startswith('/') else {}),
                        'address': {'@type': 'PostalAddress', 'addressLocality': f'{d["a"]}, {CITIES[d.get("cy", CITY)]["name"]}', 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}}}
-                       for i, d in enumerate(own_here + list_items)]}
+                       for i, d in enumerate(own_here + list_items + [x for _h, _n, lst, *_ in alts for x in lst])]}
         ld_faq = {'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [
             {'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in faq]}
         ld_page = {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': h1, 'url': url, 'description': desc,
@@ -812,16 +1056,32 @@ def main(data_path, crawled):
             .replace(f'{SITE}/thanks', url)
             .replace('  </head>', '    ' + '\n    '.join(jsonld(o) for o in (ld_page, ld_breadcrumb, ld_list, ld_faq)) + '\n  </head>', 1))
 
-        insight_html = ''.join(f'<li>{line}</li>' for line in insights(title, plural, st))
+        tips_html = (f'''<section class="sx-guide sx-tips" aria-labelledby="sx-tips-h">
+            <h2 id="sx-tips-h">{esc(h1)}: tips before you book</h2>
+            {"".join(f"<p>{esc(t)}</p>" for t in tips)}
+            {f'<ul class="sx-insights">{"".join(f"<li>{esc(x)}</li>" for x in facts)}</ul>' if facts else ""}
+          </section>''' if tips or facts else '')
+        alt_html = ''.join(
+            f'<section class="sx-group sx-alt"><h2>{esc(h2)} <span>{esc(note)}</span></h2>'
+            + (f'<ol class="sx-list">' if ranked else '<ul class="sx-list">')
+            + ''.join(item_html({**d, 'n': f'{i}. {d["n"]}' if ranked else d['n'],
+                                  'a': d['a'] if c == CITY else f'{CITIES[c]["name"]} · {d["a"]}'}, c) for i, d in enumerate(lst, 1))
+            + ('</ol>' if ranked else '</ul>')
+            + (f'<div class="sx-actions"><a class="sx-open" href="{href}">See the full page: {esc(h2)}</a></div>' if href else '')
+            + '</section>' for h2, note, lst, c, href, ranked in alts)
+        if thin and n_here:
+            alt_html = f'<p class="sx-thin">{esc(thin_note)}</p>' + alt_html
+        insight_html = ''.join(f'<li>{line}</li>' for line in (insights(title, plural, st) if n_here or is_master else []))
         faq_html = ''.join(f'<details class="sx-faq-item"><summary>{esc(q)}</summary><p>{esc(a)}</p></details>' for q, a in faq)
         seg = (('<button type="button" data-g="c">Category</button>' if is_master else '<button type="button" data-g="all">All</button>')
                + '<button type="button" data-g="s">Stars</button><button type="button" data-g="a">Area</button>'
-               + ('<button type="button" data-g="k">Type</button>' if not flt.startswith('k:') else ''))
-        # City switch at the top: the same category in the other city when it
-        # exists there, else that city's main list.
+               + ('<button type="button" data-g="k">Type</button>' if not flt.startswith('k:') else '')
+               + ('<button type="button" data-g="pb">Price</button>' if group == 'pb' else '')
+               + ('<button type="button" data-g="d">Distance</button>' if group == 'd' else ''))
+        # City switch at the top: this same page in the other city (other_city() above).
         city_switch = '<nav class="sx-city-switch" aria-label="Switch city">' + ''.join(
-            f'<a href="/hotels/best-{slug}-in-{k}" aria-current="page">{esc(v["name"])}</a>' if k == CITY else
-            f'<a href="/hotels/best-{slug if os.path.exists(f"{STAYS_DIR}/best-{slug}-in-{k}.html") else "hotels"}-in-{k}">{esc(v["name"])}</a>'
+            f'<a href="/hotels/{stem}" aria-current="page">{esc(v["name"])}</a>' if k == CITY else
+            f'<a href="/hotels/{other_city(k)}">{esc(v["name"])}</a>'
             for k, v in CITIES.items()) + '</nav>'
         kumbh_html = ('''<section class="sx-kumbh" aria-labelledby="sx-kumbh-h">
             <h2 id="sx-kumbh-h">Coming for the Kumbh 2027?</h2>
@@ -831,9 +1091,14 @@ def main(data_path, crawled):
         explore_more = ('<p>Want a hand choosing? <a href="/homestays">See our handpicked homestays</a>, read <a href="/about-rishikesh">about Rishikesh\'s areas</a>, <a href="/places-to-visit">places to visit</a> and <a href="/things-to-do-in-rishikesh">things to do</a>, plan for the <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027</a>, or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>'
                         if CITY == DEFAULT_CITY else
                         '<p>Planning a pilgrimage? Read our <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027 guide</a> and the <a href="/triveni-ghat">Ganga Aarti guide</a>, compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a> (25 km upriver), or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>')
+        updated = (f'{n:,} {esc(plural)} to compare' if not thin else
+                   f'{n_here:,} {esc(plural)} in {esc(CN)}, plus the nearest options' if n_here else
+                   f'Nearest {esc(plural)} and similar stays')
+        if thin and not n_here:
+            listing = ''
         main_html = f'''<main class="sx-page" id="main">
       <section class="section">
-        <div class="container" id="sx-root" data-city="{CITY}" data-filter="{esc(flt)}" data-all-title="All {esc(lc(title))}">
+        <div class="container" id="sx-root" data-city="{CITY}" data-filter="{esc(flt)}"{f' data-group="{group}"' if group else ''} data-all-title="{esc(h1) if search else f'All {esc(lc(title))}'}">
           <div class="sx-topbar">
             <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span> <span>{esc(h1)}</span></nav>
             {city_switch}
@@ -841,13 +1106,13 @@ def main(data_path, crawled):
           <p class="eyebrow">Where to stay</p>
           <h1 class="sx-title">{esc(h1)}</h1>
           <p class="sx-lede">{esc(intro)}</p>
-          <p class="sx-updated">{n:,} {esc(plural)} to compare</p>
+          <p class="sx-updated">{updated}</p>
           <div class="sx-layout">
           <aside class="sx-side">{filters}</aside>
           <div class="sx-main">
           {near_nav}
           <section class="sx-guide" aria-labelledby="sx-guide-h">
-            <h2 id="sx-guide-h">{f'Where to stay in {CN}' if is_master else f'Choosing {esc(lc(title))} in {CN}'}</h2>
+            <h2 id="sx-guide-h">{f'{esc(h1)}: what to know' if search else f'Where to stay in {CN}' if is_master else f'Choosing {esc(lc(title))} in {CN}'}</h2>
             <p>{esc(guide)}</p>
             <ul class="sx-insights">{insight_html}</ul>
           </section>
@@ -856,7 +1121,7 @@ def main(data_path, crawled):
             <h2 id="sx-own-h">Our homestays <span>{'Book direct with us' if CITY == DEFAULT_CITY else 'Book direct · in Rishikesh, about 25 km upriver'}</span></h2>
             <ul class="sx-list" id="sx-own">{"".join(own_html(o) for o in own)}</ul>
           </section>
-          <div class="sx-controls">
+          <div class="sx-controls"{' hidden' if thin and not n_here else ''}>
             <div class="sx-row">
               <input type="search" id="sx-q" class="sx-input" placeholder="Search a name, e.g. Zostel, Aloha, Ganga view" aria-label="Search stays">
               <span class="sx-seg" role="group" aria-label="Organise by">{seg}</span>
@@ -869,6 +1134,9 @@ def main(data_path, crawled):
             <div class="sx-row"><span class="sx-label">Facilities</span><span class="sx-row" id="sx-fac"></span><button type="button" class="sx-clear" id="sx-clear">Clear all</button></div>
           </div>
           <div id="sx-out">{listing}</div>
+          {alt_html}
+          <div class="rh-ad-slot" data-ad="display"></div>
+          {tips_html}
           <section class="sx-faq" aria-labelledby="sx-faq-h">
             <h2 id="sx-faq-h">{esc(h1)}: questions travellers ask</h2>
             {faq_html}
@@ -884,7 +1152,21 @@ def main(data_path, crawled):
         </div>
       </section>
     </main>'''
-        open(f'{STAYS_DIR}/best-{slug}-in-{CITY}.html', 'w').write(page_top + main_html + bottom)
+        open(f'{STAYS_DIR}/{stem}.html', 'w').write(page_top + main_html + bottom)
+
+    for c in live:
+        render(*c)
+    # search-phrase pages: guide text from the closest category (homestays, hotels, resorts, all stays)
+    guide_of = {c[0]: city_copy(c[0], c[1], c[4], c[5])[1] for c in live}
+    # a "kind:<type>" or "camp" rule borrows that type's category guide and singular
+    by_filter = {c[3]: c for c in live}
+    for sp in searches:
+        conds = sp['rule'].split(' & ')
+        kind = next((k for k in ('resort', 'home', 'hotel', 'entire', 'camp') if k in conds), '')
+        cat = by_filter.get(next((f'k:{c[5:]}' for c in conds if c.startswith('kind:')), 'k:Camps & tents' if kind == 'camp' else ''))
+        g_slug = cat[0] if cat else {'resort': 'resorts', 'home': 'homestays', 'entire': 'holiday-rentals', 'hotel': 'hotels'}.get(kind, 'hotels')
+        singular = cat[2] if cat else {'resort': 'resort', 'home': 'homestay', 'hotel': 'hotel'}.get(kind, 'stay')
+        render(sp['stem'], sp['h1'], singular, 'q:' + sp['rule'], sp['intro'], guide_of.get(g_slug) or guide_of.get('hotels', ''), search=sp)
 
     near_pages = build_landmark_pages(stays, own, landmarks, top, bottom, today)
 
@@ -901,14 +1183,22 @@ def main(data_path, crawled):
     <lastmod>{today.isoformat()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>''' for np in near_pages)
+  </url>''' for np in near_pages) + ''.join(f'''
+  <url>
+    <loc>{SITE}/hotels/{sp['stem']}</loc>
+    <lastmod>{today.isoformat()}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>''' for sp in searches)
     ensure_markers(f'{ROOT}/sitemap.xml', '</urlset>', '  ')
     replace_between(f'{ROOT}/sitemap.xml', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', sm + '\n  ')
     ll = '\n' + '\n'.join(
         f'- [{f"Best Hotels in {CN} (all stays)" if c[3] == "all" else f"Best {c[1]} in {CN}"}]({SITE}/hotels/best-{c[0]}-in-{CITY}): {counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else plural_of(c[0], c[1])}. {city_copy(c[0], c[1], c[4], c[5])[0]}'
         for c in live) + ''.join(
         f"\n- [Best stays near {np['name']}]({SITE}/hotels/best-stays-near-{np['slug']}): {np['near']} stays within {np['radius']:g} km of {np['name']}, sorted by real distance, with a map."
-        for np in near_pages) + '\n\n'
+        for np in near_pages) + ''.join(
+        f"\n- [{sp['h1']}]({SITE}/hotels/{sp['stem']}): {sp['count']:,} stays. {sp['intro']}"
+        for sp in searches) + '\n\n'
     ensure_markers(f'{ROOT}/llms.txt', '## Contact', '', heading=f'## Where to stay in {CN}\n\n')
     replace_between(f'{ROOT}/llms.txt', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', ll)
 
@@ -937,6 +1227,9 @@ def main(data_path, crawled):
 
     print('pages:', ', '.join(f'{c[0]} ({counts[c[0]]})' for c in live))
     print('skipped:', ', '.join(f'{c[0]} ({counts[c[0]]})' for c in CATEGORIES if c not in live) or 'none')
+    # every page's footer lists all category pages of both cities (footer_links.py)
+    from footer_links import write_footers
+    write_footers()
 
 
 if __name__ == '__main__':

@@ -8,7 +8,9 @@
     "start": "node server.js",
     "test": "node --test tests/**/*.test.js",
     "test:watch": "node --test --watch tests/**/*.test.js",
-    "test:coverage": "node --test tests/**/*.test.js --coverage"
+    "test:coverage": "node --test tests/**/*.test.js --coverage",
+    "build:stays": "python3 scripts/stays/build_pages.py --city haridwar && python3 scripts/stays/build_pages.py",
+    "check:stays": "node --test tests/integration/stays-content.test.js"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^9.1.0",

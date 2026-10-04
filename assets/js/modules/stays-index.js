@@ -20,8 +20,54 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const inr = (n) => n.toLocaleString('en-IN');
 
+// Search-phrase pages (scripts/stays/search_pages.py) filter with a small rule language
+// ("home & price<3000", "hotel & near:laxman-jhula:1.5", ...); this mirrors rule_matches() there.
+let META = null; // the data module's meta: kinds, landmarks, riverside areas
+const OYO = /\b(oyo|townhouse|capital o|collection o|spot on|flagship|silverkey|hotel o)\b/i;
+const km = (a, b) => {
+  const r = (x) => (x * Math.PI) / 180;
+  const h = Math.sin(r(b[0] - a[0]) / 2) ** 2 + Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(r(b[1] - a[1]) / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(h));
+};
+function ruleMatches(d, rule) {
+  return rule.split(' & ').map((c) => c.trim()).every((c) => {
+    if (c === 'any') return true;
+    if (META.kinds[c]) return d.ks.some((k) => META.kinds[c].includes(k));
+    let m = c.match(/^price(<=|<)(\d+)$/);
+    if (m) return !!d.p && (m[1] === '<=' ? d.p <= +m[2] : d.p < +m[2]);
+    m = c.match(/^stars(>=|=)(\d)$/);
+    if (m) return m[1] === '>=' ? (d.s || 0) >= +m[2] : (d.s || 0) === +m[2];
+    if (c.startsWith('kind:')) return d.ks.includes(c.slice(5));
+    if (c === 'top10') return true; // the ranking itself is in load()
+    if (c.startsWith('area:')) return d.a === c.slice(5);
+    if (c.startsWith('near:')) {
+      const [, slug, dist] = c.split(':');
+      return !!d.ll && !!META.landmarks[slug] && km(d.ll, META.landmarks[slug]) <= +dist;
+    }
+    const f = d.f || [];
+    switch (c) {
+      case 'priced': return !!d.p;
+      case 'river': return d.t.includes('ganga') || META.river.includes(d.a);
+      case 'gangaview': return d.t.includes('ganga');
+      case 'family': return d.t.includes('family') || d.t.includes('pool') || (d.bd || 0) >= 2 || d.ks.some((k) => ['Resorts', 'Villas', 'Holiday rentals'].includes(k));
+      case 'kitchen': case 'pool': case 'luxury': return d.t.includes(c);
+      case 'wedding': return f.includes('Meeting/ Banquet facilities') || (d.ks.includes('Resorts') && f.includes('Garden area'));
+      case 'oyo': return OYO.test(d.n);
+      case 'linked': return !!d.o;
+      default: return false;
+    }
+  });
+}
+// Price bands for "price" pages, in step with PRICE_BANDS in search_pages.py.
+const BANDS = [[1000, 'Under ₹1,000'], [2000, '₹1,000 to ₹2,000'], [3000, '₹2,000 to ₹3,000'], [5000, '₹3,000 to ₹5,000'], [null, '₹5,000 and up']];
+const band = (p) => (BANDS.find(([cap]) => cap === null || p < cap) || BANDS[BANDS.length - 1])[1];
+// Distance bands for "near <place>" pages, in step with DIST_BANDS in build_pages.py.
+const DBANDS = [[0.5, 'Under 500 m'], [1, '500 m to 1 km'], [2, '1 to 2 km'], [3, '2 to 3 km'], [null, '3 km and more']];
+const dband = (k) => DBANDS.find(([top]) => top === null || k <= top)[1];
+
 function matchFilter(d, filter) {
   if (!filter || filter === 'all') return true;
+  if (filter.startsWith('q:')) return ruleMatches(d, filter.slice(2));
   const [kind, value] = filter.split(':');
   if (kind === 'b') { // bedrooms "b:<min>-<max>"; unknown size never matches
     const [lo, hi] = value.split('-').map(Number);
@@ -72,7 +118,7 @@ export function setupStaysIndex() {
   CQ = city === 'rishikesh' ? '' : `&c=${city}`;
   const isMaster = pageFilter === 'all';
   const allTitle = root.dataset.allTitle || 'All stays';
-  const state = { q: '', g: isMaster ? 'c' : 'all', stars: new Set(), area: '', kind: '', fac: new Set(), open: new Set() };
+  const state = { q: '', g: root.dataset.group || (isMaster ? 'c' : 'all'), stars: new Set(), area: '', kind: '', fac: new Set(), open: new Set() };
   let data = null; // { base, meta } once loaded
   let loading = null;
 
@@ -85,8 +131,14 @@ export function setupStaysIndex() {
     if (!loading) {
       root.classList.add('sx-loading');
       loading = import(city === 'rishikesh' ? './stays-index-data.js' : `./stays-index-data-${city}.js`).then((m) => {
-        const base = m.STAYS_INDEX.filter((d) => matchFilter(d, pageFilter));
-        data = { base, meta: m.STAYS_INDEX_META, own: m.STAYS_OWN };
+        META = m.STAYS_INDEX_META;
+        let base = m.STAYS_INDEX.filter((d) => matchFilter(d, pageFilter));
+        // "Top 10" pages: the 10 best guest scores with enough reviews, ranked (select() in search_pages.py)
+        if (/\btop10\b/.test(pageFilter)) {
+          base = base.filter((d) => d.g && (d.c || 0) >= 5).sort((a, b) => b.g - a.g || (b.c || 0) - (a.c || 0) || a.n.localeCompare(b.n))
+            .slice(0, 10).map((d, i) => ({ ...d, n: `${i + 1}. ${d.n}` }));
+        }
+        data = { base, meta: m.STAYS_INDEX_META, own: /\btop10\b/.test(pageFilter) ? [] : m.STAYS_OWN };
         buildControls(base);
         root.classList.remove('sx-loading');
         return data;
@@ -166,10 +218,18 @@ export function setupStaysIndex() {
       sections = [{ title: allTitle, list: rows, slug: null }];
     } else {
       const groups = {};
-      rows.forEach((d) => (groups[d[state.g]] ||= []).push(d));
+      // by type on a search page: the page's own kinds first (in step with build_pages.py)
+      const ruleKinds = pageFilter.startsWith('q:') ? pageFilter.slice(2).split(' & ').map((t) => META.kinds[t.trim()]).find(Boolean) : null;
+      const near = pageFilter.startsWith('q:') ? pageFilter.slice(2).split(' & ').find((t) => t.trim().startsWith('near:')) : null;
+      const here = near ? META.landmarks[near.trim().split(':')[1]] : null;
+      const keyOf = state.g === 'd' ? (d) => (here && d.ll ? dband(km(here, d.ll)) : DBANDS[DBANDS.length - 1][1])
+        : state.g === 'pb' ? (d) => (d.p ? band(d.p) : 'No price listed')
+        : state.g === 'k' && ruleKinds ? (d) => d.ks.find((k) => ruleKinds.includes(k)) || d.k : (d) => d[state.g];
+      rows.forEach((d) => (groups[keyOf(d)] ||= []).push(d));
+      const bandOrder = state.g === 'd' ? DBANDS.map((b) => b[1]) : [...BANDS.map((b) => b[1]), 'No price listed'];
       sections = Object.keys(groups)
-        .sort(state.g === 's' ? (a, b) => b - a : (a, b) => groups[b].length - groups[a].length)
-        .map((k) => ({ title: state.g === 's' ? (k === '0' ? 'Unrated' : `${k}-star`) : k, list: groups[k], slug: null }));
+        .sort(state.g === 's' ? (a, b) => b - a : state.g === 'pb' || state.g === 'd' ? (a, b) => bandOrder.indexOf(a) - bandOrder.indexOf(b) : (a, b) => groups[b].length - groups[a].length)
+        .map((k) => ({ title: state.g === 's' ? (k === '0' || k === 'undefined' ? 'Unrated' : `${k}-star`) : k, list: groups[k], slug: null }));
     }
     const limit = isMaster && state.g === 'c';
     out.innerHTML = sections.map(({ title, plural, list, slug, filter }) => {

@@ -9,7 +9,8 @@
 // What each kind of page gets (never more than 4 ads on a wide screen, 2 on a phone):
 //   guide pages      side rails + one mid-article display + grid above the footer
 //   homepage         side rails + grid above the footer (nothing between its sections)
-//   stays lists      side rails + grid above the footer (hotels/best-*, landmark pages)
+//   stays lists      side rails + one display after the lists (at the page's <div class="rh-ad-slot" data-ad="display">,
+//                    before the tips and FAQs; landmark pages have no slot, so none there) + grid above the footer
 //   everything else  no ads: the stay page, contact, homestays, our own listing,
 //                    list-your-homestay, thanks and 404 are where guests enquire or book.
 // The top of every page stays ad-free: side rails only appear once the
@@ -21,10 +22,11 @@ const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishik
 function pageType(path) {
   if (GUIDES.includes(path)) return 'guide';
   if (path === '') return 'home';
-  if (/^\/hotels\/best-/.test(path)) return 'stays';
+  // stays lists: best-*, landmark and search-phrase pages; not the stay page or our own listing
+  if (/^\/hotels\/(?!stay$)(?!advaitam-)[a-z0-9-]+$/.test(path)) return 'stays';
   return null;
 }
-const PLAN = { guide: ['rails', 'display', 'grid'], home: ['rails', 'grid'], stays: ['rails', 'grid'] };
+const PLAN = { guide: ['rails', 'display', 'grid'], home: ['rails', 'grid'], stays: ['rails', 'display', 'grid'] };
 
 // AdSense units. Translating AdSense's AMP code: data-ad-slot → slot;
 // data-auto-format="mcrspv" (Multiplex/grid) → format 'autorelaxed';
@@ -48,8 +50,12 @@ function block(name, html) {
 }
 
 const PLACE = {
-  // mid-article, after the 2nd section, once readers are into the page
+  // a page's own slot if it has one (stays pages: after the lists, never inside them),
+  // else mid-article on guide pages, after the 2nd section, once readers are into the page
   display() {
+    const slot = document.querySelector('.rh-ad-slot[data-ad="display"]');
+    if (slot) { slot.replaceWith(block('display', ins(UNITS.display))); push(); return; }
+    if (pageType(window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '')) !== 'guide') return;
     const anchor = document.querySelector('main > section:nth-of-type(2)');
     if (!anchor) return;
     anchor.after(block('display', ins(UNITS.display))); push();

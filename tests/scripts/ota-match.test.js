@@ -29,6 +29,17 @@ const CASES = [
   ["Sushma's Homestay", 'rishikesh', 'Sushma homestay 𝗕𝗢𝗢𝗞 Rishikesh Apartment', true],
   ['Sushma Homestay', 'rishikesh', 'Sushma’s Homestay, Rishikesh (updated prices 2026)', true],
   ["Sushma's Homestay", 'rishikesh', 'Sushma homestay C1 𝗕𝗢𝗢𝗞 Rishikesh Apartment', false],
+  // spelling variants and descriptors that are not part of the name (checked by hand, 2026-10-04)
+  ['Shri Bhagwan Gopi Dham Dharmsala', 'haridwar', 'Shri Bhagwan Gopi Dham Dharmshala 𝗕𝗢𝗢𝗞 Haridwar Hotel', true],
+  ['Madhuban Ashram Bed & Breakfast', 'rishikesh', 'Madhuban Ashram, Muni Ki Reti, Rishikesh', true],
+  ['Fabexpress Kartikey Inn', 'haridwar', 'Kartikey Inn, Haridwar', true],
+  ['Ganga House Homestay', 'rishikesh', 'Ganga Home Stay - Houses for Rent in Rishikesh', false],
+  ['Blue Nature Camping And Resorts', 'rishikesh', 'BLUE NATURE CAMPING AND RESORT 𝗕𝗢𝗢𝗞 Rishikesh Camp', true], // resorts = resort
+  ['Abhi Ganga Homestay - Deluxe Double Room (2 Adults + 1 Child)', 'haridwar', 'Abhi Ganga Homestay | Near Ganga Ghat 𝗕𝗢𝗢𝗞 Haridwar Homestay', true], // room description is not the name
+  ['OZY Homestay - Two-Bedroom Apartment', 'rishikesh', 'OZY Homestay, Rishikesh, India', true],
+  ['Hotel Yuvraj Rishikesh', 'rishikesh', 'SPOT ON 43453 Hotel Yuvraj, Laxman Jhula, Rishikesh, India', true], // Spot On is an OYO brand
+  ['Kedia Resorts - ( Ganga Facing Hotel )', 'rishikesh', 'Kedia Resorts, Veerbhadra Road, Near AIIMS Hospital, Rishikesh, India', true],
+  ['Radha Krishna Homestay - Two-Bedroom Apartment', 'rishikesh', 'Radha Krishna Homestay 1 BHK Apartment 𝗕𝗢𝗢𝗞 Rishikesh Apartment', false], // 2 bedrooms is not the 1 BHK unit
   // wrong pages: other stays of the same chain/brand, other units, lookalikes, list pages
   ['Perfectstayz Value Alpine near Laxman Jhula', 'rishikesh', 'Perfectstayz Value Hills Hotel Rishikesh - Reviews, Photos & Offer', false],
   ['Perfectstayz Value Alpine near Laxman Jhula', 'rishikesh', 'Perfectstayz Value Hills 𝗕𝗢𝗢𝗞 Rishikesh Hotel', false],

@@ -2719,6 +2719,8 @@ a.homestay-photo:hover {
   font-variant-numeric: tabular-nums;}
 .sx-stats b {
   color: var(--ink);}
+.sx-controls[hidden] {
+  display: none;}
 .sx-controls {
   position: sticky;
   top: 72px;
@@ -3222,6 +3224,15 @@ input.sx-input {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--muted, #6b7280);}
+/* In-content display ad on stays pages: placed by ads.js at <div class="rh-ad-slot" data-ad="display">,
+   after the lists and before the tips and FAQs, so it never sits between a reader and the stays. */
+.rh-ad-display {
+  min-height: 300px;
+  margin: 32px auto;
+  padding: 0;}
+/* AdSense marks an ad it could not fill; collapse it instead of leaving a gap. */
+.rh-ad:has(ins[data-ad-status="unfilled"]) {
+  display: none;}
 /* Side-rail ads in the empty margins on wide screens (assets/js/ads.js decides
    when they show: past the first screen, never over the footer). */
 .rh-ad-rail {
@@ -3335,11 +3346,71 @@ input.sx-input {
 .sp-more ul + h3,
 .sp-more h3:first-of-type {
   margin-top: 12px;}
-/* Compact footer: brand (with social icons) | Stay | Explore (2 mini-columns) |
-   Stays in Rishikesh | Stays in Haridwar, in one row on desktop. */
+/* Compact footer: brand (with social icons) | Stay | Explore (2 mini-columns) in one row on
+   desktop; below it every stays page of both cities (.rhs-footer-stays, footer_links.py). */
 .rhs-footer-grid {
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 1.6fr);
   gap: 36px;}
+/* "Stays in Rishikesh" / "Stays in Haridwar": one wrapped line of links per city. */
+.rhs-footer-stays {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);}
+.rhs-footer-stays h3 {
+  margin: 0 0 8px;
+  font-size: 16px;}
+.rhs-footer-stays ul {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  line-height: 2;}
+.rhs-footer-stays li:not(:last-child)::after {
+  content: "|";
+  margin: 0 10px;
+  color: #64748b;}
+.rhs-footer-stays a {
+  color: #cbd5e1;
+  font-size: 14px;
+  text-decoration: none;}
+.rhs-footer-stays a:hover {
+  color: #6ee7b7;}
+@media (max-width: 700px) {
+  .rhs-footer-stays ul {
+    line-height: 1.9;}
+  .rhs-footer-stays a {
+    font-size: 13px;}
+  .rhs-footer-stays li:not(:last-child)::after {
+    margin: 0 7px;}}
+/* Search-phrase links: always shown on wider screens; folded on phones behind a CSS-only toggle. */
+.rhs-more-toggle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;}
+.rhs-more-label {
+  display: none;}
+@media (max-width: 700px) {
+  .rhs-footer-stays .rhs-more {
+    display: none;}
+  .rhs-footer-stays .rhs-more-toggle:checked ~ .rhs-more {
+    display: flex;}
+  .rhs-more-label {
+    display: inline-block;
+    margin: -10px 0 20px;
+    color: #6ee7b7;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;}
+  .rhs-more-label::after {
+    content: " \25BE";}
+  .rhs-more-toggle:checked + .rhs-more-label::after {
+    content: " \25B4";}
+  .rhs-more-toggle:focus-visible + .rhs-more-label {
+    outline: 2px solid #6ee7b7;
+    outline-offset: 2px;}}
 .rhs-footer-explore {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, max-content));
@@ -3351,7 +3422,7 @@ input.sx-input {
   margin-top: 18px;}
 @media (max-width: 1100px) {
   .rhs-footer-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));}
+    grid-template-columns: repeat(2, minmax(0, 1fr));}
   .rhs-footer-brand {
     grid-column: 1 / -1;}}
 @media (max-width: 700px) {
@@ -3369,8 +3440,8 @@ input.sx-input {
     column-gap: 20px;}
   .rhs-footer-brand + .rhs-footer-column h3 {
     grid-column: 1 / -1;}
-  .rhs-footer-grid > .rhs-footer-column:last-child {
-    grid-column: auto;}}
+  .rhs-footer-grid > .rhs-footer-explore:last-child {
+    grid-column: 1 / -1;}}
 /* Rishikesh | Haridwar switch at the top of every stays page. */
 .sx-topbar {
   display: flex;
@@ -3466,3 +3537,16 @@ input.sx-input {
     cursor: pointer;}
   .sx-filters nav {
     padding-bottom: 10px;}}
+/* Thin stays pages (a city with few stays of a kind): the honest note and the
+   "nearest in the other city" / "similar stays here" lists below it. */
+.sx-thin {
+  margin: 18px 0 6px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--river);
+  background: var(--paper);
+  color: var(--ink);}
+.sx-alt h2 span {
+  font-weight: 400;}
+/* Tips section after the lists (search_pages.page_content). */
+.sx-tips {
+  margin-top: 28px;}
