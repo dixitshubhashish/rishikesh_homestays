@@ -157,7 +157,7 @@ export default async function handler(req, res) {
 
     const whatsappCtaHtml = `
         <table role="presentation" style="width: 100%; margin: 26px 0;"><tr><td align="center">
-          <a href="https://wa.me/919027212484" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 30px; border-radius: 999px;">💬 Chat with us on WhatsApp</a>
+          <a href="https://wa.me/918050091290" style="display: inline-block; background: #25D366; color: #fff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 30px; border-radius: 999px;">💬 Chat with us on WhatsApp</a>
         </td></tr></table>
         <p style="text-align: center; color: #66726f; font-size: 13px; margin: 0 0 4px;">or call us directly</p>
         <p style="text-align: center; color: #17211f; font-size: 14px; font-weight: 600; margin: 0;">+91 90272 12484 &nbsp;·&nbsp; +91 80500 91290</p>`;

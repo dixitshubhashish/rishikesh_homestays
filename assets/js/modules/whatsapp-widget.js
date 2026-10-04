@@ -71,7 +71,7 @@ function ensureVendorScripts() {
 }
 
 export function setupWhatsAppWidget() {
-  const WHATSAPP_PHONE = '919027212484';
+  const WHATSAPP_PHONE = '918050091290';
 
   // The popup is a slide-in panel, not a plain show/hide overlay — it needs
   // a frame with `hidden` removed before the transform transition can run

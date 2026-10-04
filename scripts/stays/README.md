@@ -82,11 +82,16 @@ border). In hostel lists, and next to a hostel, their type reads "Private
 stay" (the not-shared alternative to a dorm). Only their real guest rating
 is shown, and only when it's 9 or more: never invent ratings.
 
-There is no ranking. Each visit shuffles the list into a fresh random order
-(the Stars / Area / Type views only group it). Our own properties (`OWN` in
+Order: stays with a verified booking link first, then the rest, in a fixed order
+(no shuffle). Category pages list the linked stays directly and put the rest in a
+"View all N …" fold (`<details class="sx-rest">`, still in the HTML for crawlers);
+a list with fewer than `SHOW_MIN` (10) linked stays is topped up to 10
+(`split_shown()` in `build_pages.py`, `shownCount()` in `stays-index.js` for
+filtered views). The master page shows 20 per section, linked first, with
+"View all" to the category page. Our own properties (`OWN` in
 `build_pages.py`: Advaitam, Elysium, and "Yoga Retreat at the Ganges",
 matched by exact source URL so no other yoga retreat is caught) are taken out
-of the shuffled data and pinned in an "Our homestays · Book direct" block on
+of the data and pinned in an "Our homestays · Book direct" block on
 top of every page. Their buttons go to our own page (Advaitam) or `/contact`,
 never to the source listing.
 

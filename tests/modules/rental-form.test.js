@@ -206,7 +206,7 @@ test('rental form submission', async (t) => {
     fill({ rental_name: 'Asha', rental_country: 'IN', rental_phone: '9876543210', rental_service: 'self_drive' });
     $('[data-rental-whatsapp]').click();
     assert.strictEqual(opened.length, 1);
-    assert.match(opened[0], /919027212484/);
+    assert.match(opened[0], /918050091290/);
     const text = decodeURIComponent(opened[0].split('text=')[1]);
     assert.match(text, /Need: Self-drive car/);
     assert.match(text, /Phone: \+919876543210/);

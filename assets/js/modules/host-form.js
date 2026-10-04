@@ -3,7 +3,7 @@ import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 
-const WHATSAPP_PHONE = '919027212484';
+const WHATSAPP_PHONE = '918050091290';
 
 // Formats a host's property application as a plain-text WhatsApp message
 // (no emoji/unicode bullets — some WhatsApp clients render those as a

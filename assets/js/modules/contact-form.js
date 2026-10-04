@@ -4,7 +4,7 @@ import { buildWhatsAppLink } from './whatsapp-link.js';
 import { setupEmailVerification } from './email-otp.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 
-const WHATSAPP_PHONE = '919027212484';
+const WHATSAPP_PHONE = '918050091290';
 
 // Formats the same enquiry data as a plain-text WhatsApp message, matching
 // the WhatsApp widget's format (no emoji/unicode bullets — some WhatsApp

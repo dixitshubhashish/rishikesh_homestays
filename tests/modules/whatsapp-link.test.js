@@ -40,31 +40,31 @@ test('isMobileDevice', async (t) => {
 test('buildWhatsAppLink', async (t) => {
   await t.test('uses wa.me on mobile', () => {
     setUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)');
-    const link = buildWhatsAppLink('919027212484', 'Hello there');
-    assert.match(link, /^https:\/\/wa\.me\/919027212484\?text=/);
+    const link = buildWhatsAppLink('918050091290', 'Hello there');
+    assert.match(link, /^https:\/\/wa\.me\/918050091290\?text=/);
   });
 
   await t.test('uses web.whatsapp.com on desktop', () => {
     setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
-    const link = buildWhatsAppLink('919027212484', 'Hello there');
-    assert.match(link, /^https:\/\/web\.whatsapp\.com\/send\?phone=919027212484&text=/);
+    const link = buildWhatsAppLink('918050091290', 'Hello there');
+    assert.match(link, /^https:\/\/web\.whatsapp\.com\/send\?phone=918050091290&text=/);
   });
 
   await t.test('strips non-digit characters from the phone number', () => {
     setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
-    const link = buildWhatsAppLink('+91 90272-12484', 'Hi');
-    assert.match(link, /phone=919027212484/);
+    const link = buildWhatsAppLink('+91 80500-91290', 'Hi');
+    assert.match(link, /phone=918050091290/);
   });
 
   await t.test('URL-encodes the message text', () => {
     setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
-    const link = buildWhatsAppLink('919027212484', 'Line one\nLine two & more');
+    const link = buildWhatsAppLink('918050091290', 'Line one\nLine two & more');
     assert.match(link, /text=Line%20one%0ALine%20two%20%26%20more/);
   });
 
   await t.test('handles an empty message without throwing', () => {
     setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
-    assert.doesNotThrow(() => buildWhatsAppLink('919027212484', ''));
+    assert.doesNotThrow(() => buildWhatsAppLink('918050091290', ''));
   });
 });
 

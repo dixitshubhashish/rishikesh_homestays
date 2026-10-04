@@ -11,6 +11,11 @@
 // data module and adds &c=<city> to /stay links for cities other than Rishikesh.
 let CQ = '';
 const PAGE_SIZE = 20; // rows per section before "Show all" on the master page
+// Stays with a verified booking link (d.o) come first and are listed directly; the rest
+// wait behind "View all". A list with fewer is topped up to SHOW_MIN. In step with
+// SHOW_MIN / split_shown() in scripts/stays/build_pages.py.
+const SHOW_MIN = 10;
+const shownCount = (list) => Math.max(list.filter((d) => d.o).length, Math.min(SHOW_MIN, list.length));
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const inr = (n) => n.toLocaleString('en-IN');
@@ -168,12 +173,13 @@ export function setupStaysIndex() {
     }
     const limit = isMaster && state.g === 'c';
     out.innerHTML = sections.map(({ title, plural, list, slug, filter }) => {
-      const key = `${state.g}:${title}`, open = !limit || state.open.has(key);
-      const shown = open ? list : list.slice(0, PAGE_SIZE);
+      const key = `${state.g}:${title}`, open = state.open.has(key);
+      const size = limit ? PAGE_SIZE : shownCount(list);
+      const shown = open ? list : list.slice(0, size);
       const actions = limit ? [
         list.length > PAGE_SIZE && !open && !slug ? `<button type="button" class="sx-more" data-k="${esc(key)}">Show all ${inr(list.length)}</button>` : '',
         slug ? `<a class="sx-open" href="/hotels/best-${slug}-in-${root.dataset.city || 'rishikesh'}">View all ${inr(list.length)} ${esc(plural || lc(title))}</a>` : ''
-      ].join('') : '';
+      ].join('') : (list.length > size && !open ? `<button type="button" class="sx-more" data-k="${esc(key)}">View all ${inr(list.length)}</button>` : '');
       return `<section class="sx-group"><h2>${esc(title)} <span>${inr(list.length)}</span></h2>` +
         `<ul class="sx-list${limit && open && list.length > PAGE_SIZE ? ' sx-scroll' : ''}">${mixHtml(shown, own, PRIVATE_ALT.includes(pageFilter) || PRIVATE_ALT.includes(filter))}</ul>` +
         `${actions ? `<div class="sx-actions">${actions}</div>` : ''}</section>`;

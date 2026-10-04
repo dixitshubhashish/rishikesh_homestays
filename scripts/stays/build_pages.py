@@ -376,6 +376,19 @@ def own_mix_html(o, private):
             f'<a class="sx-go" href="{esc(o["u"])}">View property</a></li>')
 
 
+# Owner, 2026-10-04: stays with a verified booking link are listed directly;
+# the rest wait behind "View all" (still in the HTML, so crawlers see them).
+# A list with fewer linked stays is topped up to SHOW_MIN so it never looks empty.
+# Must stay in step with SHOW_MIN / shownCount() in stays-index.js.
+SHOW_MIN = 10
+
+
+def split_shown(items):
+    """items sorted linked-first -> (shown directly, behind "View all")."""
+    n = max(sum('o' in d for d in items), min(SHOW_MIN, len(items)))
+    return items[:n], items[n:]
+
+
 def mix_html(items, own, private=False):
     """items: list of stays -> <li> html with our stays interleaved."""
     out, k = [], 0
@@ -759,8 +772,11 @@ def main(data_path, crawled):
             listing = ''.join(blocks)
             list_items = [d for d in stays][:30]
         else:
+            shown, rest = split_shown(members)
+            more = (f'<details class="sx-rest"><summary>View all {len(members):,} {esc(plural)}</summary>'
+                    f'<ul class="sx-list">{mix_html(rest, own, flt in PRIVATE_ALT)}</ul></details>') if rest else ''
             listing = (f'<section class="sx-group"><h2>All {esc(lc(title))} <span>{len(members):,}</span></h2>'
-                       f'<ul class="sx-list">{mix_html(members, own, flt in PRIVATE_ALT)}</ul></section>')
+                       f'<ul class="sx-list">{mix_html(shown, own, flt in PRIVATE_ALT)}</ul>{more}</section>')
             list_items = members[:30]
 
         ld_breadcrumb = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [

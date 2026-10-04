@@ -2850,6 +2850,21 @@ input.sx-input {
   color: var(--river);
   font: inherit;
   cursor: pointer;}
+/* "View all" fold under a category list: the stays without a booking link (still in the HTML). */
+.sx-rest > summary {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--river);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;}
+.sx-rest > summary::-webkit-details-marker {
+  display: none;}
+.sx-rest[open] > summary {
+  margin-bottom: 6px;}
 .sx-empty,
 .sx-note {
   color: var(--muted);

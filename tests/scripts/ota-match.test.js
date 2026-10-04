@@ -24,6 +24,11 @@ const CASES = [
   ['Bunk Hostel', 'rishikesh', 'Bunk Hostel Rishikesh | Rooms & Dorms 𝗕𝗢𝗢𝗞 Rishikesh Hostel', true],
   ['Hotel Dharm Yatri Niwas', 'rishikesh', 'Dharm Yatri Niwas 𝗕𝗢𝗢𝗞 Rishikesh Aashram', true],
   ['Hotel Shiva Palace – Best Stay Hotel', 'haridwar', 'Best Price on HOTEL SHIVA PALACE HARIDWAR in Haridwar + Reviews!', true],
+  // a possessive is the word itself, not an extra word "s"
+  ["Nature's Valley Resort", 'rishikesh', 'Nature Valley | Luxury Tents & Guided Treks 𝗕𝗢𝗢𝗞 Rishikesh Camp', true],
+  ["Sushma's Homestay", 'rishikesh', 'Sushma homestay 𝗕𝗢𝗢𝗞 Rishikesh Apartment', true],
+  ['Sushma Homestay', 'rishikesh', 'Sushma’s Homestay, Rishikesh (updated prices 2026)', true],
+  ["Sushma's Homestay", 'rishikesh', 'Sushma homestay C1 𝗕𝗢𝗢𝗞 Rishikesh Apartment', false],
   // wrong pages: other stays of the same chain/brand, other units, lookalikes, list pages
   ['Perfectstayz Value Alpine near Laxman Jhula', 'rishikesh', 'Perfectstayz Value Hills Hotel Rishikesh - Reviews, Photos & Offer', false],
   ['Perfectstayz Value Alpine near Laxman Jhula', 'rishikesh', 'Perfectstayz Value Hills 𝗕𝗢𝗢𝗞 Rishikesh Hotel', false],

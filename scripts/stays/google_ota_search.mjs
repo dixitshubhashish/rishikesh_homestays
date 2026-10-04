@@ -76,6 +76,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const jitter = (a, b) => sleep(a + Math.random() * (b - a));
 const shuffle = (a) => a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
 const log = (...a) => console.log(new Date().toTimeString().slice(0, 8), ...a);
+// A stop (kill, Ctrl-C) lands between two list writes, never inside one (those are synchronous).
+for (const s of ['SIGINT', 'SIGTERM']) process.on(s, () => { log(`stopped (${s})`); process.exit(0); });
 
 // ---- the three lists in docs/booking-links/ (every stay is in exactly one) ------
 //   all.tsv      stays still to sort; a stay leaves it the moment it is sorted
@@ -239,6 +241,7 @@ function nextCombo() {
   }
   return null; // everything is resting
 }
+const noAnswer = {}; // browser/engine -> searches in a row that got no results page (not a challenge)
 const rest = (pred, ms, why) => { for (const c of combos) if (pred(c)) c.until = Math.max(c.until, Date.now() + ms); log(`   ${why}`); };
 
 // ---- browsers and tabs -------------------------------------------------------
@@ -340,6 +343,19 @@ async function searchTab(b) {
   if (left) log(`   ${b}: carrying on in the open search tab (${left.url().slice(0, 60)})`);
   t.on('popup', (p) => p.close().catch(() => {})); // candidates open in background tabs of our own; any popup is unwanted
   return (tabs[b] = t);
+}
+// A search tab kept for hundreds of searches grows to gigabytes (Bing's pages leak; on 2026-10-04 two
+// such tabs pushed the Mac to 10 GB of swap): it is swapped for a fresh background tab every RECYCLE stays.
+const RECYCLE = Number(arg('--recycle', 15));
+async function freshSearchTab(b) {
+  const old = tabs[b];
+  if (!old || old.isClosed()) return;
+  const t = await openBackground(b, 'about:blank');
+  t.__ota_browser = b;
+  t.on('popup', (p) => p.close().catch(() => {}));
+  tabs[b] = t;
+  await old.close().catch(() => {});
+  log(`   ${b}: swapped the search tab for a fresh one (memory)`);
 }
 async function usable(b) {
   try { await searchTab(b); return true; } catch (e) {
@@ -564,10 +580,14 @@ async function processStay(stay) {
       res = await search(combo, q);
       lastOk = res.state === 'ok' && !challenged;
       if (challenged) rest((c) => c.b === combo.b && c.e === combo.e, 10 * 60e3, `a challenge was solved on ${combo.b}/${combo.e}: resting it there for 10 min`);
-      if (res.state === 'ok') break;
+      if (res.state === 'ok') { noAnswer[`${combo.b}/${combo.e}`] = 0; break; }
       if (res.state === 'offline') { log('   no internet connection: waiting 30 s, then the same search again'); await sleep(30000); attempt--; continue; }
       if (res.state === 'blocked') rest((c) => c.b === combo.b && c.e === combo.e, 30 * 60e3, `challenged on ${combo.b}/${combo.e}: resting ${combo.e} there for 30 min`);
-      else combo.until = Date.now() + 10 * 60e3; // page or selectors failed: rest this combination
+      else { // owner: an engine that is not responding gets no more requests (every region of it, in this browser)
+        const k = `${combo.b}/${combo.e}`; noAnswer[k] = (noAnswer[k] || 0) + 1;
+        if (noAnswer[k] >= 3) rest((c) => c.b === combo.b && c.e === combo.e, Infinity, `${combo.e} not responding on ${combo.b} (${noAnswer[k]} times in a row): no more requests to it`);
+        else rest((c) => c.b === combo.b && c.e === combo.e, 10 * 60e3, `${combo.e} not responding on ${combo.b}: resting it there for 10 min`);
+      }
       await jitter(2000, 4000);
     }
     if (res?.state !== 'ok') { log('   could not get a results page'); return 'unresolved'; }
@@ -651,6 +671,8 @@ if (SYNC_ONLY) {
     const r = await processStay(stay);
     tally[r]++;
     for (const b of BROWSERS) await tidyTabs(b, tabs[b] && !tabs[b].isClosed() ? tabs[b].url() : undefined);
+    // after the first stay too: a search tab an earlier worker left may already be huge
+    if (i === 1 || i % RECYCLE === 0) for (const b of BROWSERS) await freshSearchTab(b).catch((e) => log(`   ${b}: could not swap the search tab (${String(e?.message || e).slice(0, 80)})`));
     log(`   -> ${r}   engines: ${Object.entries(stats).map(([e, s]) => `${e} ${s.matches} found, ${s.withLinks}/${s.searches} pages with links`).join('; ')}`);
     if (r === 'unresolved' && tally.unresolved >= 3 && tally.unresolved === i) { log('first 3 stays all unresolved: the engines are blocking this browser; stopping'); break; }
     await jitter(3000, 6000);

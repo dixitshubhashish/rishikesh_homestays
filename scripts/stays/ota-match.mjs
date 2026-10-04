@@ -36,11 +36,14 @@ const plain = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // "Ris
 const townIn = (city, s) => (CITY_WORDS[city] || CITY_WORDS.rishikesh).test(plain(s));
 const isTownWord = (w) => /^(?:rishikesh|haridwar|hardwar|tapovan|lakshman|laxman|shivpuri|swarg|raiwala|byasi|kaudiyala|neelkanth|yamkeshwar|kankhal|jwalapur|bhupatwala|bahadrabad|roorkee|motichur|muni|reti)$/.test(w);
 
+// A possessive is the word itself ("Sushma's Homestay" is "Sushma Homestay"), never a word "s".
+const unPossess = (s) => s.replace(/([a-z0-9])['’ʼ`]s\b/gi, '$1');
+
 // Tokens of every length ("KG", "Om", "W", "Pi" identify stays too): "2 BHK"/"2-BHK" -> "2bhk",
 // "K G"/"J.P." -> "kg"/"jp".
 export function tokens(s) {
   const out = [];
-  for (const w of words(s.replace(/\b0*(\d)\s*-?\s*bhk\b/gi, '$1bhk'))) {
+  for (const w of words(unPossess(s).replace(/\b0*(\d)\s*-?\s*bhk\b/gi, '$1bhk'))) {
     const prev = out[out.length - 1];
     if (/^[a-z]$/.test(w) && prev?.single) { prev.w += w; continue; }
     out.push({ w, single: /^[a-z]$/.test(w) });
@@ -110,6 +113,7 @@ const sameKind = (k, list) => list.some((x) => base(x) === base(k) || (HOTELISH.
 // -> { ok, why: 'ok'|'no-title'|'core-empty'|'core-word-missing'|'town-missing'|'unit-clash'|'kind-clash'|'bhk-clash'|'id-clash'|'extra-words', detail }
 export function matchReason(name, city, title) {
   if (!title) return { ok: false, why: 'no-title' };
+  name = unPossess(name); title = unPossess(title);
   const core = coreWords(name);
   if (!core.length) return { ok: false, why: 'core-empty', detail: coreName(name) };
   const t = title.replace(/^best price on /i, '');
