@@ -1,0 +1,38 @@
+# After a push to main that changes sitemap.xml, wait until Vercel has the new
+# deploy live, then send IndexNow the pages that were added, re-dated or
+# removed (scripts/indexnow.mjs). Free, no account or secret: the key file
+# /<key>.txt at the site root proves we own the domain.
+name: IndexNow
+
+on:
+  push:
+    branches: [main]
+    paths: [sitemap.xml]
+  workflow_dispatch:
+    inputs:
+      all:
+        description: 'Send every page in the sitemap, not only the changed ones'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # the commit before the push, to compare sitemaps
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Send changed pages
+        run: |
+          if [ "${{ inputs.all }}" = "true" ]; then
+            node scripts/indexnow.mjs --all --wait-live
+          else
+            node scripts/indexnow.mjs --from "${{ github.event.before || 'HEAD~1' }}" --wait-live
+          fi

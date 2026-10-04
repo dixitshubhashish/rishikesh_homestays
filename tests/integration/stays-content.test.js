@@ -97,3 +97,16 @@ test('every stays page is in sitemap.xml, and every sitemap stays URL exists', (
   }
   for (const stem of listed) assert(existsSync(join(hotels, `${stem}.html`)), `sitemap.xml lists /hotels/${stem}, which does not exist`);
 });
+
+test('every stays page is in llms.txt (index) and llms-full.txt (details with a link to act on)', () => {
+  const llms = readFileSync(join(root, 'llms.txt'), 'utf-8');
+  const full = readFileSync(join(root, 'llms-full.txt'), 'utf-8');
+  assert(llms.includes('https://rishikeshhomestays.com/llms-full.txt'), 'llms.txt should point to llms-full.txt');
+  for (const p of pages) {
+    const url = `https://rishikeshhomestays.com/hotels/${p.file.replace(/\.html$/, '')}`;
+    assert(llms.includes(`(${url})`), `${p.file} is missing from llms.txt`);
+    assert(full.includes(`Page: ${url}\n`), `${p.file} is missing from llms-full.txt`);
+  }
+  assert(!/\): 0 [a-z]/.test(llms), 'llms.txt should describe a page with no stays honestly, not as "0 <stays>"');
+  assert(/wa\.me\/918050091290\?text=/.test(full), 'llms-full.txt should carry WhatsApp links travellers can act on');
+});

@@ -28,6 +28,7 @@ import statistics
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys_path_added = __import__('sys').path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cities import CITIES, DEFAULT_CITY, city_from_argv, cache_dir  # noqa: E402
+import page_dates  # noqa: E402
 from search_pages import (PAGES as SEARCH_PAGES, TWINS, heading, path as phrase_path, twin_of, rule_matches, select, price_band,  # noqa: E402
                           page_content, LANDMARK_NOTES, TOP_MIN_REVIEWS, PRICE_BANDS, RIVER_AREAS, KINDS as SEARCH_KINDS)
 
@@ -43,6 +44,16 @@ CN = CITIES[DEFAULT_CITY]['name']
 # from before the move are deleted on build and 301-redirected in vercel.json,
 # _redirects and server.js.
 STAYS_DIR = os.path.join(ROOT, 'hotels')  # shared with hand-made listing pages; only generated files are ever removed
+# Honest dates (page_dates.py): a page's sitemap <lastmod> and JSON-LD dateModified move only
+# when its <main> changes. Pages are written with LASTMOD_TOKEN, swapped for the date on write.
+DATES = {}       # the page-dates.tsv registry, loaded in main()
+LASTMOD = {}     # page stem -> lastmod, for sitemap.xml
+LASTMOD_TOKEN = '__LASTMOD__'
+
+
+def write_dated(stem, head, main_html, tail):
+    LASTMOD[stem] = page_dates.date_for(DATES, f'/hotels/{stem}', main_html)
+    open(f'{STAYS_DIR}/{stem}.html', 'w').write(head.replace(LASTMOD_TOKEN, LASTMOD[stem]) + main_html + tail)
 
 
 def city_qs():
@@ -365,7 +376,13 @@ def prepared_stays(city, ota):
     """Another city's stays as its own pages list them: our stays and their aliases out,
     verified booking links in, linked first (in step with the start of main())."""
     keys = [k for k, _, _ in OWN]
-    out = [s for s in json.load(open(os.path.join(cache_dir(city), 'stays.json')))
+    path = os.path.join(cache_dir(city), 'stays.json')
+    if not os.path.exists(path):
+        # no crawl of that city here (e.g. the scheduled refresh on GitHub crawls Rishikesh only):
+        # use its committed data module, which already has our stays out, links in and this order
+        module = open(f'{ROOT}/assets/js/modules/{data_module_name(city)}', encoding='utf8').read()
+        return json.loads(re.search(r'export const STAYS_INDEX = (\[.*\]);', module).group(1).replace('<\\/', '</'))
+    out = [s for s in json.load(open(path))
            if s['id'] not in OWN_ALIASES and not any(k in s['u'] for k in keys)]
     for s in out:
         if s['id'] in ota:
@@ -639,7 +656,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
                    'stays': [[s['ll'][0], s['ll'][1], s['n'], s['id'], dist_label(k)] for k, s in near[:120]],
                    'own': [[o['ll'][0], o['ll'][1], o['n'], o['u']] for o in own if o.get('ll')]}
         ld = [
-            {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': h1, 'url': url, 'description': desc, 'dateModified': today.isoformat(),
+            {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': h1, 'url': url, 'description': desc, 'dateModified': LASTMOD_TOKEN,
              'about': {'@type': lm.get('schema') or 'TouristAttraction', 'name': name, 'geo': {'@type': 'GeoCoordinates', 'latitude': here[0], 'longitude': here[1]},
                        'address': {'@type': 'PostalAddress', 'addressLocality': CN, 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}},
              'isPartOf': {'@type': 'WebSite', 'name': 'Rishikesh Homestays', 'url': f'{SITE}/'}},
@@ -704,14 +721,92 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             f'          <p class="sx-note">Distances are straight-line from {esc(name)}; walking and driving routes are longer, and drive times are rough. {note}</p>\n'
             '        </div>\n      </section>\n    </main>')
         page_bottom = bottom.replace('/assets/js/modules/stays-index.js', '/assets/js/modules/landmark-map.js')
-        open(f'{STAYS_DIR}/best-stays-near-{slug}.html', 'w').write(page_top + main_html + page_bottom)
-        made.append({'slug': slug, 'name': name, 'near': len(near), 'radius': radius})
+        write_dated(f'best-stays-near-{slug}', page_top, main_html, page_bottom)
+        made.append({'slug': slug, 'name': name, 'near': len(near), 'radius': radius, 'h1': h1, 'url': url, 'desc': desc,
+                     'tips': landmark_tips(lm, name, near, radius), 'faq': faq,
+                     'picks': [pick_line(s, CITY, f'{dist_label(k)} away') for k, s in near[:10]]})
     print('landmark pages:', ', '.join(f"{m['slug']} ({m['near']})" for m in made) or 'none')
     return made
 
 
 def jsonld(obj):
     return '<script type="application/ld+json">\n' + json.dumps(obj, ensure_ascii=False, indent=2).replace('</', '<\\/') + '\n</script>'
+
+
+# ---------- llms-full.txt: the detailed companion to llms.txt for AI assistants ----------
+# llms.txt is the short index; llms-full.txt gives every stays page's summary, prices, areas,
+# top picks (each with a link to its page here), tips, FAQs and a one-tap WhatsApp link, so an
+# assistant can answer and send the traveller straight to an action. Each city's build rewrites
+# its own section between <!-- full-<city> --> markers; the rest comes from llms.txt.
+WA_NUMBER = '918050091290'
+
+
+def wa_link(text):
+    from urllib.parse import quote
+    return f'https://wa.me/{WA_NUMBER}?text={quote(text)}'
+
+
+def pick_line(d, city, extra=''):
+    qs = '' if city == DEFAULT_CITY else f'&c={city}'
+    bits = [d['a'], d['k']] + ([f'{d["s"]}-star'] if d.get('s') else []) \
+        + ([f'guests {d["g"]:g}/10' + (f' ({d["c"]} review{"s" if d["c"] != 1 else ""})' if d.get('c') else '')] if d.get('g') else []) \
+        + ([f'from ₹{inr(d["p"])} a night'] if d.get('p') else []) + (['book online'] if 'o' in d else []) + ([extra] if extra else [])
+    return f'{d["n"]}: {" · ".join(bits)} · {SITE}/hotels/stay?s={d["id"]}{qs}'
+
+
+def best_first(items, n=10):
+    """llms-full.txt picks: bookable stays with 5+ reviews by guest score, then the page's own order."""
+    top = sorted([d for d in items if 'o' in d and d.get('g') and (d.get('c') or 0) >= 5], key=lambda d: (-d['g'], -(d.get('c') or 0), d['n']))
+    return (top + [d for d in items if d not in top])[:n]
+
+
+def full_entry(h1, url, summary, st, facts, tips, faq, picks, ranked, alts):
+    out = [f'### {h1}', f'Page: {url}', summary]
+    if st and st.get('median'):
+        out.append(f'Typical listed starting price: about ₹{round_price(st["median"])} a night; the middle half start between ₹{round_price(st["p25"])} and ₹{round_price(st["p75"])}.')
+    if st and st.get('top_areas'):
+        out.append('Main areas: ' + ', '.join(f'{a} ({c})' for a, c in st['top_areas']) + '.')
+    out += facts
+    if picks:
+        out.append('Ranked by guest score:' if ranked else 'Picks, best guest score first (the ones you can book online lead):')
+        out += [f'{i}. {line}' for i, line in enumerate(picks, 1)]
+    for h2, note, lst, c, _href, _r in alts:
+        out.append(f'{h2}{f" ({note})" if note else ""}:')
+        out += [f'- {pick_line(d, c)}' for d in lst[:5]]
+    out += [t for t in tips if not t.startswith('Prefer to book direct?')]
+    # FAQs the facts above already answer (count, cheapest, closest, best-reviewed) are left out here
+    out += [f'Q: {q} A: {a}' for q, a in faq
+            if not re.match(r'How do I book|How many .* are there|What is the cheapest|Which .* closest to|Which .* best guest reviews', q)]
+    out.append(f'Ask us about this: {wa_link(f"Hi, I am looking at {h1} on rishikeshhomestays.com. My dates: ")}')
+    return '\n'.join(out) + '\n\n'
+
+
+def write_llms_full(section, own):
+    path = f'{ROOT}/llms-full.txt'
+    old = open(path).read() if os.path.exists(path) else ''
+    secs = {}
+    for k in CITIES:
+        m = re.search(rf'<!-- full-{k}:start -->\n(.*?)<!-- full-{k}:end -->', old, re.S)
+        secs[k] = m.group(1) if m else ''
+    secs[CITY] = section
+    llms = open(f'{ROOT}/llms.txt').read()
+    head = re.sub(r'Full details for AI assistants.*?\n\n', '', llms[:llms.index('## Key pages')], flags=re.S)
+    key_pages = llms[llms.index('## Key pages'):llms.index('## Where to stay')]   # key pages + the Kumbh section
+    tail = llms[llms.index('## Contact'):]
+    own_lines = '\n'.join(f'- {o["n"]}: {re.sub(r"^.* · ", "", o["a"])}, {CITIES[DEFAULT_CITY]["name"]}' + (f' · guests {o["g"]:g}/10' if o.get('g') else '') + f' · {SITE}{o["u"]}' for o in own)
+    body = (head.replace('# Rishikesh Homestays', '# Rishikesh Homestays (full details)', 1)
+            + '## How a traveller can act\n\n'
+            + f'- Book our own homestays direct (best price, no booking-site commission): WhatsApp {wa_link("Hi, I would like to book a homestay in Rishikesh. My dates: ")} or the form at {SITE}/contact.\n'
+            + '- Any listed stay: open its page (links below) and press View property; we send you on to book it, or WhatsApp us your dates and we will suggest the best fit.\n'
+            + f'- Bike, scooty and taxi hire: {SITE}/bike-and-taxi-rental-in-rishikesh\n'
+            + f'- Short index of all pages: {SITE}/llms.txt\n\n'
+            + f'## Our own homestays (book direct)\n\n{own_lines}\n\n'
+            + key_pages
+            + '## Every stays page in detail\n\n'
+            + 'Listed starting prices change with dates and seasons; quote them as "from", and send travellers to the page or WhatsApp for the current rate.\n\n'
+            + ''.join(f'## Stays in {CITIES[k]["name"]}\n\n<!-- full-{k}:start -->\n{secs[k]}<!-- full-{k}:end -->\n\n' for k in CITIES)
+            + tail)
+    open(path, 'w').write(body)
 
 
 def ensure_markers(path, before, indent, heading=''):
@@ -734,6 +829,7 @@ def replace_between(path, start, end, body):
 
 
 def main(data_path, crawled):
+    DATES.update(page_dates.load())
     today = datetime.date.today()
     date = today.strftime('%-d %B %Y')
     stays = json.load(open(data_path))
@@ -833,6 +929,9 @@ def main(data_path, crawled):
     landmarks = load_landmarks(CITY)
     near_nav = ('<p class="sx-cities">Stay near ' + ', '.join(
         f'<a href="/hotels/best-stays-near-{l["slug"]}">{esc(l["name"])}</a>' for l in landmarks) + '</p>') if landmarks else ''
+    thin_notes = {}   # stem -> the honest summary of a page this city has few stays for (llms.txt)
+    full = []         # llms-full.txt entries, one per page
+
     def render(slug, title, singular, flt, intro, guide, search=None):
         # One stays page: a category (best-<slug>-in-<city>) or, with `search`, a search-phrase page
         # whose address and <h1> are the phrase itself (search_pages.py).
@@ -922,14 +1021,17 @@ def main(data_path, crawled):
                 alts.insert(1 if n_here == 0 and alts else 0,
                             (sim_h2, '', sim[:SHOW_MIN], CITY, sim_href, False))
             there_txt = f' The nearest are in {ON}, {CITY_AWAY[other]}.' if there else ''
+            what = re.sub(r'^top 10 ', '', plural)   # "No villas in Haridwar have enough reviews", not "No top 10 villas"
             if top10:
-                thin_note = (f'Only {n_here} {plural} in {CN} have the {TOP_MIN_REVIEWS}+ guest reviews we need to rank them, so this list is shorter than ten.'
-                             if n_here else f'No {plural} in {CN} have enough guest reviews to rank yet.') + there_txt
+                thin_note = (f'Only {n_here} {what} in {CN} {"has" if n_here == 1 else "have"} the {TOP_MIN_REVIEWS}+ guest reviews we need to rank them, so this list is shorter than ten.'
+                             if n_here else f'No {what} in {CN} have enough guest reviews to rank yet.') + there_txt
             else:
                 nm = [x['n'] for x in members]
                 names = (', '.join(nm[:-1]) + ' and ' + nm[-1]) if len(nm) > 1 else ''.join(nm)
-                thin_note = (f'{CN} has only {n_here} {plural} listed: {names}.' if n_here else f'We have not found {plural} listed in {CN} yet.') + there_txt
+                thin_note = (f'Only {n_here} {"stay" if n_here == 1 else "stays"} in {CN} {"fits" if n_here == 1 else "fit"} this: {names}.' if n_here
+                             else f'We have not found {what} listed in {CN} yet.') + there_txt
             thin_note += ((' Below them: ' if n_here else ' Below: ') + ' and '.join(h for h, *_ in alts) + '.') if alts else ''
+            thin_notes[stem] = thin_note
             if not n_here:
                 intro = thin_note   # the city's usual intro would promise stays it does not have
             page_title = f'{h1} | {"Nearest Options" if not n_here else f"{n_here} Here + Nearby Picks"} & Local Tips'
@@ -1036,7 +1138,7 @@ def main(data_path, crawled):
         ld_faq = {'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [
             {'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in faq]}
         ld_page = {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': h1, 'url': url, 'description': desc,
-                   'dateModified': today.isoformat(), 'inLanguage': 'en',
+                   'dateModified': LASTMOD_TOKEN, 'inLanguage': 'en',
                    'isPartOf': {'@type': 'WebSite', 'name': 'Rishikesh Homestays', 'url': f'{SITE}/'}}
 
         head_extra = '\n    '.join([
@@ -1152,7 +1254,9 @@ def main(data_path, crawled):
         </div>
       </section>
     </main>'''
-        open(f'{STAYS_DIR}/{stem}.html', 'w').write(page_top + main_html + bottom)
+        write_dated(stem, page_top, main_html, bottom)
+        full.append(full_entry(h1, url, thin_note if thin else intro, st if n_here else None, facts, tips, faq,
+                               [pick_line(d, CITY) for d in (members[:10] if top10 else best_first(members))], top10, alts))
 
     for c in live:
         render(*c)
@@ -1169,35 +1273,44 @@ def main(data_path, crawled):
         render(sp['stem'], sp['h1'], singular, 'q:' + sp['rule'], sp['intro'], guide_of.get(g_slug) or guide_of.get('hotels', ''), search=sp)
 
     near_pages = build_landmark_pages(stays, own, landmarks, top, bottom, today)
+    for np in near_pages:
+        full.append(full_entry(np['h1'], np['url'], np['desc'], None, [], np['tips'], np['faq'], np['picks'], False, [])
+                    .replace('Top picks (the ones you can book online first):', 'Closest stays:'))
+    write_llms_full(''.join(full), own)
 
     # sitemap.xml + llms.txt sections (regenerated between markers)
     sm = ''.join(f'''
   <url>
     <loc>{SITE}/hotels/best-{c[0]}-in-{CITY}</loc>
-    <lastmod>{today.isoformat()}</lastmod>
+    <lastmod>{LASTMOD[f"best-{c[0]}-in-{CITY}"]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>{"0.8" if c[3] == "all" else "0.6"}</priority>
   </url>''' for c in live) + ''.join(f'''
   <url>
     <loc>{SITE}/hotels/best-stays-near-{np['slug']}</loc>
-    <lastmod>{today.isoformat()}</lastmod>
+    <lastmod>{LASTMOD[f"best-stays-near-{np['slug']}"]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>''' for np in near_pages) + ''.join(f'''
   <url>
     <loc>{SITE}/hotels/{sp['stem']}</loc>
-    <lastmod>{today.isoformat()}</lastmod>
+    <lastmod>{LASTMOD[sp['stem']]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>''' for sp in searches)
     ensure_markers(f'{ROOT}/sitemap.xml', '</urlset>', '  ')
     replace_between(f'{ROOT}/sitemap.xml', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', sm + '\n  ')
+    for path in [p for p in DATES if p.startswith('/hotels/') and not os.path.exists(f'{ROOT}{p}.html')]:
+        del DATES[path]   # pages that no longer exist
+    page_dates.save(DATES)
     ll = '\n' + '\n'.join(
-        f'- [{f"Best Hotels in {CN} (all stays)" if c[3] == "all" else f"Best {c[1]} in {CN}"}]({SITE}/hotels/best-{c[0]}-in-{CITY}): {counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else plural_of(c[0], c[1])}. {city_copy(c[0], c[1], c[4], c[5])[0]}'
+        f'- [{f"Best Hotels in {CN} (all stays)" if c[3] == "all" else f"Best {c[1]} in {CN}"}]({SITE}/hotels/best-{c[0]}-in-{CITY}): '
+        + (thin_notes.get(f'best-{c[0]}-in-{CITY}') or
+           f'{counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else plural_of(c[0], c[1])}. {city_copy(c[0], c[1], c[4], c[5])[0]}')
         for c in live) + ''.join(
         f"\n- [Best stays near {np['name']}]({SITE}/hotels/best-stays-near-{np['slug']}): {np['near']} stays within {np['radius']:g} km of {np['name']}, sorted by real distance, with a map."
         for np in near_pages) + ''.join(
-        f"\n- [{sp['h1']}]({SITE}/hotels/{sp['stem']}): {sp['count']:,} stays. {sp['intro']}"
+        f"\n- [{sp['h1']}]({SITE}/hotels/{sp['stem']}): " + (thin_notes.get(sp['stem']) or f"{sp['count']:,} stays. {sp['intro']}")
         for sp in searches) + '\n\n'
     ensure_markers(f'{ROOT}/llms.txt', '## Contact', '', heading=f'## Where to stay in {CN}\n\n')
     replace_between(f'{ROOT}/llms.txt', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', ll)
@@ -1230,6 +1343,7 @@ def main(data_path, crawled):
     # every page's footer lists all category pages of both cities (footer_links.py)
     from footer_links import write_footers
     write_footers()
+    page_dates.refresh_static()   # hand-made pages' <lastmod>, from their own content
 
 
 if __name__ == '__main__':

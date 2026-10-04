@@ -10,7 +10,8 @@
     "test:watch": "node --test --watch tests/**/*.test.js",
     "test:coverage": "node --test tests/**/*.test.js --coverage",
     "build:stays": "python3 scripts/stays/build_pages.py --city haridwar && python3 scripts/stays/build_pages.py",
-    "check:stays": "node --test tests/integration/stays-content.test.js"
+    "check:stays": "node --test tests/integration/stays-content.test.js",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^9.1.0",

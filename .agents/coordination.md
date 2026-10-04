@@ -258,6 +258,7 @@ Add completed work here with the agent, date, files, and verification command or
 - Changed: every category and search-phrase page now exists in both cities (thin ones list the nearest in the other city + similar stays here); the city switch on every stays/landmark page lands on its twin; Luxury Stays and Cheap <Type> phrase pages; 21 "Rooms near / Hotels near" pages (AIIMS, Himalayan Hospital, Jolly Grant, Neelkanth, Patanjali, Shantikunj, Gurukul Kangri, BHEL, SIDCUL, ghats, stations); per-page tips/facts/FAQs; one in-content AdSense slot after the lists on stays pages; footer search links fold on phones.
 - Verification: `npm run check:stays` passes (254 pages); full `npm test` run recorded in the session.
 - Follow-up: not committed or pushed (owner commits together). Booking-link search (Opera worker) still running; new found links not merged yet.
+- 2026-10-05 later (pushed in ed7f988, then): `llms-full.txt` (every stays/landmark page with prices, areas, best-reviewed bookable picks, tips, FAQs, WhatsApp links), honest thin-page lines and a Haridwar Kumbh 2027 section in `llms.txt`; honest sitemap dates (`scripts/stays/page_dates.py`, `page-dates.tsv`); IndexNow (`scripts/indexnow.mjs`, key file at the root, `.github/workflows/indexnow.yml`, ping step in `stays-refresh.yml`, whose `git add` now covers `hotels/` and the rest of the build output); `prepared_stays()` falls back to the committed data module when a city has no local crawl.
 
 ## Handoff Template
 

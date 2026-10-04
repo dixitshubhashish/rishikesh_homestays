@@ -1,4 +1,4 @@
-# Daily check for the best-*-in-rishikesh pages. scripts/stays/refresh.py
+# Daily check for the generated stays pages (hotels/). scripts/stays/refresh.py
 # decides whether anything is due (gap grows 7 -> 56 days while the source
 # listing doesn't change), so most days this exits in seconds.
 name: Refresh stays pages
@@ -37,10 +37,22 @@ jobs:
           # BigQuery snapshot step just skips.
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
       - name: Commit if anything changed
+        id: commit
         run: |
           git config user.name "stays-refresh bot"
           git config user.email "actions@users.noreply.github.com"
-          git add scripts/stays/refresh.state scripts/stays/listing-urls.txt assets/js/modules/stays-index-data.js best-*-in-rishikesh.html
+          # the pages now live in hotels/; the build also rewrites every footer, sitemap.xml,
+          # llms.txt / llms-full.txt and the honest page dates (scripts/stays/page-dates.tsv)
+          git add -A -- scripts/stays assets/js/modules hotels sitemap.xml llms.txt llms-full.txt '*.html'
           git diff --cached --quiet && exit 0
           git commit -m "Stays pages: scheduled refresh ($(date -u +%F))"
           git push
+          echo "pushed=1" >> "$GITHUB_OUTPUT"
+      # A push made with this workflow's token does not start other workflows, so the
+      # IndexNow ping (indexnow.yml) runs here: the pages whose date moved, once live.
+      - name: IndexNow
+        if: steps.commit.outputs.pushed == '1'
+        continue-on-error: true
+        run: |
+          git diff --quiet HEAD~1 HEAD -- sitemap.xml && exit 0
+          node scripts/indexnow.mjs --from HEAD~1 --wait-live

@@ -93,6 +93,10 @@ one section per category, with 20 rows visible per section before "Show all"
 
 "Rooms near" / "Hotels near" pages for big places and institutions (AIIMS, Himalayan Hospital, Jolly Grant airport, Neelkanth, Patanjali Yogpeeth, Shantikunj, Gurukul Kangri, BHEL, SIDCUL, the ghats and stations) use `near:` rules on `landmarks.tsv`, which also makes each place's map page (`best-stays-near-<slug>`, 2 km, widened to 3 then 5 km, never past the row's `max_km`). Coordinates come from OpenStreetMap (Nominatim/Overpass), never a paid API; add a place's practical note to `LANDMARK_NOTES` in `search_pages.py`.
 
+**Dates and IndexNow**: a page's sitemap `<lastmod>` and JSON-LD `dateModified` come from `page_dates.py` (fingerprint of the page's `<main>` in `page-dates.tsv`): unchanged content keeps its date, so a rebuild that changes nothing leaves sitemap.xml untouched, and `scripts/indexnow.mjs` (run by `.github/workflows/indexnow.yml` after a push) sends only the pages whose date moved. Hand-made pages get the same treatment via `page_dates.refresh_static()` at the end of the Rishikesh build. Without a local crawl of the other city (the scheduled refresh on GitHub crawls Rishikesh only), `prepared_stays()` reads that city's committed data module.
+
+**AI assistants**: every build also writes its city's section of `llms.txt` (one line per page) and `llms-full.txt` (`write_llms_full()`: per page the summary, typical prices, main areas, facts, best-reviewed bookable picks with links to their `/hotels/stay` pages, nearest alternatives on thin pages, tips, FAQs and a prefilled WhatsApp link; the intro, own homestays and key pages come from `llms.txt`).
+
 Add a phrase or place: add a row, then `npm run build:stays` (both cities, footers, sitemap, llms.txt) and `npm run check:stays`: every stays page must have 450+ words of guide text outside the lists (landmark pages 300+), its own title, `<h1>`, lede and description, 2+ FAQs, one in-content ad slot after the lists, a working city switch and a sitemap entry.
 
 ## Ordering and our own stays
