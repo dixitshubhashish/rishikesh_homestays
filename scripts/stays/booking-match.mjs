@@ -1,7 +1,7 @@
 // The one rule both Booking.com checkers (verify_candidates.mjs and
 // guess_booking_slugs.mjs) use to decide that a Booking property page is the
 // same stay as ours: its title must name the stay and sit in the stay's city.
-const STOP = new Set(('hotel hotels resort resorts rishikesh rishīkesh haridwar hardwar by the a an and of in at near on with stay stays ' +
+export const STOP = new Set(('hotel hotels resort resorts rishikesh rishīkesh haridwar hardwar by the a an and of in at near on with stay stays ' +
   'homestay homestays home house guest guesthouse hostel apartment apartments villa inn lodge cottage cottages ' +
   'camp camps tapovan laxman jhula ram ganga ganges view river luxury premium boutique bhk 1bhk 2bhk 3bhk room rooms'
   + ' bedroom bedrooms bed beds flat flats studio studios peaceful cozy cosy private family deluxe budget spacious modern new entire unit penthouse duplex homely comfortable serene').split(' '));

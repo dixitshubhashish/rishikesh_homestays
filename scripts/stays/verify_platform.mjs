@@ -25,6 +25,9 @@ const PLATFORMS = {
   // "Best Price on <name> in <town> + Reviews!" → "<name>, <town>"
   Agoda: { page: /agoda\.com\/(?:[a-z]{2}-[a-z]{2}\/)?[^/]+\/hotel\/[^/]+\.html/, nameEnd: ',',
     clean: (t) => t.replace(/^Best Price on /i, '').replace(/ in ([^+]+?)\s*\+ Reviews!?\s*$/i, ', $1') },
+  // "<name> (<town>) - 2026 Prices, Reviews…" → "<name>, <town>"; strict host, makemytrip/easemytrip end in trip.com too
+  'Trip.com': { page: /^https?:\/\/(?:[a-z]{2}\.|www\.)?trip\.com\/hotels\/[^/?#]*hotel-detail-\d+/, nameEnd: ',',
+    clean: (t) => t.replace(/\s*\(([^)]+)\)\s*-\s*.*$/, ', $1') },
 };
 const decode = (t) => t.replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"');
 

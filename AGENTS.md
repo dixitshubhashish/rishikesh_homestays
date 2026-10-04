@@ -16,6 +16,6 @@ After making changes:
 
 The coordination file is the shared source of truth. It is file-based synchronization: agents must reread it before starting and after completing work. It does not provide live chat or automatic locking.
 
-## Helper agents finding booking links (Antigravity etc.)
+## Finding booking links for stays
 
-Read `docs/antigravity/RULES.md` before working on `docs/antigravity/no-link-stays.tsv`: exact output format, when a page counts as a match, pacing (no captcha workarounds), and what never to edit. Results go only to `docs/antigravity/results-<batch>.tsv`; Claude merges them.
+`docs/booking-links/` holds three lists, every stay in exactly one: `all.tsv` (still to sort: directory stays without a link plus Google Maps places new to us, keys `g-<place_id>`), `found.tsv` (verified links) and `unfound.tsv` (searched, nothing found: `none`, `retry` = search again, `manual` = name too generic). Claude's `scripts/stays/google_ota_search.mjs` workers move rows between them under a lock; never edit them by hand while workers run. Read `docs/booking-links/RULES.md` (match rules, pacing, no captcha workarounds) before any other agent helps; a helper writes only its own `docs/booking-links/results-<batch>.tsv` and Claude merges it. No paid Google API (Places) calls without the owner's OK; BigQuery read/write is fine.
