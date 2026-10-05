@@ -78,6 +78,7 @@ Comparison pages for every kind of stay in Rishikesh. Each shows counts by area,
 - [Best stays near Rishikesh Railway Station](https://rishikeshhomestays.com/hotels/best-stays-near-rishikesh-railway-station): 111 stays within 2 km of Rishikesh Railway Station, sorted by real distance, with a map.
 - [Best stays near Rishikesh ISBT (bus stand)](https://rishikeshhomestays.com/hotels/best-stays-near-rishikesh-isbt): 235 stays within 2 km of Rishikesh ISBT (bus stand), sorted by real distance, with a map.
 - [Best stays near Neelkanth Mahadev Temple](https://rishikeshhomestays.com/hotels/best-stays-near-neelkanth-mahadev-temple): 9 stays within 3 km of Neelkanth Mahadev Temple, sorted by real distance, with a map.
+- [Best stays near THDC India (Ganga Bhawan), Rishikesh](https://rishikeshhomestays.com/hotels/best-stays-near-thdc-rishikesh): 142 stays within 2 km of THDC India (Ganga Bhawan), Rishikesh, sorted by real distance, with a map.
 - [Cheap Homestays in Rishikesh](https://rishikeshhomestays.com/hotels/cheap-homestays-in-rishikesh): 180 stays. Homestays, guest houses and small apartments in Rishikesh that start under ₹3,000 a night, grouped by price band.
 - [Luxury Stays in Rishikesh](https://rishikeshhomestays.com/hotels/luxury-stays-in-rishikesh): 320 stays. Luxury stays in Rishikesh: upscale hotels, resorts, villas and homestays, grouped by area, with the ones you can book online first.
 - [Airbnb in Rishikesh near Ganga](https://rishikeshhomestays.com/hotels/airbnb-in-rishikesh-near-ganga): 404 stays. Airbnb-style stays near the Ganga in Rishikesh: whole apartments, homestays, cottages and villas close to the river. Some are on Airbnb, others on other booking sites or direct with the owner.
@@ -165,6 +166,8 @@ Comparison pages for every kind of stay in Rishikesh. Each shows counts by area,
 - [Rooms near Triveni Ghat Rishikesh](https://rishikeshhomestays.com/hotels/rooms-near-triveni-ghat-rishikesh): 137 stays. Rooms within about 1.5 km of Triveni Ghat and its evening aarti, grouped by price.
 - [Rooms near Rishikesh Railway Station](https://rishikeshhomestays.com/hotels/rooms-near-rishikesh-railway-station): 119 stays. Rooms within about 2 km of Yog Nagari Rishikesh, the main railway station, grouped by price.
 - [Hotels near ISBT Rishikesh](https://rishikeshhomestays.com/hotels/hotels-near-isbt-rishikesh): 100 stays. Hotels within about 1.5 km of the Rishikesh ISBT bus stand, grouped by distance, handy for early buses to the hills.
+- [Hotels near THDC Rishikesh](https://rishikeshhomestays.com/hotels/hotels-near-thdc-rishikesh): 52 stays. Hotels within about 1.5 km of THDC India's Ganga Bhawan office on the Rishikesh bypass, grouped by distance, for work visits and interviews.
+- [Rooms near THDC Rishikesh](https://rishikeshhomestays.com/hotels/rooms-near-thdc-rishikesh): 89 stays. Rooms within about 1.5 km of THDC's Ganga Bhawan office and THDC Colony, grouped by price.
 
 <!-- stays-pages:end -->
 ## Where to stay in Haridwar
@@ -212,6 +215,8 @@ Comparison pages for every kind of stay in Rishikesh. Each shows counts by area,
 - [Best stays near Gurukul Kangri University](https://rishikeshhomestays.com/hotels/best-stays-near-gurukul-kangri-university): 76 stays within 2 km of Gurukul Kangri University, sorted by real distance, with a map.
 - [Best stays near BHEL Haridwar](https://rishikeshhomestays.com/hotels/best-stays-near-bhel-haridwar): 35 stays within 3 km of BHEL Haridwar, sorted by real distance, with a map.
 - [Best stays near SIDCUL Haridwar](https://rishikeshhomestays.com/hotels/best-stays-near-sidcul-haridwar): 14 stays within 2 km of SIDCUL Haridwar, sorted by real distance, with a map.
+- [Best stays near IIT Roorkee](https://rishikeshhomestays.com/hotels/best-stays-near-iit-roorkee): 17 stays within 15 km of IIT Roorkee, sorted by real distance, with a map.
+- [Best stays near CSIR-CBRI Roorkee](https://rishikeshhomestays.com/hotels/best-stays-near-cbri-roorkee): 19 stays within 15 km of CSIR-CBRI Roorkee, sorted by real distance, with a map.
 - [Cheap Homestays in Haridwar](https://rishikeshhomestays.com/hotels/cheap-homestays-in-haridwar): 40 stays. Homestays, guest houses and small apartments in Haridwar that start under ₹3,000 a night, grouped by price band.
 - [Luxury Stays in Haridwar](https://rishikeshhomestays.com/hotels/luxury-stays-in-haridwar): 234 stays. Luxury stays in Haridwar: upscale hotels, resorts, villas and homestays, grouped by area, with the ones you can book online first.
 - [Airbnb in Haridwar near Ganga](https://rishikeshhomestays.com/hotels/airbnb-in-haridwar-near-ganga): 46 stays. Airbnb-style stays near the Ganga in Haridwar: whole apartments, homestays, cottages and villas close to the river. Some are on Airbnb, others on other booking sites or direct with the owner.
@@ -295,6 +300,10 @@ Comparison pages for every kind of stay in Rishikesh. Each shows counts by area,
 - [Rooms near Har Ki Pauri Haridwar](https://rishikeshhomestays.com/hotels/rooms-near-har-ki-pauri-haridwar): 84 stays. Rooms within about 1 km of Har Ki Pauri and the evening Ganga aarti, grouped by price.
 - [Rooms near Haridwar Railway Station](https://rishikeshhomestays.com/hotels/rooms-near-haridwar-railway-station): 243 stays. Rooms within about 1 km of Haridwar railway station and the bus stand beside it, grouped by price.
 - [Hotels near Mansa Devi Temple Haridwar](https://rishikeshhomestays.com/hotels/hotels-near-mansa-devi-temple-haridwar): 79 stays. Hotels within about 1 km of the Mansa Devi ropeway and Har Ki Pauri below it, grouped by distance.
+- [Rooms near BHEL Haridwar](https://rishikeshhomestays.com/hotels/rooms-near-bhel-haridwar): 41 stays. Rooms within about 3 km of BHEL Haridwar and its Ranipur township, grouped by price, for work visits, interviews and joining days.
+- [Rooms near Gurukul Kangri University Haridwar](https://rishikeshhomestays.com/hotels/rooms-near-gurukul-kangri-university-haridwar): 39 stays. Rooms within about 1.5 km of Gurukul Kangri University, grouped by price, for students, parents and exam days.
+- [Hotels near IIT Roorkee](https://rishikeshhomestays.com/hotels/hotels-near-iit-roorkee): 998 stays. Stays within 40 km of IIT Roorkee, grouped by distance. Roorkee itself has few stays listed with us, so the nearest are on the Haridwar side, from about 9 km away.
+- [Hotels near CBRI Roorkee](https://rishikeshhomestays.com/hotels/hotels-near-cbri-roorkee): 999 stays. Stays within 40 km of CSIR-CBRI, beside the IIT Roorkee campus, grouped by distance; the nearest are on the Haridwar side, from about 8 km away.
 
 <!-- stays-pages-haridwar:end -->
 ## Contact

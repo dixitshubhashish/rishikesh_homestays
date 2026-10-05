@@ -18,7 +18,7 @@ import { openSync, readFileSync, statSync, existsSync, mkdirSync, rmdirSync } fr
 const ROOT = new URL('../../', import.meta.url).pathname;
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
 const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '6-12', '--limit', '4000'];
+const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '5-10', '--limit', '4000'];
 const ROUNDS = 4;
 // Three browsers at a time: with four or five open the Mac ran out of memory (owner's laptop: 18 GB swap,
 // 4 GB disk free). Brave and Firefox are left out; the others take their shares when they finish.
@@ -26,8 +26,10 @@ const ROUNDS = 4;
 const WORKERS = [
   // Opera is the steadiest browser (1,028 stays, no blocked spells): two sessions share it, each closing only its own tabs
   { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/3', '--no-tidy'], ['quick', '1/1', '--reverse', '--no-tidy'], ['deep', '5/5', '--no-tidy']] },
-  { name: 'opera2', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/1', '--no-tidy'], ['quick', '1/1', '--review', '--no-tidy'], ['deep', '4/5', '--no-tidy']] },
-  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['quick', '2/3'], ['deep', '1/5'], ['deep', '2/5']] },
+  { name: 'opera2', heavy: true, how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/1', '--review', '--no-tidy'], ['deep', '4/5', '--no-tidy']] },
+  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['quick', '2/3'], ['deep', '1/5']] },
+  // Brave is open anyway and was idle (owner, 2026-10-05: up to 10 agents); disk is guarded by the pause below
+  { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['deep', '2/5']] },
   // a fourth worker (Brave) pushed the disk under 3 GB twice (2026-10-05): three workers is this Mac's limit
 
   { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['quick', '3/3'], ['deep', '3/5']] },
@@ -88,9 +90,11 @@ function adopt(w) {
 function memoryTight() {
   try {
     const lvl = Number(execSync('sysctl -n kern.memorystatus_vm_pressure_level').toString());
-    const swap = Number((execSync('sysctl -n vm.swapusage').toString().match(/used = ([0-9.]+)M/) || [])[1] || 0);
+    // macOS keeps swap high for days and adds swap files as it needs them: what matters is swap nearly full while the disk
+    // it grows onto is low too
+    const swapFree = Number((execSync('sysctl -n vm.swapusage').toString().match(/free = ([0-9.]+)M/) || [])[1] || 9999);
     const disk = Number(execSync("df -g / | awk 'NR==2 {print $4}'").toString());
-    return lvl >= 4 || swap > 8000 || disk < 5 ? `pressure ${lvl}, swap ${Math.round(swap)} MB, disk ${disk} GB free` : '';
+    return lvl >= 4 || (swapFree < 800 && disk < 8) || disk < 5 ? `pressure ${lvl}, swap free ${Math.round(swapFree)} MB, disk ${disk} GB free` : '';
   } catch { return ''; }
 }
 
@@ -117,7 +121,8 @@ for (;;) {
     if (w.pid && alive(w.pid)) {
       // stalled: no log line for 15 minutes
       try { if (now - statSync(logFile(w)).mtimeMs > 15 * 60e3) { stop(w, 'log silent for 15 min'); w.notBefore = now + 60e3; } } catch { /* no log yet */ }
-      if (w.heavy && tight) { stop(w, `memory tight (${tight}), paused 30 min`); held = now + 30 * 60e3; w.notBefore = held; }
+      // owner, 2026-10-05: a short pause, 5 to 10 min at random, not 30
+      if (w.heavy && tight) { const mins = 5 + Math.round(Math.random() * 5); stop(w, `memory tight (${tight}), paused ${mins} min`); held = now + mins * 60e3; w.notBefore = held; }
       continue;
     }
     if (now < w.notBefore || (w.heavy && (tight || now < held))) continue;

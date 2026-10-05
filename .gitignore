@@ -8,6 +8,9 @@
 !package.json
 !package-lock.json
 !vercel.json
+# Translation catalogues and the files the browser fetches (no secrets)
+!i18n/**/*.json
+!i18n/**/*.json
 credentials/
 
 # Dependencies

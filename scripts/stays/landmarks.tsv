@@ -21,3 +21,6 @@ shantikunj	Shantikunj	haridwar	29.99137	78.19059		OSM Nominatim ("Gayatriteerth 
 gurukul-kangri-university	Gurukul Kangri University	haridwar	29.92053	78.12403		OSM Nominatim	CollegeOrUniversity	
 bhel-haridwar	BHEL Haridwar	haridwar	29.94506	78.10644		OSM Nominatim ("BHEL Haridwar", BHEL Township)	Place	
 sidcul-haridwar	SIDCUL Haridwar	haridwar	29.95000	78.08000		OSM Nominatim (Integrated Industrial Estate, midpoint)	Place	
+thdc-rishikesh	THDC India (Ganga Bhawan), Rishikesh	rishikesh	30.10939	78.28086		OSM Nominatim ("Ganga Bhawan", Rishikesh Bypass, THDC Colony)	Place	
+iit-roorkee	IIT Roorkee	haridwar	29.86617	77.89573		OSM Nominatim (amenity=university "Indian Institute of Technology Roorkee")	CollegeOrUniversity	30
+cbri-roorkee	CSIR-CBRI Roorkee	haridwar	29.86512	77.90246		OSM Nominatim (research_institute "Central Building Research Institute")	Place	30

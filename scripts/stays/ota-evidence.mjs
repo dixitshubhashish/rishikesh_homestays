@@ -66,7 +66,8 @@ export function fuzzyName(stayName, text) {
   const core = strong.length ? strong : all;
   const got = words(text);
   const shared = core.filter((w) => got.some((t) => like(w, t)));
-  const distinctive = shared.some((w) => !COMMON.has(w));
+  // an area word ("Tapovan", "Laxman Jhula") is where a place is, not what it is called (review lessons, 2026-10-05)
+  const distinctive = shared.some((w) => !COMMON.has(w) && !PLACE_WORDS.has(w));
   // a one-word name ("Amigos") only counts in full when that word is on the page exactly and is not short
   const single = core.length === 1 && core[0].length >= 6 && got.includes(core[0]);
   const exact = core.length > 0 && core.every((w) => got.includes(w));
@@ -109,6 +110,23 @@ export function placeNamed({ city, area, address }, pageText) {
   return town ? `the page names its town (${town})` : '';  // weakest: only with an exactly spelt name (judge)
 }
 
+// Towns a page can name that are not ours: a page there is another place with a similar name (Jammu's Ranbir Yatri
+// Bhawan, Kollur's Mahalakshmi Residency, Vrindavan's Radha Kunj... from the review re-check, 2026-10-05).
+const ELSEWHERE = new RegExp(`\\b(${[
+  'mussoorie', 'dehradun city', 'delhi', 'noida', 'gurgaon', 'gurugram', 'ghaziabad', 'faridabad', 'nainital', 'bhimtal', 'haldwani', 'kathgodam',
+  'almora', 'ranikhet', 'kausani', 'mukteshwar', 'jim corbett', 'corbett', 'ramnagar', 'lansdowne', 'chopta', 'auli', 'joshimath', 'badrinath', 'kedarnath',
+  'guptkashi', 'sonprayag', 'phata', 'rudraprayag', 'karnprayag', 'uttarkashi', 'gangotri', 'yamunotri', 'barkot', 'chamoli', 'pithoragarh', 'kotdwar',
+  'manali', 'shimla', 'kasauli', 'kasol', 'kullu', 'dharamshala', 'mcleodganj', 'mcleod ganj', 'dalhousie', 'chandigarh', 'amritsar', 'jammu', 'katra',
+  'srinagar', 'kashmir', 'gulmarg', 'pahalgam', 'leh', 'ladakh', 'agra', 'mathura', 'vrindavan', 'ayodhya', 'varanasi', 'prayagraj', 'allahabad',
+  'lucknow', 'kanpur', 'meerut', 'muzaffarnagar', 'saharanpur', 'jaipur', 'udaipur', 'jodhpur', 'jaisalmer', 'pushkar', 'ajmer', 'mount abu', 'ujjain',
+  'indore', 'bhopal', 'omkareshwar', 'mumbai', 'pune', 'lonavala', 'mahabaleshwar', 'goa', 'bangalore', 'bengaluru', 'mysore', 'mysuru', 'coorg',
+  'kollur', 'udupi', 'gokarna', 'hampi', 'ooty', 'kodaikanal', 'munnar', 'kochi', 'cochin', 'alleppey', 'varkala', 'pondicherry', 'puducherry', 'chennai',
+  'madurai', 'rameswaram', 'kanyakumari', 'tirupati', 'hyderabad', 'kolkata', 'darjeeling', 'gangtok', 'shillong', 'puri', 'bhubaneswar', 'guwahati',
+  'ahmedabad', 'dwarka', 'somnath', 'nepal', 'kathmandu', 'pokhara', 'dubai', 'bangkok', 'bali',
+].join('|')})\\b`, 'i');
+// Our own towns and their surroundings: a page naming none of them gets no benefit of the doubt.
+const OURS = /\b(rishikesh|rishīkesh|haridwar|haridwār|hardwar|tapovan|laxman jhula|lakshman jhula|ram jhula|swarg ashram|muni ki reti|shivpuri|neelkanth|kankhal|jwalapur|bhupatwala|ranipur|sidcul|bahadrabad|raiwala|doiwala|jolly grant|dehradun|roorkee|uttarakhand)\b/i;
+
 /**
  * key, name: our stay; nameOk: ota-match's verdict on the page title; title, urlPath, pageLL ([lat, lng] or
  * null), pageText (the page's visible text, for its address).
@@ -122,7 +140,7 @@ export function judge({ key, name, city = '', nameOk, title, urlPath = '', pageL
   const oyoNo = (x) => (String(x).match(/\b(?:oyo|capital o|collection o|townhouse|spot on|flagship|silverkey)\s*(\d{3,})\b/i) || [])[1];
   if (oyoNo(name) && oyoNo(title) && oyoNo(name) !== oyoNo(title)) return { verdict: 'reject', why: `a different OYO property (${oyoNo(title)}, ours ${oyoNo(name)})`, km: d };
   // a page that sits in another town (its address or link says so) is not this stay
-  const elsewhere = /\b(mussoorie|dehradun city|delhi|noida|gurgaon|nainital|manali|shimla|mukteshwar|jim corbett|kasauli|chandigarh|agra|jaipur|varanasi)\b/i;
+  const elsewhere = ELSEWHERE;
   if (elsewhere.test(`${urlPath} ${title}`) && !elsewhere.test(name)) return { verdict: 'reject', why: `the page is in another town (${(`${urlPath} ${title}`.match(elsewhere) || [])[0]})`, km: d };
   const where = d === null ? '' : `map pin ${d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`} from this stay`;
   if (nameOk) {
@@ -143,6 +161,7 @@ export function judge({ key, name, city = '', nameOk, title, urlPath = '', pageL
   if (d !== null && d <= REVIEW_KM) return { verdict: 'review', why: `similar name (shared [${fz.shared}]), ${where}`, km: d };
   const street = (me.street || []).filter((w) => words(pageText).includes(w));
   if (fz.all && street.length >= 2 && (d === null || d <= NEAR_KM)) return { verdict: 'review', why: `name matches in every word [${fz.shared}] and the page shows our street words (${street.join(', ')})`, km: d };
+  if (d === null && fz.all && !OURS.test(`${title} ${urlPath} ${pageText}`)) return { verdict: 'reject', why: `similar name (shared [${fz.shared}]) but the page names neither city nor any of their areas`, km: d };
   if (d === null && fz.all) return { verdict: 'review', why: `similar name in every word (shared [${fz.shared}]) but no map pin or address on the page to confirm it`, km: d };
   return { verdict: 'reject', why: `similar name (shared [${fz.shared}]) but ${where || 'nothing on the page confirms the place'}`, km: d };
 }

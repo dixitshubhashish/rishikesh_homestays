@@ -11,7 +11,8 @@
     "test:coverage": "node --test tests/**/*.test.js --coverage",
     "build:stays": "python3 scripts/stays/build_pages.py --city haridwar && python3 scripts/stays/build_pages.py",
     "check:stays": "node --test tests/integration/stays-content.test.js",
-    "indexnow": "node scripts/indexnow.mjs"
+    "indexnow": "node scripts/indexnow.mjs",
+    "build:i18n": "node scripts/i18n/snippet.mjs && node scripts/i18n/extract-ui.mjs && node scripts/i18n/build-runtime.mjs"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^9.1.0",

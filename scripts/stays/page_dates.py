@@ -47,6 +47,8 @@ def save(reg):
 def fingerprint(content):
     # dates written into a page (JSON-LD dateModified) never count as a change
     content = re.sub(r'\d{4}-\d{2}-\d{2}', '', content)
+    # nor does a control: the distance range is a tool, not something a reader reads (no <div> inside it)
+    content = re.sub(r'<div class="sx-row sx-dist".*?</div>', '', content, flags=re.S)
     return hashlib.sha1(content.encode('utf8')).hexdigest()[:16]
 
 

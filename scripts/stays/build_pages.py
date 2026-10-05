@@ -478,19 +478,72 @@ def round_price(p):
     return inr(int(round(p / 100.0) * 100))
 
 
-def insights(title, plural, st):
+def insights(title, plural, st, boxed=False):
+    """The data lines under a page's guide text. boxed: the Quick facts box at the top already gives
+    the price range and the review scores, so they are not repeated here."""
     lines = []
     if st['top_areas']:
         a = ', '.join(f'{esc(name)} ({c})' for name, c in st['top_areas'])
         lines.append(f'Most {plural} are in {a}.')
-    if st['median']:
+    if st['median'] and not boxed:
         lines.append(f'The typical listed starting price is about ₹{round_price(st["median"])} a night; the middle half of {plural} start between ₹{round_price(st["p25"])} and ₹{round_price(st["p75"])} (based on {st["priced"]} listings with a price).')
     if st['starred']:
         lines.append(f'{st["starred"]} have a star rating, including {st["five"]} five-star and {st["four"]} four-star.')
     lines.append(f'{st["pet"]} ({pct(st["pet"], st["n"])}) allow pets and {st["ganga"]} ({pct(st["ganga"], st["n"])}) are on or facing the Ganga.')
-    if st['rated']:
+    if st['rated'] and not boxed:
         lines.append(f'Of the {st["rated"]} with at least five guest reviews, {st["well_rated"]} score 9/10 or higher.')
     return lines
+
+
+# Timings that change (trains): a plain link to the source that has them, never a time we would have to keep current.
+NTES_LINK = ('<p class="sx-source">Train times and platforms change, so check them on '
+             '<a href="https://enquiry.indianrail.gov.in/ntes/" target="_blank" rel="noopener">Indian Railways\' train enquiry (NTES)</a> '
+             'before you leave for the station.</p>')
+STATION_SLUGS = {'rishikesh-railway-station', 'haridwar-railway-station'}
+
+
+# ---------- Quick facts: short, self-contained lines near the top of every stays page ----------
+# Each line names its place and gives a number, so it still reads true when quoted on its own
+# (AI answers and search snippets lift single sentences). Only facts from the page's own data.
+def facts_html(lines, label):
+    if not lines:
+        return ''
+    return (f'<aside class="sx-facts" aria-labelledby="sx-facts-h"><h2 id="sx-facts-h">Quick facts <span>{esc(label)}</span></h2>'
+            f'<ul>{"".join(f"<li>{esc(x)}</li>" for x in lines)}</ul></aside>')
+
+
+def price_fact(prices, what, where):
+    """Cheapest, typical and middle-half listed starting price. No top end: one mispriced listing at
+    ₹1,00,000 would make a quotable range wrong."""
+    prices = sorted(p for p in prices if p)
+    if len(prices) < 2:
+        return None
+    w = f'{what}{" " + where if where else ""}'
+    q = lambda f: round_price(prices[min(len(prices) - 1, int(len(prices) * f))])
+    lo, mid = round_price(prices[0]), round_price(statistics.median(prices))
+    if len(prices) < 4 or q(0.25) == q(0.75):
+        return f'Listed starting prices for {w} begin at about ₹{lo} a night; a typical one starts around ₹{mid}.'
+    return (f'Listed starting prices for {w} begin at about ₹{lo} a night; a typical one starts around ₹{mid}, '
+            f'and the middle half between ₹{q(0.25)} and ₹{q(0.75)}.')
+
+
+def own_fact(own, place_name=None, place_ll=None):
+    """Where our own homestays are, from a place: straight-line distance and a rough drive in Rishikesh,
+    the town (25 km upriver) from Haridwar."""
+    home = CITIES[DEFAULT_CITY]['name']
+    with_ll = [o for o in own if o.get('ll')]
+    if not with_ll:
+        return None
+    area = re.sub(r'^.* · ', '', with_ll[0]['a'])
+    if CITY != DEFAULT_CITY and not place_ll:
+        return f'Our own Ganga-side homestays are in {area}, {home}, about 25 km upriver from {CN}, and are booked direct with us.'
+    if not place_ll:
+        return None
+    k, o = min(((km_between(place_ll, o['ll']), o) for o in with_ll), key=lambda t: t[0])
+    if k < 0.05:
+        return None
+    return (f'Our own homestays in {area}, {home} are about {dist_label(k)} from {place_name} in a straight line, '
+            f'roughly {drive_minutes(k)} minutes by car, and are booked direct with us.')
 
 
 def faqs(title, singular, plural, st, date):
@@ -502,7 +555,7 @@ def faqs(title, singular, plural, st, date):
         notes = '; '.join(f'{name} is {AREA_NOTES[name]}' for name, _ in st['top_areas'] if name in AREA_NOTES)
         tip = CITY_COPY.get(CITY, {}).get('area_tip', AREA_TIP_RISHIKESH)
         out.append((f'Which area of {CN} is best for {plural}?',
-                    f'It depends on the trip. {notes + ". " if notes else ""}{tip}'))
+                    f'{tip} {notes + "." if notes else ""}'.strip()))
     if st['median']:
         out.append((f'How much does a {singular} in {CN} cost per night?',
                     f'Listed starting prices put a typical {singular} at about ₹{round_price(st["median"])} a night, with most between ₹{round_price(st["p25"])} and ₹{round_price(st["p75"])}. Prices rise on weekends, long weekends and festivals, and fall in the monsoon.'))
@@ -550,10 +603,42 @@ def drive_minutes(k):
 
 # "Near <place>" search pages grouped by distance (group 'd'); in step with DBANDS in stays-index.js.
 DIST_BANDS = [(0.5, 'Under 500 m'), (1.0, '500 m to 1 km'), (2.0, '1 to 2 km'), (3.0, '2 to 3 km'), (None, '3 km and more')]
+# a place out of town searched over a wide radius (IIT Roorkee, 40 km) is grouped in 5 km steps
+FAR_DIST_BANDS = [(5.0, 'Under 5 km'), (10.0, '5 to 10 km'), (15.0, '10 to 15 km'), (20.0, '15 to 20 km'),
+                  (25.0, '20 to 25 km'), (30.0, '25 to 30 km'), (None, '30 km and more')]
+FAR_RADIUS_KM = 8
 
 
-def dist_band(k):
-    return next(label for top, label in DIST_BANDS if top is None or k <= top)
+# Stops of the distance range on "near <place>" pages; in step with DIST_STOPS in stays-index.js.
+DIST_STOPS = [0, 0.2, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40, 45, 50]
+DIST_DEFAULT_KM = 20  # a page without a place of its own starts at 20 km from its town centre (owner, 2026-10-05)
+
+
+def dist_range_html(lm_name, radius, center):
+    """Two slider ends with a box at each end (a number and m/km), measured from the page's own place (a near page)
+    or its town centre (every other page): 0 m to the page's radius, or to 20 km, to start."""
+    top = len(DIST_STOPS) - 1
+    radius = radius or DIST_DEFAULT_KM
+    hi = next((i for i, v in enumerate(DIST_STOPS) if v >= radius - 1e-9), top)
+    to_val, to_unit = (f'{round(radius * 1000)}', 'm') if radius < 1 else (f'{radius:g}', 'km')
+    unit = lambda u: ''.join(f'<option value="{x}"{" selected" if x == u else ""}>{x}</option>' for x in ('m', 'km'))
+    return (f'<div class="sx-row sx-dist" id="sx-dist" data-center="{esc(center)}" style="--lo:0%;--hi:{hi / top * 100:.2f}%">'
+            f'<span class="sx-label">Distance from {esc(lm_name)}</span>'
+            f'<span class="sx-dist-end"><input type="number" id="sx-dist-lo" class="sx-input" min="0" step="any" value="0" aria-label="From (distance from {esc(lm_name)})">'
+            f'<select id="sx-dist-lo-u" class="sx-input" aria-label="Unit for from">{unit("m")}</select></span>'
+            f'<span class="sx-dist-track"><span class="sx-dist-fill" aria-hidden="true"></span>'
+            f'<input type="range" id="sx-dist-a" min="0" max="{top}" step="1" value="0" aria-label="Nearest distance">'
+            f'<input type="range" id="sx-dist-b" min="0" max="{top}" step="1" value="{hi}" aria-label="Farthest distance"></span>'
+            f'<span class="sx-dist-end"><input type="number" id="sx-dist-hi" class="sx-input" min="0" step="any" value="{to_val}" aria-label="To (distance from {esc(lm_name)})">'
+            f'<select id="sx-dist-hi-u" class="sx-input" aria-label="Unit for to">{unit(to_unit)}</select></span></div>')
+
+
+def dist_bands(radius):
+    return FAR_DIST_BANDS if radius and radius > FAR_RADIUS_KM else DIST_BANDS
+
+
+def dist_band(k, radius=None):
+    return next(label for top, label in dist_bands(radius) if top is None or k <= top)
 
 
 def with_dist(row_html, label):
@@ -601,10 +686,11 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
         here = (float(lm['lat']), float(lm['lng']))
         name, slug = lm['name'], lm['slug']
         dist = sorted(((km_between(here, s['ll']), s) for s in pool), key=lambda t: (t[0], t[1]['id']))
-        # 2 km, widened to 3 km (then 5 km, for places out of town such as the airport) where fewer than 10 stays are that close
+        # 2 km, widened to 3 km (then 5 km, for places out of town such as the airport; up to 30 km for a place like IIT Roorkee
+        # whose max_km allows it) where fewer than 10 stays are that close
         # (never past the place's max_km in landmarks.tsv: Neelkanth is 5 km from Laxman Jhula as the crow flies, 30 km by road)
         cap = float(lm.get('max_km') or 5.0)
-        radius = next((r for r in (LANDMARK_RADIUS_KM, 3.0) if r <= cap and sum(1 for k, _ in dist if k <= r) >= 10), cap)
+        radius = next((r for r in (LANDMARK_RADIUS_KM, 3.0, 5.0, 10.0, 15.0, 20.0, 30.0) if r <= cap and sum(1 for k, _ in dist if k <= r) >= 10), cap)
         near = [(k, s) for k, s in dist if k <= radius]
         if len(near) < 5:
             continue
@@ -636,6 +722,21 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             own_rows = ''.join(with_dist(own_html(o), f'{dist_label(k)} from {esc(name)} · ~{drive_minutes(k)} min drive') for k, o in own_d)
             own_block = ('<section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">A calmer base <span>Book direct with us</span></h2>'
                          f'<p class="sx-base">{esc(base_line)}</p><ul class="sx-list">{own_rows}</ul></section>')
+        # Quick facts: counts, closest, prices, bookable, the town centre and our homestays, all from this page's data
+        qf = [f'{within1:,} stays are within 1 km of {name} and {len(near):,} within {radius:g} km, as the crow flies.',
+              f'The closest stay to {name} is {closest["n"]}, ' + ('right next to it.' if closest_k < 0.05 else f'about {dist_label(closest_k)} away.')]
+        qf.append(price_fact(prices, f'stays within 1 km of {name}', '') if len(prices) > 1 else
+                  price_fact([s['p'] for _, s in near if s.get('p')], f'stays within {radius:g} km of {name}', ''))
+        linked_n = sum('o' in s for _, s in near)
+        if linked_n:
+            qf.append(f'{linked_n:,} of the {len(near):,} stays near {name} can be booked online right away.')
+        c_slug = CITIES[CITY].get('center_landmark')
+        c_lm = next((l for l in landmarks if l['slug'] == c_slug), None)
+        if c_lm and c_slug != slug:
+            ck = km_between(here, (float(c_lm['lat']), float(c_lm['lng'])))
+            qf.append(f'{name} is about {dist_label(ck)} from {c_lm["name"]} in a straight line.')
+        qf.append(own_fact(own, name, here))
+        qf = [x for x in qf if x]
         url = f'{SITE}/hotels/best-stays-near-{slug}'
         h1 = f'Best Stays near {name}'
         title = f'Stays near {name}, {CN} | {within1:,} within 1 km, by Distance'
@@ -647,7 +748,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             faq.append((f'What does a stay near {name} cost?',
                         f'Listed starting prices within 1 km run from about ₹{round_price(prices[0])} to ₹{round_price(prices[-1])} a night, with a typical stay around ₹{round_price(statistics.median(prices))}. Expect more on weekends and festival days.'))
         faq.append((f'Is it better to stay right next to {name}?',
-                    'Walking distance is handy for early mornings and evening aartis, but the busiest lanes are noisy and hard to drive into on festival days. '
+                    'Only if you want to walk there early and late: walking distance is handy for early mornings and evening aartis, but the busiest lanes are noisy and hard to drive into on festival days. '
                     + (base_line or 'A stay 1–2 km away is often quieter and easier to reach by car.')))
         if slug == 'har-ki-pauri':
             faq.insert(1, KUMBH_FAQ)
@@ -700,6 +801,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             f'          <h1 class="sx-title">{esc(h1)}</h1>\n'
             f'          <p class="sx-lede">Every stay within {radius:g} km of {esc(name)}, sorted by real distance. {within1:,} are within 1 km{lede_closest}.</p>\n'
             f'          <p class="sx-cities">{guide}<a href="/hotels/best-hotels-in-{CITY}">All stays in {CN}</a></p>\n'
+            f'          {facts_html(qf, f"Stays near {name}")}\n'
             f'          {own_block}\n'
             '          <section class="sp-map" aria-labelledby="lm-map-h">\n            <h2 id="lm-map-h">On the map</h2>\n'
             f'            <div class="sp-map-slot" id="lm-map"><a href="https://www.google.com/maps?q={here[0]},{here[1]}" target="_blank" rel="noopener">Open {esc(name)} in Google Maps</a></div>\n'
@@ -711,6 +813,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             '          <section class="sx-guide sx-tips" aria-labelledby="lm-tips-h">\n'
             f'            <h2 id="lm-tips-h">Staying near {esc(name)}: good to know</h2>\n'
             + ''.join(f'            <p>{esc(t)}</p>\n' for t in landmark_tips(lm, name, near, radius))
+            + (f'            {NTES_LINK}\n' if slug in STATION_SLUGS or lm.get('schema') == 'TrainStation' else '')
             + '          </section>\n'
             '          <section class="sx-faq" aria-labelledby="sx-faq-h">\n'
             f'            <h2 id="sx-faq-h">Staying near {esc(name)}: questions travellers ask</h2>\n            {faq_html}\n          </section>\n'
@@ -723,7 +826,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
         page_bottom = bottom.replace('/assets/js/modules/stays-index.js', '/assets/js/modules/landmark-map.js')
         write_dated(f'best-stays-near-{slug}', page_top, main_html, page_bottom)
         made.append({'slug': slug, 'name': name, 'near': len(near), 'radius': radius, 'h1': h1, 'url': url, 'desc': desc,
-                     'tips': landmark_tips(lm, name, near, radius), 'faq': faq,
+                     'tips': landmark_tips(lm, name, near, radius), 'faq': faq, 'facts': qf,
                      'picks': [pick_line(s, CITY, f'{dist_label(k)} away') for k, s in near[:10]]})
     print('landmark pages:', ', '.join(f"{m['slug']} ({m['near']})" for m in made) or 'none')
     return made
@@ -1085,7 +1188,9 @@ def main(data_path, crawled):
             kind_set = next((SEARCH_KINDS[t] for t in (search['rule'].split(' & ') if search else []) if t in SEARCH_KINDS), set())
             near_c = next((c for c in (search['rule'].split(' & ') if search else []) if c.startswith('near:')), None)
             here_ll = lm_all.get(near_c.split(':')[1]) if near_c else None
-            key = {'d': lambda d: dist_band(km_between(here_ll, d['ll'])) if here_ll and d.get('ll') else DIST_BANDS[-1][1],
+            near_r = float(near_c.split(':')[2]) if near_c else None
+            bands = dist_bands(near_r)
+            key = {'d': lambda d: dist_band(km_between(here_ll, d['ll']), near_r) if here_ll and d.get('ll') else bands[-1][1],
                    'a': lambda d: d['a'], 's': lambda d: d.get('s') or 0, 'k': lambda d: next((k for k in d['ks'] if k in kind_set), d['k']), 'pb': lambda d: price_band(d['p']) if d.get('p') else 'No price listed'}[group]
             parts = {}
             for d in members:
@@ -1095,7 +1200,7 @@ def main(data_path, crawled):
             elif group == 'pb':
                 order = [label for _, label in PRICE_BANDS if label in parts] + (['No price listed'] if 'No price listed' in parts else [])
             elif group == 'd':
-                order = [label for _, label in DIST_BANDS if label in parts]
+                order = [label for _, label in bands if label in parts]
             else:
                 order = sorted(parts, key=lambda k: (-len(parts[k]), str(k)))
             blocks = []
@@ -1125,6 +1230,38 @@ def main(data_path, crawled):
             faq = faq[:-1] + more_faq + faq[-1:] if faq else more_faq   # keep "How do I book" last
         else:
             tips, facts = [], []
+        # Quick facts, from this page's own stays (thin pages: the nearest in the other city instead)
+        what_q = re.sub(r'^top 10 ', '', plural)
+        near_q = next((c for c in (search['rule'].split(' & ') if search else []) if c.startswith('near:')), None)
+        q_slug = near_q.split(':')[1] if near_q else CITIES[CITY].get('center_landmark', '')
+        q_ll, q_name = lm_all.get(q_slug), lm_names.get(q_slug, '')
+        qf = []
+        if top10 and members:
+            d0 = members[0]
+            qf.append(f'This list ranks {len(members)} {what_q} in {CN} by guest score, counting only those with {TOP_MIN_REVIEWS}+ guest reviews.')
+            qf.append(f'{d0["n"]} in {d0["a"]} tops the {what_q} in {CN} at {d0["g"]:g}/10 from {d0["c"]:,} reviews.')
+        elif n_here:
+            qf.append(f'We list {n_here:,} {what_q} in {CN}' + (f', across {len(st["areas"])} areas.' if len(st['areas']) > 1 else '.'))
+        if n_here:
+            qf.append(price_fact([d.get('p') for d in members], what_q, f'in {CN}'))
+            if st['rated'] and not top10:
+                qf.append(f'{st["well_rated"]:,} of the {st["rated"]:,} {what_q} in {CN} with five or more guest reviews score 9/10 or higher.')
+            linked_q = sum('o' in d for d in members)
+            if linked_q:
+                qf.append(f'{linked_q:,} of the {n_here:,} {what_q} in {CN} on this page can be booked online right away.')
+            if near_q and q_ll:
+                dk = sorted(((km_between(q_ll, d['ll']), d) for d in members if d.get('ll')), key=lambda t: t[0])
+                if dk:
+                    w1 = sum(1 for k, _ in dk if k <= 1)
+                    qf.append(f'{w1:,} of these {n_here:,} stays are within 1 km of {q_name}; the closest, {dk[0][1]["n"]}, is '
+                              + ('right next to it.' if dk[0][0] < 0.05 else f'about {dist_label(dk[0][0])} away in a straight line.'))
+        if thin:
+            other_q = next(k for k in CITIES if k != CITY)
+            there_q = next((lst for _h, _n, lst, c, *_ in alts if c == other_q), None)
+            if there_q:
+                qf.append(f'The nearest {what_q} are in {CITIES[other_q]["name"]}, {CITY_AWAY[other_q]} from {CN}.')
+        qf.append(own_fact(own, q_name if near_q else q_name or CN, q_ll if (near_q or CITY == DEFAULT_CITY) else None))
+        qf = [x for x in qf if x]
         ld_breadcrumb = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
             {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': f'{SITE}/'},
             {'@type': 'ListItem', 'position': 2, 'name': h1, 'item': url}]}
@@ -1162,6 +1299,7 @@ def main(data_path, crawled):
             <h2 id="sx-tips-h">{esc(h1)}: tips before you book</h2>
             {"".join(f"<p>{esc(t)}</p>" for t in tips)}
             {f'<ul class="sx-insights">{"".join(f"<li>{esc(x)}</li>" for x in facts)}</ul>' if facts else ""}
+            {NTES_LINK if near_q and q_slug in STATION_SLUGS else ""}
           </section>''' if tips or facts else '')
         alt_html = ''.join(
             f'<section class="sx-group sx-alt"><h2>{esc(h2)} <span>{esc(note)}</span></h2>'
@@ -1173,7 +1311,7 @@ def main(data_path, crawled):
             + '</section>' for h2, note, lst, c, href, ranked in alts)
         if thin and n_here:
             alt_html = f'<p class="sx-thin">{esc(thin_note)}</p>' + alt_html
-        insight_html = ''.join(f'<li>{line}</li>' for line in (insights(title, plural, st) if n_here or is_master else []))
+        insight_html = ''.join(f'<li>{line}</li>' for line in (insights(title, plural, st, boxed=bool(qf)) if n_here or is_master else []))
         faq_html = ''.join(f'<details class="sx-faq-item"><summary>{esc(q)}</summary><p>{esc(a)}</p></details>' for q, a in faq)
         seg = (('<button type="button" data-g="c">Category</button>' if is_master else '<button type="button" data-g="all">All</button>')
                + '<button type="button" data-g="s">Stars</button><button type="button" data-g="a">Area</button>'
@@ -1198,6 +1336,10 @@ def main(data_path, crawled):
                    f'Nearest {esc(plural)} and similar stays')
         if thin and not n_here:
             listing = ''
+        near_term = next((c for c in (search['rule'].split(' & ') if search else []) if c.startswith('near:')), None)
+        center = near_term.split(':')[1] if near_term else CITIES[CITY].get('center_landmark', '')
+        dist_row = (dist_range_html(lm_names.get(center, center), float(near_term.split(':')[2]) if near_term else None, center)
+                    if center in lm_names else '')
         main_html = f'''<main class="sx-page" id="main">
       <section class="section">
         <div class="container" id="sx-root" data-city="{CITY}" data-filter="{esc(flt)}"{f' data-group="{group}"' if group else ''} data-all-title="{esc(h1) if search else f'All {esc(lc(title))}'}">
@@ -1209,6 +1351,7 @@ def main(data_path, crawled):
           <h1 class="sx-title">{esc(h1)}</h1>
           <p class="sx-lede">{esc(intro)}</p>
           <p class="sx-updated">{updated}</p>
+          {facts_html(qf, (lambda t: t[:1].upper() + t[1:])(f'{plural} in {CN}' if not is_master else f'stays in {CN}'))}
           <div class="sx-layout">
           <aside class="sx-side">{filters}</aside>
           <div class="sx-main">
@@ -1233,6 +1376,7 @@ def main(data_path, crawled):
               <select id="sx-area" class="sx-input" aria-label="Area"><option value="">All areas</option></select>
               <select id="sx-kind" class="sx-input" aria-label="Type"{' hidden' if flt.startswith('k:') else ''}><option value="">All types</option></select>
             </div>
+            {dist_row}
             <div class="sx-row"><span class="sx-label">Facilities</span><span class="sx-row" id="sx-fac"></span><button type="button" class="sx-clear" id="sx-clear">Clear all</button></div>
           </div>
           <div id="sx-out">{listing}</div>
@@ -1255,7 +1399,7 @@ def main(data_path, crawled):
       </section>
     </main>'''
         write_dated(stem, page_top, main_html, bottom)
-        full.append(full_entry(h1, url, thin_note if thin else intro, st if n_here else None, facts, tips, faq,
+        full.append(full_entry(h1, url, thin_note if thin else intro, st if n_here else None, qf + facts, tips, faq,
                                [pick_line(d, CITY) for d in (members[:10] if top10 else best_first(members))], top10, alts))
 
     for c in live:
@@ -1274,7 +1418,7 @@ def main(data_path, crawled):
 
     near_pages = build_landmark_pages(stays, own, landmarks, top, bottom, today)
     for np in near_pages:
-        full.append(full_entry(np['h1'], np['url'], np['desc'], None, [], np['tips'], np['faq'], np['picks'], False, [])
+        full.append(full_entry(np['h1'], np['url'], np['desc'], None, np['facts'], np['tips'], np['faq'], np['picks'], False, [])
                     .replace('Top picks (the ones you can book online first):', 'Closest stays:'))
     write_llms_full(''.join(full), own)
 

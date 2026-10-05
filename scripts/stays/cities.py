@@ -9,8 +9,9 @@ import os, sys
 
 DEFAULT_CITY = 'rishikesh'
 CITIES = {
-    'rishikesh': {'name': 'Rishikesh', 'directory': 'rishikesh-hotels-32481', 'center': (30.103, 78.297)},
-    'haridwar': {'name': 'Haridwar', 'directory': 'haridwar-hotels-32456', 'center': (29.945, 78.164)},
+    # center_landmark: the point (landmarks.tsv) a page's distance range measures from when the page has no place of its own
+    'rishikesh': {'name': 'Rishikesh', 'directory': 'rishikesh-hotels-32481', 'center': (30.103, 78.297), 'center_landmark': 'triveni-ghat'},
+    'haridwar': {'name': 'Haridwar', 'directory': 'haridwar-hotels-32456', 'center': (29.945, 78.164), 'center_landmark': 'har-ki-pauri'},
 }
 HERE = os.path.dirname(os.path.abspath(__file__))
 

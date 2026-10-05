@@ -50,9 +50,16 @@ const VIEWPORTS = [
 // report a fraction of a pixel of "overflow" that isn't a real bug.
 const OVERFLOW_TOLERANCE_PX = 2;
 
-// ~80 pages × 2 widths: a generous limit so a busy machine doesn't fail it
-test('No page overflows horizontally on mobile or laptop', { timeout: 360000 }, async (t) => {
-  const pages = discoverPages();
+// Every page at both widths (~265 stays pages alone, so 600+ loads): pages load a few at a time in
+// one browser (separate tabs, each a fresh page as before), and the limit grows with the page count
+// so a busy machine doesn't fail the run. Each page/width is still its own subtest.
+const TABS = 4;
+const PER_LOAD_MS = 4000;
+const PAGES = discoverPages();
+const LIMIT_MS = Math.max(360000, 60000 + Math.ceil((PAGES.length * VIEWPORTS.length) / TABS) * PER_LOAD_MS * 2);
+
+test('No page overflows horizontally on mobile or laptop', { timeout: LIMIT_MS, concurrency: TABS }, async (t) => {
+  const pages = PAGES;
   const app = express();
   app.use(express.static(ROOT));
   const server = await new Promise((resolve) => {
@@ -62,12 +69,13 @@ test('No page overflows horizontally on mobile or laptop', { timeout: 360000 }, 
   const browser = await chromium.launch();
 
   try {
+    const runs = [];
     for (const pagePath of pages) {
       for (const viewport of VIEWPORTS) {
-        await t.test(`${pagePath} @ ${viewport.name} (${viewport.width}px)`, async () => {
+        runs.push(t.test(`${pagePath} @ ${viewport.name} (${viewport.width}px)`, async () => {
           const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
           try {
-            await page.goto(`http://localhost:${port}${pagePath}`, { waitUntil: 'load', timeout: 20000 });
+            await page.goto(`http://localhost:${port}${pagePath}`, { waitUntil: 'load', timeout: 30000 });
             const overflow = await page.evaluate(
               () => document.documentElement.scrollWidth - window.innerWidth
             );
@@ -78,9 +86,10 @@ test('No page overflows horizontally on mobile or laptop', { timeout: 360000 }, 
           } finally {
             await page.close();
           }
-        });
+        }));
       }
     }
+    await Promise.all(runs);
   } finally {
     await browser.close();
     await new Promise((resolve) => server.close(resolve));

@@ -5,14 +5,37 @@ import { validateDateRange, validateRentalDateRange } from '../assets/js/modules
 import { insertEnquiry } from './bigquery.js';
 import { randomUUID } from 'crypto';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Every error response carries a machine-readable `code` next to the English
+// `message`, so a translated page can show its own wording for the code and
+// fall back to the message for codes it doesn't know.
+const fail = (res, status, code, message) =>
+  res.status(status).json({ success: false, code, message });
 
-export default async function handler(req, res) {
+// Language of the page the enquiry came from (`lang`, e.g. 'hi'), stored as
+// page_lang. Anything that isn't 2-5 letters is ignored, never an error: a
+// bad or missing language must not cost us a lead.
+export function normalizePageLang(value) {
+  const lang = String(value || '').trim().toLowerCase();
+  return /^[a-z]{2,5}$/.test(lang) ? lang : 'en';
+}
+
+// Resend is created on first use, so tests (and a missing RESEND_API_KEY)
+// never build a real client at import time.
+let resendClient;
+function defaultSendEmail(message) {
+  resendClient = resendClient || new Resend(process.env.RESEND_API_KEY);
+  return resendClient.emails.send(message);
+}
+
+// Factory so tests can pass stand-ins for BigQuery and Resend (the resend SDK
+// ignores a stubbed globalThis.fetch, so it has to be replaced outright).
+export function createContactHandler({
+  insertEnquiry: storeEnquiry = insertEnquiry,
+  sendEmail = defaultSendEmail
+} = {}) {
+return async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      success: false,
-      message: "Method not allowed"
-    });
+    return fail(res, 405, 'method_not_allowed', "Method not allowed");
   }
 
   const data = req.body || {};
@@ -20,10 +43,7 @@ export default async function handler(req, res) {
   const missingFields = requiredFields.filter((field) => !String(data[field] || "").trim());
 
   if (missingFields.length) {
-    return res.status(400).json({
-      success: false,
-      message: "Please complete the required fields before sending your enquiry."
-    });
+    return fail(res, 400, 'missing_fields', "Please complete the required fields before sending your enquiry.");
   }
 
   // The frontend always sends the phone number in E.164 form (+<country
@@ -32,10 +52,7 @@ export default async function handler(req, res) {
   // full E.164 string on its own.
   const parsedPhone = parsePhoneNumberFromString(String(data.phone || ''));
   if (!parsedPhone || !parsedPhone.isValid()) {
-    return res.status(400).json({
-      success: false,
-      message: "Please provide a valid phone number, including country code."
-    });
+    return fail(res, 400, 'invalid_phone', "Please provide a valid phone number, including country code.");
   }
   data.phone = parsedPhone.number;
 
@@ -47,10 +64,7 @@ export default async function handler(req, res) {
     ? validateRentalDateRange(data.check_in, data.check_out)
     : validateDateRange(data.check_in, data.check_out);
   if (!dateRangeResult.valid) {
-    return res.status(400).json({
-      success: false,
-      message: dateRangeResult.message
-    });
+    return fail(res, 400, dateRangeResult.code || 'invalid_dates', dateRangeResult.message);
   }
 
   try {
@@ -88,16 +102,24 @@ export default async function handler(req, res) {
       pet_count: petCount,
       message: detailsText,
       source: data.source || 'website_form',
+      page_lang: normalizePageLang(data.lang),
       status: 'pending',
       ip_address: req.headers['x-forwarded-for'] || req.connection.remoteAddress || null,
       user_agent: req.headers['user-agent'] || null,
       referrer: req.headers['referer'] || null
     };
 
-    // Store in BigQuery
-    await insertEnquiry(enquiryData);
-
-    console.log("✅ Data stored in BigQuery:", enquiryId);
+    // Store in BigQuery. A failed insert (BigQuery down, a schema mismatch)
+    // must not lose the lead: log it and still send the email below, which
+    // carries every detail of the enquiry.
+    let stored = false;
+    try {
+      await storeEnquiry(enquiryData);
+      stored = true;
+      console.log("✅ Data stored in BigQuery:", enquiryId);
+    } catch (dbError) {
+      console.error("❌ BigQuery insert failed, sending the email anyway:", enquiryId, dbError && dbError.message, dbError && dbError.errors ? JSON.stringify(dbError.errors) : '');
+    }
 
     // Send email via Resend. Wrapped in a branded header/footer (logo, brand
     // colors) instead of a bare unstyled div, since this is a guest-facing
@@ -252,7 +274,7 @@ export default async function handler(req, res) {
           ${whatsappCtaHtml}
           <p style="color: #45534f; font-size: 14px; margin: 26px 0 0;">Warm regards,<br><strong style="color: #17211f;">Rishikesh Homestays Team</strong></p>`;
 
-      const emailResponse = await resend.emails.send({
+      const emailResponse = await sendEmail({
         from: 'hello@rishikeshhomestays.com',
         to: data.email,
         cc: contactEmail,
@@ -275,9 +297,9 @@ export default async function handler(req, res) {
             : 'No email on file for this guest — reach out by phone or WhatsApp.'}</p>
           ${replyOnWhatsAppHtml}
           ${detailsCardHtml}
-          <p style="color: #66726f; font-size: 12px; margin-top: 20px;">This enquiry has been logged in your database.</p>`;
+          <p style="color: #66726f; font-size: 12px; margin-top: 20px;">${stored ? 'This enquiry has been logged in your database.' : `This enquiry could NOT be saved to the database (id ${enquiryId}); this email is the only copy.`}</p>`;
 
-      const emailResponse = await resend.emails.send({
+      const emailResponse = await sendEmail({
         from: 'noreply@rishikeshhomestays.com',
         to: contactEmail,
         subject: isHostApplication
@@ -301,9 +323,9 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error("Error processing enquiry:", error.message);
-    return res.status(500).json({
-      success: false,
-      message: "We encountered an error. Please try again or contact us directly."
-    });
+    return fail(res, 500, 'server_error', "We encountered an error. Please try again or contact us directly.");
   }
+};
 }
+
+export default createContactHandler();

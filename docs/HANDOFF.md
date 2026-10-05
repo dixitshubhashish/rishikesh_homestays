@@ -1,8 +1,38 @@
-# Handoff: start here (state on 2026-10-05)
+# Handoff: start here (state on 2026-10-06)
 
 Read `CLAUDE.md` first (rules, where things live), then this file. Then, as needed: `docs/ARCHITECTURE.md` (modules, API), `scripts/stays/README.md` (stays pipeline), `docs/booking-links/RULES.md` (booking-link search), `docs/TESTING.md`. `PROGRESS.md` is the dated log; `.agents/coordination.md` is the multi-agent ledger (Codex also works here: claim files before editing).
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
+
+## Session 2026-10-06: what landed and what's open
+
+Pushed in the "Ads, distance slider, PSU pages, i18n catalogues, AI citation" commit (`npm test` 846/846, `check:stays` 8/8):
+- **Ads** (`assets/js/ads.js`, plan in ARCHITECTURE): units in-feed ×2, in-article, display, multiplex. Owner rule: never in the first screen. On the homepage ads start only after "Plan beyond the room". At most 3 on screen. None on our listing, `/hotels/stay` or lead pages. Sticky sidebar gap fixed. Labelled preview boxes on localhost. Open: owner decision on in-feed between stay groups.
+- **Distance slider** on every stays list (`stays-index.js` + `build_pages.py dist_range_html`): 200 m–50 km, number boxes with an m/km select at both ends. Centre is the landmark, or Triveni Ghat / Har Ki Pauri. Default 20 km. Our stays always show ("X km away · a calmer base").
+- **PSU/institute pages**: THDC (rooms/hotels), IIT Roorkee and CBRI (40 km), BHEL, Gurukul Kangri. Researched but not added: Raiwala Junction / Military Station.
+- **AI citation**: quick-facts boxes, answer-first openings, official-source links, "Checked: Oct 2026" on the guides and every stays page. Owner to confirm: the Kedarnath Rishikesh→Sonprayag km (page says 120–125; others say ~210), and Janki Setu = Janki Pul listed twice in `places-to-visit`.
+- **Enquiry safety** (`api/contact.js`): the email still goes out if the BigQuery insert fails; new `page_lang` column (`scripts/setup-bigquery.js`, re-run it once).
+- **Languages (23, owner decision: one page per URL, translated in the browser, no `/hi/` copies)**:
+  - Catalogues `i18n/<lang>.json` cover all 15 hand-made pages, 1,540 strings. All 22 languages are translated and native-edited; QA notes are in `i18n/qa-<lang>.md`.
+  - Footer stay-link labels are in `i18n/footer/`.
+  - Tools are in `scripts/i18n/` (`extract`, `stale`, `extract-footer`).
+  - `.gitignore` now allows `i18n/**/*.json`.
+  - **Not finished:** `assets/js/i18n-runtime.js` and `modules/lang-picker.js` are a first cut from a workflow that was still running. Still to do:
+    - check that every hero slide (`data-headlines` / `data-captions` / `data-copy`) and all JS-written text translate;
+    - move the picker to a small header dropdown, each language in its own script;
+    - stays-page body text (next wave);
+    - about 118 English sentences changed by the AI-citation edits need re-translating (`node scripts/i18n/stale.mjs <lang> --fresh`).
+- **Dark/light theme**: built in a worktree (`.claude/worktrees/…`), **not merged**. Merge and check it next.
+- **Known bugs, not fixed:**
+  - `list-your-homestay.html` doesn't load libphonenumber, which can block host applications;
+  - `/homestays` shows sample listings;
+  - the hero height jumps;
+  - the cross-city links on `stay.html` are unstyled.
+- **Booking search**: still running, unattended (`search_supervisor.mjs`; 5 workers Opera×2/Chrome/Edge/Brave; 5–10 s gap; the heavy worker pauses for a random 5–10 min when memory or disk is tight).
+  - Now: `found.tsv` 1,550; `unfound.tsv` retry 2,403 · none 274 · review 110 · duplicate 95 · manual 36.
+  - Still to do: sort the duplicates at the end, then rename `unfound` to a grammatical name once every case is sorted.
+  - Found links reach the site only after a merge (below), which hasn't been run this session.
+- **Google Search Console / Bing**: `BingSiteAuth.xml` is at the root and live. Sitemap: `https://rishikeshhomestays.com/sitemap.xml`.
 
 ## Goal
 

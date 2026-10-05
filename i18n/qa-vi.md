@@ -1,0 +1,25 @@
+# Vietnamese (vi) translation notes
+
+## Translator pass
+- 15 pages, 1,540 strings (1,035 unique ids); every id from en.json is present, with no extra ids. Each id has the same translation on every page it appears on.
+- Checked by script: indexed tags (`<0>…</0>`, `<1/>`) are in the same count and order, and every ₹ amount, phone number, email and URL is unchanged. ₹1,000 keeps its English comma, as in the source.
+- Place names are in Latin script, written the way Vietnamese travellers write them: Rishikesh, Haridwar, Laxman/Lakshman Jhula (whichever the English uses), Ram Jhula, Triveni Ghat, Har Ki Pauri, Swarg Ashram, Muni Ki Reti, Tapovan, Neelkanth. The river is « sông Hằng » (the standard Vietnamese name). The ceremony is « lễ Ganga Aarti » / « lễ aarti ».
+- Words travellers already know are kept: homestay, ashram, ghat, sadhu, akhara, dharamshala, thali, dosa, chai, Char Dham, Kumbh Mela, snan/tithi names (Amavasya, Purnima…). Common words are translated: rafting → « chèo bè (vượt thác) », scooty → « xe tay ga », auto-rickshaw → « xe tuk-tuk », e-rickshaw → « xe điện ba bánh », workation → « vừa làm vừa du lịch ».
+- 3BHK: when it is part of the property name it stays as is (« Advaitam Ganga & Hill View Luxury 3BHK »). In running text it becomes « 3 phòng ngủ (3BHK) ».
+- Dates are written « 14 tháng 1 năm 2027 », with weekdays « Thứ Hai… », and Vietnamese decimal commas (2,5 km; 9,1 triệu). Lakhs → « hàng trăm nghìn ». 11-foot → « 11 feet (khoảng 3,35 m) ».
+- Jokes are rewritten so they work in Vietnamese, not translated word for word. Examples: the 404 page « có lẽ đã giác ngộ » and the « kiểu phim Bollywood » twin; « ngõ hẻm sẽ thắng » / « ngõ hẻm cũng có chính kiến »; the elephants that « sẽ không vẫy lại đâu »; « bánh xe của chính chúng tôi chưa lăn trên đó thì chúng tôi chưa tin ».
+- UI strings follow Vietnamese website conventions: Trang chủ, Menu, Liên hệ, Gửi yêu cầu, Nhận phòng/Trả phòng, Không bắt buộc, VD:.
+- Mantras in Devanagari (ॐ नमः शिवाय, हर हर गंगे) and the romanised "Om Namah Shivaya, Har Har Gange" are left unchanged.
+
+## Copy-editor pass (native Vietnamese review)
+- **What I checked:** I read all 1,035 unique strings next to the English, page by page. I looked at grammar, natural phrasing, meaning (back-translating any line I doubted), the jokes, terms used the same way throughout, and things that must stay unchanged (names, ₹ prices, phone numbers, emails, URLs, `<0>…</0>` tags). After editing, a script checked that every string's tags still match the English in count and order (0 mismatches) and that the file parses with `JSON.parse`.
+- **Overall:** the translation was already strong: fluent, accurate, and the 404 page, parking jokes and "elephants won't wave back" lines already worked in Vietnamese. Most strings needed no change.
+- **Changed:** 24 unique strings, which is 38 lines across all pages, since shared strings (nav, footer) appear on several pages. Each was changed to the same text everywhere it appears.
+  - Wrong or unclear meaning: "starter homestay listings" was « homestay đầu tiên trong danh sách » ("the first homestay in the list") and is now « homestay trong danh sách ban đầu ». "Open to suggestions" (a dropdown option) is now « Để chúng tôi gợi ý ». "Stay 5+ days" said « 5 đêm » (nights) and now says « 5 ngày », as elsewhere on the site.
+  - Machine-sounding or clunky: « Đăng ký đăng chỗ ở » is now « Đăng ký đưa chỗ ở lên trang ». « Cách thức hoạt động? » is now « Hoạt động thế nào? » / « Quy trình ». « Lên sóng » (a TV/broadcast word) is now « Hiển thị trên trang ». « Thời gian lái thường gặp » is now « Thời gian lái thông thường ». « kiểu ngày tháng bạn muốn có » is now « kiểu ngày nghỉ bạn mong muốn ». « Chuẩn bị cho cửa ngõ Garhwal » is now « Lên kế hoạch đi vùng Garhwal ». « Xa hơn Rishikesh » is now « Ngoài Rishikesh ». « năm 2027 nằm ở đâu » is now « vị trí của năm 2027 ». « dạo một bậc ghat » is now « dạo dọc một bến ghat ». « chúng tôi chỉ thành công khi… » is now « chúng tôi chỉ có lời khi… ». "Made with ❤️" is now the usual « Được làm với ❤️ ».
+  - Voice and jokes: "Route status: delightfully lost" is now « lạc đường, nhưng vui » (punchier than « một cách đáng yêu »). "Stay here, visit there" is now « Ở một nơi, chơi khắp nơi » (it rhymes). "Somewhere to park the bike tonight?" is now « Tối nay cần chỗ dựng xe, ngả lưng? », which keeps the hint that this is about a place to sleep.
+  - Smaller fixes: « Định đi chơi vào dịp Kumbh? » is now « Định đi vào dịp Kumbh? » ("đi chơi" sounds too frivolous for a pilgrimage). « Cần cả chỗ ở? » is now « Cần cả chỗ ở nữa? ».
+- **Still uncertain:**
+  - Ratings are written « 5.0 » / « ★5.0 » with a decimal point to match Airbnb. Elsewhere the translation uses Vietnamese decimal commas (2,5 km), so « 5,0 » would be the strictly local form.
+  - « xe tuk-tuk » for auto-rickshaw is clear to Vietnamese travellers, but it is a Thai-style name.
+  - Some English loanwords are kept on purpose because Vietnamese travel sites use them (view, healthy, homestay, staycation, set ăn sáng). A more formal style would replace them.

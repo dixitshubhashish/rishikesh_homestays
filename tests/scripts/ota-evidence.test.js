@@ -56,3 +56,17 @@ test('lessons from the last 33 hand checks: home stay, years, landmark tails', a
   assert.deepStrictEqual(coreWords('1997 homestay'), ['1997']);
   assert(matchReason('Hotel Rah Inn', 'rishikesh', 'HOTEL RAH INN - Yog Nagari Rishikesh Railway Station, Rishikesh (updated prices 2027)').ok);
 });
+
+test('review re-check lessons: pages in other towns, area words, no town at all', async () => {
+  const { judge, fuzzyName } = await import('../../scripts/stays/ota-evidence.mjs');
+  const v = (o) => judge({ key: 'none', city: 'haridwar', nameOk: false, ...o }).verdict;
+  assert.strictEqual(v({ name: 'HOTEL MAHALAKSHMI, NEAR MANSA DEVI', title: 'Hotel Mahalakshmi Residency | Kollur 2020 UPDATED DEALS' }), 'reject');
+  assert.strictEqual(v({ name: 'Hotel Radhe Kunj', title: 'SHRI RADHA KUNJ Hotel (Vrindavan) - Deals, Photos & Reviews' }), 'reject');
+  assert.strictEqual(v({ name: 'Smiley Hotels and Resorts', title: 'Smiley Resort , Pondicherry, India - Photos, Room Rates' }), 'reject');
+  // the town is in our stay's own name, but the page names neither of our cities
+  assert.strictEqual(v({ name: 'Jammu Yatri Bhawan, Haridwar', title: 'Best Price on Hotel Ranbir Yatri Bhawan in Jammu + Reviews!' }), 'reject');
+  // an area word is not a name: "Tapovan Resort" is not Lemon Tree Hotel, Tapovan
+  assert.strictEqual(fuzzyName('Tapovan Resort', 'Lemon Tree Hotel, Tapovan Rishikesh').ok, false);
+  // a spelling slip with only the town on the page and no pin or address: still the owner's call
+  assert.strictEqual(v({ name: 'Hotel Shivalik Darshanam', title: 'Hotel Shivalik Darshnam, Haridwar' }), 'review');
+});

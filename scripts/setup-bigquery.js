@@ -1,7 +1,11 @@
-// One-time setup: creates the BigQuery dataset + enquiries table used by
-// api/contact.js. Safe to re-run — skips creation if either already exists.
+// Setup: creates the BigQuery dataset + enquiries table used by
+// api/contact.js. Safe to re-run: an existing table is never recreated, but
+// any column in `schema` that it lacks is added (NULLABLE only, so old rows
+// stay valid). Add the column here and run this BEFORE deploying code that
+// writes it, or the insert fails.
 import { BigQuery } from '@google-cloud/bigquery';
 import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -21,9 +25,7 @@ function resolveProjectId() {
   return process.env.GOOGLE_CLOUD_PROJECT;
 }
 
-const bigquery = new BigQuery({ projectId: resolveProjectId() });
-
-const schema = [
+export const schema = [
   { name: 'id', type: 'STRING', mode: 'REQUIRED' },
   { name: 'created_at', type: 'TIMESTAMP', mode: 'REQUIRED' },
   { name: 'name', type: 'STRING', mode: 'REQUIRED' },
@@ -44,20 +46,45 @@ const schema = [
   // 'website_form' (contact page) or 'whatsapp_widget' (popup), per CLAUDE.md.
   // Kept STRING (not an enum) so new sources can be added without a schema change.
   { name: 'source', type: 'STRING', mode: 'NULLABLE' },
+  // Language of the page the enquiry was sent from ('en', 'hi', ...).
+  { name: 'page_lang', type: 'STRING', mode: 'NULLABLE' },
   { name: 'status', type: 'STRING', mode: 'NULLABLE' },
   { name: 'ip_address', type: 'STRING', mode: 'NULLABLE' },
   { name: 'user_agent', type: 'STRING', mode: 'NULLABLE' },
   { name: 'referrer', type: 'STRING', mode: 'NULLABLE' }
 ];
 
+// Adds the columns of `wanted` that `table` lacks. Only NULLABLE columns can
+// be added to a table that has rows; anything else is reported, not forced.
+// Returns the names added.
+export async function addMissingColumns(table, wanted = schema) {
+  const [metadata] = await table.getMetadata();
+  const fields = (metadata.schema && metadata.schema.fields) || [];
+  const have = new Set(fields.map((f) => f.name.toLowerCase()));
+  const missing = wanted.filter((f) => !have.has(f.name.toLowerCase()));
+  const addable = missing.filter((f) => (f.mode || 'NULLABLE') === 'NULLABLE');
+  for (const f of missing) {
+    if (!addable.includes(f)) console.warn(`⚠️  Not adding ${f.mode} column ${f.name}: only NULLABLE columns can be added`);
+  }
+  if (!addable.length) return [];
+  // Send back the full existing schema plus the new columns; etag guards
+  // against a concurrent schema change.
+  await table.setMetadata({ schema: { fields: [...fields, ...addable] }, etag: metadata.etag });
+  return addable.map((f) => f.name);
+}
+
 async function main() {
+  const bigquery = new BigQuery({ projectId: resolveProjectId() });
   const [dataset] = await bigquery.dataset(DATASET_ID).get({ autoCreate: true });
   console.log(`✅ Dataset ready: ${dataset.id}`);
 
   const table = dataset.table(TABLE_ID);
   const [exists] = await table.exists();
   if (exists) {
-    console.log(`ℹ️  Table already exists: ${DATASET_ID}.${TABLE_ID} (schema left untouched)`);
+    const added = await addMissingColumns(table);
+    console.log(added.length
+      ? `✅ Added column(s) to ${DATASET_ID}.${TABLE_ID}: ${added.join(', ')}`
+      : `ℹ️  Table already exists with every column: ${DATASET_ID}.${TABLE_ID}`);
     return;
   }
 
@@ -68,7 +95,9 @@ async function main() {
   console.log(`✅ Table created: ${DATASET_ID}.${TABLE_ID}`);
 }
 
-main().catch((err) => {
-  console.error('❌ BigQuery setup failed:', err.message);
-  process.exit(1);
-});
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  main().catch((err) => {
+    console.error('❌ BigQuery setup failed:', err.message);
+    process.exit(1);
+  });
+}

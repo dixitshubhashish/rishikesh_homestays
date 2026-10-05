@@ -38,16 +38,16 @@ export function validateRentalDateRange(startValue, endValue) {
     return { valid: true };
   }
   if (endValue && !startValue) {
-    return { valid: false, message: 'Please select a start date first.' };
+    return { valid: false, code: 'start_date_missing', message: 'Please select a start date first.' };
   }
   if (startValue && endValue) {
     const start = new Date(startValue);
     const end = new Date(endValue);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return { valid: false, message: 'Enter valid dates.' };
+      return { valid: false, code: 'invalid_dates', message: 'Enter valid dates.' };
     }
     if (end < start) {
-      return { valid: false, message: 'End date can\'t be before the start date.' };
+      return { valid: false, code: 'end_before_start', message: 'End date can\'t be before the start date.' };
     }
   }
   return { valid: true };
@@ -59,16 +59,16 @@ export function validateDateRange(checkinValue, checkoutValue) {
     return { valid: true };
   }
   if (checkoutValue && !checkinValue) {
-    return { valid: false, message: 'Please select a check-in date first.' };
+    return { valid: false, code: 'checkin_missing', message: 'Please select a check-in date first.' };
   }
   if (checkinValue && checkoutValue) {
     const checkin = new Date(checkinValue);
     const checkout = new Date(checkoutValue);
     if (Number.isNaN(checkin.getTime()) || Number.isNaN(checkout.getTime())) {
-      return { valid: false, message: 'Enter valid dates.' };
+      return { valid: false, code: 'invalid_dates', message: 'Enter valid dates.' };
     }
     if (checkout <= checkin) {
-      return { valid: false, message: 'Check-out date must be after check-in date.' };
+      return { valid: false, code: 'checkout_not_after_checkin', message: 'Check-out date must be after check-in date.' };
     }
   }
   return { valid: true };

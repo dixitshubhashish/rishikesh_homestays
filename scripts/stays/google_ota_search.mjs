@@ -64,7 +64,7 @@ const WAIT = Number(arg('--wait-captcha', 0));
 // minimum seconds between two searches of one worker, as "min-max"
 const [GAP_MIN, GAP_MAX] = arg('--gap', '10-18').split('-').map(Number);
 const SYNC_ONLY = flag('--sync');
-const SEARCHES_PER_STAY = DEEP ? 7 : 2, LINKS_PER_PAGE = DEEP ? 4 : 3, SCROLL_STEPS = DEEP ? 8 : 5;
+const SEARCHES_PER_STAY = DEEP ? 6 : 2, LINKS_PER_PAGE = DEEP ? 4 : 3, SCROLL_STEPS = DEEP ? 8 : 5;
 const ENGINE_FALLBACKS = 2;
 const MAX_DEAD = 3; // closed listings opened per stay, on top of LINKS_PER_PAGE live ones
 const MORE_PAGES = 2; // "More results" / next page, when the first page shows nothing like the stay // a search that shows nothing like the stay is repeated on up to 2 other engines
@@ -542,14 +542,17 @@ async function search(combo, query, stay) {
     const read = async () => ({ ...(await pageResults(page)), picks: combo.e === 'google' ? await googlePicks(page) : [] });
     let got = await read();
     const fits = () => (stay ? relevant(stay, candidates(got, new Set())).length > 0 : got.links.some(platformOf) || got.picks.length > 0);
-    for (let step = 0; step < SCROLL_STEPS && !fits(); step++) {
+    // a page with no booking-site link at all after a few scrolls has nothing further down either
+    const none = () => !got.links.some(platformOf) && !got.picks?.length;
+    for (let step = 0; step < SCROLL_STEPS && !fits() && !(step >= 2 && none()); step++) {
       await page.evaluate((dy) => window.scrollBy(0, dy), 700 + Math.random() * 400).catch(() => {}); // works in a background tab
       await jitter(400, 800);
       got = await read();
     }
     // still nothing like the stay: "More results" (DuckDuckGo) or the next page (Google, Bing, Brave),
     // like a person would (owner, 2026-10-05); links already read stay in the list
-    for (let extra = 0; extra < MORE_PAGES && !fits() && eng.more; extra++) {
+    // (not for a site:/OR search whose first page had no booking-site link at all: the next pages are no better)
+    for (let extra = 0; extra < MORE_PAGES && !fits() && eng.more && !(/\bsite:|\sOR\s/.test(query) && none()); extra++) {
       const more = page.locator(eng.more).first();
       if (!(await more.count().catch(() => 0))) break;
       const prev = got;
@@ -669,8 +672,10 @@ async function check(b, stay, cand) {
       if (brand(stay.name) !== brand(ownerName) || (m.ok && ownerName && !matchReason(ownerName, NAMES[owner]?.[1] || stay.city, title).ok)) {
         return { ok: false, review: `this page may belong to this stay rather than ${ownerName || owner}, which has it now`, title, url, platform: landed.name };
       }
-      if (fz.ok && d !== null && d <= SAME_PLACE_KM) return { ok: false, duplicate: owner, title, url, platform: landed.name, d };
-      if (fz.ok && d !== null && d <= NEAR_KM) return { ok: false, review: `same name as ${NAMES[owner]?.[0] || owner}, which has this page; pins ${Math.round(d * 1000)} m apart`, title, url, platform: landed.name };
+      // one place twice only when the whole name fits, not one shared word ("Tapovan Resort" is not Lemon Tree Tapovan)
+      const sameName = m.ok || fz.all;
+      if (sameName && d !== null && d <= SAME_PLACE_KM) return { ok: false, duplicate: owner, title, url, platform: landed.name, d };
+      if (sameName && d !== null && d <= NEAR_KM) return { ok: false, review: `same name as ${NAMES[owner]?.[0] || owner}, which has this page; pins ${Math.round(d * 1000)} m apart`, title, url, platform: landed.name };
       // same name but no usable pin on one side: searching again would only find this page again
       if (m.ok && d === null) return { ok: false, review: `same name as ${NAMES[owner]?.[0] || owner}, which has this page; no pin to tell them apart`, title, url, platform: landed.name };
       return { ok: false, title, url, why: `already the page of ${NAMES[owner]?.[0] || owner}${d !== null ? `, ${d.toFixed(1)} km from this stay` : ''}` };
@@ -717,10 +722,15 @@ function queries(stay) {
   const area = stay.area && !/^(elsewhere|outside)\b/i.test(stay.area) ? stay.area.split('&')[0].trim() : '';
   const withArea = area && !n.toLowerCase().includes(area.toLowerCase()) ? `${n} ${area} ${c}` : `${n} ${c}`;
   const hostel = /hostel|backpack|zostel|dorm/i.test(`${stay.name} ${stay.type || ''}`), oyo = /\b(oyo|townhouse|capital o|collection o|spot on|flagship)\b/i.test(stay.name);
-  const sites = ['site:agoda.com', 'airbnb', ...(hostel ? ['site:hostelworld.com'] : []), ...(oyo ? ['site:oyorooms.com'] : []),
-    'site:trip.com', 'site:easemytrip.com', 'site:goibibo.com', 'site:makemytrip.com', 'site:expedia.co.in', 'site:hotels.com', 'site:cleartrip.com'];
-  return [withArea, `site:booking.com ${n} ${c}`, `${n} ${c} makemytrip OR goibibo OR agoda OR trip.com OR easemytrip`,
-    ...sites.map((x) => (x.startsWith('site:') ? `${x} ${n} ${c}` : `${n} ${c} ${x}`))].slice(0, SEARCHES_PER_STAY);
+  const q = (x) => (x.startsWith('site:') ? `${x} ${n} ${c}` : `${n} ${c} ${x}`);
+  // quick pass: the name with its area, then Booking.com
+  if (!DEEP) return [withArea, `site:booking.com ${n} ${c}`].slice(0, SEARCHES_PER_STAY);
+  // deep pass, by what found pages so far (log count, 2026-10-05: of ~700 matches 611 came from the first search, then
+  // Agoda 27, Airbnb 10, site:booking.com 9, Goibibo 7, the OR search 4, MakeMyTrip 3, EaseMyTrip 3; Trip.com,
+  // Expedia, Hotels.com and Cleartrip none): those that never paid off only fill a slot a hostel/OYO search leaves free
+  return [withArea, q('site:agoda.com'), ...(hostel ? [q('site:hostelworld.com')] : []), ...(oyo ? [q('site:oyorooms.com')] : []),
+    q('airbnb'), `site:booking.com ${n} ${c}`, q('site:goibibo.com'), `${n} ${c} makemytrip OR easemytrip OR trip.com`,
+    q('site:expedia.co.in'), q('site:cleartrip.com')].slice(0, SEARCHES_PER_STAY);
 }
 // How much a link looks like this stay: core-name words in its address slug or Google result
 // title, small spelling differences allowed ("pardesi" ~ "paradesi").

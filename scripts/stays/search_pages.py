@@ -196,6 +196,9 @@ LANDMARK_NOTES = {
     'shantikunj': 'Shantikunj and Dev Sanskriti Vishwavidyalaya stand side by side on the Rishikesh road, about 4 km north of Har Ki Pauri, with ashram-style hotels and guest houses all along the stretch.',
     'gurukul-kangri-university': 'Gurukul Kangri University is on the main Haridwar to Jwalapur road, about 6 km south of Har Ki Pauri; rooms fill up around admissions and exam days.',
     'bhel-haridwar': 'BHEL\'s factory and Ranipur township are about 6 km west of Har Ki Pauri; stays here suit work visits more than a pilgrimage.',
+    'thdc-rishikesh': 'THDC India\'s head office, Ganga Bhawan, is on the Rishikesh bypass beside THDC Colony, about 2 km west of Triveni Ghat; stays here suit work visits and interviews.',
+    'iit-roorkee': 'IIT Roorkee is in Roorkee, about 28 km south-west of Har Ki Pauri in a straight line and a little more by the Haridwar to Roorkee highway. Few stays near the campus are listed with us, so the ones here are on the Haridwar side: allow 40 to 60 minutes by road.',
+    'cbri-roorkee': 'CSIR-CBRI sits beside the IIT Roorkee campus, about 28 km south-west of Har Ki Pauri. Few stays near it are listed with us, so the ones here are on the Haridwar side: allow 40 to 60 minutes by road.',
     'sidcul-haridwar': 'SIDCUL, Haridwar\'s industrial estate, is about 9 km west of Har Ki Pauri; its hotels mostly serve business travellers on weekdays.',
     'haridwar-railway-station': 'The station is about 2 km from Har Ki Pauri; e-rickshaws run the route all day.',
 }
