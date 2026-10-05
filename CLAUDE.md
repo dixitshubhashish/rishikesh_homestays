@@ -1,153 +1,122 @@
 # Rishikesh Homestays
 
-A modern hospitality platform for discovering premium homestays in Rishikesh, India.
+A Rishikesh & Haridwar travel guide (rishikeshhomestays.com) whose job is to sell our own homestays over third-party listings.
 
 ## 📚 Documentation Map
 
-- `README.md`, `CLAUDE.md`, `AGENTS.md` — stay at repo root (GitHub/Claude Code/Codex all read these by convention from the root).
-- `.agents/coordination.md` — live multi-agent coordination ledger; stays under `.agents/` (see below).
-- `docs/HANDOFF.md` — **start here in a new session**: current state, owner to-dos, how to run the pipelines, hard-won rules.
-- `docs/ARCHITECTURE.md` — module/file breakdown.
-- `docs/TESTING.md` — how to run and write tests.
-- `docs/TEST_RESULTS.md` — latest recorded test run output.
-- `PROGRESS.md` — shipped/pending work log; stays at root for now since it's actively read/written by in-flight multi-agent tasks tracked in `.agents/coordination.md` — check that file before relocating it.
+Each topic has one home; other files link to it instead of repeating it.
+
+- `docs/HANDOFF.md`: **start here in a new session**. Goal, live numbers, owner to-dos, how to run the pipelines, hard-won rules.
+- `CLAUDE.md` (this file): the rules and where things live.
+- `docs/ARCHITECTURE.md`: files, pages, every JS module, ads plan, CSS tokens, the API contracts (`/api/contact` sources and email flow, geo, currency, OTP).
+- `docs/TESTING.md`: running and writing tests, what each test file covers, the last full run, the 404-artwork manual checks.
+- `scripts/stays/README.md`: the stays pipeline (crawl, process, build, page rules, listing ids, BigQuery, Google Maps places).
+- `docs/booking-links/RULES.md`: the booking-link search (lists, match rules, workers, merge).
+- `README.md` (public summary), `AGENTS.md` (rules for other agents) and `CLAUDE.md` stay at the repo root by convention.
+- `PROGRESS.md`: dated shipped/pending log. Stays at the root while in-flight tasks in `.agents/coordination.md` read and write it; check that file before moving it.
+- `.agents/coordination.md`: the live multi-agent ledger.
+
+Keep it this way: update the doc that owns a topic, don't add new `.md` files for results or notes (test runs go in `docs/TESTING.md` "Last full run", state in `docs/HANDOFF.md`, history in `PROGRESS.md`).
 
 ## Multi-Agent Coordination
 
-When working alongside Codex or another agent, read `AGENTS.md` and `.agents/coordination.md` before editing. Claim the files or task you are working on, avoid overlapping active claims, and update the coordination ledger with changes, verification, and handoff notes when finished. The coordination file is the shared source of truth; it is file-based synchronization, not live messaging.
+Codex and other agents work here too. Follow `AGENTS.md`: read `.agents/coordination.md` before editing, claim your files or task, avoid active claims, and record changes, verification and handoff notes when done. It is file-based, not live messaging. As of 2026-10-05 only Claude holds claims (the owner released every Codex and other-agent claim); another agent starts with a new claim.
 
-## 🏗️ Architecture
+## 🏗️ Where things live
 
-**Frontend:** Static HTML5/CSS3/Vanilla JS (no framework, no build step)
-- `index.html` — Main landing page
-- `404.html` — Custom error page (full site header/footer, quirky Rishikesh-themed copy, prominent phone/WhatsApp/email contact block, auto-redirects to `/` after 30s with a cancel option). Vercel and Netlify serve it automatically for any unmatched route (native `404.html`-at-root convention, no `vercel.json`/`_redirects` config needed); `server.js` has an explicit catch-all at the end mirroring that for local dev.
-- Content/guide pages (`homestays.html`, `about-rishikesh.html`, `places-to-visit.html`, `things-to-do-in-rishikesh.html`, `contact.html`, `thanks.html`, `triveni-ghat.html`, `kedarnath-yatra.html`, `haridwar-kumbh-2027.html`, `list-your-homestay.html`, `driving-from-delhi-to-rishikesh.html`, `bike-and-taxi-rental-in-rishikesh.html`) live **at the repo root**, next to `index.html` — not in a `pages/` folder. They used to live under `pages/` with a matching `/pages/<slug>` URL; both the folder and the URL segment were dropped so the canonical URL matches the filename directly (`/contact` → `contact.html`), the same pattern `index.html` and `hotels/*.html` already use. This isn't just cosmetic: Vercel's `cleanUrls` (and Netlify's pretty-URL handling) only auto-map a clean URL to a `.html` file at the *same* path — a `vercel.json` **rewrite** pointing a root URL at a file in a different folder (e.g. `/contact` → `/pages/contact.html`) silently 404s in production despite working fine against the local `server.js` dev server, which is why the file location and the URL must match 1:1 rather than being bridged with a rewrite. `server.js` (local dev), `vercel.json`, and `_redirects` (Netlify) all 301-redirect any old `/pages/<slug>` request to the new root URL — keep all three in sync when adding/renaming a page, and always verify a new/changed route against the actual deployed URL, not just the local dev server.
-- `hotels/best-<category>-in-<city>.html` — **generated** stays pages, now for **two cities**: Rishikesh (29 pages, the default city) and Haridwar (26 pages, with a Kumbh 2027 section/FAQ and a Dharamshalas page). They live in `hotels/` next to the hand-made listing pages, at URLs `/hotels/best-<category>-in-<city>`. The single property page is `hotels/stay.html` → `/hotels/stay?s=<slug>&c=<city>` (`c` defaults to rishikesh; with no `s` it redirects to the city's stays page). Old root URLs (`/best-…`, `/stay`) **301-redirect** to `hotels/` in `vercel.json`, `_redirects` and `server.js`, keep all three in sync. Built by `scripts/stays/` (see its README; `--city <key>` on every step, config in `scripts/stays/cities.py`): **never hand-edit these pages or `assets/js/modules/stays-index-data*.js`** (one data module per city; Rishikesh's is `stays-index-data.js`). The generator only ever deletes its own `best-*-in-<city>.html` files and `stay.html` in `hotels/`, never hand-made pages. Shared JS: `stays-index.js` (lists, reads `#sx-root[data-city]`) and `stay-page.js` (property page, reads `?c=`). Lists are written into the HTML (crawlable), our own 3 stays (`OWN`) are pinned and mixed into every list (on other cities' pages they're labelled as being in Rishikesh), then stays with a verified booking link, then the rest; category pages list only the linked stays directly and fold the rest behind "View all" (`split_shown()`, topped up to 10). **View property** → lead popup (name/phone/email → `/api/contact`, then one redirect to the verified Booking.com/MMT/Agoda/Airbnb page from `scripts/stays/ota-links.tsv`) or WhatsApp. Category pages are indexable and listed in `sitemap.xml` / `llms.txt` (per-city sections between `stays-pages` / `stays-pages-<city>` markers); `hotels/stay.html` is `noindex`. The footer of every page lists every category page of both cities ("Stays in Rishikesh" then "Stays in Haridwar", one wrapped line of "Best <category> in <city>" links each), written between `<!-- footer-stays -->` markers by `scripts/stays/footer_links.py`, which `build_pages.py` runs after every build; a new page gets the block on the next build (or run the script). Every stay has a permanent numeric **`listing_id`** (registry `scripts/stays/listing-ids.tsv` with a `city` column; ours are 1–3; Rishikesh 1–1,608, Haridwar 1,609–2,414; ids are never reused) plus its text `slug`. Landmark pages `hotels/best-stays-near-<landmark>.html` (20: Triveni Ghat, Laxman Jhula, AIIMS, Neelkanth, Har Ki Pauri, Patanjali Yogpeeth, Shantikunj, Gurukul Kangri, BHEL, SIDCUL, …; coordinates from OpenStreetMap in `scripts/stays/landmarks.tsv`, with a schema type and an optional `max_km`) list stays by real distance and always pitch our homestays as "a calmer base" with honest distance and drive time. **Search-phrase pages** (rows of `scripts/stays/search-pages.tsv`, loaded by `search_pages.py`; owner 2026-10-04/05): one page per phrase people type into Google ("Cheap Homestays in Rishikesh", "Rooms near AIIMS Rishikesh", "Hotels near Patanjali Haridwar", "Top 10 Resorts in Haridwar"…), address and `<h1>` = the phrase in the searcher's own words (never reworded), ~190 pages across both cities; each row is phrase, rule (`home & price<3000`, `hotel & near:aiims-rishikesh:2`, …), grouping (area/stars/type/price band/distance), cities, intro and, for one-city phrases, the other city's twin. **Every page exists in both cities** (owner 2026-10-05): a category or `both` phrase gets a page in each city once either city has 5 stays (Top 10: 10 with ≥5 reviews), and a city with fewer says so and lists the nearest in the other city plus similar stays here, so the Rishikesh / Haridwar switch on every page (landmark pages too) always lands on the same page; all of them are in sitemap.xml. Every non-master page also gets its own tips, facts and FAQs (`page_content()`). The rule language and groupings are mirrored in `stays-index.js` (`ruleMatches`, price/distance bands): change both together. Add a phrase: add a row, `npm run build:stays` (Haridwar then Rishikesh, footers, sitemap, llms.txt), then `npm run check:stays` (`tests/integration/stays-content.test.js`: 450+ words of guide text outside the lists, 300+ on landmark pages, unique title/h1/lede/description, 2+ FAQs, one ad slot after the lists, working city switch, sitemap entry; also part of `npm test`). **Honest sitemap dates and IndexNow** (owner 2026-10-05): a page's `<lastmod>` (and JSON-LD `dateModified`) moves only when what a reader sees changes, never just because the pages were rebuilt: `scripts/stays/page_dates.py` keeps a content fingerprint and date per URL in `scripts/stays/page-dates.tsv` (committed; generated pages fingerprint their `<main>`, hand-made pages their file minus the generated footer block). After every push to main that changes `sitemap.xml`, `.github/workflows/indexnow.yml` waits for the deploy and sends the added, re-dated or removed URLs to IndexNow (`scripts/indexnow.mjs`; `npm run indexnow -- --from <ref> | --all [--dry-run]`), which Bing (ChatGPT search, Copilot, DuckDuckGo) and other engines share; Google does not take part and reads the sitemap. The public key file `998dc5c32f318e29058c994927f39486.txt` at the root proves ownership: never delete or rename it. The scheduled stays refresh pings IndexNow itself, since its bot pushes don't start other workflows. For AI assistants, `llms.txt` (the short index, between per-city markers) links to **`llms-full.txt`** (generated by `build_pages.py`, ~1.2 MB): every stays and landmark page with prices, areas, best-reviewed picks linking to their `/hotels/stay` pages, tips, FAQs and a prefilled WhatsApp link to 80500 91290, plus how to book our own homestays direct; thin pages are described honestly, never as "0 stays". On phones the footer folds each city's search-phrase links behind "More <city> searches" (CSS-only toggle; the links stay in the HTML). 412 Google Maps places with a confirmed booking link (a real property page, never a booking-site homepage) are also listed (marked `gm`: "View on Google Maps" instead of our map, never pinned, not on landmark pages; `scripts/stays/import_google_stays.py`). BigQuery **`places_lodging`** (internal only, never read by the site) is the Google Maps sweep: every lodging place within 20 km of each city with phone, matched directory stay and booking link (`scripts/stays/places_sweep.mjs` + `push_places.mjs`, see the stays README). BigQuery **`rishikesh_homestays.market_properties`** holds all cities (one row per stay per `snapshot_date`, with a `city` column) and view **`stays_sheet`** is the latest snapshot with page/booking URLs for Google Sheets. `.github/workflows/stays-refresh.yml` re-crawls with an adaptive gap (7 → 56 days).
-- `hotels/` — Also holds the generated stays pages above. Dedicated hand-made pages for individual bookable listings (still its own folder, with the segment in the URL — e.g. `/hotels/<slug>` maps to `hotels/<slug>.html`, unlike the root-level content pages above). Currently one: `advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html`. A `STAYS` entry in `data.js` gets a clickable card (photo + title link to the page) by adding a `detailUrl: "/hotels/<slug>"` field; entries without one render as plain (non-linked) cards, same as before.
-- `assets/css/styles.css` — Main site styles
-- `assets/css/whatsapp-widget.css` — WhatsApp widget popup styles
-- `assets/js/analytics.js` — Google Analytics 4 (gtag.js) loader and the single place the measurement ID (`G-L82BSZMRLW`) lives. It's the site's only Google tag (GTM was removed 2026-09-30 in favor of direct GA4; never add both, or page views double-count). Owner-only opt-out: `?baba=<owner phrase>` stops that browser from being tracked (localStorage flag + Google's `ga-disable-<ID>`), and `?baba=wapas` resumes. Only the phrase's SHA-256 is in the code; never commit the phrase itself. Every page includes it as `<script async src="/assets/js/analytics.js"></script>` immediately after `<meta charset>` — **add that line to any new page** (`tests/integration/analytics.test.js` scans all root + `hotels/` pages and fails if it's missing or if a Google tag ID is hardcoded in HTML).
-- `assets/js/modules/affiliate-links.js` — **the single place for affiliate IDs** (CJ publisher `CJ_PID` 101895722, Booking.com APAC link `CJ_BOOKING_LINK_ID` 17323528) and `affiliateLink(site, url)`. Every Booking.com link (site, BigQuery `booking_link` column and `stays_sheet` view) is a CJ deep link `https://www.anrdoezrs.net/click-<PID>-<LINK>?url=<page>` that lands on the same property page; `build_pages.py` reads the constants from this file, the Node scripts import it. Never append `?aid=` (the old 7854081 was Booking.com APAC's CJ advertiser ID, not ours). Clicks earn once Booking.com APAC approves us in CJ.
-- `assets/js/ads.js` — Google AdSense (publisher `ca-pub-7016219170450293`, also in `/ads.txt`). Every page has `<meta name="google-adsense-account" …>` + `<script async src="/assets/js/ads.js"></script>` right after the analytics line (generated stays pages get it from `thanks.html`'s head); `ads.js` decides per page type: **guide pages** get side rails + one mid-article display (after the 2nd section) + a Multiplex grid above the footer; **homepage** gets side rails + the grid; **stays lists** (category, search-phrase and landmark pages in `hotels/`) get side rails + one display at the page's `<div class="rh-ad-slot" data-ad="display">` (after the lists, before the tips/FAQs, never between a reader and the stays) + the grid; unfilled units collapse; **lead/booking pages** (stay page, contact, homestays, our own listing, list-your-homestay, thanks, 404) get none. The top of every page stays ad-free: side rails (160/300×600, fixed in the margins) appear only on windows ≥ 1580px, only after the first screen, and hide over the footer. Never on localhost or for the owner's opted-out browsers. Units live in `UNITS` (AdSense's AMP code translates: `mcrspv` → `autorelaxed`, `rspv` → `auto`); the site isn't AMP, so never paste `amp-ad`/`amp-auto-ads`.
-- `assets/js/site.js` / `assets/js/contact.js` — backward-compat shims that import from `assets/js/modules/` and re-export onto `window`. Both are real ES modules (they use `import`), so every page loads them with `<script type="module" src="...">` — **never as a plain `<script src="...">`**, or the browser throws `Cannot use import statement outside a module` and silently breaks nav/search/forms on that page.
-- `assets/js/modules/` — the actual modular source (see `docs/ARCHITECTURE.md` for full breakdown). Notable ones:
-  - `data.js` — AREAS/STAYS data
-  - `whatsapp-widget.js` — floating WhatsApp popup: name/phone/dates/guests/pets form, builds a formatted booking message, stores the enquiry via `/api/contact`, and opens WhatsApp
-  - `whatsapp-link.js` — device-aware WhatsApp link builder: `wa.me` on mobile (opens the app), `web.whatsapp.com/send` on desktop (skips the wa.me interstitial so an already-open WhatsApp Web session gets the message in one hop); also rewrites every static `wa.me` link on a page via `enhanceStaticWhatsAppLinks()`
-  - `validators.js` — shared phone validation (via `window.libphonenumber`) and check-in/check-out date-range validation, used by both the WhatsApp widget and the main contact form
-  - `country-select.js` — builds the country-code `<select>` (flag + name + dial code) purely from `libphonenumber-js` metadata + `Intl.DisplayNames` (no hardcoded country list), and auto-detects the visitor's country via `geo.js` (falls back to India)
-  - `geo.js` — shared IP-geolocation lookup used by both `country-select.js` and `currency.js`, backed by `/api/geo` (see below). Cached in-memory per page load and in `localStorage` for 24h, so a visitor's country is looked up at most once a day, not once per page.
-  - `currency.js` — approximate visitor-currency price display (USD/EUR/GBP/AUD/CAD/JPY), backed by `/api/currency-rates`. Never replaces the INR price shown, only adds an approximate equivalent alongside it; rounds up to the nearest 5 units of the target currency.
-  - `contact-form.js` — main contact form: phone validation, flatpickr check-in/check-out with range enforcement, counters
-  - `button-loading.js` — shared busy-state helper (`setButtonLoading`/`clearButtonLoading`) used by every "-ing" submit button (contact form, host form, email OTP, OTA lead-gate) — shows a spinner + label, disables the button, and restores the exact original label afterward via a `data-original-label` attribute rather than a hardcoded string
-  - `rental-form.js` — Bike & Taxi Rental enquiry form (country-code phone, flatpickr dates, notes required for cars/taxis, `rental_enquiry` POST, WhatsApp prefill). Page owned by Claude; verified live 2026-10-04.
-  - `ota-lead-gate.js` — gates outbound links to third-party booking platforms (Airbnb/Booking.com/MakeMyTrip on the `hotels/` pages) behind a small name+phone modal; awaits a real `/api/contact` acknowledgement (spinner shown) before opening the external link, so the lead is actually captured before the guest leaves
-- `assets/vendor/` — self-hosted third-party libraries (no CDN dependency, so the site works offline/behind restrictive networks):
-  - `flatpickr/` — calendar date picker (check-in/check-out on both the contact form and WhatsApp widget)
-  - `libphonenumber/` — Google's phone-number metadata library, used client-side for real per-country validation
-  - `leaflet/` — open-source map library (+ marker images) for the map on `/stay?s=<id>` pages (OpenStreetMap tiles, no API key). Loaded only when the map scrolls into view. Booking.com's old affiliate widgets (`flexiproduct.js`) are retired: every product now redirects to a 400, so don't use them.
-  - Both loaded as plain `<script src="...">` (classic, not `type="module"`) **before** the `type="module"` scripts that use them, since they expose `window.flatpickr` / `window.libphonenumber` globals
-- `assets/images/` — Property and hero images
+Full map in `docs/ARCHITECTURE.md`. The rules:
 
-**Backend:** Node.js/Express
-- `server.js` — Dev server serving static files + API route
-- `api/contact.js` — POST `/api/contact` handler that:
-  - Validates form data (name, phone, details required)
-  - Validates the phone number server-side using `libphonenumber-js` (expects E.164 — the frontend always normalizes to `+<countrycode><number>` before sending, so this is defense-in-depth, not the primary validation)
-  - Validates check-in/check-out date range server-side (`validateDateRange` from `assets/js/modules/validators.js`)
-  - Stores enquiry in BigQuery via `api/bigquery.js` (`insertEnquiry`), tagged with `source` (`website_form` from the contact page, `whatsapp_widget` from the WhatsApp popup, `ota_redirect_<platform>` from the OTA lead-gate, `host_application` from List Your Homestay, `rental_enquiry` from the Bike & Taxi Rental form — same-day rentals allowed, subject "Rental enquiry: <name> → <service>")
-  - Sends one branded HTML email (logo, WhatsApp CTA, book-direct pitch) via Resend. If the guest gave an email, they're the `to` and `CONTACT_EMAIL` is `cc`'d — one shared, reply-all-able thread instead of two disconnected emails. No guest email → internal-only notification to `CONTACT_EMAIL`. (`CONTACT_EMAIL` was defined in `.env` for a while but never actually read by the code — fixed; always reference `process.env.CONTACT_EMAIL`, don't hardcode the address again.)
-  - **Stay-popup leads** (`source` starting `stay_`, from `/stay` pages) are internal-only: never emailed to the guest even if they gave an address. The internal email's subject is "Stay lead: <name> (<n> guests) → <stay>", and a **"WhatsApp <name> now"** button opens `wa.me/<guest phone>` with a prefilled opener that asks for their dates and offers our own handpicked homestays/hotels, then pitches booking direct: "skip the booking-site commission" and spend it on one random Rishikesh treat (`SAVED_COMMISSION_IDEAS`: Chotiwala feast, rafting, Triveni Ghat offering or donation, yoga, chai & jalebis, Kunjapuri, Parmarth diyas, Ayurvedic massage, Tapovan cafes). It deliberately does **not** name the listing they clicked (`stay_name` stays in the email for us only). The goal of the stays pages is to sell our own homestay network over the third-party listings.
-  - Returns success/error JSON
-  - ⚠️ Testing: the `resend` SDK does not go through a stubbed `globalThis.fetch`, so running this handler locally with the real `.env` sends real email. Mock `Resend` itself, or unset `RESEND_API_KEY`, when testing.
-- `api/bigquery.js` — BigQuery client + `insertEnquiry(row)`. Reads credentials from `GOOGLE_APPLICATION_CREDENTIALS` (local file path) or `GOOGLE_APPLICATION_CREDENTIALS_JSON` (inline JSON string, for Vercel). Dataset/table names come from `BIGQUERY_DATASET`/`BIGQUERY_ENQUIRIES_TABLE` (default `rishikesh_homestays.enquiries`).
-- `scripts/setup-bigquery.js` — one-time/idempotent script that creates the dataset + `enquiries` table (schema + `created_at` day-partitioning). Re-run safely; skips creation if the table already exists.
-- `api/geo.js` — GET endpoint backing `geo.js`. On Vercel, reads the free `x-vercel-ip-country` edge header (no external call, no latency). In local dev (no such header), falls back to `ipwho.is` (free, no API key/pricing tier), cached in-memory for 24h.
-- `api/currency-rates.js` — GET endpoint backing `currency.js`. Fetches from [fawazahmed0/currency-api](https://github.com/fawazahmed0/currency-api) (open-source, GitHub-hosted, served as static JSON via jsDelivr — no API key, no pricing tier), cached server-side for 24h. Falls back to a small static rates table if the fetch ever fails.
-- `api/otp-status.js` / `api/otp-send.js` / `api/otp-verify.js` — optional email OTP verification for the enquiry form, backed by `email-otp.js` + `otp-helpers.js`. Stateless (no storage) — the code is deterministically derived from `OTP_SECRET` + email + expiry, sent via Resend. Never blocks enquiry submission; if `OTP_SECRET` is unset, the verify-email UI simply never appears.
+**Pages and URLs**
+- Hand-made content and guide pages live **at the repo root** next to `index.html` (`/contact` → `contact.html`), not in a `pages/` folder. The URL must match the file 1:1: Vercel's `cleanUrls` (and Netlify's pretty URLs) only map a clean URL to a `.html` file at the *same* path, and a `vercel.json` rewrite to a file in another folder (`/contact` → `/pages/contact.html`) silently 404s in production while working on the local `server.js`. Old `/pages/<slug>` URLs 301 to the root URL in `server.js`, `vercel.json` and `_redirects`: keep all three in sync when adding or renaming a page, and verify new routes on the deployed site, not only locally.
+- `hotels/` holds our own hand-made listing pages (`/hotels/<slug>`, currently Advaitam) and the generated stays pages. A `STAYS` entry in `data.js` with `detailUrl: "/hotels/<slug>"` gets a clickable card.
+- `404.html` is served for any unmatched route (Vercel/Netlify convention; `server.js` has a catch-all at the end for local dev).
 
-**Database:** Google BigQuery
-- Table: `rishikesh_homestays.enquiries` — stores homestay booking enquiries with guest details, dates, preferences, and `source`
-- Service account key lives at `credentials/bigquery-service-account.json` locally (gitignored — never commit it). On Vercel, paste the full JSON into the `GOOGLE_APPLICATION_CREDENTIALS_JSON` env var instead, since serverless functions can't read a local file path.
+**Generated stays pages** (`scripts/stays/`, details in its README; numbers in `docs/HANDOFF.md`)
+- Two cities, Rishikesh (default) and Haridwar (config `scripts/stays/cities.py`, `--city <key>` on every step). Category pages `hotels/best-<category>-in-<city>.html`, landmark pages `hotels/best-stays-near-<landmark>.html`, search-phrase pages (one per row of `scripts/stays/search-pages.tsv`, address and `<h1>` = the searcher's exact phrase, never reworded), and the property page `hotels/stay.html` → `/hotels/stay?s=<slug>&c=<city>` (`noindex`; without `s` it redirects to the city's list).
+- **Never hand-edit** these pages or `assets/js/modules/stays-index-data*.js`. Change the scripts, then `npm run build:stays` (Haridwar, then Rishikesh) and `npm run check:stays`. The build deletes only its own outputs (its `best-*` pages, `stay.html`, dropped phrase pages, old root-level copies), never hand-made pages.
+- The search-phrase rule language is mirrored in `stays-index.js` (`ruleMatches`): change both together.
+- Old root URLs (`/best-…`, `/stay`) 301 to `hotels/` in `vercel.json`, `_redirects` and `server.js`: keep all three in sync.
+- Our own 3 stays (`OWN` in `build_pages.py`) are pinned and mixed into every list (on Haridwar pages labelled as in Rishikesh); never treat them as third-party. Linked stays come next; category pages fold the rest behind "View all".
+- **View property** → lead popup (name/phone/email → `/api/contact`), then one redirect to the stay's verified booking page (`scripts/stays/ota-links.tsv`), or WhatsApp. The stays pages exist to sell our homestays: lead first, booking site second.
+- Every page's footer lists every category page of both cities between `<!-- footer-stays -->` markers, written by `footer_links.py` (run by every build).
+- Every stay has a permanent numeric `listing_id` (`scripts/stays/listing-ids.tsv`; ours are 1–3; never reused) plus its text `slug`.
+- Google Maps stays (`gm`) show "View on Google Maps" instead of our map, are never pinned and stay off landmark pages; only places with a confirmed booking page (a real property page, never a booking-site homepage) are listed.
+- Sitemap `<lastmod>` moves only when a page's content changes (`page_dates.py`, `page-dates.tsv`); after a push that changes `sitemap.xml`, `.github/workflows/indexnow.yml` pings IndexNow. The key file `998dc5c32f318e29058c994927f39486.txt` at the root proves ownership: **never delete or rename it**.
+- BigQuery `places_lodging` (the Google Maps sweep, with phones) is **internal only**; the site never reads it. `market_properties` / view `stays_sheet` hold the directory snapshots. `.github/workflows/stays-refresh.yml` re-crawls on an adaptive 7 → 56 day gap.
 
-**Email:** Resend — transactional email service
+**Scripts every page must load**
+- `<script async src="/assets/js/analytics.js"></script>` immediately after `<meta charset>`: **add it to any new page** (`tests/integration/analytics.test.js` checks every root and `hotels/` page and fails on a hardcoded Google tag ID). GA4 is the only Google tag (`G-L82BSZMRLW`, in `analytics.js`); GTM was removed 2026-09-30: never add both, or page views double-count. Owner opt-out `?baba=<phrase>` (`?baba=wapas` resumes): only the phrase's SHA-256 is in the code; never commit the phrase.
+- Then `<meta name="google-adsense-account" …>` + `<script async src="/assets/js/ads.js"></script>` (generated pages copy `thanks.html`'s head). `ads.js` decides ads per page type (plan in `docs/ARCHITECTURE.md`): guides, home and stays lists get ads, lead/booking pages none, the top of every page none. Add units to `UNITS`; the site isn't AMP, so never paste `amp-ad` / `amp-auto-ads`.
+- `assets/js/site.js` and `contact.js` are ES modules (backward-compat shims over `assets/js/modules/`): load them with `<script type="module" src="…">`, **never a plain `<script src>`**, or the browser throws "Cannot use import statement outside a module" and nav/search/forms break silently.
+- Vendor libraries in `assets/vendor/` (flatpickr, libphonenumber, leaflet) are self-hosted (no CDN) and loaded as classic `<script src>` **before** the module scripts that use their globals.
 
-**Hosting:** Vercel (primary — see `vercel.json` for clean-URL redirects) and Netlify (static export; redirects defined in `_redirects`, kept for parity)
+**Affiliate links**
+- `assets/js/modules/affiliate-links.js` is the single place for affiliate IDs (CJ publisher `CJ_PID` 101895722, Booking.com APAC link `CJ_BOOKING_LINK_ID` 17323528) and `affiliateLink(site, url)`. Every Booking.com link (site, BigQuery `booking_link`, `stays_sheet`) is a CJ deep link to the same property page. Never append `?aid=` (7854081 was Booking.com APAC's CJ advertiser ID, not ours).
+- Booking.com's old affiliate widgets (`flexiproduct.js`) are retired (every product redirects to a 400): don't use them.
+
+**Backend** (contracts in `docs/ARCHITECTURE.md`)
+- `api/contact.js` (POST `/api/contact`): validates name/phone/details, phone (E.164) and dates server-side, stores the enquiry in BigQuery with its `source`, sends one Resend email. Always use `process.env.CONTACT_EMAIL`; never hardcode the address. Stay-popup leads (`source` `stay_*`) are internal-only and the WhatsApp opener never names the listing the guest clicked.
+- ⚠️ The `resend` SDK does not go through a stubbed `globalThis.fetch`: running the handler locally with the real `.env` sends real email. Mock `Resend` or unset `RESEND_API_KEY` when testing.
+- `api/bigquery.js`: credentials from `GOOGLE_APPLICATION_CREDENTIALS` (local key file `credentials/bigquery-service-account.json`, gitignored, never commit it) or `GOOGLE_APPLICATION_CREDENTIALS_JSON` (the full JSON, on Vercel, since functions can't read a local path). `scripts/setup-bigquery.js` creates the `enquiries` table (safe to re-run).
+- Also `api/geo.js`, `api/currency-rates.js`, `api/otp-*.js` (optional email OTP; never blocks an enquiry).
+
+**Hosting**: Vercel is primary (`vercel.json`). Netlify (publish dir `.`, no build command, `_redirects`) is kept for parity, but has no functions config, so `/api/*` would not run there.
 
 ## 📁 Key Files to Edit
 
-- **Contact Email:** `api/contact.js` → from/to addresses in the Resend calls
-- **Property/Site Data:** `assets/js/modules/data.js` — AREAS and STAYS listings (the single source of truth; `site.js` just re-exports it)
-- **WhatsApp Number:** `WHATSAPP_PHONE` const in `assets/js/modules/whatsapp-widget.js`, and the `wa.me/...` hrefs in `index.html` (hero button, footer social icon) / `contact.html`
-- **Analytics / GA4 measurement ID:** `GA_MEASUREMENT_ID` in `assets/js/analytics.js`
-- **Hero Images:** Replace PNGs in `assets/images/`
-- **Styling:** `assets/css/styles.css` (site-wide) / `assets/css/whatsapp-widget.css` (widget only)
-- **Contact Form Endpoint:** `assets/js/modules/contact-form.js` — client-side submission logic, validation, date pickers
+- **Property cards / areas:** `assets/js/modules/data.js` (`AREAS`, `STAYS`; the single source of truth)
+- **Stays pages:** `scripts/stays/` (then rebuild), never the generated output
+- **WhatsApp number:** `WHATSAPP_PHONE` in `assets/js/modules/whatsapp-widget.js` and the `wa.me/...` links in `index.html` (hero, footer) and `contact.html`. WhatsApp is 80500 91290 only; 9027212484 is a second call number, keep it.
+- **Contact email:** `CONTACT_EMAIL` env var; from/to in the Resend calls in `api/contact.js`
+- **Contact form logic:** `assets/js/modules/contact-form.js`
+- **GA4 ID:** `GA_MEASUREMENT_ID` in `assets/js/analytics.js`; **AdSense units:** `UNITS` in `assets/js/ads.js`
+- **Styling:** `assets/css/styles.css` (site) / `assets/css/whatsapp-widget.css` (widget)
+- **Hero images:** `assets/images/`
 
 ## 🚀 Local Development
 
 ```bash
 npm install
-npm run dev
-# Opens at http://localhost:3000
+npm run dev      # http://localhost:3000
+npm test         # see docs/TESTING.md
 ```
 
-### Environment Variables (`.env`)
+`.env` (template in `.env.example`):
 ```
 RESEND_API_KEY=<your-resend-api-key>
 CONTACT_EMAIL=hello@rishikeshhomestays.com
 PORT=3000
 GOOGLE_APPLICATION_CREDENTIALS=credentials/bigquery-service-account.json
+# GOOGLE_APPLICATION_CREDENTIALS_JSON={...}   (Vercel instead of the file path)
 BIGQUERY_DATASET=rishikesh_homestays
 BIGQUERY_ENQUIRIES_TABLE=enquiries
+OTP_SECRET=                                   (optional; empty = no email OTP)
 ```
 
-`.env`, `node_modules/`, `credentials/`, all other `*.json` files (except `package.json`/`package-lock.json`/`vercel.json`), and other local-only files are git-ignored (see `.gitignore`). Do not commit `.env` or the BigQuery service-account key — rotate any keys that were ever committed in the past.
+`.env`, `node_modules/`, `credentials/` and all `*.json` except `package.json`, `package-lock.json` and `vercel.json` are git-ignored. Never commit `.env` or the BigQuery key; rotate any key that was ever committed.
 
 ## 🔑 Dependencies
 
-Runtime:
+Runtime: **express**, **dotenv**, **body-parser**, **@google-cloud/bigquery**, **resend**, **libphonenumber-js** (server-side phone check; the browser uses the vendored bundle).
 
-- **express** — Web server
-- **dotenv** — Environment variables
-- **body-parser** — Parse form submissions
-- **@google-cloud/bigquery** — Database (enquiries storage)
-- **resend** — Email service
-- **libphonenumber-js** — server-side phone number validation in `api/contact.js` (the browser also uses this library, but via the self-hosted bundle in `assets/vendor/libphonenumber/`, not this npm install)
+Dev-only (their browser bundles are copied into `assets/vendor/` and committed): **flatpickr**, **leaflet**, **jsdom** (DOM tests), **playwright** (real-browser visual test `tests/visual/no-horizontal-overflow.test.js`, part of `npm test`; jsdom can't do CSS layout. Also used for ad hoc screenshots: keep it installed).
 
-Dev-only (their browser bundles are copied into `assets/vendor/` and committed — see that folder — so the npm packages themselves aren't needed at runtime):
-
-- **flatpickr** — source of `assets/vendor/flatpickr/flatpickr.min.{js,css}`
-- **jsdom** — DOM helper tests
-- **leaflet** — source of `assets/vendor/leaflet/` (re-copy `node_modules/leaflet/dist/{leaflet.js,leaflet.css,images/*}` after an upgrade)
-- **playwright** — real-browser rendering for `tests/visual/no-horizontal-overflow.test.js` (jsdom doesn't run actual CSS layout, so it can't catch a page overflowing its viewport — only a real rendered browser can). That test spins up its own ephemeral static-file server on a random port and checks every page at mobile + laptop widths; it's part of `npm test`, no separate setup needed. Also used ad hoc during development for visual verification (screenshots, timing) — keep it installed even if no other automated test uses it yet.
-
-If you upgrade `flatpickr` or `libphonenumber-js`, re-copy the built files:
+After upgrading, re-copy the bundles:
 
 ```bash
 cp node_modules/flatpickr/dist/flatpickr.min.{js,css} assets/vendor/flatpickr/
 cp node_modules/libphonenumber-js/bundle/libphonenumber-min.js assets/vendor/libphonenumber/
+cp node_modules/leaflet/dist/{leaflet.js,leaflet.css} assets/vendor/leaflet/ && cp node_modules/leaflet/dist/images/* assets/vendor/leaflet/images/
 ```
-
-## 📜 Netlify Deployment
-
-- **Publish directory:** `.` (root)
-- **Build command:** None (static files)
-- **Custom domain:** rishikeshhomestays.com
-- Contact form works via `/api/contact` route (may need serverless function adjustment for production)
 
 ## 💡 Development Rules
 
-- **Keep CSS unified** — Single `assets/css/styles.css` for performance
-- **Modular JavaScript** — Use `assets/js/modules/` for new features (see `docs/ARCHITECTURE.md`)
-- **Data centralization** — Homestays and areas defined in `assets/js/modules/data.js`
-- **Form validation** — Both frontend (contact-form module) and backend (`api/contact.js`)
-- **Optimize images** — Use tools like ImageOptim before committing media files
-- **Backward compatibility** — Keep `site.js` and `contact.js` shims for existing HTML
-- **Responsive grid tracks** — use `minmax(0, 1fr)`, not a bare `1fr`, for any mobile single-column reset (`.search-grid`, `.guide-grid`, etc. in `styles.css`). A bare `1fr` still has an implicit min-content floor, so a single fixed-width descendant anywhere inside (an embed widget, an oversized image) silently blows the whole column out to that width instead of the screen's — this exact bug shipped once and clipped an entire page's text off-screen on mobile. `tests/visual/no-horizontal-overflow.test.js` guards against it, but don't reintroduce a bare `1fr` reset.
-
-## 📊 Current State
-
-- Travel guide for Rishikesh & Haridwar that sells our own homestays first: 2,819 stays (1,720 with a confirmed booking link), ~85 generated stays/landmark pages, 7 guides, rental and enquiry pages — see `docs/HANDOFF.md` for live numbers and owner to-dos
-- Hosted on Vercel (primary; Netlify config kept for parity); GA4 + AdSense (verified, in review) + CJ Booking.com affiliate links
-- `npm test`: 413 passing (see `docs/TESTING.md`)
+- **One CSS file**: `assets/css/styles.css`.
+- **Modular JavaScript**: new features go in `assets/js/modules/`; keep the `site.js` / `contact.js` shims.
+- **Data centralization**: homestay cards and areas only in `data.js`; stays data only from `scripts/stays/`.
+- **Validate forms twice**: in the browser (form modules, `validators.js`) and in `api/contact.js`.
+- **Optimize images** before committing (WebP, sensible sizes).
+- **Image credits**: never publish them and don't keep them in the repo (owner, 2026-10-05): no `CREDITS.md` files, credit lines or credit comments.
+- **Responsive grid tracks**: use `minmax(0, 1fr)`, never a bare `1fr`, for any mobile single-column reset (`.search-grid`, `.guide-grid`…). A bare `1fr` keeps a min-content floor, so one wide descendant (an embed, a big image) blows the column past the screen; this shipped once and clipped a whole page on mobile. `tests/visual/no-horizontal-overflow.test.js` guards it.
+- **No paid Google API calls** (Places) without the owner's OK; BigQuery reads/writes are fine.
+- Commit only when asked.

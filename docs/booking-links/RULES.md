@@ -8,7 +8,7 @@ to the wrong hotel; a missing link costs little (the lead is still captured), so
 
 | File | What is in it |
 |---|---|
-| `all.tsv` | stays never searched yet (deleted once empty) |
+| `all.tsv` | stays never searched yet; deleted on 2026-10-05 once every stay had been searched (never recreate it) |
 | `found.tsv` | confirmed booking pages: `key, status, platform, url, note, name, city, source`; the note says why it matched |
 | `unfound.tsv` | stays without a confirmed page, by `status`: `retry` (search again), `none` (searched well; not on a booking site, or only closed listings: the log starts `closed listing:`), `manual` (the name cannot identify it), `duplicate` (a second entry of a place already linked), `review` (only the owner can decide) |
 | `review.tsv` | the owner's checklist: the page, what it shows, and why it is doubtful |

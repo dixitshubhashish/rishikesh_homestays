@@ -671,6 +671,8 @@ async function check(b, stay, cand) {
       }
       if (fz.ok && d !== null && d <= SAME_PLACE_KM) return { ok: false, duplicate: owner, title, url, platform: landed.name, d };
       if (fz.ok && d !== null && d <= NEAR_KM) return { ok: false, review: `same name as ${NAMES[owner]?.[0] || owner}, which has this page; pins ${Math.round(d * 1000)} m apart`, title, url, platform: landed.name };
+      // same name but no usable pin on one side: searching again would only find this page again
+      if (m.ok && d === null) return { ok: false, review: `same name as ${NAMES[owner]?.[0] || owner}, which has this page; no pin to tell them apart`, title, url, platform: landed.name };
       return { ok: false, title, url, why: `already the page of ${NAMES[owner]?.[0] || owner}${d !== null ? `, ${d.toFixed(1)} km from this stay` : ''}` };
     }
     // name, then the place itself: map pin or the address the page shows (ota-evidence.mjs)

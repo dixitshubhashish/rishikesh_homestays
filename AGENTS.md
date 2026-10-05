@@ -5,8 +5,8 @@ This repository may be worked on by Codex, Claude, or other agents.
 Before making changes:
 
 1. Read `.agents/coordination.md` for the current work ledger.
-2. Read `CLAUDE.md` and `PROGRESS.md` for project conventions and history.
-3. Claim files or a clearly defined task in `.agents/coordination.md` before editing.
+2. Read `docs/HANDOFF.md` (start here: current state, owner to-dos, hard-won rules) and `CLAUDE.md` (project rules and where things live). `PROGRESS.md` is the dated history.
+3. Claim files or a clearly defined task in `.agents/coordination.md` before editing. Old claims by Codex and other agents were released by the owner on 2026-10-05: none of them holds a file, so start with a new claim.
 
 After making changes:
 
@@ -18,4 +18,4 @@ The coordination file is the shared source of truth. It is file-based synchroniz
 
 ## Finding booking links for stays
 
-`docs/booking-links/` holds three lists, every stay in exactly one: `all.tsv` (still to sort: directory stays without a link plus Google Maps places new to us, keys `g-<place_id>`), `found.tsv` (verified links) and `unfound.tsv` (searched, nothing found: `none`, `retry` = search again, `manual` = name too generic). Claude's `scripts/stays/google_ota_search.mjs` workers move rows between them under a lock; never edit them by hand while workers run. Read `docs/booking-links/RULES.md` (match rules, pacing, no captcha workarounds) before any other agent helps; a helper writes only its own `docs/booking-links/results-<batch>.tsv` and Claude merges it. No paid Google API (Places) calls without the owner's OK; BigQuery read/write is fine.
+Claude runs this search. The lists in `docs/booking-links/` (`found.tsv`, `unfound.tsv`, `review.tsv`) change only through `scripts/stays/google_ota_search.mjs` and `scripts/stays/record_manual.mjs`, under a lock: never edit or save them by hand, and never while workers run. Any agent asked to help reads `docs/booking-links/RULES.md` first (lists, match rules, pace, no captcha workarounds) and records checks only through `record_manual.mjs`. No paid Google API (Places) calls without the owner's OK; BigQuery read/write is fine.

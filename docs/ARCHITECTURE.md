@@ -1,287 +1,126 @@
-# Architecture Overview
+# Architecture
 
-## Project Structure
+Static HTML/CSS/vanilla JS (no framework, no build step) plus a few Node API functions. The rules for working in it are in `CLAUDE.md`; this file is the map. The stays pipeline is in `scripts/stays/README.md`, the booking-link search in `docs/booking-links/RULES.md`.
+
+## Files
 
 ```
-rishikesh_homestays/
-├── assets/
-│   ├── css/
-│   │   └── styles.css              # All styling (design tokens, components)
-│   ├── js/
-│   │   ├── index.js                # Main entry point (ES modules)
-│   │   ├── analytics.js            # GA4 gtag.js loader (measurement ID lives here)
-│   │   ├── site.js                 # Backward compatibility shim
-│   │   ├── contact.js              # Backward compatibility shim
-│   │   └── modules/
-│   │       ├── data.js             # Homestay and area data
-│   │       ├── dom-helpers.js      # DOM utility functions
-│   │       ├── nav.js              # Navigation toggle
-│   │       ├── stays-renderer.js   # Stay card rendering & filtering
-│   │       ├── search-form.js      # Search & area dropdown setup
-│   │       ├── contact-form.js     # Contact form submission & counters
-│   │       └── enquiry-prefill.js  # URL param handling
-│   └── images/                     # Placeholder & actual images
-├── pages/                          # HTML pages
-│   ├── homestays.html
-│   ├── contact.html
-│   ├── things-to-do.html
-│   ├── about-rishikesh.html
-│   ├── triveni-ghat.html
-│   ├── places-to-visit.html
-│   └── thanks.html
-├── api/
-│   └── contact.js                  # Express API handler
-├── index.html                      # Landing page
-├── server.js                       # Express dev server
-├── CLAUDE.md                       # Project documentation
-└── docs/
-    └── ARCHITECTURE.md             # This file
+index.html, 404.html                 home page, custom 404
+<page>.html                          hand-made guide and lead pages, at the repo root (URL = file name)
+hotels/                              our own listing page + the generated stays pages and hotels/stay.html
+assets/css/styles.css                all site styles (tokens, components)
+assets/css/whatsapp-widget.css       WhatsApp popup only
+assets/js/analytics.js, ads.js       GA4 and AdSense, loaded by every page
+assets/js/site.js, contact.js        backward-compat shims (ES modules)
+assets/js/index.js                   old module entry point; no page loads it
+assets/js/modules/                   the real source (table below)
+assets/vendor/                       self-hosted flatpickr, libphonenumber, leaflet
+assets/images/                       photos and art
+api/                                 Vercel functions: contact, bigquery, geo, currency-rates, otp-*
+server.js                            Express dev server (static files + /api routes + 301s + 404 catch-all)
+scripts/stays/                       stays pipeline and booking-link search
+scripts/indexnow.mjs                 IndexNow pings (run by .github/workflows/indexnow.yml after a push)
+scripts/setup-bigquery.js            creates the enquiries table (idempotent)
+vercel.json, _redirects              clean URLs and 301s (Vercel, Netlify)
+sitemap.xml, llms.txt, llms-full.txt, robots.txt, ads.txt
+tests/                               see docs/TESTING.md
 ```
 
-Note: this tree is illustrative of the original module layout, not a full current listing — see `CLAUDE.md`'s own Architecture section for the up-to-date file map (`hotels/`, `tests/`, `scripts/`, `docs/`, etc. have been added since).
+`assets/js/abc.html` and `assets/css/abc.html` are empty tracked files with no purpose (safe to delete).
 
-## Module Breakdown
+## Pages
 
-### `modules/data.js`
-- **Purpose**: Central data store for static content
-- **Exports**: 
-  - `AREAS` — list of stay locations
-  - `STAYS` — homestay listing data with properties
-- **Usage**: Imported by renderer and search modules
+- **Hand-made, repo root**: guides `about-rishikesh`, `places-to-visit`, `things-to-do-in-rishikesh`, `triveni-ghat`, `kedarnath-yatra`, `haridwar-kumbh-2027`, `driving-from-delhi-to-rishikesh`; lead pages `contact`, `homestays`, `list-your-homestay`, `bike-and-taxi-rental-in-rishikesh`, `thanks`, `404`.
+- **Hand-made, `hotels/`**: `advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html` (our own listing, `/hotels/<slug>`).
+- **Generated, `hotels/`** (by `scripts/stays/build_pages.py`, never hand-edited): per city `best-<category>-in-<city>` (33 each: type, size and theme pages plus the master `best-hotels-in-<city>`), landmark pages `best-stays-near-<landmark>` (20), search-phrase pages named after Google searches (about 170, e.g. `/hotels/cheap-hotels-in-rishikesh`), and the single property page `stay.html` (`/hotels/stay?s=<slug>&c=<city>`, `noindex`). Category links are grouped (Accommodation type / By size / Themes & facilities) and sorted by count.
+- **404.html**: full site header/footer, Rishikesh-themed copy, a phone/WhatsApp/email block, auto-redirect to `/` after 30 s with a cancel option. Vercel and Netlify serve it for any unmatched route; `server.js` has a catch-all at the end that does the same locally. Art: `assets/images/404/*-choti.webp` (manual checks in `docs/TESTING.md`).
 
-### `modules/dom-helpers.js`
-- **Purpose**: Reusable DOM query and manipulation utilities
-- **Exports**: 
-  - `qs()` / `qsa()` — query selectors
-  - `addClass()` / `removeClass()` / `toggleClass()`
-  - `setAttr()` / `getAttr()`
-- **Benefit**: Consistent, safe DOM operations across modules
+## Script loading
 
-### `modules/nav.js`
-- **Purpose**: Mobile navigation toggle
-- **Exports**: `setupNav()`
-- **Dependencies**: dom-helpers.js
-- **Triggers**: On hamburger button click
+- `site.js` and `contact.js` use `import`, so every page loads them as `<script type="module">`. As plain scripts they throw "Cannot use import statement outside a module" and nav/search/forms break silently.
+- Vendor libraries (`flatpickr`, `libphonenumber`, `leaflet`) are classic `<script src>` tags placed **before** the module scripts, because they expose `window.flatpickr` / `window.libphonenumber` / `window.L`. Leaflet loads only when a map scrolls into view.
+- `analytics.js` comes right after `<meta charset>`, then the AdSense meta + `ads.js`.
 
-### `modules/stays-renderer.js`
-- **Purpose**: Render homestay cards and handle filtering
-- **Exports**:
-  - `createStayCard()` — generates card HTML
-  - `renderStays()` — filters and renders grid
-  - `hydrateFilters()` — populates dropdown options
-- **Dependencies**: data.js, dom-helpers.js
+## Modules (`assets/js/modules/`)
 
-### `modules/search-form.js`
-- **Purpose**: Search bar and area dropdown setup
-- **Exports**:
-  - `setupQuickSearch()` — form submission handler
-  - `setupAreaDropdowns()` — populate area selects
-  - `setupDatePickers()` — date input interactions
-- **Dependencies**: data.js, dom-helpers.js
-
-### `modules/contact-form.js`
-- **Purpose**: Contact form submission and guest counters
-- **Exports**:
-  - `setupContactForm()` — form validation and API call
-  - `setupCounters()` — increment/decrement buttons
-- **API Integration**: Posts to `/api/contact`
-
-### `modules/enquiry-prefill.js`
-- **Purpose**: URL parameter handling for enquiry forms
-- **Exports**:
-  - `setupEnquiryPrefill()` — prefill homestay name
-  - `applyListingParams()` — apply filter from URL
-- **Use Case**: Linking from stay card → contact form with stay pre-selected
-
-## Initialization Flow
-
-### Modern ES Modules (Future)
-```javascript
-// index.js - Import and orchestrate
-import { setupNav } from './modules/nav.js';
-import { setupContactForm } from './modules/contact-form.js';
-// ... etc
-
-document.addEventListener("DOMContentLoaded", () => {
-  setupNav();
-  setupContactForm();
-  // ... initialize all modules
-});
-```
-
-### Backward Compatibility (Current)
-```
-site.js / contact.js
-  ↓ (import from)
-modules/*.js
-  ↓ (re-export to window)
-HTML pages (can use old references)
-```
-
-## Design Decisions
-
-### Why Modular?
-1. **Testability** — Each module can be tested independently
-2. **Maintainability** — Clear single responsibility
-3. **Reusability** — Modules can be used across pages
-4. **Scalability** — Easy to add new features without tangling code
-
-### Why Backward Compatibility?
-- Existing HTML files continue to work unchanged
-- No disruption to deployed pages
-- Gradual migration path to pure ES modules
-- Falls back gracefully if old script references remain
-
-### No Build Process
-- Uses native ES modules directly
-- Simple `<script type="module">` in HTML
-- No webpack, rollup, or bundler needed
-- Fast development iteration
-
-## CSS Architecture
-
-### Design Tokens (`:root`)
-- `--ink` — text color
-- `--river` — primary action color
-- `--leaf`, `--marigold`, `--clay` — accent colors
-- `--paper`, `--panel` — backgrounds
-- `--shadow` — elevation
-- `--radius` — border radius
-
-### Component Patterns
-- `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-whatsapp`
-- `.card`, `.homestay-card`, `.info-card`
-- `.hero`, `.section`, `.container`
-- `.field`, `.tag-row`, `.filters`
-
-### Responsive
-- Mobile-first approach
-- Flexbox and CSS Grid
-- No fixed widths (uses `min()`, `max()`, `clamp()`)
-
-## API Integration
-
-### `/api/contact` — POST
-**Input:**
-```json
-{
-  "name": "string",
-  "phone": "string",
-  "email": "string (optional)",
-  "preferred_stay": "string (optional)",
-  "area": "string",
-  "coming_from_city": "string",
-  "adults": "number",
-  "children": "number",
-  "pets": "none|dogs|cats",
-  "pet_count": "number",
-  "details": "string"
-}
-```
-
-**Output:**
-```json
-{
-  "success": true,
-  "message": "Thank you! We will contact you shortly.",
-  "enquiryId": "uuid"
-}
-```
-
-**Actions:**
-1. Validates required fields (name, phone, details)
-2. Stores in BigQuery `enquiries` table
-3. Sends email to admin via Resend
-4. Sends confirmation to guest (if email provided)
-5. Returns success/error response
-
-## Performance Considerations
-
-- **Minimal JS** — Only ~10KB of business logic
-- **No Framework Overhead** — Vanilla JS runs fast
-- **Single CSS File** — No waterfall requests
-- **Static HTML** — Netlify can cache aggressively
-- **Modular Imports** — Browsers cache modules independently
-
-## Future Improvements
-
-1. **Module Bundling** — Build step for production minification
-2. **Unit Tests** — Jest/Vitest for each module
-3. **TypeScript** — Type safety without overhead
-4. **State Management** — If logic becomes more complex
-5. **Component Library** — Reusable web components
-
-## Migration Guide (Old → New)
-
-### For Developers
-Instead of editing one massive `site.js`, import specific modules:
-
-```javascript
-// Before
-const AREAS = [...]; // 9 lines
-const STAYS = [...]; // 60 lines
-function setupNav() { ... } // 10 lines
-// ... hundreds of lines mixed together
-
-// After
-import { AREAS, STAYS } from './modules/data.js';
-import { setupNav } from './modules/nav.js';
-// Each concern in its own place
-```
-
-### For HTML Pages
-No changes required — backward-compatible shims ensure old references work.
-
-But for new pages, prefer:
-```html
-<!-- Modern approach -->
-<script type="module" src="/assets/js/index.js"></script>
-
-<!-- Old approach (still works) -->
-<script src="/assets/js/site.js"></script>
-```
-
-## File Size Comparison
-
-| File | Lines | Purpose |
-|------|-------|---------|
-| site.js (old) | 212 | Everything mixed |
-| **New Modular:** | | |
-| data.js | 60 | Data only |
-| dom-helpers.js | 35 | Utilities |
-| nav.js | 12 | Nav logic |
-| stays-renderer.js | 50 | Card rendering |
-| search-form.js | 30 | Search UI |
-| contact-form.js | 60 | Form handling |
-| enquiry-prefill.js | 15 | URL params |
-| **Total** | **262** | Better organized |
-
-*Slightly larger combined, but much more maintainable.*
-
-## Stays guide & revenue layer (2026-10)
-
-The site is now a Rishikesh/Haridwar travel guide that sells the owner's own homestays first. On top of the modules above:
-
-### Pages
-- **Hand-made (repo root):** guides `about-rishikesh`, `places-to-visit`, `things-to-do-in-rishikesh`, `triveni-ghat`, `kedarnath-yatra`, `haridwar-kumbh-2027`, `driving-from-delhi-to-rishikesh`; lead pages `contact`, `homestays`, `list-your-homestay`, `bike-and-taxi-rental-in-rishikesh`, `thanks`, `404`; own listing `hotels/advaitam-…`.
-- **Generated (`hotels/`, by `scripts/stays/build_pages.py`, never hand-edited):** `best-<category>-in-<city>` (type, size, theme categories for Rishikesh and Haridwar), `best-stays-near-<landmark>` (14), and the property page `stay.html` (`/hotels/stay?s=<slug>&c=<city>`). Category links are grouped (Accommodation type / By size / Themes & facilities) and sorted by count.
-
-### Modules (`assets/js/modules/`)
-| Module | Job |
+| Module | Exports / job |
 |---|---|
-| `stays-index.js` | Lists on the generated pages: search/filter (`k:` type, `t:` theme, `b:` bedrooms), our own stays mixed in, "View property" |
-| `stays-index-data.js`, `stays-index-data-haridwar.js` | Generated data per city (never hand-edit) |
-| `stay-page.js` | Property page: facts, lead popup → one booking redirect, WhatsApp, sidebar (our homestays, grouped "More stays in …"), Leaflet map (not for Google-sourced `gm` stays: "View on Google Maps") |
-| `landmark-map.js` | Map on landmark pages (lazy Leaflet) |
-| `affiliate-links.js` | **Only place for affiliate IDs**: CJ PID + Booking.com link id; `affiliateLink(site, url)` wraps Booking.com pages in the CJ deep link |
-| `rental-form.js` | Bike & taxi rental enquiry form (phone/date validation, `rental_enquiry` payload, WhatsApp prefill) |
-| `whatsapp-widget.js`, `whatsapp-link.js` | Floating WhatsApp popup; device-aware WhatsApp links |
-| `contact-form.js`, `validators.js`, `country-select.js`, `geo.js`, `currency.js`, `button-loading.js`, `ota-lead-gate.js` | Shared form/phone/date/currency helpers (see CLAUDE.md) |
+| `data.js` | `AREAS`, `STAYS`: the hand-kept homestay cards (single source of truth). A `STAYS` entry with `detailUrl: "/hotels/<slug>"` gets a clickable card |
+| `dom-helpers.js` | `qs`, `qsa`, `getSafe`, `addClass`, `removeClass`, `toggleClass`, `setAttr`, `getAttr`; all null-safe |
+| `nav.js` | `setupNav`: mobile menu (hamburger) |
+| `stays-renderer.js` | `createStayCard`, `renderStays`, `hydrateFilters`: homestay cards and filters on `homestays.html` |
+| `search-form.js` | `setupQuickSearch`, `setupAreaDropdowns`, `setupDatePickers`: home search bar |
+| `enquiry-prefill.js` | `setupEnquiryPrefill`, `applyListingParams`: reads URL params so a stay card can open the contact form with that stay preselected, and applies listing filters |
+| `contact-form.js` | `setupContactForm`, `setupCounters`, `setupContactDatePickers`: main contact form (phone validation, flatpickr check-in/out with range rules, guest counters) |
+| `validators.js` | `validatePhone` (via `window.libphonenumber`), `validateDateRange`, `validateRentalDateRange` (same-day allowed); shared by the forms and `api/contact.js` |
+| `country-select.js` | Country-code `<select>` (flag, name, dial code) built only from libphonenumber metadata + `Intl.DisplayNames` (no hardcoded list); default country from `geo.js`, else India |
+| `geo.js` | `detectCountryCode` via `/api/geo`; cached in memory per page and in `localStorage` for 24 h |
+| `currency.js` | Approximate visitor-currency price (USD/EUR/GBP/AUD/CAD/JPY) via `/api/currency-rates`; shown next to the INR price, never instead of it; rounded up to the nearest 5 units |
+| `button-loading.js` | `setButtonLoading` / `clearButtonLoading`: spinner + "-ing" label, disabled while busy; restores the exact original label from `data-original-label` |
+| `whatsapp-widget.js` | Floating WhatsApp popup: name/phone/dates/guests/pets form, formatted booking message, stores the enquiry via `/api/contact`, opens WhatsApp. `WHATSAPP_PHONE` lives here |
+| `whatsapp-link.js` | `buildWhatsAppLink`: `wa.me` on mobile (opens the app), `web.whatsapp.com/send` on desktop (an open WhatsApp Web session gets the message in one hop); `enhanceStaticWhatsAppLinks()` rewrites a page's static `wa.me` links |
+| `ota-lead-gate.js` | Name + phone modal before outbound booking-site links on `hotels/` pages; waits for `/api/contact` to acknowledge (spinner) before opening the link |
+| `email-otp.js` | `setupEmailVerification`: optional email OTP on the enquiry form (hidden when the server has no `OTP_SECRET`) |
+| `host-form.js` | `setupHostForm`: List Your Homestay form (`host_application`) |
+| `rental-form.js` | Bike & Taxi Rental form: country-code phone, flatpickr dates, notes required for cars/taxis, `rental_enquiry` payload, WhatsApp prefill |
+| `hero-slideshow.js` | Home hero slider |
+| `page-tabs.js` | Tabs (Places / Restaurants on `places-to-visit`) |
+| `stays-index.js` | Lists on the generated pages (reads `#sx-root[data-city]`): search/filter (`k:` type, `t:` theme, `b:` bedrooms), `ruleMatches` (mirror of the search-phrase rules), `mixHtml` (own stays mixed in), `shownCount` ("View all" fold), View property |
+| `stays-index-data.js`, `stays-index-data-haridwar.js` | Generated data per city (`STAYS_INDEX`, `STAYS_INDEX_META`, `STAYS_OWN`); never hand-edit |
+| `stay-page.js` | Property page (reads `?s=` and `?c=`): facts, lead popup → one booking redirect, WhatsApp, sidebar (our homestays + grouped "More stays in …"), Leaflet map (not for `gm` stays: "View on Google Maps") |
+| `landmark-map.js` | Lazy Leaflet map on landmark pages |
+| `affiliate-links.js` | The only place for affiliate IDs: `CJ_PID` 101895722, `CJ_BOOKING_LINK_ID` 17323528, `affiliateLink(site, url)` wraps a Booking.com page in `https://www.anrdoezrs.net/click-<PID>-<LINK>?url=<page>`. `build_pages.py` reads the constants from this file; the Node scripts import it |
 
-Top-level scripts: `assets/js/analytics.js` (GA4, owner opt-out) and `assets/js/ads.js` (AdSense: per page type, top of page ad-free, rails only on wide screens; lead pages none).
+`assets/js/index.js` imports `nav`, `search-form`, `stays-renderer` and `enquiry-prefill` and runs them on `DOMContentLoaded`, but no page loads it; pages use the `site.js` shim.
 
-### Data pipeline (`scripts/stays/`, see its README)
-crawl → `process.py` (areas, types, tags, bedrooms, permanent `listing_id`; also Google Maps places via `import_google_stays.py`) → booking-link matching (`booking-match.mjs` rule, `verify_candidates.mjs`, `guess_booking_slugs.mjs`, `sitemap_candidates.py` + `verify_platform.mjs`, `postcheck_matches.py`, `merge_ota.py` → `ota-links.tsv`) → `build_pages.py` (pages, sitemap, llms.txt) → BigQuery (`push_bigquery.mjs` → `market_properties` + view `stays_sheet`; `push_places.mjs` → `places_lodging`, internal, with phones).
+## Top-level scripts
 
-### `/api/contact` sources
-`website_form`, `whatsapp_widget`, `ota_redirect_<platform>`, `stay_*` (stay-page popup: internal-only email with a "WhatsApp <name> now" button), `host_application`, `rental_enquiry` (rental page: subject "Rental enquiry: <name> → <service>", same-day rentals allowed). All stored in BigQuery `enquiries`.
+- **`analytics.js`**: GA4 (gtag.js), measurement ID `G-L82BSZMRLW` (the site's only Google tag; GTM removed 2026-09-30). Owner opt-out: `?baba=<phrase>` sets a `localStorage` flag + `ga-disable-<ID>`; `?baba=wapas` resumes. Only the phrase's SHA-256 is in the code.
+- **`ads.js`**: AdSense, publisher `ca-pub-7016219170450293` (also in `/ads.txt`). Per page type (`PLAN`):
+  - guide pages: side rails + one mid-article display (after the 2nd section) + a Multiplex grid above the footer;
+  - homepage: rails + grid;
+  - stays lists (every `/hotels/*` page except `stay` and our own listing: category, landmark and search-phrase pages): rails + one display at the page's `.rh-ad-slot` after the lists (landmark pages have no slot) + grid;
+  - lead/booking pages (stay page, contact, homestays, our own listing, list-your-homestay, rental, thanks, 404): none.
+  - Never more than 4 ads on a wide screen, 2 on a phone. The top of every page is ad-free: rails (160/300 × 600, fixed in the margins) only on windows ≥ 1580px, only after the first screen, hidden over the footer. Never on localhost or for the owner's opted-out browsers.
+  - Units are in `UNITS`. AdSense's AMP code translates: `mcrspv` → `autorelaxed`, `rspv` → `auto`. The site isn't AMP: never paste `amp-ad` / `amp-auto-ads`.
+
+## CSS
+
+- One file, `styles.css`. Tokens on `:root`: `--ink` text, `--river` primary action, `--leaf` / `--marigold` / `--clay` accents, `--paper` / `--panel` backgrounds, `--sky`, `--line`, `--muted`, `--shadow`, `--radius`, `--max` (1180px content width), `--hero-gradient-a/b/c`, `--hero-panel-bg`.
+- Components: `.btn` (`-primary`, `-secondary`, `-whatsapp`), `.card` / `.homestay-card` / `.info-card`, `.hero` / `.section` / `.container`, `.field` / `.tag-row` / `.filters`.
+- Mobile-first, flex and grid, `min()` / `max()` / `clamp()` instead of fixed widths. Single-column resets use `minmax(0, 1fr)`, never a bare `1fr` (see `CLAUDE.md`).
+
+## API (`api/`)
+
+### `POST /api/contact` (`contact.js`)
+
+Input (JSON): `name`, `phone` (E.164, `+<code><number>`), `email`, `details`, `preferred_stay`, `stay_name`, `area`, `coming_from_city`, `check_in`, `check_out`, `adults`, `children`, `guests_total`, `people`, `pets` (`none|dogs|cats`), `pet_count`, `service`, `pickup_point`, `email_verified`, `source`.
+
+Output: `{ "success": true, "message": "Thank you! We will contact you shortly.", "enquiryId": "<uuid>" }`, or an error JSON.
+
+It:
+1. Requires name, phone and details; checks the phone with `libphonenumber-js` (the browser already normalised it; this is defence in depth) and the date range with `validateDateRange`.
+2. Stores the enquiry in BigQuery (`api/bigquery.js`, `insertEnquiry`) with its `source`: `website_form` (contact page), `whatsapp_widget`, `ota_redirect_<platform>` (lead gate), `stay_redirect_<site>` / `stay_enquiry` (stay-page popup), `host_application` (List Your Homestay), `rental_enquiry` (rental page; subject "Rental enquiry: <name> → <service>", same-day rentals allowed).
+3. Sends one branded HTML email via Resend (logo, WhatsApp button, book-direct pitch). With a guest email: the guest is `to` and `CONTACT_EMAIL` is `cc` (one reply-all thread). Without: internal-only to `CONTACT_EMAIL`.
+4. **Stay-popup leads** (`stay_*`) are internal-only, even with a guest email. Subject "Stay lead: <name> (<n> guests) → <stay>", with a **"WhatsApp <name> now"** button: `wa.me/<guest phone>` with an opener that asks for their dates, offers our own homestays, and pitches booking direct ("skip the booking-site commission") with one random Rishikesh treat from `SAVED_COMMISSION_IDEAS` (Chotiwala, rafting, Triveni Ghat offering, yoga, chai & jalebis, Kunjapuri, Parmarth diyas, Ayurvedic massage, Tapovan cafes). It never names the listing they clicked (`stay_name` is for us only): the stays pages exist to sell our own homestays.
+
+### Others
+
+- `bigquery.js`: client + `insertEnquiry(row)`. Credentials from `GOOGLE_APPLICATION_CREDENTIALS` (file path, local) or `GOOGLE_APPLICATION_CREDENTIALS_JSON` (inline JSON, Vercel). Table from `BIGQUERY_DATASET` / `BIGQUERY_ENQUIRIES_TABLE` (default `rishikesh_homestays.enquiries`, day-partitioned on `created_at`, created by `scripts/setup-bigquery.js`).
+- `geo.js` (`GET /api/geo`): on Vercel, the free `x-vercel-ip-country` header (no external call); locally, `ipwho.is` (free, no key), cached in memory 24 h.
+- `currency-rates.js` (`GET /api/currency-rates`): fawazahmed0/currency-api via jsDelivr (no key), cached 24 h; a small static table if the fetch fails.
+- `otp-status.js`, `otp-send.js`, `otp-verify.js` + `otp-helpers.js`: optional email OTP. Stateless: the code is derived from `OTP_SECRET` + email + expiry and sent via Resend. Never blocks an enquiry; without `OTP_SECRET` the verify UI never appears.
+
+## Data pipeline (summary)
+
+`scripts/stays/` (details in its README): crawl → `process.py` (areas, types, tags, bedrooms, permanent `listing_id`; Google Maps places via `import_google_stays.py`) → booking links (browser search in `google_ota_search.mjs` with `ota-match.mjs` + `ota-evidence.mjs`, see `docs/booking-links/RULES.md`; older matchers `booking-match.mjs`, `verify_candidates.mjs`, `guess_booking_slugs.mjs`, `sitemap_candidates.py` + `verify_platform.mjs`) → `postcheck_matches.py` → `merge_ota.py` → `ota-links.tsv` → `build_pages.py` (pages, footers via `footer_links.py`, search-phrase pages via `search_pages.py`, dates via `page_dates.py`, sitemap, `llms.txt`, `llms-full.txt`) → BigQuery (`push_bigquery.mjs` → `market_properties` + view `stays_sheet`; `push_places.mjs` → `places_lodging`, internal only). `refresh.py` re-crawls on a schedule.
+
+## Hosting
+
+Vercel is primary (`vercel.json`: `cleanUrls`, 301s, the `api/` functions). Netlify config (`_redirects`) is kept for parity, but there is no `netlify.toml` or functions folder, so on a plain Netlify static deploy `/api/*` (forms, lead popup) would not run.
+
+## Design notes
+
+- Modular for testability, single responsibility, reuse across pages and room to grow; shims kept so existing pages keep working.
+- No bundler: native ES modules, fast iteration; one CSS file, no request waterfall; modules cached by the browser separately.
+- Ideas not taken up yet: a production build step (minify), TypeScript, state management, web components.
