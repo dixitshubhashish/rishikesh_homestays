@@ -3580,3 +3580,202 @@ input.sx-input {
   color: var(--ok);}
 [data-form-status].is-err {
   color: var(--err);}
+
+/* ============================================================
+   Dark/light theme. The head snippet on every page sets
+   <html data-theme="light|dark"> before the first paint, and
+   assets/js/modules/theme-toggle.js wires the header button.
+   Light is the colours above; dark only redefines tokens here,
+   plus the few third-party widgets that bring their own colours.
+   Always dark in both themes, so left alone: the heroes, the
+   footers, the stay gallery, booking-site and WhatsApp brand
+   colours, the 404 river scene and the map pins.
+   ============================================================ */
+:root {
+  color-scheme: light;}
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin-left: auto;
+  margin-right: -12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;}
+.theme-toggle:hover {
+  background: var(--sky);
+  border-color: rgba(var(--accent-rgb), 0.26);
+  color: var(--river);}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--river);
+  outline-offset: 2px;}
+.theme-toggle svg {
+  display: block;}
+.theme-toggle .theme-toggle-sun,
+:root[data-theme="dark"] .theme-toggle .theme-toggle-moon {
+  display: none;}
+:root[data-theme="dark"] .theme-toggle .theme-toggle-sun {
+  display: block;}
+@media (min-width: 1381px) {
+  /* desktop: after the inline nav, which keeps its place on the right */
+  .site-nav {
+    margin-left: auto;}
+  .theme-toggle {
+    order: 1;
+    margin-left: 0;
+    margin-right: 0;}}
+@media (max-width: 420px) {
+  .nav-wrap {
+    gap: 14px;}
+  .theme-toggle {
+    margin-right: -6px;}}
+@media (max-width: 374px) {
+  /* small phones: the site name wraps to two lines so both buttons fit */
+  .site-header .brand {
+    white-space: normal;
+    line-height: 1.15;}}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e7ece9;
+  --muted: #a3b0ac;
+  --paper: #0f1715;
+  --panel: #16211e;
+  --line: #2c3a36;
+  --river: #7fc9bc;
+  --river-2: #5fb8bd;
+  --leaf: #9cc06e;
+  --marigold: #e8a64f;
+  --clay: #e08a72;
+  --sky: #1b2c28;
+  --shadow: 0 18px 46px rgba(0, 0, 0, 0.45);
+  --river-fill: #1f6a62;
+  --river-fill-2: #1f6a62;
+  --on-fill: #fff;
+  --header-bg: rgba(15, 23, 21, 0.9);
+  --header-line: rgba(255, 255, 255, 0.08);
+  --ink-2: #c9d3cf;
+  --ink-label: #c9d3cf;
+  --ink-tag: #c9d3cf;
+  --eyebrow: #8fd3a8;
+  --alt: #131e1b;
+  --zebra: #1a2522;
+  --note-bg: #2a2316;
+  --note-ink: #f1d9a8;
+  --note-ink-2: #d9cfb8;
+  --notice-bg: linear-gradient(110deg, #16302a 0%, #2a2316 100%);
+  --notice-strong: #8fd3a8;
+  --strip-bg: #131e1b;
+  --strip-card: #16211e;
+  --strip-line: #2c3a36;
+  --img-ph: #22302c;
+  --img-ph-2: #22302c;
+  --shadow-card: rgba(0, 0, 0, 0.35);
+  --accent-rgb: 127, 201, 188;
+  --ok: #7ed492;
+  --err: #ff8a80;
+  --ad-preview-line: #b8862f;
+  --ad-preview-a: #2a2316;
+  --ad-preview-b: #33291a;
+  --ad-preview-ink: #f1d9a8;}
+
+/* The logo is a white-background PNG: a deliberate white chip in dark. */
+:root[data-theme="dark"] .site-header .site-logo,
+:root[data-theme="dark"] .nav-drawer-logo {
+  background: #fff;
+  border-radius: 10px;
+  padding: 3px;}
+
+/* Local ad previews (ads.js, localhost only). */
+:root[data-theme="dark"] .rh-ad-preview {
+  border-color: var(--ad-preview-line);
+  background: repeating-linear-gradient(45deg, var(--ad-preview-a), var(--ad-preview-a) 10px, var(--ad-preview-b) 10px, var(--ad-preview-b) 20px);
+  color: var(--ad-preview-ink);}
+
+/* Leaflet maps: darker tiles (pins sit in their own pane and keep their colours). */
+:root[data-theme="dark"] .leaflet-container {
+  background: #1b2422;}
+:root[data-theme="dark"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);}
+:root[data-theme="dark"] .leaflet-popup-content-wrapper,
+:root[data-theme="dark"] .leaflet-popup-tip,
+:root[data-theme="dark"] .leaflet-bar a {
+  background: var(--panel);
+  color: var(--ink);}
+:root[data-theme="dark"] .leaflet-bar a {
+  border-bottom-color: var(--line);}
+:root[data-theme="dark"] .leaflet-bar a:hover {
+  background: var(--sky);}
+:root[data-theme="dark"] .leaflet-container a.leaflet-popup-close-button {
+  color: var(--muted);}
+:root[data-theme="dark"] .leaflet-control-attribution {
+  background: rgba(15, 23, 21, 0.85);
+  color: var(--muted);}
+:root[data-theme="dark"] .leaflet-control-attribution a {
+  color: var(--river);}
+
+/* flatpickr date picker (its vendor stylesheet is light only). */
+:root[data-theme="dark"] .flatpickr-calendar {
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--line), 0 12px 30px rgba(0, 0, 0, 0.5);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowTop::after {
+  border-bottom-color: var(--panel);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowBottom::after {
+  border-top-color: var(--panel);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowTop::before {
+  border-bottom-color: var(--line);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowBottom::before {
+  border-top-color: var(--line);}
+:root[data-theme="dark"] .flatpickr-months .flatpickr-month,
+:root[data-theme="dark"] .flatpickr-months .flatpickr-prev-month,
+:root[data-theme="dark"] .flatpickr-months .flatpickr-next-month,
+:root[data-theme="dark"] .flatpickr-current-month input.cur-year,
+:root[data-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months {
+  color: var(--ink);
+  fill: var(--ink);}
+:root[data-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months {
+  background: var(--panel);}
+:root[data-theme="dark"] .flatpickr-months .flatpickr-prev-month:hover svg,
+:root[data-theme="dark"] .flatpickr-months .flatpickr-next-month:hover svg {
+  fill: var(--river);}
+:root[data-theme="dark"] .numInputWrapper span.arrowUp::after {
+  border-bottom-color: var(--ink);}
+:root[data-theme="dark"] .numInputWrapper span.arrowDown::after {
+  border-top-color: var(--ink);}
+:root[data-theme="dark"] span.flatpickr-weekday {
+  color: var(--muted);}
+:root[data-theme="dark"] .flatpickr-day {
+  color: var(--ink);}
+:root[data-theme="dark"] .flatpickr-day:hover,
+:root[data-theme="dark"] .flatpickr-day:focus,
+:root[data-theme="dark"] .flatpickr-day.inRange,
+:root[data-theme="dark"] .flatpickr-day.prevMonthDay.inRange,
+:root[data-theme="dark"] .flatpickr-day.nextMonthDay.inRange {
+  background: var(--sky);
+  border-color: var(--sky);
+  box-shadow: -5px 0 0 var(--sky), 5px 0 0 var(--sky);}
+:root[data-theme="dark"] .flatpickr-day:hover,
+:root[data-theme="dark"] .flatpickr-day:focus {
+  box-shadow: none;}
+:root[data-theme="dark"] .flatpickr-day.today {
+  border-color: var(--muted);}
+:root[data-theme="dark"] .flatpickr-day.selected,
+:root[data-theme="dark"] .flatpickr-day.startRange,
+:root[data-theme="dark"] .flatpickr-day.endRange {
+  background: var(--river-fill);
+  border-color: var(--river-fill);
+  color: var(--on-fill);
+  box-shadow: none;}
+:root[data-theme="dark"] .flatpickr-day.prevMonthDay,
+:root[data-theme="dark"] .flatpickr-day.nextMonthDay,
+:root[data-theme="dark"] .flatpickr-day.flatpickr-disabled,
+:root[data-theme="dark"] .flatpickr-day.flatpickr-disabled:hover {
+  color: rgba(231, 236, 233, 0.32);
+  background: transparent;
+  border-color: transparent;}

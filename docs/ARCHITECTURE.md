@@ -40,6 +40,7 @@ tests/                               see docs/TESTING.md
 - `site.js` and `contact.js` use `import`, so every page loads them as `<script type="module">`. As plain scripts they throw "Cannot use import statement outside a module" and nav/search/forms break silently.
 - Vendor libraries (`flatpickr`, `libphonenumber`, `leaflet`) are classic `<script src>` tags placed **before** the module scripts, because they expose `window.flatpickr` / `window.libphonenumber` / `window.L`. Leaflet loads only when a map scrolls into view.
 - `analytics.js` comes right after `<meta charset>`, then the AdSense meta + `ads.js`.
+- Then the theme head snippet: `<meta name="theme-color">` and an inline script that sets `<html data-theme>` from `localStorage['rh-theme']` (light while unset) before the stylesheets, so there is no flash of the wrong theme. Every page also has one `<button class="theme-toggle" data-theme-toggle>` in the header, before the menu button. Generated stays pages copy both from `thanks.html`. `tests/integration/theme.test.js` checks every page.
 
 ## Modules (`assets/js/modules/`)
 
@@ -59,6 +60,7 @@ tests/                               see docs/TESTING.md
 | `button-loading.js` | `setButtonLoading` / `clearButtonLoading`: spinner + "-ing" label, disabled while busy; restores the exact original label from `data-original-label` |
 | `whatsapp-widget.js` | Floating WhatsApp popup: name/phone/dates/guests/pets form, formatted booking message, stores the enquiry via `/api/contact`, opens WhatsApp. `WHATSAPP_PHONE` lives here |
 | `whatsapp-link.js` | `buildWhatsAppLink`: `wa.me` on mobile (opens the app), `web.whatsapp.com/send` on desktop (an open WhatsApp Web session gets the message in one hop); `enhanceStaticWhatsAppLinks()` rewrites a page's static `wa.me` links |
+| `theme-toggle.js` | `setupThemeToggle` (called by `site.js`): dark/light switch, stores `rh-theme`, keeps `aria-pressed`, `color-scheme` and the theme-color meta in step, fires `rh-themechange`. Phase 1 is opt-in (`FOLLOW_SYSTEM = false`); phase 2 follows the system setting while nothing is stored (one line here, one in the head snippet) |
 | `ota-lead-gate.js` | Name + phone modal before outbound booking-site links on `hotels/` pages; waits for `/api/contact` to acknowledge (spinner) before opening the link |
 | `email-otp.js` | `setupEmailVerification`: optional email OTP on the enquiry form (hidden when the server has no `OTP_SECRET`) |
 | `host-form.js` | `setupHostForm`: List Your Homestay form (`host_application`) |

@@ -555,3 +555,15 @@
   outline: 2px solid #25d366;
   outline-offset: 2px;
 }
+
+/* Dark theme (data-theme set by the head snippet): the popup takes the site's tokens. */
+:root[data-theme="dark"] {
+  --wa-surface: var(--panel);
+  --wa-ink: var(--ink);
+  --wa-ink-2: var(--muted);
+  --wa-line: var(--line);
+  --wa-line-2: var(--line);
+  --wa-line-3: var(--line);
+  --wa-soft: var(--sky);
+  --wa-hover: #1d3a2c;
+  --wa-title: #5fd3a8;}

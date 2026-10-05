@@ -58,7 +58,9 @@ export async function startServer(root = ROOT) {
 }
 
 // A page with the stored theme choice set before any script runs.
-export async function openPage(browser, base, url, { viewport, theme = null, system = 'light' } = {}) {
+// force: also set <html data-theme> directly, to preview generated pages that
+// get the head snippet only at the next stays build.
+export async function openPage(browser, base, url, { viewport, theme = null, system = 'light', force = false } = {}) {
   const context = await browser.newContext({ viewport, colorScheme: system });
   await context.route('**/*', (route) => {
     const u = route.request().url();
@@ -72,6 +74,20 @@ export async function openPage(browser, base, url, { viewport, theme = null, sys
   if (theme) {
     await context.addInitScript((t) => {
       try { localStorage.setItem('rh-theme', t); } catch { /* storage blocked */ }
+    }, theme);
+  }
+  if (theme && force) {
+    await context.addInitScript((t) => {
+      // the parser creates <html> after init scripts run: catch it as it appears
+      const mark = () => {
+        const d = document.documentElement;
+        if (d && !d.hasAttribute('data-theme')) { d.setAttribute('data-theme', t); d.style.colorScheme = t; }
+        return !!d;
+      };
+      if (!mark()) {
+        const mo = new MutationObserver(() => { if (mark()) mo.disconnect(); });
+        mo.observe(document, { childList: true });
+      }
     }, theme);
   }
   const page = await context.newPage();
@@ -94,7 +110,12 @@ export function uiStates(name, width) {
   const s = [];
   if (width < 1381) s.push(['drawer', (p) => p.click('[data-nav-toggle]', { timeout: 4000 })]);
   s.push(['whatsapp', (p) => p.click('.whatsapp-fab', { timeout: 4000 })]);
-  if (name === 'contact') s.push(['datepicker', (p) => p.click('#check_in', { timeout: 4000 })]);
+  if (name === 'contact') {
+    s.push(['datepicker', async (p) => {
+      // flatpickr's altInput hides #check_in and shows its own input next to it
+      await p.locator('#check_in + input').click({ timeout: 4000 });
+    }]);
+  }
   if (name === 'stay' || name === 'landmark') {
     s.push(['map', (p) => p.locator('.leaflet-container').first().scrollIntoViewIfNeeded({ timeout: 4000 })]);
   }
@@ -104,7 +125,7 @@ export function uiStates(name, width) {
 
 async function shootUi(browser, base, url, viewport, theme, name, outDir) {
   for (const [label, act] of uiStates(name, viewport.width)) {
-    const { context, page } = await openPage(browser, base, url, { viewport, theme });
+    const { context, page } = await openPage(browser, base, url, { viewport, theme, force: true });
     try {
       await settle(page);
       await act(page);
@@ -127,7 +148,7 @@ export async function shoot(outDir, { theme = null, ui = false } = {}) {
   try {
     for (const [name, url] of PAGES) {
       for (const viewport of VIEWPORTS) {
-        const { context, page } = await openPage(browser, srv.base, url, { viewport, theme });
+        const { context, page } = await openPage(browser, srv.base, url, { viewport, theme, force: true });
         try {
           await settle(page);
           const file = path.join(outDir, `${name}-${viewport.name}.png`);
