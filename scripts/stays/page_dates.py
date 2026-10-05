@@ -8,9 +8,13 @@ page's content and the date that fingerprint first appeared.
 
 - Generated stays pages: build_pages.py fingerprints each page's <main>.
 - Hand-made pages (index.html, the guides, ...): refresh_static() fingerprints
-  the file without the generated footer-stays block (a new stays page changes
-  every footer, which is not news about the page itself) and rewrites their
+  the file without its <head>, its site header and the generated footer-stays
+  block (a new stays page changes every footer, a theme or tag change every
+  head and header: none of it is news about the page itself) and rewrites their
   <lastmod> in sitemap.xml, outside the generated sections.
+- `python3 page_dates.py --reseed`: after changing what the fingerprint skips,
+  store the new fingerprints but keep every date (a page whose content already
+  changed under the old rule is left alone, so its next refresh still re-dates it).
 """
 import datetime
 import hashlib
@@ -71,6 +75,45 @@ def git_date(file):
         return None
 
 
+def static_content(page):
+    """What a reader reads on a hand-made page: the file minus head, site header and footer-stays block."""
+    page = re.sub(r'<!-- footer-stays -->.*?<!-- /footer-stays -->', '', page, flags=re.S)
+    page = re.sub(r'<head>.*?</head>', '', page, count=1, flags=re.S)
+    return re.sub(r'<header class="site-header">.*?</header>', '', page, count=1, flags=re.S)
+
+
+def static_pages(sitemap):
+    """(path, rel, loc match) of every hand-made page in sitemap.xml, outside the generated sections."""
+    s = open(sitemap, encoding='utf8').read()
+    generated = [(m.start(), m.end()) for m in re.finditer(r'<!-- stays-pages[a-z-]*:start -->.*?<!-- stays-pages[a-z-]*:end -->', s, re.S)]
+    for m in re.finditer(r'<url>\s*<loc>([^<]+)</loc>\s*<lastmod>([^<]+)</lastmod>.*?</url>', s, flags=re.S):
+        if any(a <= m.start() < b for a, b in generated):
+            continue
+        rel = m.group(1)[len(SITE):].strip('/') or 'index'
+        if os.path.exists(os.path.join(ROOT, f'{rel}.html')):
+            yield '/' + ('' if rel == 'index' else rel), rel, m
+
+
+def reseed(sitemap=os.path.join(ROOT, 'sitemap.xml')):
+    """Store fingerprints under the current static_content() rule, keeping every date.
+    Only pages unchanged under the old rule (file minus footer-stays) are reseeded."""
+    reg = load()
+    for path, rel, _ in static_pages(sitemap):
+        page = open(os.path.join(ROOT, f'{rel}.html'), encoding='utf8').read()
+        old = fingerprint(re.sub(r'<!-- footer-stays -->.*?<!-- /footer-stays -->', '', page, flags=re.S))
+        new = fingerprint(static_content(page))
+        if path not in reg:
+            continue
+        if reg[path][0] == new:
+            continue
+        if reg[path][0] != old:
+            print(f'reseed: {path} changed since its last refresh, left for the next refresh to re-date')
+            continue
+        reg[path] = (new, reg[path][1])
+        print(f'reseed: {path} fingerprint updated, date kept ({reg[path][1]})')
+    save(reg)
+
+
 def refresh_static(sitemap=os.path.join(ROOT, 'sitemap.xml')):
     """Rewrite <lastmod> of the hand-made pages in sitemap.xml from their content fingerprints."""
     reg = load()
@@ -85,8 +128,7 @@ def refresh_static(sitemap=os.path.join(ROOT, 'sitemap.xml')):
         file = os.path.join(ROOT, f'{rel}.html')
         if not os.path.exists(file):
             return m.group(0)
-        page = open(file, encoding='utf8').read()
-        page = re.sub(r'<!-- footer-stays -->.*?<!-- /footer-stays -->', '', page, flags=re.S)
+        page = static_content(open(file, encoding='utf8').read())
         # a page seen for the first time keeps the later of its sitemap date and its last commit
         first = max(d for d in (m.group(2), git_date(f'{rel}.html')) if d)
         date = date_for(reg, '/' + ('' if rel == 'index' else rel), page, first)
@@ -99,4 +141,8 @@ def refresh_static(sitemap=os.path.join(ROOT, 'sitemap.xml')):
 
 
 if __name__ == '__main__':
-    refresh_static()
+    import sys
+    if '--reseed' in sys.argv:
+        reseed()
+    else:
+        refresh_static()
