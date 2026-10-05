@@ -3840,8 +3840,12 @@ html:is(:lang(hi), :lang(bn), :lang(ta), :lang(te), :lang(kn), :lang(mr), :lang(
   line-height: 1.35;}
 html:is(:lang(zh), :lang(ja), :lang(ko)) :is(h1, h2, h3, h4) {
   line-height: 1.3;}
-/* Long words (Tamil, Malayalam-style compounds, German) wrap instead of overflowing. */
-html:not(:lang(en)) :is(h1, h2, h3, .btn, button, .nav-cta) {
+/* Translations run longer than English (Tamil, Telugu, German...): buttons
+   and tabs wrap onto a second line instead of spilling out of their box. */
+html:not(:lang(en)) :is(.btn, .page-tab-btn, .nav-cta, button) {
+  white-space: normal !important;
+  text-align: center;}
+html:not(:lang(en)) :is(h1, h2, h3, .btn, .page-tab-btn, button) {
   overflow-wrap: anywhere;}
 
 /* System fonts per script (no web fonts); the serif headings switch to the

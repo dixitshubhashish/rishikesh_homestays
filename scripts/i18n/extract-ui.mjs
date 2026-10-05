@@ -180,7 +180,7 @@ export function extractUi() {
   for (const p of PAGES) inlineScripts(p).forEach((js, i) => sources.push([`${p}.html#script${i}`, js]));
   for (const [where, src] of sources) {
     // The rh-i18n head snippet itself has no UI text.
-    if (src.includes("rh-i18n")) continue;
+    if (src.includes("/* rh-i18n:")) continue;
     for (const lit of stringLiterals(src)) for (const t of pieces(lit)) if (looksLikeText(t)) add(t, where);
   }
   const out = {};
