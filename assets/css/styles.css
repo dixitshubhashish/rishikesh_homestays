@@ -1213,13 +1213,6 @@ a.homestay-photo:hover {
   margin: 12px 0 0;
   color: var(--muted);
   font-size: 0.86rem;}
-.photo-credit {
-  margin: 28px 0 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-  text-align: center;}
-.photo-credit a {
-  text-decoration: underline;}
 .info-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -66,6 +66,7 @@ const [GAP_MIN, GAP_MAX] = arg('--gap', '10-18').split('-').map(Number);
 const SYNC_ONLY = flag('--sync');
 const SEARCHES_PER_STAY = DEEP ? 7 : 2, LINKS_PER_PAGE = DEEP ? 4 : 3, SCROLL_STEPS = DEEP ? 8 : 5;
 const ENGINE_FALLBACKS = 2;
+const MAX_DEAD = 3; // closed listings opened per stay, on top of LINKS_PER_PAGE live ones
 const MORE_PAGES = 2; // "More results" / next page, when the first page shows nothing like the stay // a search that shows nothing like the stay is repeated on up to 2 other engines
 // --attach chrome=http://localhost:9222[,opera=…]: browsers you opened yourself (a bare URL means chrome)
 const ATTACH = Object.fromEntries(arg('--attach', '').split(',').filter(Boolean)
@@ -152,13 +153,17 @@ const LL = {};
 for (const f of ['scripts/stays/.cache/stays.json', 'scripts/stays/.cache/haridwar/stays.json']) {
   try { for (const x of JSON.parse(readFileSync(ROOT + f, 'utf8'))) if (x.ll) LL[x.id] = x.ll; } catch {}
 }
-try { for (const x of JSON.parse(readFileSync(`${ROOT}scripts/stays/.cache/places/places.json`, 'utf8'))) if (x.lat) LL[`g-${x.id}`] = [x.lat, x.lng]; } catch {}
+const MAPS = {}; // Google Maps place page of each g- stay (its booking partners are read in the browser, no API)
+try { for (const x of JSON.parse(readFileSync(`${ROOT}scripts/stays/.cache/places/places.json`, 'utf8'))) { if (x.lat) LL[`g-${x.id}`] = [x.lat, x.lng]; if (x.maps) MAPS[`g-${x.id}`] = x.maps; } } catch {}
 const kmBetween = (a, b) => {
   const r = (x) => (x * Math.PI) / 180;
   const h = Math.sin(r(b[0] - a[0]) / 2) ** 2 + Math.cos(r(a[0])) * Math.cos(r(b[0])) * Math.sin(r(b[1] - a[1]) / 2) ** 2;
   return 6371 * 2 * Math.asin(Math.sqrt(h));
 };
 const SAME_PLACE_KM = 0.25, NEAR_KM = 2; // pins this close: same place; up to NEAR_KM: the owner decides (review.tsv)
+// A pin shared by 3+ stays is a placeholder (an area centre), not the place: never used for duplicates.
+const pinKey = (ll) => `${ll[0].toFixed(4)},${ll[1].toFixed(4)}`;
+const COARSE = (() => { const n = {}; for (const ll of Object.values(LL)) n[pinKey(ll)] = (n[pinKey(ll)] || 0) + 1; return new Set(Object.keys(n).filter((k) => n[k] >= 3)); })();
 const nameSet = (n) => [...new Set(n.toLowerCase().replace(/home stay/g, 'homestay').replace(/guest house/g, 'guesthouse')
   .replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter((w) => w && !/^(?:hotel|hotels|the|a|an|and|of|in|at|by|with|rishikesh|haridwar|hardwar|tapovan)$/.test(w)))].sort().join(' ');
 const normUrl = (u) => { const p = platformOf(u); try { if (p) u = cleanUrl(u, p.name); } catch {} return u.split('?')[0].replace(/\/+$/, ''); };
@@ -172,7 +177,7 @@ function ownedByOther(stay, url) {
 function record(stay, outcome, data) {
   if (DRY) return null;
   return withLock(() => {
-    writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== stay.key));
+    if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== stay.key));
     const unfound = tsv(UNFOUND).filter((r) => r.key !== stay.key);
     if (outcome === 'verified') {
       writeTsv(FOUND, FOUND_COLS, [...tsv(FOUND), { key: stay.key, status: 'verified', city: stay.city, name: stay.name, ...data }]);
@@ -192,7 +197,7 @@ function recordReview(stay, r) {
     if (!existsSync(R)) writeFileSync(R, 'key\tname\tcity\tplatform\turl\tpage_shows\twhy_review\n');
     const cols = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review'];
     writeTsv(R, cols, [...tsv(R).filter((x) => x.key !== stay.key), { key: stay.key, name: stay.name, city: stay.city, platform: r.platform, url: r.url, page_shows: r.title, why_review: r.review }]);
-    writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((x) => x.key !== stay.key));
+    if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((x) => x.key !== stay.key));
     writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((x) => x.key !== stay.key), { key: stay.key, name: stay.name, city: stay.city, area: stay.area, search_log: `in review.tsv for the owner: ${r.review}`, status: 'review' }]);
     return counts();
   });
@@ -599,22 +604,53 @@ async function check(b, stay, cand) {
   try {
     const host = await searchTab(b, 'google'); // Google's click-only results live in its tab
     page = cand.pick ? await openPick(b, host, cand.pick) : await openBackground(b, cand.url);
-    await page.waitForLoadState('domcontentloaded', { timeout: 25000 });
-    await jitter(1500, 2500);
-    const title = (await page.title()).trim();
+    const resp = await page.waitForLoadState('domcontentloaded', { timeout: 25000 }).then(() => null);
+    // Airbnb and Agoda fill in the real title late (lessons from the hand checks, 2026-10-05): wait for it
+    await page.waitForFunction(() => document.title && !/^(airbnb|agoda|booking\.com|makemytrip|goibibo|expedia|hotels\.com|trip\.com)\b[:|\s-]*(holiday|vacation|hotels?|book|online|$)/i.test(document.title), null, { timeout: 7000 }).catch(() => {});
+    await jitter(400, 800);
     finalUrl = page.url();
+    // a closed listing: Booking.com sends it to a city search with closed_msg / hlrd, others say so in words
+    const deadText = await page.evaluate(() => /no longer available|is not available on our site|this property is closed|hotel not found|page not found|listing (?:is )?(?:no longer|not) available/i.test((document.body?.innerText || '').slice(0, 4000))).catch(() => false);
+    if (/[?&](?:closed_msg|hlrd)=/.test(finalUrl) || deadText) return { ok: false, dead: true, title: 'closed listing', url: finalUrl };
+    const seen = await page.evaluate(() => {
+      // the property's own name and pin: JSON-LD of @type Hotel / LodgingBusiness / Accommodation, then meta tags
+      let ldName = '', ldTown = '', ldPin = null;
+      for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+        try {
+          const nodes = [].concat(JSON.parse(s.textContent)).flatMap((n) => [n, ...(n['@graph'] || [])]);
+          for (const n of nodes) {
+            const t = [].concat(n['@type'] || []).join(' ');
+            if (!/Hotel|LodgingBusiness|Accommodation|Hostel|Resort|BedAndBreakfast|Campground|VacationRental|House|Apartment/i.test(t)) continue;
+            ldName ||= n.name || '';
+            ldTown ||= n.address?.addressLocality || '';
+            const g = n.geo || {};
+            if (!ldPin && g.latitude && g.longitude) ldPin = [Number(g.latitude), Number(g.longitude)];
+          }
+        } catch { /* not JSON */ }
+      }
+      const meta = (p) => document.querySelector(`meta[property="${p}"], meta[name="${p}"]`)?.content || '';
+      const metaPin = meta('place:location:latitude') && [Number(meta('place:location:latitude')), Number(meta('place:location:longitude'))];
+      const atlas = (document.querySelector('[data-atlas-latlng]')?.getAttribute('data-atlas-latlng') || '').split(',').map(Number);
+      const h1s = [...document.querySelectorAll('h1')].map((h) => h.innerText.trim()).filter(Boolean);
+      return {
+        title: document.title.trim(), ogTitle: meta('og:title'), ldName, ldTown, h1: h1s.length === 1 ? h1s[0] : '',
+        pin: atlas.length === 2 && atlas[0] ? atlas : ldPin || metaPin || null,
+        text: (document.body?.innerText || '').slice(0, 40000),
+      };
+    }).catch(() => ({ title: '', text: '', pin: null }));
+    // still generic: the property's own name from og:title, its JSON-LD node or the only h1 (marked as such)
+    const generic = !seen.title || /^(airbnb|agoda|booking\.com|makemytrip|goibibo)\b[:|\s-]*(holiday|vacation|hotels?|book|online|$)/i.test(seen.title);
+    let title = seen.title;
+    if (generic) title = [seen.ogTitle, seen.ldName, seen.h1].find((t) => t && !/^(airbnb|agoda|booking\.com)\b/i.test(t)) || '';
+    if (generic && title && seen.ldTown && !new RegExp(seen.ldTown, 'i').test(title)) title = `${title}, ${seen.ldTown}`;
     const landed = platformOf(finalUrl);
     const url = landed ? cleanUrl(finalUrl, landed.name) : finalUrl;
     if (!title || /just a moment|access denied|captcha|robot|attention required|^403|^404|not found/i.test(title)) return { ok: false, unreadable: true, title, url: landed ? url : '' };
     // still that site's property page (a closed Booking listing redirects to a city search) and the same stay
     // judged on where it landed (a Google result labelled Booking.com may land elsewhere)
     if (!landed) return { ok: false, title, url, why: 'not a property page' };
-    const seen = await page.evaluate(() => ({
-      pin: (document.querySelector('[data-atlas-latlng]')?.getAttribute('data-atlas-latlng') || '').split(',').map(Number),
-      text: (document.body?.innerText || '').slice(0, 40000),
-    })).catch(() => ({ pin: [], text: '' }));
-    const pin = seen.pin;
-    const pageLL = pin.length === 2 && pin.every(Number.isFinite) && pin[0] ? pin : null;
+    // a pin is used only when it is in our part of Uttarakhand
+    const pageLL = seen.pin && seen.pin.every(Number.isFinite) && seen.pin[0] > 29 && seen.pin[0] < 31 && seen.pin[1] > 77.5 && seen.pin[1] < 79 ? seen.pin : null;
     const here = LL[stay.key];
     const m = matchReason(stay.name, stay.city, title);
     const fz = m.ok ? { ok: true } : fuzzyName(stay.name, `${title} ${new URL(url).pathname.replace(/[-_/.]+/g, ' ')}`);
@@ -623,12 +659,25 @@ async function check(b, stay, cand) {
       // a second listing of the same place (same name, pins together) is a duplicate of the stay that has
       // the page, not a miss; same name but further apart is for the owner to judge
       const there = pageLL || LL[owner];
-      const d = here && there ? kmBetween(here, there) : null;
+      const d = here && there && !COARSE.has(pinKey(here)) && !COARSE.has(pinKey(there)) ? kmBetween(here, there) : null;
+      // not a duplicate when a brand tells the two apart ("FabHotel Yamunotri Retreat" vs "Hotel Yamunotri Retreat"), or when
+      // the page fits this stay's name but not its current owner's: then only the owner can say whose page it is
+      const brand = (n) => (String(n).toLowerCase().match(/\b(fab ?hotel|oyo|capital o|collection o|townhouse|treebo|goroomgo|spot on|silverkey|zostel)\b/g) || []).sort().join();
+      const ownerName = NAMES[owner]?.[0] || '';
+      // Google Maps itself lists the owner's page as this place's partner: one place, two entries of ours
+      if (cand.fromMaps && ownerName && matchReason(ownerName, NAMES[owner]?.[1] || stay.city, title).ok) return { ok: false, duplicate: owner, title, url, platform: landed.name, d: 0 };
+      if (brand(stay.name) !== brand(ownerName) || (m.ok && ownerName && !matchReason(ownerName, NAMES[owner]?.[1] || stay.city, title).ok)) {
+        return { ok: false, review: `this page may belong to this stay rather than ${ownerName || owner}, which has it now`, title, url, platform: landed.name };
+      }
       if (fz.ok && d !== null && d <= SAME_PLACE_KM) return { ok: false, duplicate: owner, title, url, platform: landed.name, d };
       if (fz.ok && d !== null && d <= NEAR_KM) return { ok: false, review: `same name as ${NAMES[owner]?.[0] || owner}, which has this page; pins ${Math.round(d * 1000)} m apart`, title, url, platform: landed.name };
       return { ok: false, title, url, why: `already the page of ${NAMES[owner]?.[0] || owner}${d !== null ? `, ${d.toFixed(1)} km from this stay` : ''}` };
     }
     // name, then the place itself: map pin or the address the page shows (ota-evidence.mjs)
+    if (cand.fromMaps) { // Google Maps lists this page as the place's own booking partner: the place is confirmed
+      if (m.ok || fz.ok) return { ok: true, title, url, platform: landed.name, evidence: 'Google Maps lists it as this place\'s booking partner' };
+      return { ok: false, review: 'Google Maps lists it as this place\'s booking partner, but the page uses another name', title, url, platform: landed.name };
+    }
     const j = judge({ key: stay.key, name: stay.name, city: stay.city, nameOk: m.ok, title, urlPath: new URL(url).pathname, pageLL, pageText: seen.text });
     if (j.verdict === 'review') return { ok: false, review: j.why, title, url, platform: landed.name };
     if (j.verdict === 'verified') return { ok: true, title, url, platform: landed.name, evidence: j.why };
@@ -640,13 +689,36 @@ async function check(b, stay, cand) {
   }
 }
 
+// Google Maps place page: the hotel panel lists booking partners ("Booking.com ₹2,300", "Agoda …") with
+// Google's redirect links; each one is followed by check() like any candidate (owner, 2026-10-05).
+async function mapsPartners(b, mapsUrl) {
+  const page = await openBackground(b, mapsUrl);
+  try {
+    await page.waitForLoadState('domcontentloaded', { timeout: 25000 }).catch(() => {});
+    await jitter(2500, 3500);
+    if (/sorry|consent/.test(page.url())) return [];
+    const links = await page.$$eval('a[href]', (as) => as.map((a) => [`${a.innerText || ''} ${a.getAttribute('aria-label') || ''}`, a.href])).catch(() => []);
+    const out = [];
+    for (const [text, href] of links) {
+      const p = PLATFORMS.find((x) => new RegExp(x.name.replace('.', '\\.'), 'i').test(text) || platformOf(href) === x);
+      if (p && !/\/maps\//.test(href) && !out.some((o) => o.p.name === p.name)) out.push({ p, url: href, fromMaps: true, label: text.slice(0, 80) });
+    }
+    return out;
+  } finally { await page.close().catch(() => {}); }
+}
+
 // ---- one stay ---------------------------------------------------------------
 function queries(stay) {
-  const n = coreName(stay.name), c = stay.city;
-  const hostel = /hostel|backpack|zostel|dorm/i.test(stay.name), oyo = /\b(oyo|townhouse|capital o|collection o|spot on|flagship)\b/i.test(stay.name);
-  const sites = ['site:booking.com', 'site:agoda.com', 'airbnb', ...(hostel ? ['site:hostelworld.com'] : []), ...(oyo ? ['site:oyorooms.com'] : []),
-    'site:goibibo.com', 'site:makemytrip.com', 'site:expedia.co.in', 'site:hotels.com', 'site:cleartrip.com', 'site:trip.com', 'site:easemytrip.com'];
-  return [`${n} ${c}`, ...sites.map((x) => (x.startsWith('site:') ? `${x} ${n} ${c}` : `${n} ${c} ${x}`))].slice(0, SEARCHES_PER_STAY);
+  // lessons from 186 hand checks (2026-10-05): the area helps, Booking.com stays second for the quick pass,
+  // one OR search covers the sites that were cut off, typos in our names are fixed first
+  const n = coreName(stay.name).replace(/\bhotal\b/gi, 'Hotel').replace(/\b(hotel)\s+hotel\b/gi, '$1').replace(/\s+/g, ' ').trim(), c = stay.city;
+  const area = stay.area && !/^(elsewhere|outside)\b/i.test(stay.area) ? stay.area.split('&')[0].trim() : '';
+  const withArea = area && !n.toLowerCase().includes(area.toLowerCase()) ? `${n} ${area} ${c}` : `${n} ${c}`;
+  const hostel = /hostel|backpack|zostel|dorm/i.test(`${stay.name} ${stay.type || ''}`), oyo = /\b(oyo|townhouse|capital o|collection o|spot on|flagship)\b/i.test(stay.name);
+  const sites = ['site:agoda.com', 'airbnb', ...(hostel ? ['site:hostelworld.com'] : []), ...(oyo ? ['site:oyorooms.com'] : []),
+    'site:trip.com', 'site:easemytrip.com', 'site:goibibo.com', 'site:makemytrip.com', 'site:expedia.co.in', 'site:hotels.com', 'site:cleartrip.com'];
+  return [withArea, `site:booking.com ${n} ${c}`, `${n} ${c} makemytrip OR goibibo OR agoda OR trip.com OR easemytrip`,
+    ...sites.map((x) => (x.startsWith('site:') ? `${x} ${n} ${c}` : `${n} ${c} ${x}`))].slice(0, SEARCHES_PER_STAY);
 }
 // How much a link looks like this stay: core-name words in its address slug or Google result
 // title, small spelling differences allowed ("pardesi" ~ "paradesi").
@@ -660,7 +732,7 @@ const close = (a, b) => {
   return d[a.length][b.length] <= 2;
 };
 function relevance(stay, text) {
-  const got = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/).filter(Boolean);
+  const got = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[^a-z0-9]+/).filter((w) => w && w !== 'amp');
   return coreWords(stay.name).filter((w) => got.some((g) => g === w || (w.length >= 4 && (g.startsWith(w) || w.startsWith(g) && g.length >= 4)) || close(w, g))).length;
 }
 // Only links that look like this stay count; among them Booking.com first, then the other
@@ -698,7 +770,19 @@ async function processStay(stay) {
   }
   const tried = new Set(), skipped = new Set();
   let searches = 0;
+  if (MAPS[stay.key]) {
+    const partners = await mapsPartners(BROWSERS[0], MAPS[stay.key]).catch(() => []);
+    if (partners.length) log(`   google maps lists ${partners.length} booking partner(s): ${partners.map((x) => x.p.name).join(', ')}`);
+    for (const cand of partners.slice(0, 4)) {
+      const r = await check(BROWSERS[0], stay, cand);
+      log(`     ${r.ok ? 'MATCH (maps partner)' : r.review ? `REVIEW, ${r.review}` : r.dead ? 'closed listing' : `no match, ${r.why || 'unreadable'}`}: ${r.url || cand.url} "${r.title}"`);
+      if (r.ok) { log('   lists:', JSON.stringify(record(stay, 'verified', { platform: r.platform || cand.p.name, url: r.url, note: `page title as shown: "${r.title}"; ${r.evidence}`, source: `claude browser search, worker ${SHARD} (google maps partner)` }) || 'dry run: not touched')); return 'verified'; }
+      if (r.duplicate) { log('   lists:', JSON.stringify(record(stay, 'duplicate', { log: `google maps partner page already belongs to ${NAMES[r.duplicate]?.[0] || r.duplicate}: ${r.url}` }) || 'dry run: not touched')); return 'duplicate'; }
+      if (r.review) { log('   lists:', JSON.stringify(recordReview(stay, r) || 'dry run: not touched')); return 'review'; }
+    }
+  }
   const qs = queries(stay), usedEngines = new Set();
+  let deadSeen = 0; const closedFits = [], unreadableN = {};
   let fallbacks = ENGINE_FALLBACKS;
   for (let qi = 0; qi < qs.length; qi++) {
     const q = qs[qi];
@@ -746,16 +830,23 @@ async function processStay(stay) {
       log(`   nothing that looks like this stay on ${combo.e}: the same search on another engine`);
       continue;
     }
-    for (const cand of cands.slice(0, LINKS_PER_PAGE)) {
+    // closed listings do not use up the page's link slots (they crowded out live pages lower down), but at
+    // most MAX_DEAD of them are opened per stay; a site is skipped only after its second unreadable page
+    let live = 0;
+    for (const cand of cands) {
+      if (live >= LINKS_PER_PAGE) break;
       const p = cand.p;
       if (skipped.has(p.name) || (cand.url && tried.has(cand.url))) continue;
+      if (deadSeen >= MAX_DEAD && p.name === 'Booking.com') continue;
       tried.add(cand.url || `pick:${cand.label}`);
       let r = await check(combo.b, stay, cand);
       if (r.url && platformOf(r.url)) tried.add(r.url);
       // a site that refuses this browser/connection (Goibibo outside India): same URL in another browser of this worker
       const other = r.unreadable && r.url && BROWSERS.find((b) => b !== combo.b && combos.some((c) => c.b === b && c.until !== Infinity));
       if (other) { log(`     unreadable in ${combo.b} ("${r.title}"), retrying in ${other}`); r = await check(other, stay, { p, url: r.url }); }
-      log(`     ${r.ok ? 'MATCH' : r.duplicate ? 'DUPLICATE of an already linked stay' : r.review ? `REVIEW, ${r.review}` : r.unreadable ? 'unreadable' : `no match, ${r.why}`}: ${r.url || cand.label} "${r.title}"`);
+      log(`     ${r.ok ? 'MATCH' : r.dead ? 'closed listing' : r.duplicate ? 'DUPLICATE of an already linked stay' : r.review ? `REVIEW, ${r.review}` : r.unreadable ? 'unreadable' : `no match, ${r.why}`}: ${r.url || cand.label} "${r.title}"`);
+      if (r.dead) { deadSeen++; if (relevance(stay, cand.label || cand.url) >= Math.max(1, coreWords(stay.name).length)) closedFits.push(cand.url || cand.label); await jitter(600, 1200); continue; }
+      live++;
       if (r.ok) {
         st.matches++;
         log('   lists:', JSON.stringify(record(stay, 'verified', { platform: r.platform || p.name, url: r.url, note: `page title as shown: "${r.title}"${r.evidence ? `; ${r.evidence}` : ''}`, source: `claude browser search, worker ${SHARD} (${combo.b}/${combo.where})` }) || 'dry run: not touched'));
@@ -769,8 +860,11 @@ async function processStay(stay) {
         log('   lists:', JSON.stringify(recordReview(stay, r) || 'dry run: not touched'));
         return 'review';
       }
-      if (r.unreadable) { skipped.add(p.name); log(`     ${p.name} pages will not load here: skipping ${p.name} for this stay`); }
-      await jitter(1200, 2200);
+      if (r.unreadable) {
+        unreadableN[p.name] = (unreadableN[p.name] || 0) + 1;
+        if (unreadableN[p.name] >= 2) { skipped.add(p.name); log(`     ${p.name} pages will not load here: skipping ${p.name} for this stay`); }
+      }
+      await jitter(500, 1000);
     }
     if (st.searches >= MIN_TRIES && st.withLinks / st.searches < MIN_YIELD) {
       rest((c) => c.e === combo.e, Infinity, `${combo.e} is not helping (${st.withLinks}/${st.searches} pages with booking-site links): switched off`);
@@ -787,6 +881,10 @@ async function processStay(stay) {
   if (skipped.size) { // a site that would not load: search again later
     log('   lists:', JSON.stringify(record(stay, 'retry', { log: `${DEEP ? 'deep' : 'quick'} pass: ${searches} search(es); pages would not load: ${[...skipped].join(', ')}` }) || 'dry run: not touched'));
     return 'retry';
+  }
+  if (DEEP && closedFits.length) {
+    log('   lists:', JSON.stringify(record(stay, 'none', { log: `closed listing: ${closedFits.join(' ')} (deep pass, ${searches} searches, no live page fits)` }) || 'dry run: not touched'));
+    return 'none';
   }
   const miss = DEEP ? 'none' : 'retry';
   log("   lists:", JSON.stringify(record(stay, miss, { log: `${DEEP ? "deep" : "quick"} pass: ${searches} search(es) (${[...usedEngines].join("/") || ENGINES_ON.join("/")}), no booking-site link that looks like this stay` }) || "dry run: not touched"));
@@ -811,11 +909,45 @@ async function recheck(file) {
   log(`recheck done: kept ${kept}/${lines.length}${DRY ? ' (dry, nothing written)' : ''}`);
 }
 
+// ---- --review: settle review.tsv with today's evidence (owner, 2026-10-05) ----
+// Each review row's page is opened again and judged with the current rules (title, property pin, address,
+// distance): this stay -> found.tsv; another stay's page -> duplicate; clearly not this stay or a closed
+// listing -> back to 'retry' so the search finds the right page; still unclear -> stays in review.tsv.
+const REVIEW_FILE = `${ROOT}docs/booking-links/review.tsv`;
+function dropReview(key) {
+  if (DRY) return;
+  withLock(() => writeTsv(REVIEW_FILE, ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review'], tsv(REVIEW_FILE).filter((x) => x.key !== key)));
+}
+async function settleReviews() {
+  const rows = tsv(REVIEW_FILE).filter((r) => shareOf(r.key) === SHARD - 1);
+  const b = BROWSERS[0];
+  const tally = { verified: 0, duplicate: 0, retry: 0, kept: 0, gone: 0 };
+  let i = 0;
+  for (const row of rows) {
+    log(`[review ${++i}/${rows.length}] ${row.name} -> ${row.platform} ${row.url}`);
+    const stay = tsv(UNFOUND).find((r) => r.key === row.key) || (existsSync(QUEUE) ? tsv(QUEUE).find((r) => r.key === row.key) : null);
+    if (!stay) { dropReview(row.key); tally.gone++; log('   already sorted elsewhere: review row removed'); continue; }
+    const p = platformOf(row.url || '');
+    if (!p) { log('   no booking-site page on this row: kept for the owner'); tally.kept++; continue; }
+    const r = await check(b, stay, { p, url: row.url });
+    log(`     ${r.ok ? 'MATCH' : r.dead ? 'closed listing' : r.duplicate ? 'DUPLICATE' : r.review ? `still unclear: ${r.review}` : r.unreadable ? 'unreadable' : `not this stay: ${r.why}`}: "${r.title}"`);
+    if (r.ok) { record(stay, 'verified', { platform: r.platform || p.name, url: r.url, note: `page title as shown: "${r.title}"; ${r.evidence || 'name fits'} (review re-checked)`, source: 'claude review re-check' }); dropReview(row.key); tally.verified++; }
+    else if (r.duplicate) { record(stay, 'duplicate', { log: `review re-check: same place as ${NAMES[r.duplicate]?.[0] || r.duplicate}: ${r.url}` }); dropReview(row.key); tally.duplicate++; }
+    else if (r.dead || (!r.review && !r.unreadable)) { record(stay, 'retry', { log: `review re-check: ${r.dead ? 'closed listing' : `not this stay (${r.why})`}: ${row.url}` }); dropReview(row.key); tally.retry++; }
+    else tally.kept++;
+    await jitter(1500, 3000);
+  }
+  log('review done', JSON.stringify(tally));
+}
+
 // ---- main -------------------------------------------------------------------
 if (SYNC_ONLY) {
   log('lists:', JSON.stringify(counts()));
 } else if (RECHECK) {
   await recheck(RECHECK);
+} else if (flag('--review')) {
+  await settleReviews();
+  log('done', JSON.stringify({ verified: 0, duplicate: 0, review: 0, none: 0, retry: 0, manual: 0, unresolved: 0, skipped: 0, settled: 1 }));
 } else {
   log('lists:', JSON.stringify(counts()));
   // each worker takes its share (stay number mod N, stable across restarts) of the unsearched
@@ -823,22 +955,34 @@ if (SYNC_ONLY) {
   const mine = (r) => shareOf(r.key) === SHARD - 1 && !OWN_KEYS.has(r.key);
   const fresh = tsv(QUEUE).filter(mine);
   const retry = tsv(UNFOUND).filter((r) => r.status === 'retry' && mine(r));
-  const todo = (DEEP ? shuffle(retry) : shuffle(fresh)).slice(OFFSET, OFFSET + LIMIT);
+  // likeliest first (owner, 2026-10-05: "faster"): a stay with guest reviews and a price is almost always on a
+  // booking site; Google Maps places without either come last (random order within each group)
+  const STAY = {};
+  for (const f of ['scripts/stays/.cache/stays.json', 'scripts/stays/.cache/haridwar/stays.json']) {
+    try { for (const x of JSON.parse(readFileSync(ROOT + f, 'utf8'))) STAY[x.id] = x; } catch { /* no crawl here */ }
+  }
+  const likely = (r) => { const x = STAY[r.key] || {}; return (Number(x.c || r.reviews) > 0 ? 2 : 0) + (x.p || Number(r.price_from_inr) > 0 ? 1 : 0) + (r.key.startsWith('g-') ? 0 : 1); };
+  const ordered = (rows) => shuffle(rows).map((r) => [likely(r), r]).sort((a, b) => b[0] - a[0]).map(([, r]) => r);
+  const picked = (DEEP ? ordered(retry) : ordered(fresh));
+  if (flag('--reverse')) picked.reverse();
+  const todo = picked.slice(OFFSET, OFFSET + LIMIT);
   log(`worker ${SHARD}/${SHARDS}: ${todo.length} stay(s) (${fresh.length} never searched, ${retry.length} retry); browsers ${BROWSERS.join('/')}; engines ${ENGINES_ON.join('/')} = ${combos.length} combinations${PROXY ? `; proxy ${PROXY}` : ''}${DRY ? '; DRY (nothing written)' : ''}`);
   // leftovers of earlier runs (search and booking-site tabs of ours) go before the first search
-  for (const b of BROWSERS) { const n = await tidyTabs(b, []); if (n) log(`   ${b}: closed ${n} leftover search/booking tab(s) from earlier runs`); }
+  // --no-tidy: another worker shares this browser, so only this worker's own tabs are ever closed (owner, 2026-10-05)
+  const TIDY = !flag('--no-tidy');
+  if (TIDY) for (const b of BROWSERS) { const n = await tidyTabs(b, []); if (n) log(`   ${b}: closed ${n} leftover search/booking tab(s) from earlier runs`); }
   const tally = { verified: 0, duplicate: 0, review: 0, none: 0, retry: 0, manual: 0, unresolved: 0, skipped: 0 };
   let i = 0;
   for (const stay of todo) {
     log(`[${++i}/${todo.length}] ${stay.name} (${stay.city}) key=${stay.key}`);
     const r = await processStay(stay);
     tally[r]++;
-    for (const b of BROWSERS) await tidyTabs(b, ourTabs(b).map(([, t]) => t.url()));
+    if (TIDY) for (const b of BROWSERS) await tidyTabs(b, ourTabs(b).map(([, t]) => t.url()));
     // after the first stay too: a search tab an earlier worker left may already be huge
     if (i % RECYCLE === 0) for (const b of BROWSERS) await freshSearchTab(b).catch((e) => log(`   ${b}: could not swap the search tab (${String(e?.message || e).slice(0, 80)})`));
     log(`   -> ${r}   engines: ${Object.entries(stats).map(([e, s]) => `${e} ${s.matches} found, ${s.withLinks}/${s.searches} pages with links`).join('; ')}`);
     if (r === 'unresolved' && tally.unresolved >= 3 && tally.unresolved === i) { log('first 3 stays all unresolved: the engines are blocking this browser; stopping'); break; }
-    await jitter(3000, 6000);
+    await jitter(1200, 2500);
   }
   log('done', JSON.stringify(tally));
 }

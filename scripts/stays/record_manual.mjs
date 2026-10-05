@@ -87,7 +87,7 @@ if (cmd === 'verified') {
   const j = judge({ key, name: stay.name, city: stay.city, nameOk: m.ok, title, urlPath: new URL(clean).pathname, pageLL: ll && ll.every(Number.isFinite) ? ll : null, pageText: `${title} ${address}` });
   if (j.verdict === 'reject') out(`refused: ${m.ok ? '' : `${m.why} ${m.detail || ''}; `}${j.why}`, 1);
   withLock(() => {
-    writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
+    if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
     if (j.verdict === 'verified') {
       writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
       writeTsv(FOUND, FOUND_COLS, [...tsv(FOUND).filter((r) => r.key !== key), { key, status: 'verified', platform: p.name, url: clean,
@@ -104,7 +104,7 @@ if (cmd === 'review') {
   const [platform, url, shows, why] = rest;
   withLock(() => {
     writeTsv(REVIEW, REVIEW_COLS, [...tsv(REVIEW).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, platform, url, page_shows: shows, why_review: why }]);
-    writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
+    if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
     writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, area: stay.area, search_log: `in review.tsv for the owner: ${why}`, status: 'review' }]);
   });
   out(`review ${stay.name}`);
@@ -112,7 +112,7 @@ if (cmd === 'review') {
 
 if (['none', 'retry', 'manual'].includes(cmd)) {
   withLock(() => {
-    writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
+    if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
     writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, area: stay.area, search_log: `by hand in the owner's Chrome: ${rest.join(' ')}`, status: cmd }]);
   });
   out(`${cmd} ${stay.name}`);

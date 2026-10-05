@@ -21,13 +21,17 @@ export function places() {
   if (PLACES) return PLACES;
   PLACES = {};
   for (const f of ['scripts/stays/.cache/stays.json', 'scripts/stays/.cache/haridwar/stays.json']) {
-    try { for (const x of JSON.parse(readFileSync(ROOT + f, 'utf8'))) PLACES[x.id] = { ll: x.ll || null, address: '', area: /^(elsewhere|outside)\b/i.test(x.a || '') ? '' : (x.a || '') }; } catch { /* no crawl here */ }
+    try { for (const x of JSON.parse(readFileSync(ROOT + f, 'utf8'))) PLACES[x.id] = { ll: x.ll || null, address: '', street: streetWords(x.ad, x.n), area: /^(elsewhere|outside)\b/i.test(x.a || '') ? '' : (x.a || '') }; } catch { /* no crawl here */ }
   }
   try {
     for (const x of JSON.parse(readFileSync(`${ROOT}scripts/stays/.cache/places/places.json`, 'utf8'))) {
       PLACES[`g-${x.id}`] = { ll: x.lat ? [x.lat, x.lng] : null, address: x.address || '', maps: x.maps || '' };
     }
   } catch { /* no sweep here */ }
+  // a pin shared by 3+ stays is a placeholder (an area centre): never used to confirm a place, only to rule out far ones
+  const n = {};
+  for (const v of Object.values(PLACES)) if (v.ll) n[v.ll.map((x) => x.toFixed(4)).join()] = (n[v.ll.map((x) => x.toFixed(4)).join()] || 0) + 1;
+  for (const v of Object.values(PLACES)) if (v.ll && n[v.ll.map((x) => x.toFixed(4)).join()] >= 3) v.coarse = true;
   return PLACES;
 }
 
@@ -69,6 +73,16 @@ export function fuzzyName(stayName, text) {
   return { core, shared, exact, all: core.length > 0 && shared.length === core.length && distinctive && (core.length >= 2 || single), ok: core.length > 0 && shared.length * 2 >= core.length && distinctive };
 }
 
+// The crawl's street address, cleaned: without the stay's own name, towns, areas, ghats and highways (words found on
+// every page's "nearby" list), so two of what is left really point at the street (critics of the 2026-10-05 lessons).
+const PLACE_WORDS = new Set(('rishikesh haridwar hardwar tapovan laxman lakshman jhula swarg ashram muni reti ghat ghats ganga ganges triveni parmarth '
+  + 'niketan pauri kankhal jwalapur bhupatwala bhoopatwala ranipur sidcul shivpuri neelkanth badrinath kedarnath delhi dehradun bypass highway '
+  + 'national uttarakhand india tehri garhwal near opposite behind beside upper lower').split(' '));
+function streetWords(address, name) {
+  if (!address) return [];
+  const own = new Set(words(name || ''));
+  return [...new Set(words(address.replace(/\b\d{6}\b/g, ' ')))].filter((w) => w.length >= 5 && !own.has(w) && !PLACE_WORDS.has(w) && !/^\d/.test(w));
+}
 const ADDRESS_NOISE = new Set(('uttarakhand india rishikesh haridwar hardwar dehradun tehri garhwal pauri district block road marg near '
   + 'opposite opp post office village vill po ps teh tehsil main lane gali street mohalla colony nagar ward no number').split(' '));
 /** The page shows the stay's PIN code and one of its own address words (village, street, landmark). */
@@ -102,7 +116,8 @@ export function placeNamed({ city, area, address }, pageText) {
  */
 export function judge({ key, name, city = '', nameOk, title, urlPath = '', pageLL = null, pageText = '' }) {
   const me = places()[key] || {};
-  const d = pageLL && me.ll ? kmBetween(me.ll, pageLL) : null;
+  const dAll = pageLL && me.ll ? kmBetween(me.ll, pageLL) : null;
+  const d = me.coarse && dAll !== null && dAll <= NEAR_KM ? null : dAll; // a placeholder pin only rules out far pages
   // OYO's own numbers identify the property: two different numbers are two different hotels
   const oyoNo = (x) => (String(x).match(/\b(?:oyo|capital o|collection o|townhouse|spot on|flagship|silverkey)\s*(\d{3,})\b/i) || [])[1];
   if (oyoNo(name) && oyoNo(title) && oyoNo(name) !== oyoNo(title)) return { verdict: 'reject', why: `a different OYO property (${oyoNo(title)}, ours ${oyoNo(name)})`, km: d };
@@ -126,6 +141,8 @@ export function judge({ key, name, city = '', nameOk, title, urlPath = '', pageL
   if (d !== null && d <= SAME_PLACE_KM) return { verdict: 'verified', why: `similar name (shared [${fz.shared}]), ${where}`, km: d };
   if (addr.ok && (d === null || d <= NEAR_KM)) return { verdict: 'verified', why: `similar name (shared [${fz.shared}]), the page shows its address (PIN ${addr.pin}, ${addr.hits.join(', ')})`, km: d };
   if (d !== null && d <= REVIEW_KM) return { verdict: 'review', why: `similar name (shared [${fz.shared}]), ${where}`, km: d };
+  const street = (me.street || []).filter((w) => words(pageText).includes(w));
+  if (fz.all && street.length >= 2 && (d === null || d <= NEAR_KM)) return { verdict: 'review', why: `name matches in every word [${fz.shared}] and the page shows our street words (${street.join(', ')})`, km: d };
   if (d === null && fz.all) return { verdict: 'review', why: `similar name in every word (shared [${fz.shared}]) but no map pin or address on the page to confirm it`, km: d };
   return { verdict: 'reject', why: `similar name (shared [${fz.shared}]) but ${where || 'nothing on the page confirms the place'}`, km: d };
 }

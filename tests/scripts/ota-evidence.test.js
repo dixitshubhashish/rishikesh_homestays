@@ -39,3 +39,20 @@ test('judge: different OYO numbers or another town are never this stay', async (
   assert.strictEqual(v({ name: 'OYO 35366 Hotel Shiv Murti', title: 'OYO 11858 Hotel Shiv Murti Grand in Haridwar' }), 'reject');
   assert.strictEqual(v({ name: 'Treebo Royal Mirage, Bhoopatwala Hotel', title: 'Hotel Royal Mirage', urlPath: '/treebo-trend-tropical-roots/hotel/mussoorie-in.html' }), 'reject');
 });
+
+test('lessons from 186 hand checks: operators, add-ons and taglines are not required name words', async () => {
+  const { coreWords } = await import('../../scripts/stays/ota-match.mjs');
+  assert.deepStrictEqual(coreWords('Bhagirathi by Reet'), ['bhagirathi']);
+  assert.deepStrictEqual(coreWords('Hostel Serendipity & Cats Cafe'), ['serendipity']);
+  assert.deepStrictEqual(coreWords('Khushi Wedding Banquet Garden'), ['khushi']);
+  assert.deepStrictEqual(coreWords('Ganga River Cozy Stay by the Nirvanaa Blues'), ['nirvanaa', 'blues'], 'not a known operator: kept');
+  assert.deepStrictEqual(coreWords('Around Stays – Shanti Villas, Tapovan'), ['around', 'shanti'], 'a chain unit keeps its own word');
+  assert.deepStrictEqual(coreWords('Rose Garden Hotel'), ['rose', 'garden'], 'a name that is only garden words keeps them');
+});
+
+test('lessons from the last 33 hand checks: home stay, years, landmark tails', async () => {
+  const { matchReason, coreWords } = await import('../../scripts/stays/ota-match.mjs');
+  assert(matchReason('Jaiswal Homestay, Rishikesh - Double Room with Terrace', 'rishikesh', 'Jaiswal Home Stay, Rishikesh, India').ok);
+  assert.deepStrictEqual(coreWords('1997 homestay'), ['1997']);
+  assert(matchReason('Hotel Rah Inn', 'rishikesh', 'HOTEL RAH INN - Yog Nagari Rishikesh Railway Station, Rishikesh (updated prices 2027)').ok);
+});

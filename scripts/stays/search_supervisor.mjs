@@ -18,14 +18,19 @@ import { openSync, readFileSync, statSync, existsSync, mkdirSync, rmdirSync } fr
 const ROOT = new URL('../../', import.meta.url).pathname;
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
 const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '10-18', '--limit', '4000'];
+const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '6-12', '--limit', '4000'];
 const ROUNDS = 4;
 // Three browsers at a time: with four or five open the Mac ran out of memory (owner's laptop: 18 GB swap,
 // 4 GB disk free). Brave and Firefox are left out; the others take their shares when they finish.
+// owner, 2026-10-05: the never-searched list (all.tsv) first, split three ways, then the re-checks
 const WORKERS = [
-  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/2'], ['quick', '2/2'], ['deep', '5/5']] },
-  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['deep', '1/5'], ['deep', '2/5']] },
-  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '3/5'], ['deep', '4/5']] },
+  // Opera is the steadiest browser (1,028 stays, no blocked spells): two sessions share it, each closing only its own tabs
+  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/3', '--no-tidy'], ['quick', '1/1', '--reverse', '--no-tidy'], ['deep', '5/5', '--no-tidy']] },
+  { name: 'opera2', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/1', '--no-tidy'], ['quick', '1/1', '--review', '--no-tidy'], ['deep', '4/5', '--no-tidy']] },
+  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['quick', '2/3'], ['deep', '1/5'], ['deep', '2/5']] },
+  // a fourth worker (Brave) pushed the disk under 3 GB twice (2026-10-05): three workers is this Mac's limit
+
+  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['quick', '3/3'], ['deep', '3/5']] },
 ].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, crashes: [], finished: false, logOffset: 0 }));
 
 const stamp = () => new Date().toTimeString().slice(0, 8);
@@ -34,8 +39,8 @@ const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { retu
 const logFile = (w) => `${LOGS}r4-${w.name}.log`;
 
 function start(w) {
-  const [mode, shard] = w.plan[w.step];
-  const args = ['scripts/stays/google_ota_search.mjs', '--shard', shard, ...w.how, ...COMMON, ...(mode === 'deep' ? ['--deep'] : [])];
+  const [mode, shard, ...extra] = w.plan[w.step];
+  const args = ['scripts/stays/google_ota_search.mjs', '--shard', shard, ...w.how, ...COMMON, ...(mode === 'deep' ? ['--deep'] : []), ...extra];
   const f = logFile(w);
   w.logOffset = existsSync(f) ? statSync(f).size : 0;
   const fd = openSync(f, 'a');
@@ -46,7 +51,8 @@ function start(w) {
 }
 
 function since(w) { // this run's part of the worker's log
-  try { return readFileSync(logFile(w), 'utf8').slice(w.logOffset); } catch { return ''; }
+  // the offset is in bytes (file size), so slice the bytes, then decode (the log has ₹ and other multi-byte text)
+  try { return readFileSync(logFile(w)).subarray(w.logOffset).toString('utf8'); } catch { return ''; }
 }
 
 function stop(w, why) { // under the lists lock, so a list write is never cut short
@@ -68,8 +74,11 @@ function adopt(w) {
     for (const l of lines) {
       const [pid, ...cmd] = l.split(' ');
       const c = cmd.join(' ');
-      w.plan.forEach(([mode, shard], i) => {
-        if (c.includes(`--shard ${shard} `) && c.includes(w.how.join(' ')) && (mode === 'deep') === c.includes('--deep')) { w.pid = Number(pid); w.step = i; }
+      w.plan.forEach(([mode, shard, ...extra], i) => {
+        // two sessions can share a browser: the extra flags (--reverse, --review) tell them apart
+        const flagsMatch = ['--reverse', '--review'].every((f) => extra.includes(f) === c.includes(f));
+        if (!w.pid && c.includes(`--shard ${shard} `) && c.includes(w.how.join(' ')) && (mode === 'deep') === c.includes('--deep') && flagsMatch
+            && !WORKERS.some((o) => o !== w && o.pid === Number(pid))) { w.pid = Number(pid); w.step = i; }
       });
     }
   } catch { /* none running */ }
@@ -99,7 +108,7 @@ for (;;) {
   const now = Date.now();
   const tight = memoryTight();
   if (diskCritical()) {
-    for (const w of WORKERS) if (w.pid && alive(w.pid)) { stop(w, 'disk almost full (under 3 GB): paused 15 min'); w.notBefore = now + 15 * 60e3; w.pid = 0; }
+    for (const w of WORKERS) if (w.pid && alive(w.pid)) { stop(w, 'disk almost full (under 3 GB): paused 5 min'); w.notBefore = now + 5 * 60e3; w.pid = 0; }
     await new Promise((r) => setTimeout(r, 60e3));
     continue;
   }

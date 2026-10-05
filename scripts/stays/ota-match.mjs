@@ -20,7 +20,7 @@ const PAGE_WORDS = new Set('best price deals photos photo reviews review offer o
 // Glue: free anywhere.
 const GLUE = new Set('the a an and of by in at on to for hotel hotels stay stays bed breakfast bnb'.split(' '));
 // Address words: never part of a name ("Hotel Ganga Azure@ Har Ki Pauri Road" is "Ganga Azure Hotel").
-const LOCATION = new Set('road station railway har ki ke pauri harkipauri ghat jhula chowk marg bypass sector near min mins minute minutes from walk walking distance opposite opp behind main market km kms mtr mtrs meters metres uttarakhand india dehradun'.split(' '));
+const LOCATION = new Set('yog nagari isbt stand road station railway har ki ke pauri harkipauri ghat jhula chowk marg bypass sector near min mins minute minutes from walk walking distance opposite opp behind main market km kms mtr mtrs meters metres uttarakhand india dehradun'.split(' '));
 // Marketing words in a name's later parts ("– Prime Location – Luxury and Spacious Room").
 export const MARKETING = new Set(('prime location luxury luxurious spacious best top rated selling property star four five three ' +
   'free parking lift kitchen wifi pool swimming garden tropical aesthetic mountain mountains netflix pottery studio ' +
@@ -45,7 +45,7 @@ const unPossess = (s) => s.replace(/([a-z0-9])['’ʼ`]s\b/gi, '$1').replace(/\b
 export function tokens(s) {
   const out = [];
   const num = { one: 1, two: 2, three: 3, four: 4, five: 5 }; // "Two-Bedroom" is a 2bhk too (unit clash check)
-  s = unPossess(s).replace(/\b(one|two|three|four|five|\d)[\s-]*bed(?:room)?s?\b/gi, (m, n) => `${num[n.toLowerCase()] || n}bhk`);
+  s = unPossess(s).replace(/\bhome\s+stay\b/gi, 'homestay').replace(/\bguest\s+house\b/gi, 'guesthouse').replace(/\bhotal\b/gi, 'hotel').replace(/\blogde\b/gi, 'lodge').replace(/\b(one|two|three|four|five|\d)[\s-]*bed(?:room)?s?\b/gi, (m, n) => `${num[n.toLowerCase()] || n}bhk`);
   for (const w of words(s.replace(/\b0*(\d)\s*-?\s*bhk\b/gi, '$1bhk'))) {
     const prev = out[out.length - 1];
     if (/^[a-z]$/.test(w) && prev?.single) { prev.w += w; continue; }
@@ -53,13 +53,20 @@ export function tokens(s) {
   }
   return out.map((t) => t.w);
 }
-const isId = (w) => /^\d{4,}$/.test(w), isBhk = (w) => /^\d+bhk$/.test(w);
+const isId = (w) => /^\d{5,}$/.test(w) && !/^(19|20)\d\d$/.test(w), isBhk = (w) => /^\d+bhk$/.test(w);
 const neutral = (w) => STOP.has(w) || GLUE.has(w) || BRANDS.has(w) || UNITS.has(w) || LOCATION.has(w) || isId(w) || isBhk(w);
 
 // A later part of the name counts only if it names something: it does not open like a
 // tagline and has a word that is not generic, marketing or an address.
 const TAGLINE = /^(?:a|an|best|top|the best|luxury|budget|free|walking|new|family|pure|deluxe|near|opp|opposite|member|fully|no)\b|\b(?:star|property|selling|rated)\b|\b\d+\s*(?:km|kms|min|mins|minutes?|mtrs?|meters?|metres?|adults?|guests?|persons?|people|pax|child|children|kids?|beds?)\b|\b(?:one|two|three|four|five|\d+)[\s-]*(?:bedroom|bed)s?\b|\bdouble bed\b|\b(?:double|single|twin|triple|deluxe|superior|standard|family|premium)\s+(?:room|apartment|suite|cottage|villa)\b/i;
-const naming = (part) => !TAGLINE.test(part) && tokens(part).some((w) => !neutral(w) && !MARKETING.has(w));
+// Add-ons and taglines after the name (lessons from 186 hand checks, 2026-10-05): "& Cats Cafe",
+// "Wedding Banquet Garden", "Guests Favourite, Travellers Delight" are never required words.
+const AMENITY = new Set('cafe cafes restaurant banquet banquets hall garden wedding bar dhaba office adventure adventures camping panchakarma wellness cats'.split(' '));
+const TAGLINE_WORDS = new Set('guests guest favourite favorite travellers travelers delight include includes price accomodation'.split(' '));
+const naming = (part) => !TAGLINE.test(part) && tokens(part).some((w) => !neutral(w) && !MARKETING.has(w) && !AMENITY.has(w) && !TAGLINE_WORDS.has(w));
+// "… by <operator>": only these operators / booking agents are dropped (a name like "Cozy Stay by the Nirvanaa Blues" keeps its own words)
+const OPERATOR = /\s+by\s+(?:the\s+)?(?:reet|restay|rfh|trindra(?:\s+hospitality)?|around\s+stays|grihasaarthi|live\s+inn\s+hotels|dp\s+hotels|salvus|da\s+alohas|wb|yatrimap|delight\s+stay|stayvista|mudras|hariganga)\b.*$/i;
+const ADDON = /\s+(?:&|and|with)\s+([a-z ]{3,40})$/i;
 const CUT = /\s+(?:near|opposite|opp\.?|with|walking distance|close to|behind|next to|formerly)\s+/i;
 
 // "The Ramawati – A Four Star Luxury Hotel near Ganga Ghat" -> "The Ramawati"
@@ -69,7 +76,13 @@ export function coreName(name) {
   name = name.split(/[#!]/)[0] // hashtags and "!" taglines are marketing
     .replace(/\b((?:oyo|collection o|capital o|townhouse|spot on)(?: townhouse)?)\s+\d{3,}\b/gi, '$1') // OYO's own numbers
     .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ' ');
-  const head = name.split(CUT)[0];
+  let head = name.split(CUT)[0];
+  const cut = head.replace(OPERATOR, '');
+  if (cut !== head && tokens(cut).some((w) => !neutral(w))) head = cut;
+  const addon = head.match(ADDON);
+  if (addon && tokens(addon[1]).every((w) => AMENITY.has(w) || MARKETING.has(w) || TAGLINE_WORDS.has(w) || neutral(w))) head = head.slice(0, addon.index);
+  const tail = head.replace(/(?:\s+(?:wedding|banquet|banquets|garden|hall|cafe|restaurant|dhaba|bar|spa))+\s*$/i, ''); // "Khushi Wedding Banquet Garden"
+  if (tail !== head && tokens(tail).some((w) => !neutral(w) && !MARKETING.has(w))) head = tail;
   // a full stop before a capital starts a new part too: "Krishna Kunj Homestay Rishikesh. A Family Friendly Homestay at Best Price"
   const parts = head.split(/\s+[–—|-]\s+|,|\(|\)|\.\s+(?=[A-Z])/).map((p) => p.trim()).filter(Boolean);
   let first = 0; // a first part with no name in it ("Hotel") takes the next one
@@ -165,7 +178,7 @@ export const PLATFORMS = [
   { name: 'Booking.com', host: 'booking.com', page: /^https?:\/\/[^/]*booking\.com\/hotel\/[a-z]{2}\/[^/?#]+\.html/ },
   { name: 'MakeMyTrip', host: 'makemytrip.com', page: /^https?:\/\/[^/]*makemytrip\.[a-z.]+\/hotels\/[^/?#]+-details-[^/?#]+\.html/ },
   { name: 'Goibibo', host: 'goibibo.com', page: /^https?:\/\/[^/]*goibibo\.com\/hotels\/[^/?#]+-\d{8,}\/?(?:[?#]|$)/ },
-  { name: 'Agoda', host: 'agoda.com', page: /^https?:\/\/[^/]*agoda\.com\/(?:[a-z]{2}-[a-z]{2}\/)?[^/]+\/hotel\/[^/?#]+\.html/ },
+  { name: 'Agoda', host: 'agoda.com', page: /^https?:\/\/[^/]*agoda\.com\/(?:[a-z]{2}-[a-z]{2}\/)?[^/]+\/hotel\/(?:all\/)?[^/?#]+\.html/ },
   { name: 'Airbnb', host: 'airbnb.', page: /^https?:\/\/[^/]*airbnb\.[a-z.]+\/rooms\/\d+/ },
   { name: 'EaseMyTrip', host: 'easemytrip.com', page: /^https?:\/\/[^/]*easemytrip\.com\/hotels\/[^/]+-\d+\/?(?:[?#]|$)/ },
   // in.trip.com / uk.trip.com / www.trip.com (strict host: "makemytrip.com" and "easemytrip.com" end in trip.com too)
@@ -174,7 +187,7 @@ export const PLATFORMS = [
   { name: 'Expedia', host: 'expedia.', page: /^https?:\/\/[^/]*expedia\.[a-z.]+\/[^?#]*\.h\d+\.Hotel-Information/ },
   { name: 'Hotels.com', host: 'hotels.com', page: /^https?:\/\/(?:[a-z]{2}\.|www\.)?hotels\.com\/ho\d+/ },
   { name: 'Cleartrip', host: 'cleartrip.com', page: /^https?:\/\/[^/]*cleartrip\.com\/hotels\/details\/[^/?#]+/ },
-  { name: 'Hostelworld', host: 'hostelworld.com', page: /^https?:\/\/[^/]*hostelworld\.com\/(?:pwa\/hosteldetails\.php\/[^/?#]+\/[^/?#]+\/\d+|hostels\/p\/\d+\/[^/?#]+)/ },
+  { name: 'Hostelworld', host: 'hostelworld.com', page: /^https?:\/\/[^/]*hostelworld\.com\/(?:pwa\/hosteldetails\.php\/[^/?#]+\/[^/?#]+\/\d+|(?:hostels|hotels)\/p\/\d+\/[^/?#]+)/ },
   { name: 'OYO', host: 'oyorooms.com', page: /^https?:\/\/(?:www\.)?oyorooms\.com\/(?:[a-z-]+-)?\d{3,}\/?(?:[?#]|$)/ },
   // a price-comparison site: its own hotel page only (its "View deal" buttons are paid clicks, never followed)
   { name: 'Trivago', host: 'trivago.', page: /^https?:\/\/[^/]*trivago\.[a-z.]+\/(?:[a-z]{2}-[A-Za-z]{2}\/)?(?:oar\/[^/?#]+\?(?:[^#]*&)?search=\d+-\d+|[^?#]*\/hotel\/[^/?#]+-\d+)/ },
@@ -189,7 +202,7 @@ const SUBPAGE = /\/hotels\/(?:address-of-|reviews?-of-|rooms-(?:in|of)-|photos-o
 export function cleanUrl(u, platform) {
   const url = new URL(u);
   let path = url.pathname.replace(/(\.[a-z]{2}(?:-[a-z]{2})?)?\.html$/i, '.html');
-  if (platform === 'Agoda') path = path.replace(/^\/[a-z]{2}-[a-z]{2}\//i, '/');
+  if (platform === 'Agoda') path = path.replace(/^\/[a-z]{2}-[a-z]{2}\//i, '/').replace(/\/hotel\/all\//, '/hotel/');
   if (platform === 'Airbnb') path = path.match(/\/rooms\/\d+/)[0];
   if (platform === 'MakeMyTrip' || platform === 'Goibibo') path = path.replace(SUBPAGE, '/hotels/');
   // Trivago's hotel id lives in ?search=100-<id>; it only runs country sites, so the host stays as landed
