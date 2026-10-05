@@ -94,16 +94,16 @@ export function setupHostForm() {
         form.reset();
         if (status) {
           status.textContent = result.message || 'Thank you! Our team will contact you shortly to verify your property.';
-          status.style.color = '#4CAF50';
+          status.classList.add('is-ok'); status.classList.remove('is-err');
         }
       } else if (status) {
         status.textContent = result.message || 'Unable to submit your application right now.';
-        status.style.color = '#f44336';
+        status.classList.add('is-err'); status.classList.remove('is-ok');
       }
     } catch (error) {
       if (status) {
         status.textContent = 'Unable to submit your application right now. Please message us on WhatsApp instead.';
-        status.style.color = '#f44336';
+        status.classList.add('is-err'); status.classList.remove('is-ok');
       }
     } finally {
       clearButtonLoading(btn);

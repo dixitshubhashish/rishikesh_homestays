@@ -20,7 +20,8 @@ import express from 'express';
 import { chromium } from 'playwright';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-export const ROOT = path.join(__dirname, '..', '..');
+// SCREENS_ROOT: shoot another copy of the site, e.g. an export of the last commit
+export const ROOT = process.env.SCREENS_ROOT ? path.resolve(process.env.SCREENS_ROOT) : path.join(__dirname, '..', '..');
 
 export const PAGES = [
   ['home', '/'],
@@ -88,37 +89,35 @@ async function settle(page) {
   await page.clock.runFor(1500);
 }
 
-async function openUi(page, name) {
-  const shots = [];
-  const tryShot = async (label, fn) => {
-    try {
-      await fn();
-      await page.clock.runFor(600);
-      shots.push([label, await page.screenshot({ animations: 'disabled' })]);
-      await page.keyboard.press('Escape').catch(() => {});
-      await page.clock.runFor(400);
-    } catch { /* that control is not on this page */ }
-  };
-  const vw = page.viewportSize().width;
-  if (vw < 1381) await tryShot('drawer', () => page.click('[data-nav-toggle]', { timeout: 1500 }));
-  await tryShot('whatsapp', () => page.click('.whatsapp-fab, [data-whatsapp-open]', { timeout: 1500 }));
-  if (name === 'contact') {
-    await tryShot('datepicker', async () => {
-      const el = await page.$('input.flatpickr-input, input[name="checkin"], #checkin');
-      await el.scrollIntoViewIfNeeded();
-      await el.click({ timeout: 1500 });
-    });
-  }
+// UI states worth a look in both themes; each is shot on a fresh page load.
+export function uiStates(name, width) {
+  const s = [];
+  if (width < 1381) s.push(['drawer', (p) => p.click('[data-nav-toggle]', { timeout: 4000 })]);
+  s.push(['whatsapp', (p) => p.click('.whatsapp-fab', { timeout: 4000 })]);
+  if (name === 'contact') s.push(['datepicker', (p) => p.click('#check_in', { timeout: 4000 })]);
   if (name === 'stay' || name === 'landmark') {
-    await tryShot('map', async () => {
-      const el = await page.$('.leaflet-container, [data-map], .sp-map, #map');
-      await el.scrollIntoViewIfNeeded();
-    });
+    s.push(['map', (p) => p.locator('.leaflet-container').first().scrollIntoViewIfNeeded({ timeout: 4000 })]);
   }
-  if (name === 'advaitam') {
-    await tryShot('ota-gate', () => page.click('.ota-link', { timeout: 1500 }));
+  if (name === 'advaitam') s.push(['ota-gate', (p) => p.locator('.ota-link').first().click({ timeout: 4000 })]);
+  return s;
+}
+
+async function shootUi(browser, base, url, viewport, theme, name, outDir) {
+  for (const [label, act] of uiStates(name, viewport.width)) {
+    const { context, page } = await openPage(browser, base, url, { viewport, theme });
+    try {
+      await settle(page);
+      await act(page);
+      await page.clock.runFor(800);
+      await page.waitForLoadState('networkidle').catch(() => {});
+      await page.clock.runFor(800);
+      writeFileSync(path.join(outDir, `${name}-${viewport.name}-${label}.png`), await page.screenshot({ animations: 'disabled' }));
+    } catch (err) {
+      console.warn(`${name}-${viewport.name}-${label}: ${err.message.split('\n')[0]}`);
+    } finally {
+      await context.close();
+    }
   }
-  return shots;
 }
 
 export async function shoot(outDir, { theme = null, ui = false } = {}) {
@@ -133,14 +132,10 @@ export async function shoot(outDir, { theme = null, ui = false } = {}) {
           await settle(page);
           const file = path.join(outDir, `${name}-${viewport.name}.png`);
           writeFileSync(file, await page.screenshot({ fullPage: true, animations: 'disabled' }));
-          if (ui) {
-            for (const [label, buf] of await openUi(page, name)) {
-              writeFileSync(path.join(outDir, `${name}-${viewport.name}-${label}.png`), buf);
-            }
-          }
         } finally {
           await context.close();
         }
+        if (ui) await shootUi(browser, srv.base, url, viewport, theme, name, outDir);
       }
     }
   } finally {
@@ -167,9 +162,12 @@ export async function compare(aDir, bDir) {
         if (ia.width !== ib.width || ia.height !== ib.height) return `size ${ia.width}x${ia.height} vs ${ib.width}x${ib.height}`;
         const px = (img) => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0); return x.getImageData(0, 0, c.width, c.height).data; };
         const da = px(ia); const db = px(ib);
+        // a difference of 1-2 per channel is anti-aliasing noise on rounded
+        // corners (it varies run to run too); a real colour change is bigger
         let n = 0; let top = -1;
         for (let i = 0; i < da.length; i += 4) {
-          if (da[i] !== db[i] || da[i + 1] !== db[i + 1] || da[i + 2] !== db[i + 2]) { n++; if (top < 0) top = Math.floor(i / 4 / ia.width); }
+          const d = Math.max(Math.abs(da[i] - db[i]), Math.abs(da[i + 1] - db[i + 1]), Math.abs(da[i + 2] - db[i + 2]));
+          if (d > 2) { n++; if (top < 0) top = Math.floor(i / 4 / ia.width); }
         }
         if (!n) return 0;
         // side-by-side crop around the first difference, for a look by eye

@@ -229,12 +229,12 @@ export function setupRentalForm({ redirect = (url) => window.location.assign(url
       }
       if (status) {
         status.textContent = result.message || 'Unable to send your enquiry right now.';
-        status.style.color = '#f44336';
+        status.classList.add('is-err'); status.classList.remove('is-ok');
       }
     } catch {
       if (status) {
         status.textContent = 'Unable to send your enquiry right now. Please WhatsApp or call us directly.';
-        status.style.color = '#f44336';
+        status.classList.add('is-err'); status.classList.remove('is-ok');
       }
     }
     clearButtonLoading(btn);
