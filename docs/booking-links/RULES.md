@@ -73,6 +73,24 @@ For each stay, find its own property page on booking sites, using Google search 
 
 If in doubt, it is **not** a match. Record nothing for that platform.
 
+### 4a. The place decides (owner, 2026-10-05)
+
+Names may be loose ("fuzzy to a high extent is fine") when **the place itself** confirms the page; a similar name somewhere else is never the stay. `scripts/stays/ota-evidence.mjs` applies this for both the automatic search and checks by hand (`scripts/stays/record_manual.mjs`):
+
+- Name fits (rule 3) → match, unless the page's own map pin (Booking.com shows one) is over 2 km from our pin → `review.tsv`.
+- Name close (its distinctive words, spelling slips allowed) **and** the page's pin within 250 m of ours, or the page shows the stay's PIN code and one of its own address words (village, street) → match, with that evidence in the note.
+- Name close and the pin within 1 km → `review.tsv`; close in every word but nothing on the page to check the place → `review.tsv`.
+- A page that already belongs to another stay: pins within 250 m and a close name → this row is a **duplicate** of that stay (`unfound.tsv` status `duplicate`, never listed twice); within 2 km → `review.tsv`; further → a different place.
+- Real cases: "Krishn Kunj home Stay" vs Booking's Krishna Kunj Homestay, 2.6 km apart: different places. "Aranyam In the Village Homestay" vs Booking's Aranyam, 24 km apart: different. "MUSKAN RIVER RESORT" vs Agoda's "The Muskan Camp & Resort", same village and PIN on the page: the same place.
+
+### 4b. How the search runs now
+
+- Booking sites tried, in order, when the first does not turn the stay up: Booking.com, Agoda, Airbnb, (Hostelworld for hostels, OYO for OYO-branded names), Goibibo, MakeMyTrip, Expedia, Hotels.com, Cleartrip, Trip.com, EaseMyTrip. MakeMyTrip and Goibibo pages usually refuse automated browsers: noted, never forced.
+- Each result is read with its title and snippet, not only its address (an Airbnb address is just a number, an Agoda address often differs from the name), the top results first; the page is scrolled, then "More results" / the next page read, only when nothing near the top looks like the stay.
+- A results page with nothing like the stay is repeated on up to two other engines (Google, Bing, Brave Search, DuckDuckGo) before the stay is put aside; scrolling goes on until something that looks like the stay shows up.
+- `scripts/stays/search_supervisor.mjs` keeps one worker per browser running (Opera, Chrome, Edge; Brave and Firefox left out while memory is short), restarts crashed or stalled ones, and pauses everything when the disk is almost full. Each worker paces itself: 1.5x slower after a challenge, 10% faster after 15 clean pages.
+- Stays the automatic search cannot settle are checked by hand in the owner's Chrome (Claude in Chrome): its Google Maps booking options, Google with scrolling (Bing or DuckDuckGo after a CAPTCHA, never solved), one booking site at a time, recorded only through `record_manual.mjs`; a second agent re-opens every link accepted and sends wrong ones back to `review.tsv`.
+
 ## 5. Output format (exact)
 
 File: `docs/booking-links/results-<batch>.tsv` — UTF-8, **tab-separated, no header**, append as you go.

@@ -22,7 +22,7 @@ const GLUE = new Set('the a an and of by in at on to for hotel hotels stay stays
 // Address words: never part of a name ("Hotel Ganga Azure@ Har Ki Pauri Road" is "Ganga Azure Hotel").
 const LOCATION = new Set('road station railway har ki ke pauri harkipauri ghat jhula chowk marg bypass sector near min mins minute minutes from walk walking distance opposite opp behind main market km kms mtr mtrs meters metres uttarakhand india dehradun'.split(' '));
 // Marketing words in a name's later parts ("– Prime Location – Luxury and Spacious Room").
-const MARKETING = new Set(('prime location luxury luxurious spacious best top rated selling property star four five three ' +
+export const MARKETING = new Set(('prime location luxury luxurious spacious best top rated selling property star four five three ' +
   'free parking lift kitchen wifi pool swimming garden tropical aesthetic mountain mountains netflix pottery studio ' +
   'airport pickup nights night point river ganga ganges view views ac room rooms family budget new pure deluxe ' +
   'clean comfortable cozy cosy beautiful amazing awesome perfect calm peaceful quiet scenic stunning private ' +
@@ -70,7 +70,8 @@ export function coreName(name) {
     .replace(/\b((?:oyo|collection o|capital o|townhouse|spot on)(?: townhouse)?)\s+\d{3,}\b/gi, '$1') // OYO's own numbers
     .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ' ');
   const head = name.split(CUT)[0];
-  const parts = head.split(/\s+[–—|-]\s+|,|\(|\)/).map((p) => p.trim()).filter(Boolean);
+  // a full stop before a capital starts a new part too: "Krishna Kunj Homestay Rishikesh. A Family Friendly Homestay at Best Price"
+  const parts = head.split(/\s+[–—|-]\s+|,|\(|\)|\.\s+(?=[A-Z])/).map((p) => p.trim()).filter(Boolean);
   let first = 0; // a first part with no name in it ("Hotel") takes the next one
   const named = (p) => tokens(p).some((w) => !neutral(w) && !isTownWord(w));
   while (first < parts.length - 1 && !named(parts[first]) && named(parts[first + 1])) first++;
@@ -169,6 +170,12 @@ export const PLATFORMS = [
   { name: 'EaseMyTrip', host: 'easemytrip.com', page: /^https?:\/\/[^/]*easemytrip\.com\/hotels\/[^/]+-\d+\/?(?:[?#]|$)/ },
   // in.trip.com / uk.trip.com / www.trip.com (strict host: "makemytrip.com" and "easemytrip.com" end in trip.com too)
   { name: 'Trip.com', host: 'trip.com', page: /^https?:\/\/(?:[a-z]{2}\.|www\.)?trip\.com\/hotels\/[^/?#]*hotel-detail-\d+/ },
+  // more booking sites (owner, 2026-10-05: "the other OTAs we discussed as well")
+  { name: 'Expedia', host: 'expedia.', page: /^https?:\/\/[^/]*expedia\.[a-z.]+\/[^?#]*\.h\d+\.Hotel-Information/ },
+  { name: 'Hotels.com', host: 'hotels.com', page: /^https?:\/\/(?:[a-z]{2}\.|www\.)?hotels\.com\/ho\d+/ },
+  { name: 'Cleartrip', host: 'cleartrip.com', page: /^https?:\/\/[^/]*cleartrip\.com\/hotels\/details\/[^/?#]+/ },
+  { name: 'Hostelworld', host: 'hostelworld.com', page: /^https?:\/\/[^/]*hostelworld\.com\/(?:pwa\/hosteldetails\.php\/[^/?#]+\/[^/?#]+\/\d+|hostels\/p\/\d+\/[^/?#]+)/ },
+  { name: 'OYO', host: 'oyorooms.com', page: /^https?:\/\/(?:www\.)?oyorooms\.com\/(?:[a-z-]+-)?\d{3,}\/?(?:[?#]|$)/ },
   // a price-comparison site: its own hotel page only (its "View deal" buttons are paid clicks, never followed)
   { name: 'Trivago', host: 'trivago.', page: /^https?:\/\/[^/]*trivago\.[a-z.]+\/(?:[a-z]{2}-[A-Za-z]{2}\/)?(?:oar\/[^/?#]+\?(?:[^#]*&)?search=\d+-\d+|[^?#]*\/hotel\/[^/?#]+-\d+)/ },
 ];
@@ -177,7 +184,7 @@ export const platformOf = (url) => PLATFORMS.find((p) => p.page.test(url));
 // The generic property URL: no tracking, no language/country variant, no regional host,
 // no sub-page (booking.com/hotel/in/x.en-gb.html -> …/x.html, agoda.com/en-gb/… -> agoda.com/…,
 // airbnb.co.uk/rooms/1?s=76 -> airbnb.com/rooms/1, makemytrip …/address-of-x-details… -> …/x-details…).
-const HOSTS = { 'Booking.com': 'www.booking.com', Agoda: 'www.agoda.com', Airbnb: 'www.airbnb.com', MakeMyTrip: 'www.makemytrip.com', Goibibo: 'www.goibibo.com', EaseMyTrip: 'www.easemytrip.com', 'Trip.com': 'www.trip.com' };
+const HOSTS = { 'Booking.com': 'www.booking.com', Agoda: 'www.agoda.com', Airbnb: 'www.airbnb.com', MakeMyTrip: 'www.makemytrip.com', Goibibo: 'www.goibibo.com', EaseMyTrip: 'www.easemytrip.com', 'Trip.com': 'www.trip.com', Cleartrip: 'www.cleartrip.com', Hostelworld: 'www.hostelworld.com', OYO: 'www.oyorooms.com' };
 const SUBPAGE = /\/hotels\/(?:address-of-|reviews?-of-|rooms-(?:in|of)-|photos-of-|amenities-of-|policies-of-|location-of-)/;
 export function cleanUrl(u, platform) {
   const url = new URL(u);

@@ -38,6 +38,8 @@ const CASES = [
   ['Abhi Ganga Homestay - Deluxe Double Room (2 Adults + 1 Child)', 'haridwar', 'Abhi Ganga Homestay | Near Ganga Ghat 𝗕𝗢𝗢𝗞 Haridwar Homestay', true], // room description is not the name
   ['OZY Homestay - Two-Bedroom Apartment', 'rishikesh', 'OZY Homestay, Rishikesh, India', true],
   ['Hotel Yuvraj Rishikesh', 'rishikesh', 'SPOT ON 43453 Hotel Yuvraj, Laxman Jhula, Rishikesh, India', true], // Spot On is an OYO brand
+  ['Krishna Kunj Homestay Rishikesh. A Family Friendly Homestay at Best Price', 'rishikesh', 'Krishna Kunj Homestay Rishikesh, Rishīkesh (updated prices 2027)', true], // a tagline after a full stop
+  ['Krishn Kunj home Stay', 'rishikesh', 'Krishna Kunj Homestay Rishikesh, Rishīkesh (updated prices 2027)', false], // a spelling variant is never auto-matched (and this one is a different place, 2.6 km away)
   ['Kedia Resorts - ( Ganga Facing Hotel )', 'rishikesh', 'Kedia Resorts, Veerbhadra Road, Near AIIMS Hospital, Rishikesh, India', true],
   ['Radha Krishna Homestay - Two-Bedroom Apartment', 'rishikesh', 'Radha Krishna Homestay 1 BHK Apartment 𝗕𝗢𝗢𝗞 Rishikesh Apartment', false], // 2 bedrooms is not the 1 BHK unit
   // wrong pages: other stays of the same chain/brand, other units, lookalikes, list pages

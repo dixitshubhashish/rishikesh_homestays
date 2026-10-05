@@ -260,6 +260,12 @@ Add completed work here with the agent, date, files, and verification command or
 - Follow-up: not committed or pushed (owner commits together). Booking-link search (Opera worker) still running; new found links not merged yet.
 - 2026-10-05 later (pushed in ed7f988, then): `llms-full.txt` (every stays/landmark page with prices, areas, best-reviewed bookable picks, tips, FAQs, WhatsApp links), honest thin-page lines and a Haridwar Kumbh 2027 section in `llms.txt`; honest sitemap dates (`scripts/stays/page_dates.py`, `page-dates.tsv`); IndexNow (`scripts/indexnow.mjs`, key file at the root, `.github/workflows/indexnow.yml`, ping step in `stays-refresh.yml`, whose `git add` now covers `hotels/` and the rest of the build output); `prepared_stays()` falls back to the committed data module when a city has no local crawl.
 
+### 2026-10-05 (night) - Claude: booking-link search, all browsers and sites
+- Task: re-search every stay without a booking link (queue 1,171, unfound retry 2,480) and hand-check the 230 the passes could not settle.
+- Files: `scripts/stays/ota-evidence.mjs` (new: fuzzy name + map pin / address evidence), `scripts/stays/record_manual.mjs` (new: hand-check recorder), `scripts/stays/search_supervisor.mjs` (new), `scripts/stays/google_ota_search.mjs` (site-by-site queries, engine fallback, adaptive pace, duplicates/review by pin), `scripts/stays/ota-match.mjs` (Expedia, Hotels.com, Cleartrip, Hostelworld, OYO; tagline after a full stop), `docs/booking-links/RULES.md` §4a/4b, tests `tests/scripts/ota-evidence.test.js`.
+- Running: supervisor + workers on Opera (quick), Chrome and Edge (deep), logs `scripts/stays/.cache/booking-search-2026-10-04/r4-*.log` and `supervisor.log`; hand-check workflow in the owner's Chrome (Claude in Chrome) for the `hand` rows of unfound.tsv.
+- Follow-up: found links are not on the site until merged (postcheck_matches.py → merge_ota.py → places pipeline → build) and pushed; review.tsv needs the owner.
+
 ## Handoff Template
 
 ```text
