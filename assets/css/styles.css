@@ -11,6 +11,37 @@
   --clay: #b5573f;
   --sky: #e7f1ef;
   --shadow: 0 18px 46px rgba(23, 33, 31, 0.12);
+  /* theme tokens: light values are the colours these rules always had;
+     the dark theme redefines them at the end of this file */
+  --river-fill: #14524a;
+  --river-fill-2: #0f6f74;
+  --on-fill: #fff;
+  --header-bg: rgba(251, 250, 245, 0.92);
+  --header-line: rgba(222, 216, 202, 0.8);
+  --ink-2: #31413e;
+  --ink-label: #45534f;
+  --ink-tag: #35504b;
+  --eyebrow: #043d19;
+  --alt: #eef4f2;
+  --zebra: #f5f8f6;
+  --note-bg: #fff7e9;
+  --note-ink: #173c3d;
+  --note-ink-2: #314b47;
+  --notice-bg: linear-gradient(110deg, #e6f7ed 0%, #fff8df 100%);
+  --notice-strong: #0b6b45;
+  --strip-bg: #eef4f0;
+  --strip-card: #f4f8f5;
+  --strip-line: #d8e3dc;
+  --img-ph: #dbe9e2;
+  --img-ph-2: #dce9e2;
+  --shadow-card: rgba(23, 33, 31, 0.07);
+  --accent-rgb: 20, 82, 74;
+  --ok: #4CAF50;
+  --err: #f44336;
+  --ad-preview-line: #c58b2a;
+  --ad-preview-a: #fff8ea;
+  --ad-preview-b: #fdf0d5;
+  --ad-preview-ink: #8a5a12;
   --radius: 8px;
   --max: 1180px;}
 * {
@@ -50,8 +81,8 @@ textarea {
   top: -100px;
   z-index: 100;
   padding: 10px 14px;
-  color: #fff;
-  background: var(--river);}
+  color: var(--on-fill);
+  background: var(--river-fill);}
 .skip-link:focus {
   top: 16px;}
 .site-logo{
@@ -67,8 +98,8 @@ textarea {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgba(251, 250, 245, 0.92);
-  border-bottom: 1px solid rgba(222, 216, 202, 0.8);
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-line);
   backdrop-filter: blur(16px);}
 .nav-wrap {
   width: min(1400px, calc(100% - 32px));
@@ -97,7 +128,7 @@ textarea {
   height: 42px;
   padding: 0 16px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--panel);
   border-radius: 999px;
   color: var(--ink);
   font-weight: 800;
@@ -115,7 +146,7 @@ textarea {
 .nav-toggle:hover,
 .nav-toggle[aria-expanded="true"] {
   background: var(--sky);
-  border-color: rgba(20, 82, 74, 0.26);
+  border-color: rgba(var(--accent-rgb), 0.26);
   color: var(--river);}
 .nav-toggle-icon {
   position: relative;
@@ -149,7 +180,7 @@ textarea {
   padding: 7px 7px;
   border: 1px solid transparent;
   border-radius: var(--radius);
-  color: #31413e;
+  color: var(--ink-2);
   font-size: 0.72rem;
   font-weight: 650;
   white-space: nowrap;
@@ -157,7 +188,7 @@ textarea {
 .site-nav a:hover,
 .site-nav a[aria-current="page"] {
   background: var(--sky);
-  border-color: rgba(20, 82, 74, 0.18);
+  border-color: rgba(var(--accent-rgb), 0.18);
   color: var(--river);}
 .site-nav a.nav-cta[aria-current="page"] {
   /* The CTA button keeps its own dark background + white text even when
@@ -206,8 +237,8 @@ textarea {
   transform: translateY(-1px);}
 .btn-secondary {
   color: var(--river);
-  background: #fff;
-  border-color: rgba(20, 82, 74, 0.26);}
+  background: var(--panel);
+  border-color: rgba(var(--accent-rgb), 0.26);}
 .btn-secondary:hover {
   border-color: var(--river);}
 .btn-quiet {
@@ -285,7 +316,7 @@ textarea {
   transform: translateY(-2px);}
 .eyebrow {
   margin: 0 0 12px;
-  color: #043d19;
+  color: var(--eyebrow);
   font-size: 0.78rem;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -503,7 +534,7 @@ textarea {
 .guide-section {
   padding: 62px 0;}
 .section.alt {
-  background: #eef4f2;}
+  background: var(--alt);}
 main > section:last-child {
   padding-bottom: 42px;}
 .guide-section + .section,
@@ -550,7 +581,7 @@ main > section:last-child {
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--panel);
   box-shadow: var(--shadow);}
 
  .search-grid{
@@ -638,7 +669,7 @@ main > section:last-child {
 .field label {
   display: block;
   margin-bottom: 6px;
-  color: #45534f;
+  color: var(--ink-label);
   font-size: 0.82rem;
   font-weight: 800;}
 .field input,
@@ -649,7 +680,7 @@ main > section:last-child {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--panel);
   color: var(--ink);
   transition: box-shadow 150ms ease, border-color 150ms ease;}
 .field select:focus,
@@ -660,7 +691,7 @@ main > section:last-child {
 .phone-row select:active {
   outline: none;
   border-color: var(--river);
-  box-shadow: 0 0 0 3px rgba(20, 82, 74, 0.15), 0 4px 12px rgba(23, 33, 31, 0.12);}
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15), 0 4px 12px rgba(23, 33, 31, 0.12);}
 .field textarea {
   min-height: 112px;
   resize: vertical;}
@@ -694,7 +725,7 @@ main > section:last-child {
   padding: 6px 12px;
   border: 1px solid var(--river);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--panel);
   color: var(--river);
   font-size: 0.78rem;
   font-weight: 700;
@@ -724,7 +755,7 @@ main > section:last-child {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;
+  background: var(--panel);
   padding: 4px;}
 .counter-btn {
   flex: 0 0 40px;
@@ -777,7 +808,7 @@ main > section:last-child {
   border-radius: var(--radius);
   background: var(--panel);
   overflow: hidden;
-  box-shadow: 0 12px 30px rgba(23, 33, 31, 0.07);}
+  box-shadow: 0 12px 30px var(--shadow-card);}
 .homestay-photo {
   display: block;
   min-height: 208px;
@@ -850,7 +881,7 @@ a.homestay-photo:hover {
   align-items: center;
   padding: 5px 9px;
   border-radius: 999px;
-  color: #35504b;
+  color: var(--ink-tag);
   background: var(--sky);
   font-size: 0.78rem;
   font-weight: 800;}
@@ -886,8 +917,8 @@ a.homestay-photo:hover {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  color: #fff;
-  background: var(--river-2);
+  color: var(--on-fill);
+  background: var(--river-fill-2);
   font-weight: 900;}
 .feature-item h3 {
   margin: 0 0 4px;
@@ -914,24 +945,24 @@ a.homestay-photo:hover {
   padding: 11px 20px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--panel);
   color: var(--ink);
   font-weight: 800;
   font-size: 0.94rem;
   cursor: pointer;
   transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;}
 .page-tab-btn:hover {
-  border-color: rgba(20, 82, 74, 0.35);}
+  border-color: rgba(var(--accent-rgb), 0.35);}
 .page-tab-btn.is-active {
-  background: var(--river);
-  color: #fff;
-  border-color: var(--river);}
+  background: var(--river-fill);
+  color: var(--on-fill);
+  border-color: var(--river-fill);}
 
 .cta-band {
   padding: 48px;
   border-radius: var(--radius);
-  color: #fff;
-  background: linear-gradient(135deg, var(--river), #50351e);
+  color: var(--on-fill);
+  background: linear-gradient(135deg, var(--river-fill), #50351e);
   display: grid;
   grid-template-columns: 1.1fr auto;
   gap: 24px;
@@ -1074,8 +1105,8 @@ a.homestay-photo:hover {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(23, 33, 31, 0.07);}
+  background: var(--panel);
+  box-shadow: 0 12px 30px var(--shadow-card);}
 .kumbh-table {
   width: 100%;
   table-layout: fixed;
@@ -1094,15 +1125,15 @@ a.homestay-photo:hover {
   line-height: 1.45;
   overflow-wrap: anywhere;}
 .kumbh-table th {
-  color: #fff;
-  background: var(--river);
+  color: var(--on-fill);
+  background: var(--river-fill);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;}
 .kumbh-table tbody tr:last-child td {
   border-bottom: 0;}
 .kumbh-table tbody tr:nth-child(even) {
-  background: #f5f8f6;}
+  background: var(--zebra);}
 .kumbh-table .date {
   color: var(--river);
   font-weight: 900;
@@ -1116,7 +1147,7 @@ a.homestay-photo:hover {
 .kumbh-note {
   padding: 16px 18px;
   border-left: 4px solid var(--marigold);
-  background: #fff7e9;
+  background: var(--note-bg);
   color: var(--muted);}
 .kumbh-plan-grid {
   display: grid;
@@ -1127,7 +1158,7 @@ a.homestay-photo:hover {
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;}
+  background: var(--panel);}
 .kumbh-plan-card h3 {
   margin: 0 0 8px;
   font-size: 1.12rem;}
@@ -1153,8 +1184,8 @@ a.homestay-photo:hover {
   padding: 22px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(23, 33, 31, 0.07);}
+  background: var(--panel);
+  box-shadow: 0 12px 30px var(--shadow-card);}
 .side-panel h2,
 .side-panel h3 {
   margin: 0 0 12px;
@@ -1199,7 +1230,7 @@ a.homestay-photo:hover {
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: #fff;}
+  background: var(--panel);}
 .listing-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 360px;
@@ -1261,7 +1292,7 @@ a.homestay-photo:hover {
   border: 1px dashed var(--line);
   border-radius: var(--radius);
   color: var(--muted);
-  background: #fff;}
+  background: var(--panel);}
 @media (max-width: 1380px) {
   .nav-toggle {
     display: inline-flex;
@@ -1287,7 +1318,8 @@ a.homestay-photo:hover {
     align-items: stretch;
     gap: 4px;
     padding: 0 16px 24px;
-    background: #fff;
+    background: var(--panel);
+    box-shadow: 8px 0 40px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
     transform: translateX(-100%);
     transition: transform 0.3s ease;}
@@ -2402,7 +2434,7 @@ a.homestay-photo:hover {
     margin: 28px 0 34px;
     padding: 14px;
     border-radius: var(--radius);
-    background: #eef4f0;
+    background: var(--strip-bg);
 }
 .stay-detail-strip-reverse {
     grid-template-columns: minmax(0, 1.1fr) minmax(180px, 0.9fr);
@@ -2414,7 +2446,7 @@ a.homestay-photo:hover {
     width: 100%;
     height: 190px;
     object-fit: contain;
-    background: #dbe9e2;
+    background: var(--img-ph);
     border-radius: calc(var(--radius) - 2px);
 }
 .stay-detail-strip h3 {
@@ -2434,22 +2466,22 @@ a.homestay-photo:hover {
 .stay-story-grid figure {
     margin: 0;
     overflow: hidden;
-    border: 1px solid #d8e3dc;
+    border: 1px solid var(--strip-line);
     border-radius: var(--radius);
-    background: #f4f8f5;
+    background: var(--strip-card);
 }
 .stay-story-grid img {
     display: block;
     width: 100%;
     height: 220px;
     object-fit: contain;
-    background: #dce9e2;
+    background: var(--img-ph-2);
 }
 .stay-story-grid figcaption {
     display: grid;
     gap: 4px;
     padding: 14px 16px 16px;
-    color: #314b47;
+    color: var(--note-ink-2);
     line-height: 1.4;
 }
 .stay-story-grid figcaption strong {
@@ -2466,19 +2498,19 @@ a.homestay-photo:hover {
     padding: 18px 20px;
     border-left: 5px solid #20c96b;
     border-radius: 8px;
-    background: linear-gradient(110deg, #e6f7ed 0%, #fff8df 100%);
-    color: #173c3d;
+    background: var(--notice-bg);
+    color: var(--note-ink);
 }
 .notice-card strong {
     display: block;
-    color: #0b6b45;
+    color: var(--notice-strong);
     font-size: 1.2rem;
     line-height: 1.25;
 }
 .notice-card span {
     display: block;
     max-width: 58ch;
-    color: #314b47;
+    color: var(--note-ink-2);
     font-size: 1rem;
     line-height: 1.45;
 }
@@ -2636,7 +2668,7 @@ a.homestay-photo:hover {
   overflow-y: auto;
   padding: 28px 24px 24px;
   border-radius: 14px;
-  background: #fff;
+  background: var(--panel);
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.3);
   transform: translate(-50%, -48%) scale(0.96);
   opacity: 0;
@@ -2690,7 +2722,7 @@ a.homestay-photo:hover {
   animation: btn-spin 0.7s linear infinite;}
 .btn-secondary .btn-spinner,
 .btn-quiet .btn-spinner {
-  border-color: rgba(20, 82, 74, 0.25);
+  border-color: rgba(var(--accent-rgb), 0.25);
   border-top-color: var(--river);}
 @keyframes btn-spin {
   to { transform: rotate(360deg); }
@@ -2766,8 +2798,8 @@ input.sx-input {
   font: inherit;
   cursor: pointer;}
 .sx-seg button[aria-pressed="true"] {
-  background: var(--river);
-  color: #fff;}
+  background: var(--river-fill);
+  color: var(--on-fill);}
 .sx-chip {
   padding: 4px 11px;
   border: 1px solid var(--line);
@@ -2908,14 +2940,14 @@ input.sx-input {
   grid-row: 1 / span 2;
   padding: 7px 16px;
   border-radius: var(--radius);
-  background: var(--river);
-  color: #fff;
+  background: var(--river-fill);
+  color: var(--on-fill);
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;}
 .sx-go:hover {
-  background: var(--river-2);}
+  background: var(--river-fill-2);}
 .sx-more {
   margin-top: 10px;
   padding: 6px 12px;
@@ -2966,9 +2998,9 @@ input.sx-input {
 .sx-cats a:hover {
   border-color: var(--river-2);}
 .sx-cats a[aria-current="page"] {
-  border-color: var(--river);
-  background: var(--river);
-  color: #fff;}
+  border-color: var(--river-fill);
+  background: var(--river-fill);
+  color: var(--on-fill);}
 .sx-cats a[aria-current="page"] small {
   color: rgba(255, 255, 255, 0.8);}
 .sx-explore {
@@ -3619,8 +3651,8 @@ body.whatsapp-drawer-open .rh-ad-rail {
 .sx-city-switch a:hover {
   color: var(--river);}
 .sx-city-switch a[aria-current="page"] {
-  background: var(--river);
-  color: #fff;}
+  background: var(--river-fill);
+  color: var(--on-fill);}
 /* Stays pages: category filters as a left sidebar (collapsible "Filter stays" on phones). */
 .sx-layout {
   display: grid;
@@ -3663,8 +3695,8 @@ body.whatsapp-drawer-open .rh-ad-rail {
   background: var(--panel);
   color: var(--river);}
 .sx-filters li a[aria-current="page"] {
-  background: var(--river);
-  color: #fff;}
+  background: var(--river-fill);
+  color: var(--on-fill);}
 .sx-filters li a[aria-current="page"] small {
   color: rgba(255, 255, 255, 0.8);}
 .sx-f-all a {
@@ -3906,3 +3938,207 @@ html:lang(he) :is(body, h1, h2, h3, h4) {
 [dir="rtl"] :is(a[href^="tel:"], a[href^="mailto:"], .sx-price, .price) {
   unicode-bidi: isolate;
   direction: ltr;}
+/* Form result messages (contact, host and rental forms set these classes). */
+[data-form-status].is-ok {
+  color: var(--ok);}
+[data-form-status].is-err {
+  color: var(--err);}
+
+/* ============================================================
+   Dark/light theme. The head snippet on every page sets
+   <html data-theme="light|dark"> before the first paint, and
+   assets/js/modules/theme-toggle.js wires the header button.
+   Light is the colours above; dark only redefines tokens here,
+   plus the few third-party widgets that bring their own colours.
+   Always dark in both themes, so left alone: the heroes, the
+   footers, the stay gallery, booking-site and WhatsApp brand
+   colours, the 404 river scene and the map pins.
+   ============================================================ */
+:root {
+  color-scheme: light;}
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin-left: auto;
+  margin-right: -12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;}
+.theme-toggle:hover {
+  background: var(--sky);
+  border-color: rgba(var(--accent-rgb), 0.26);
+  color: var(--river);}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--river);
+  outline-offset: 2px;}
+.theme-toggle svg {
+  display: block;}
+.theme-toggle .theme-toggle-sun,
+:root[data-theme="dark"] .theme-toggle .theme-toggle-moon {
+  display: none;}
+:root[data-theme="dark"] .theme-toggle .theme-toggle-sun {
+  display: block;}
+@media (min-width: 1381px) {
+  /* desktop: after the inline nav, which keeps its place on the right */
+  .site-nav {
+    margin-left: auto;}
+  .theme-toggle {
+    order: 1;
+    margin-left: 0;
+    margin-right: 0;}}
+@media (max-width: 420px) {
+  .nav-wrap {
+    gap: 14px;}
+  .theme-toggle {
+    margin-right: -6px;}}
+@media (max-width: 374px) {
+  /* small phones: the site name wraps to two lines so both buttons fit */
+  .site-header .brand {
+    white-space: normal;
+    line-height: 1.15;}}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e7ece9;
+  --muted: #a3b0ac;
+  --paper: #0f1715;
+  --panel: #16211e;
+  --line: #2c3a36;
+  --river: #7fc9bc;
+  --river-2: #5fb8bd;
+  --leaf: #9cc06e;
+  --marigold: #e8a64f;
+  --clay: #e08a72;
+  --sky: #1b2c28;
+  --shadow: 0 18px 46px rgba(0, 0, 0, 0.45);
+  --river-fill: #1f6a62;
+  --river-fill-2: #1f6a62;
+  --on-fill: #fff;
+  --header-bg: rgba(15, 23, 21, 0.9);
+  --header-line: rgba(255, 255, 255, 0.08);
+  --ink-2: #c9d3cf;
+  --ink-label: #c9d3cf;
+  --ink-tag: #c9d3cf;
+  --eyebrow: #8fd3a8;
+  --alt: #131e1b;
+  --zebra: #1a2522;
+  --note-bg: #2a2316;
+  --note-ink: #f1d9a8;
+  --note-ink-2: #d9cfb8;
+  --notice-bg: linear-gradient(110deg, #16302a 0%, #2a2316 100%);
+  --notice-strong: #8fd3a8;
+  --strip-bg: #131e1b;
+  --strip-card: #16211e;
+  --strip-line: #2c3a36;
+  --img-ph: #22302c;
+  --img-ph-2: #22302c;
+  --shadow-card: rgba(0, 0, 0, 0.35);
+  --accent-rgb: 127, 201, 188;
+  --ok: #7ed492;
+  --err: #ff8a80;
+  --ad-preview-line: #b8862f;
+  --ad-preview-a: #2a2316;
+  --ad-preview-b: #33291a;
+  --ad-preview-ink: #f1d9a8;}
+
+/* The logo is a white-background PNG: a deliberate white chip in dark. */
+:root[data-theme="dark"] .site-header .site-logo,
+:root[data-theme="dark"] .nav-drawer-logo {
+  background: #fff;
+  border-radius: 10px;
+  padding: 3px;}
+
+/* Local ad previews (ads.js, localhost only). */
+:root[data-theme="dark"] .rh-ad-preview {
+  border-color: var(--ad-preview-line);
+  background: repeating-linear-gradient(45deg, var(--ad-preview-a), var(--ad-preview-a) 10px, var(--ad-preview-b) 10px, var(--ad-preview-b) 20px);
+  color: var(--ad-preview-ink);}
+
+/* Leaflet maps: darker tiles (pins sit in their own pane and keep their colours). */
+:root[data-theme="dark"] .leaflet-container {
+  background: #1b2422;}
+:root[data-theme="dark"] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);}
+:root[data-theme="dark"] .leaflet-popup-content-wrapper,
+:root[data-theme="dark"] .leaflet-popup-tip,
+:root[data-theme="dark"] .leaflet-bar a {
+  background: var(--panel);
+  color: var(--ink);}
+:root[data-theme="dark"] .leaflet-bar a {
+  border-bottom-color: var(--line);}
+:root[data-theme="dark"] .leaflet-bar a:hover {
+  background: var(--sky);}
+:root[data-theme="dark"] .leaflet-container a.leaflet-popup-close-button {
+  color: var(--muted);}
+:root[data-theme="dark"] .leaflet-control-attribution {
+  background: rgba(15, 23, 21, 0.85);
+  color: var(--muted);}
+:root[data-theme="dark"] .leaflet-control-attribution a {
+  color: var(--river);}
+
+/* flatpickr date picker (its vendor stylesheet is light only). */
+:root[data-theme="dark"] .flatpickr-calendar {
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--line), 0 12px 30px rgba(0, 0, 0, 0.5);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowTop::after {
+  border-bottom-color: var(--panel);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowBottom::after {
+  border-top-color: var(--panel);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowTop::before {
+  border-bottom-color: var(--line);}
+:root[data-theme="dark"] .flatpickr-calendar.arrowBottom::before {
+  border-top-color: var(--line);}
+:root[data-theme="dark"] .flatpickr-months .flatpickr-month,
+:root[data-theme="dark"] .flatpickr-months .flatpickr-prev-month,
+:root[data-theme="dark"] .flatpickr-months .flatpickr-next-month,
+:root[data-theme="dark"] .flatpickr-current-month input.cur-year,
+:root[data-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months {
+  color: var(--ink);
+  fill: var(--ink);}
+:root[data-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months {
+  background: var(--panel);}
+:root[data-theme="dark"] .flatpickr-months .flatpickr-prev-month:hover svg,
+:root[data-theme="dark"] .flatpickr-months .flatpickr-next-month:hover svg {
+  fill: var(--river);}
+:root[data-theme="dark"] .numInputWrapper span.arrowUp::after {
+  border-bottom-color: var(--ink);}
+:root[data-theme="dark"] .numInputWrapper span.arrowDown::after {
+  border-top-color: var(--ink);}
+:root[data-theme="dark"] span.flatpickr-weekday {
+  color: var(--muted);}
+:root[data-theme="dark"] .flatpickr-day {
+  color: var(--ink);}
+:root[data-theme="dark"] .flatpickr-day:hover,
+:root[data-theme="dark"] .flatpickr-day:focus,
+:root[data-theme="dark"] .flatpickr-day.inRange,
+:root[data-theme="dark"] .flatpickr-day.prevMonthDay.inRange,
+:root[data-theme="dark"] .flatpickr-day.nextMonthDay.inRange {
+  background: var(--sky);
+  border-color: var(--sky);
+  box-shadow: -5px 0 0 var(--sky), 5px 0 0 var(--sky);}
+:root[data-theme="dark"] .flatpickr-day:hover,
+:root[data-theme="dark"] .flatpickr-day:focus {
+  box-shadow: none;}
+:root[data-theme="dark"] .flatpickr-day.today {
+  border-color: var(--muted);}
+:root[data-theme="dark"] .flatpickr-day.selected,
+:root[data-theme="dark"] .flatpickr-day.startRange,
+:root[data-theme="dark"] .flatpickr-day.endRange {
+  background: var(--river-fill);
+  border-color: var(--river-fill);
+  color: var(--on-fill);
+  box-shadow: none;}
+:root[data-theme="dark"] .flatpickr-day.prevMonthDay,
+:root[data-theme="dark"] .flatpickr-day.nextMonthDay,
+:root[data-theme="dark"] .flatpickr-day.flatpickr-disabled,
+:root[data-theme="dark"] .flatpickr-day.flatpickr-disabled:hover {
+  color: rgba(231, 236, 233, 0.32);
+  background: transparent;
+  border-color: transparent;}

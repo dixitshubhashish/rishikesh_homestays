@@ -195,18 +195,18 @@ export function setupContactForm() {
 
         if (status) {
           status.textContent = result.message || "Thank you! We will contact you shortly.";
-          status.style.color = "#4CAF50";
+          status.classList.add('is-ok'); status.classList.remove('is-err');
         }
       } else {
         if (status) {
           status.textContent = result.message || "Unable to send your enquiry right now.";
-          status.style.color = "#f44336";
+          status.classList.add('is-err'); status.classList.remove('is-ok');
         }
       }
     } catch (error) {
       if (status) {
         status.textContent = "Unable to send your enquiry right now. Please call us directly.";
-        status.style.color = "#f44336";
+        status.classList.add('is-err'); status.classList.remove('is-ok');
       }
     } finally {
       // Restores this button's own original label — homestays.html says

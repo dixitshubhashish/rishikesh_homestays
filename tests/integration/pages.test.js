@@ -294,7 +294,7 @@ test('Page Integration Tests', async (t) => {
     // The bike & taxi rental page has its own visible start/end dates and
     // phone field (its enquiry form is the point of the page).
     const eagerFlatpickrPages = ['index.html', 'contact.html', 'homestays.html', 'bike-and-taxi-rental-in-rishikesh.html'];
-    const eagerLibphonenumberPages = ['contact.html', 'homestays.html', 'bike-and-taxi-rental-in-rishikesh.html'];
+    const eagerLibphonenumberPages = ['contact.html', 'homestays.html', 'list-your-homestay.html', 'bike-and-taxi-rental-in-rishikesh.html'];
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
       const hasEagerFlatpickr = content.includes('flatpickr.min.js');

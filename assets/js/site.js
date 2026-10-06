@@ -11,6 +11,7 @@ import { enhanceStaticWhatsAppLinks } from './modules/whatsapp-link.js';
 import { setupPageTabs } from './modules/page-tabs.js';
 import { setupHeroSlideshow } from './modules/hero-slideshow.js';
 import { setupLangPicker } from './modules/lang-picker.js';
+import { setupThemeToggle } from './modules/theme-toggle.js';
 
 // Re-export for any inline script usage
 window.AREAS = AREAS;
@@ -27,6 +28,7 @@ window.applyListingParams = applyListingParams;
 
 // Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", () => {
+  setupThemeToggle();
   setupNav();
   setupLangPicker();
   setupQuickSearch();
