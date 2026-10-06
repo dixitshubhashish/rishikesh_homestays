@@ -12,8 +12,8 @@ export function createStayCard(stay) {
     ? `<a class="homestay-photo ${stay.imageClass}" href="${stay.detailUrl}" aria-label="View ${stay.name}"></a>`
     : `<div class="homestay-photo ${stay.imageClass}" aria-hidden="true"></div>`;
   const title = stay.detailUrl
-    ? `<h3><a href="${stay.detailUrl}">${stay.name}</a></h3>`
-    : `<h3>${stay.name}</h3>`;
+    ? `<h3><a href="${stay.detailUrl}" data-stay-name>${stay.name}</a></h3>`
+    : `<h3 data-stay-name>${stay.name}</h3>`;
   return `
     <article class="homestay-card" data-area="${stay.area}" data-type="${stay.type}" data-budget="${stay.budget}">
       ${photo}

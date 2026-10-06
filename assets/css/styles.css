@@ -3061,6 +3061,27 @@ input.sx-input {
   text-transform: uppercase;}
 .sx-own .sx-list {
   border-top: 0;}
+/* "Book direct" perks (OWN_PERKS in build_pages.py, also in stay-page.js) */
+.sx-own-perks {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0 10px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.86rem;
+  color: var(--ink-2);}
+.sx-own-perks li {
+  position: relative;
+  padding-left: 20px;}
+.sx-own-perks li::before {
+  content: "✓";
+  position: absolute;
+  left: 2px;
+  color: var(--marigold);
+  font-weight: 800;}
+.sx-own-perks li:first-child {
+  color: var(--ink);
+  font-weight: 700;}
 .sx-own .sx-item:last-child {
   border-bottom: 0;}
 /* Editorial blocks on best-*-in-rishikesh pages: breadcrumb, guide, data
@@ -3856,8 +3877,55 @@ html.rh-i18n-wait body {
 .rh-lang-picker select option {
   color: #1d2a22;
   background: #fff;}
-.rhs-footer-bottom-inner .rh-lang-picker {
-  justify-self: center;}
+/* header dropdown: a small pill with a globe and the language code ("EN");
+   the native select sits invisibly on top, so its list shows the full names */
+.rh-lang-picker-header {
+  position: relative;
+  flex: 0 0 auto;
+  gap: 4px;
+  height: 34px;
+  margin-left: auto;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;}
+.rh-lang-picker-header svg {
+  width: 15px;
+  height: 15px;}
+.rh-lang-picker-header label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;}
+.rh-lang-picker-header select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;}
+.rh-lang-picker-header:hover {
+  background: var(--sky);}
+.rh-lang-picker-header:focus-within {
+  outline: 2px solid var(--river);
+  outline-offset: 2px;}
+.rh-lang-picker-header + .theme-toggle {
+  margin-left: 0;}
+@media (min-width: 1381px) {
+  .rh-lang-picker-header {
+    order: 1;
+    margin-left: 0;}}
+
 .nav-drawer-footer .rh-lang-picker {
   margin-top: 14px;}
 
@@ -4142,3 +4210,242 @@ html:lang(he) :is(body, h1, h2, h3, h4) {
   color: rgba(231, 236, 233, 0.32);
   background: transparent;
   border-color: transparent;}
+/* Desktop nav: one row in every language. Links and the button never wrap;
+   assets/js/modules/nav-fit.js shrinks the text (--nav-fit) when a language's
+   labels would overflow the header (Tamil, Telugu…). */
+@media (min-width: 1381px) {
+  .site-header .nav-wrap {
+    gap: 14px;}
+  .site-nav {
+    flex-wrap: nowrap;
+    gap: calc(6px * var(--nav-fit, 1));}
+  .site-nav a {
+    padding: 7px calc(6px * var(--nav-fit, 1));
+    font-size: calc(0.72rem * var(--nav-fit, 1));}
+  .site-nav .nav-cta {
+    white-space: nowrap !important;
+    padding: 9px calc(11px * var(--nav-fit, 1));}}
+/* Hero buttons side by side are always the same height, even when one label
+   wraps to more lines in a translation ("Reserva por WhatsApp"). */
+.hero-actions,
+.hero > .hero-inner .hero-actions {
+  align-items: stretch;}
+
+/* ============================================================
+   Site search. assets/js/modules/site-search.js injects the
+   header button (.site-search-btn, before the theme toggle) and
+   the panel (.site-search, appended to <body>, outside the
+   header, whose backdrop-filter would trap position:fixed).
+   Colours are theme tokens only, so dark needs no extra rules.
+   ============================================================ */
+.site-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin-left: auto;
+  margin-right: -12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;}
+.site-search-btn:hover,
+.site-search-btn[aria-expanded="true"] {
+  background: var(--sky);
+  border-color: rgba(var(--accent-rgb), 0.26);
+  color: var(--river);}
+.site-search-btn:focus-visible {
+  outline: 2px solid var(--river);
+  outline-offset: 2px;}
+.site-search-btn svg {
+  display: block;}
+.site-search-btn + .theme-toggle {
+  margin-left: 0;}
+@media (min-width: 1381px) {
+  .site-search-btn {
+    order: 1;
+    margin-left: 0;}}
+@media (max-width: 420px) {
+  .site-search-btn {
+    margin-right: -6px;}}
+@media (max-width: 460px) {
+  /* phones: with three header buttons the site name wraps to two lines
+     (the small-phone rule above, from a wider screen) */
+  .site-header .brand {
+    white-space: normal;
+    line-height: 1.15;}}
+.site-search {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;}
+.site-search[hidden] {
+  display: none;}
+.site-search-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 20, 18, 0.5);}
+.site-search-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(640px, calc(100% - 24px));
+  max-height: calc(100vh - 104px);
+  max-height: calc(100dvh - 104px);
+  margin: 80px auto 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: var(--shadow);}
+.site-search-form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 12px 8px 16px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);}
+.site-search-form svg {
+  flex: 0 0 auto;}
+.site-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.05rem; /* 16px+: iOS Safari zooms into smaller inputs */}
+.site-search-input::placeholder {
+  color: var(--muted);}
+.site-search-close {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;}
+.site-search-close:hover {
+  color: var(--river);}
+.site-search-results {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 6px 8px;}
+.site-search-results:empty {
+  display: none;}
+.site-search-group {
+  padding: 10px 10px 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;}
+.site-search-item {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--ink);}
+.site-search-item[aria-selected="true"] {
+  background: var(--sky);}
+.site-search-title {
+  display: block;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;}
+.site-search-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;}
+.site-search mark {
+  background: transparent;
+  color: var(--river);
+  font-weight: 800;}
+.site-search-own {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--river-fill);
+  color: var(--on-fill);
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: 2px;}
+.site-search-status {
+  margin: 0;
+  padding: 12px 16px 14px;
+  color: var(--muted);
+  font-size: 0.92rem;}
+.site-search-status:empty {
+  display: none;}
+.site-search-status a {
+  color: var(--river);
+  text-decoration: underline;}
+html.site-search-open {
+  overflow: hidden;}
+@media (max-width: 680px) {
+  .site-search-panel {
+    width: calc(100% - 16px);
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    margin-top: 12px;}}
+/* Header buttons in a row: site search, language, theme, menu. Only the first
+   one pushes right (margin-left: auto); on phones they shrink so the menu
+   button never leaves the screen (checked 320–1440 px, English and Tamil). */
+.site-search-btn + .rh-lang-picker-header {
+  margin-left: 0;}
+.site-header .nav-wrap > .site-search-btn,
+.site-header .nav-wrap > .rh-lang-picker-header,
+.site-header .nav-wrap > .theme-toggle {
+  margin-right: 0;}
+@media (max-width: 1380px) {
+  .site-header .nav-wrap {
+    gap: 8px;}}
+@media (max-width: 480px) {
+  .site-header .nav-wrap {
+    gap: 6px;}
+  .site-header .site-logo {
+    height: 46px;}
+  .site-header .brand {
+    gap: 6px;
+    font-size: 0.86rem;}
+  .site-search-btn,
+  .site-header .theme-toggle {
+    width: 36px;
+    height: 36px;}
+  .site-header .nav-toggle {
+    height: 36px;
+    padding: 0 11px;}
+  .rh-lang-picker-header {
+    height: 36px;
+    padding: 0 8px;}
+  .rh-lang-picker-header svg {
+    display: none;}}
+@media (max-width: 359px) {
+  .site-header .nav-wrap {
+    gap: 4px;
+    width: calc(100% - 20px);}
+  .site-header .site-logo {
+    height: 36px;}
+  .site-header .brand {
+    font-size: 0.78rem;}
+  .site-search-btn,
+  .site-header .theme-toggle {
+    width: 34px;
+    height: 34px;}
+  .site-header .nav-toggle {
+    height: 34px;
+    padding: 0 9px;}
+  .rh-lang-picker-header {
+    height: 34px;
+    padding: 0 7px;}}

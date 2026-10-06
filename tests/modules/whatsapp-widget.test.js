@@ -19,15 +19,17 @@ const RETURN_HINT_TIMEOUT_MS = 7000;
 // dispatches DOMContentLoaded/load asynchronously, same as a real browser —
 // the widget module only self-injects once that fires), then enables fake
 // timers and boots the widget against it.
-async function setup(t, { mobile = false } = {}) {
+async function setup(t, { mobile = false, url = 'http://localhost/' } = {}) {
   const dom = new JSDOM(`
     <body>
       <div class="hero-actions">
         <a class="btn btn-whatsapp" href="https://wa.me/918050091290?text=hi">Book on WhatsApp</a>
       </div>
     </body>
-  `, { url: 'http://localhost/' });
+  `, { url });
   global.window = dom.window;
+  global.location = dom.window.location;
+  t.after(() => { delete global.location; });
   global.document = dom.window.document;
   // Node's own built-in `navigator` global (read-only, can't be reassigned)
   // reports a "Node.js/vX" user agent, which isMobileDevice() correctly
@@ -259,5 +261,31 @@ test('WhatsApp "Book on WhatsApp" button attention effect', async (t) => {
     typeName();
     t.mock.timers.tick(MANUAL_OPEN_IDLE_MS);
     assert(popup().classList.contains('is-open'));
+  });
+});
+
+// The shareable link (/whatsapp -> /?whatsapp=open, also #whatsapp) for
+// Instagram and other social posts: the form opens at once and stays open.
+test('WhatsApp form link (?whatsapp=open, #whatsapp)', async (t) => {
+  const popup = () => document.getElementById('whatsapp-popup');
+  for (const url of ['http://localhost/?whatsapp=open', 'http://localhost/contact#whatsapp']) {
+    await t.test(`opens the form at once: ${url}`, async (t) => {
+      await setup(t, { url });
+      t.mock.timers.tick(0);
+      assert(popup().classList.contains('is-open'), 'drawer should open straight away');
+      t.mock.timers.tick(5 * 60 * 1000);
+      assert(popup().classList.contains('is-open'), 'and never idle shut');
+      assert(!getButton().classList.contains('whatsapp-btn-attention'), 'no attention effects for a visitor who came for the form');
+    });
+  }
+  await t.test('opens on phones too', async (t) => {
+    await setup(t, { mobile: true, url: 'http://localhost/?whatsapp=open' });
+    t.mock.timers.tick(0);
+    assert(popup().classList.contains('is-open'));
+  });
+  await t.test('a plain visit still waits 15s', async (t) => {
+    await setup(t);
+    t.mock.timers.tick(0);
+    assert(!popup().classList.contains('is-open'));
   });
 });

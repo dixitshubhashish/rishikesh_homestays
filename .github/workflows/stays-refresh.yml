@@ -36,6 +36,9 @@ jobs:
           # JSON as Vercel's GOOGLE_APPLICATION_CREDENTIALS_JSON. Without it the
           # BigQuery snapshot step just skips.
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON }}
+      # The stays pages' text templates for in-browser translation (docs/I18N.md): new
+      # English templates show in English until they are translated (npm run i18n:status).
+      - run: npm run --silent build:i18n
       - name: Commit if anything changed
         id: commit
         run: |
@@ -43,7 +46,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           # the pages now live in hotels/; the build also rewrites every footer, sitemap.xml,
           # llms.txt / llms-full.txt and the honest page dates (scripts/stays/page-dates.tsv)
-          git add -A -- scripts/stays assets/js/modules hotels sitemap.xml llms.txt llms-full.txt '*.html'
+          git add -A -- scripts/stays assets/js/modules hotels sitemap.xml llms.txt llms-full.txt '*.html' i18n
           git diff --cached --quiet && exit 0
           git commit -m "Stays pages: scheduled refresh ($(date -u +%F))"
           git push

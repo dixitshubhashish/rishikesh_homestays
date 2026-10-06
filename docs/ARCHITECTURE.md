@@ -19,6 +19,7 @@ assets/images/                       photos and art
 api/                                 Vercel functions: contact, bigquery, geo, currency-rates, otp-*
 server.js                            Express dev server (static files + /api routes + 301s + 404 catch-all)
 scripts/stays/                       stays pipeline and booking-link search
+scripts/search/build-index.mjs       builds assets/search/index.json, the header search index
 scripts/indexnow.mjs                 IndexNow pings (run by .github/workflows/indexnow.yml after a push)
 scripts/setup-bigquery.js            creates the enquiries table (idempotent)
 vercel.json, _redirects              clean URLs and 301s (Vercel, Netlify)
@@ -58,7 +59,7 @@ tests/                               see docs/TESTING.md
 | `geo.js` | `detectCountryCode` via `/api/geo`; cached in memory per page and in `localStorage` for 24 h |
 | `currency.js` | Approximate visitor-currency price (USD/EUR/GBP/AUD/CAD/JPY) via `/api/currency-rates`; shown next to the INR price, never instead of it; rounded up to the nearest 5 units |
 | `button-loading.js` | `setButtonLoading` / `clearButtonLoading`: spinner + "-ing" label, disabled while busy; restores the exact original label from `data-original-label` |
-| `whatsapp-widget.js` | Floating WhatsApp popup: name/phone/dates/guests/pets form, formatted booking message, stores the enquiry via `/api/contact`, opens WhatsApp. `WHATSAPP_PHONE` lives here |
+| `whatsapp-widget.js` | Floating WhatsApp popup: name/phone/dates/guests/pets form, formatted booking message, stores the enquiry via `/api/contact`, opens WhatsApp. `WHATSAPP_PHONE` lives here. **Shareable link** that opens the form at once (Instagram bio, stories, social posts): `https://rishikeshhomestays.com/whatsapp` (302 to `/?whatsapp=open` in `vercel.json`, `_redirects`, `server.js`; other query parameters such as `utm_source` are kept by `server.js`). Any page also takes `?whatsapp=open` or `#whatsapp`. Opened that way the drawer never idles shut and no attention effects run |
 | `whatsapp-link.js` | `buildWhatsAppLink`: `wa.me` on mobile (opens the app), `web.whatsapp.com/send` on desktop (an open WhatsApp Web session gets the message in one hop); `enhanceStaticWhatsAppLinks()` rewrites a page's static `wa.me` links |
 | `theme-toggle.js` | `setupThemeToggle` (called by `site.js`): dark/light switch, stores `rh-theme`, keeps `aria-pressed`, `color-scheme` and the theme-color meta in step, fires `rh-themechange`. Phase 1 is opt-in (`FOLLOW_SYSTEM = false`); phase 2 follows the system setting while nothing is stored (one line here, one in the head snippet) |
 | `ota-lead-gate.js` | Name + phone modal before outbound booking-site links on `hotels/` pages; waits for `/api/contact` to acknowledge (spinner) before opening the link |
@@ -71,9 +72,21 @@ tests/                               see docs/TESTING.md
 | `stays-index-data.js`, `stays-index-data-haridwar.js` | Generated data per city (`STAYS_INDEX`, `STAYS_INDEX_META`, `STAYS_OWN`); never hand-edit |
 | `stay-page.js` | Property page (reads `?s=` and `?c=`): facts, lead popup → one booking redirect, WhatsApp, sidebar (our homestays + grouped "More stays in …"), Leaflet map (not for `gm` stays: "View on Google Maps") |
 | `landmark-map.js` | Lazy Leaflet map on landmark pages |
+| `site-search.js` | `setupSiteSearch` (called by `site.js`): header search button + panel; pure `tokenise`, `similarity`, `wordSimilarity`, `score`, `search`, `highlight` (see Site search below) |
 | `affiliate-links.js` | The only place for affiliate IDs: `CJ_PID` 101895722, `CJ_BOOKING_LINK_ID` 17323528, `affiliateLink(site, url)` wraps a Booking.com page in `https://www.anrdoezrs.net/click-<PID>-<LINK>?url=<page>`. `build_pages.py` reads the constants from this file; the Node scripts import it |
 
 `assets/js/index.js` imports `nav`, `search-form`, `stays-renderer` and `enquiry-prefill` and runs them on `DOMContentLoaded`, but no page loads it; pages use the `site.js` shim.
+
+## Site search
+
+The magnifier button in every page's header (injected by `site-search.js` before the theme toggle, so no HTML page carries it) opens a search panel over the page: up to 8 results grouped Pages / Stays, matched words highlighted, ↑/↓/Enter/Esc, and a "No results" line linking to `/contact`.
+
+- **Index**: `assets/search/index.json` (committed; a `.gitignore` exception, since `*.json` is ignored). Built by `npm run build:search` (`scripts/search/build-index.mjs`), which `npm run build:stays` runs at the end; rebuild it after editing a hand-made page's title, description or headings. It holds every page at the root and in `hotels/` without a robots `noindex` (`p`: hand-made pages give title, meta description and h2/h3 headings with their anchor; generated stays pages give their `<h1>` and title), then every stay of both cities (`s`: name `n`, area `a`, kinds `k`, `id`, city `c`), our own stays (`STAYS_OWN`, `o: 1`, own URL `u`) first. Other stays open `/hotels/stay?s=<id>&c=<city>`. Heading anchors: the heading's id, else its tab panel when hidden on load (`places-to-visit#restaurants`), else a `#:~:text=` fragment. About 360 KB raw, 70 KB gzipped.
+- **Loading**: fetched on the button's first focus / hover / click, never on page load.
+- **Fuzzy rule**: text is lowercased, Latin accents and punctuation stripped, split into words; query stop words (in, the, of…) dropped. A query word matches an index word when `1 - distance / longer length` ≥ 0.70 (Levenshtein, an adjacent swap counting as one edit), or matches the start of a longer word the same way (scored × 0.95), so "trivn" finds Triveni, "ganag" Ganga, "hotal" Hotel. Words with digits match only exactly or as a prefix (207 ≠ 2027). Fields are weighted (title / name 1, other title parts 0.85, area / kind 0.8, description 0.6; a heading must match on its own text).
+- **Ranking**: more query words matched first, then match quality, then pages before headings before stays, then the shorter title; our own stays get +0.15. Each group keeps up to 3 places among the best-matching tier, at most 3 results come from one page, and weaker matches only fill in when the best tier is short.
+- **Styles**: the "Site search" block at the end of `styles.css` (theme tokens only, so dark needs no extra rules). On phones (≤ 460px) the site name wraps to two lines so the three header buttons fit.
+- Visible strings are English literals in the module; the i18n catalogue translates them.
 
 ## Top-level scripts
 

@@ -19,7 +19,7 @@ test('Data Module Tests', async (t) => {
   await t.test('STAYS - should have sample homestays', () => {
     assert.strictEqual(Array.isArray(STAYS), true, 'STAYS should be an array');
     assert(STAYS.length > 0, 'STAYS should not be empty');
-    assert.strictEqual(STAYS.length, 6, 'Should have 6 sample homestays');
+    assert.strictEqual(STAYS.length, 3, 'Should list only our own homestays (no sample listings)');
   });
 
   await t.test('STAYS - each stay should have required properties', () => {

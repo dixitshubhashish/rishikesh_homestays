@@ -41,12 +41,15 @@ test('no translated copies of pages: one page, translated on the go', () => {
   assert(!/\/hi\b/.test(server), 'server.js has no /hi routes');
 });
 
-test('built runtime files parse (node scripts/i18n/build-runtime.mjs)', () => {
+test('built runtime files: two per language (node scripts/i18n/build-runtime.mjs)', () => {
   for (const code of LANGS) {
-    const file = join(root, 'i18n', code, '_common.json');
-    if (!existsSync(file)) continue; // not built yet in this checkout
-    const common = JSON.parse(readFileSync(file, 'utf8'));
-    assert.strictEqual(typeof common.strings, 'object', code);
-    assert.strictEqual(typeof common.patterns, 'object', code);
+    for (const f of [`${code}.json`, `${code}.stays.json`]) {
+      const file = join(root, 'i18n', 'dist', f);
+      assert(existsSync(file), `i18n/dist/${f} is built`);
+      const d = JSON.parse(readFileSync(file, 'utf8'));
+      assert.strictEqual(typeof d.s, 'object', f);
+      assert(Array.isArray(d.p), f);
+    }
+    assert(!existsSync(join(root, 'i18n', code)), `the old per-page folder i18n/${code}/ is gone`);
   }
 });

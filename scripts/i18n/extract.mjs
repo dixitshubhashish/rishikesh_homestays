@@ -1,13 +1,16 @@
 #!/usr/bin/env node
-// Pulls the visible English text out of the hand-made pages into i18n/en.json.
+// Writes i18n/en.json, every English text the site shows (shape and ids in
+// scripts/i18n/catalog.mjs), from all four sources:
+//   the hand-made pages (this file, extractPage below), the footer-stays block
+//   (extract-footer.mjs), text written by scripts (extract-ui.mjs, plus what
+//   extract-rendered.mjs saw in the browser), and the generated stays pages
+//   (extract-stays.mjs, their own "stays" section).
 //
 //   node scripts/i18n/extract.mjs            write i18n/en.json
 //   node scripts/i18n/extract.mjs --stdout   print it instead
 //
-// Shape: { "<page>": { "<id>": "<English>" } }, page = file path without .html
-// (index, contact, hotels/advaitam-...). id = first 12 hex chars of
-// sha1(normalised English), so the same sentence keeps the same id on every
-// page and a changed sentence gets a new id (scripts/i18n/stale.mjs reports it).
+// A changed sentence gets a new id (ids hash the English), so it shows up as
+// missing in every language (node scripts/i18n/sync.mjs status).
 //
 // What counts as text: block-level runs (headings, paragraphs, list items,
 // buttons, labels, options, table cells, figcaptions...), <title>, the meta
@@ -25,11 +28,13 @@
 // their own (DO_NOT_TRANSLATE) are skipped; inside a sentence they are kept as
 // written by the translator.
 
-import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { JSDOM, VirtualConsole } from "jsdom";
+import { segId, norm, addText, readEn, writeEn, slotOnly } from "./catalog.mjs";
+
+export { segId, norm };
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -66,8 +71,6 @@ const LD_NAME_TYPES = new Set(["ListItem", "Question", "HowToStep", "LocationFea
 const LD_PROSE_KEYS = new Set(["description", "text", "headline", "abstract"]);
 const LD_SKIP_TYPES = new Set(["PostalAddress", "GeoCoordinates", "Offer", "AggregateRating", "Rating"]);
 
-export const norm = (s) => s.replace(/\s+/g, " ").trim();
-export const segId = (text) => createHash("sha1").update(norm(text)).digest("hex").slice(0, 12);
 const hasLetters = (s) => /\p{L}/u.test(s.replace(/<\/?\d+\/?>/g, ""));
 const isEmailOrUrl = (s) => /^(\S+@\S+\.\S+|https?:\/\/\S+|[\w.-]+\.(com|in|org)(\/\S*)?)$/i.test(s);
 
@@ -83,8 +86,12 @@ function stripGenerated(html) {
   return html.replace(/<!--\s*footer-stays\s*-->[\s\S]*?<!--\s*\/footer-stays\s*-->/g, "");
 }
 
+// Never translated (owner, 2026-10-06): the brand name and logo, the contact
+// forms (every <form> but the homepage search filter) and stay names. Kept in
+// step with NO_TRANSLATE in assets/js/i18n-runtime.js.
+export const NO_TRANSLATE = '[translate="no"], .notranslate, form:not([data-search-form]), .brand, .site-logo, .rhs-footer-logo, .sx-name, [data-stay-name], .leaflet-control-attribution, .rh-lang-code';
 function isNoTranslate(el) {
-  return !!el.closest('[translate="no"], .notranslate');
+  return !!el.closest(NO_TRANSLATE);
 }
 
 function hasText(node) {
@@ -188,7 +195,8 @@ function collectLd(node, out, parentType = null) {
 }
 
 export function extractPage(html) {
-  const doc = new JSDOM(stripGenerated(html), { virtualConsole: new VirtualConsole() }).window.document;
+  const { window } = new JSDOM(stripGenerated(html), { virtualConsole: new VirtualConsole() });
+  const doc = window.document;
   const out = [];
   const title = keep(doc.title || "");
   if (title) out.push(title);
@@ -204,6 +212,7 @@ export function extractPage(html) {
   }
   collectBlock(doc.body, out);
   collectAttrs(doc, out);
+  window.close(); // free the DOM: the stays build extracts ~250 pages in one run
   const page = {};
   for (const t of out) page[segId(t)] ??= t;
   return page;
@@ -215,16 +224,32 @@ export function extractAll() {
   return all;
 }
 
+// Every English text, by section: { site, stays, rendered } (catalog.mjs).
+export async function buildEnglish({ stays = true } = {}) {
+  const { extractFooter } = await import("./extract-footer.mjs");
+  const { extractUi } = await import("./extract-ui.mjs");
+  const en = { site: {}, stays: {}, rendered: readEn().rendered || [] };
+  for (const page of Object.values(extractAll())) for (const t of Object.values(page)) addText(en.site, t);
+  for (const t of Object.keys(extractFooter())) addText(en.site, t);
+  for (const t of Object.keys(extractUi(en.rendered))) addText(en.site, t);
+  if (stays) {
+    const { extractStays } = await import("./extract-stays.mjs");
+    const st = await extractStays();
+    for (const t of [...Object.keys(st.templates), ...Object.keys(st.terms)]) {
+      const id = addText(en.stays, t);
+      if (en.site[id] === norm(t)) delete en.stays[id]; // already in the site file every page loads
+    }
+  } else en.stays = readEn().stays;
+  return en;
+}
+
+// No top-level await: extract-ui.mjs and extract-stays.mjs import this module, so it
+// must finish loading before buildEnglish() imports them.
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const all = extractAll();
-  const json = JSON.stringify(all, null, 2) + "\n";
-  if (process.argv.includes("--stdout")) {
-    process.stdout.write(json);
-  } else {
-    mkdirSync(join(ROOT, "i18n"), { recursive: true });
-    writeFileSync(join(ROOT, "i18n", "en.json"), json);
-    const total = Object.values(all).reduce((n, p) => n + Object.keys(p).length, 0);
-    const unique = new Set(Object.values(all).flatMap((p) => Object.keys(p))).size;
-    console.log(`i18n/en.json: ${PAGES.length} pages, ${total} strings (${unique} unique)`);
-  }
+  buildEnglish().then((en) => {
+    if (process.argv.includes("--stdout")) return process.stdout.write(JSON.stringify(en, null, 1) + "\n");
+    writeEn(en);
+    const own = (o) => Object.values(o).filter((t) => !slotOnly(t)).length;
+    console.log(`i18n/en.json: site ${own(en.site)} texts, stays ${own(en.stays)} texts (${Object.keys(en.stays).length - own(en.stays)} slot-only), ${en.rendered.length} seen only in the browser`);
+  }).catch((e) => { console.error(e.message); process.exit(1); });
 }

@@ -26,10 +26,10 @@ function draw(el, data) {
   data.stays.forEach(([lat, lng, name, id, dist]) => {
     bounds.push([lat, lng]);
     pin([lat, lng], { radius: 6, color: '#0f6f74', weight: 1, fillColor: '#0f6f74', fillOpacity: 0.55 },
-      `<b>${esc(name)}</b><br>${esc(dist)} away<br><a href="/hotels/stay?s=${esc(id)}${esc(data.cq)}">View property</a>`);
+      `<b data-stay-name>${esc(name)}</b><br>${esc(dist)} away<br><a href="/hotels/stay?s=${esc(id)}${esc(data.cq)}">View property</a>`);
   });
   data.own.forEach(([lat, lng, name, url]) => pin([lat, lng], { radius: 9, color: '#9a5a10', weight: 2, fillColor: '#d98b2b', fillOpacity: 0.95 },
-    `<b>${esc(name)}</b><br>Our homestay · book direct<br><a href="${esc(url)}">${url === '/contact' ? 'Enquire' : 'View'}</a>`));
+    `<b data-stay-name>${esc(name)}</b><br>Our homestay · book direct<br><a href="${esc(url)}">${url === '/contact' ? 'Enquire' : 'View'}</a>`));
   pin(data.center, { radius: 11, color: '#7a2f1f', weight: 3, fillColor: '#b5573f', fillOpacity: 1 }, `<b>${esc(data.name)}</b>`).openPopup();
   map.fitBounds(L.latLngBounds(bounds.slice(0, 60)).pad(0.1), { maxZoom: 16 });
 }

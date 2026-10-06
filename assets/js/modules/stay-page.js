@@ -159,7 +159,7 @@ function factRows(d) {
     ['Type', esc(d.ks.join(', '))],
     ['Area', `${esc(d.a)}, ${CITY_NAME}`],
   ];
-  if (d.ad && d.ad.length > 6) rows.push(['Address', esc(d.ad)]);
+  if (d.ad && d.ad.length > 6) rows.push(['Address', `<span translate="no">${esc(d.ad)}</span>`]); // a street address stays as written
   // Stays found on Google Maps (gm) link to their Google Maps page and are never
   // drawn on our OpenStreetMap map (Google's terms).
   if (d.gm) rows.push(['Map', `<a href="${esc(d.gm)}" target="_blank" rel="noopener">View on Google Maps</a>`]);
@@ -177,9 +177,9 @@ function render(root, d, isOwn) {
   document.title = `${d.n} | ${d.a}, ${CITY_NAME} | Rishikesh Homestays`;
   root.innerHTML = `
     <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span>
-      <a href="/hotels/best-${cat.slug}-in-${CITY}">${cat.filter === 'all' ? `Best Hotels in ${CITY_NAME}` : `Best ${esc(cat.title)} in ${CITY_NAME}`}</a> <span aria-hidden="true">›</span> <span>${esc(d.n)}</span></nav>
+      <a href="/hotels/best-${cat.slug}-in-${CITY}">${cat.filter === 'all' ? `Best Hotels in ${CITY_NAME}` : `Best ${esc(cat.title)} in ${CITY_NAME}`}</a> <span aria-hidden="true">›</span> <span data-stay-name>${esc(d.n)}</span></nav>
     <p class="eyebrow">${esc(d.k)} · ${esc(d.a)}</p>
-    <h1 class="sx-title">${esc(d.n)}</h1>
+    <h1 class="sx-title" data-stay-name>${esc(d.n)}</h1>
     <div class="sp-layout"><div class="sp-main">
     <div class="sp-grid">
       <section class="sp-card" aria-labelledby="sp-facts-h">
@@ -214,6 +214,7 @@ function render(root, d, isOwn) {
     <aside class="sp-side" aria-label="Book direct with Rishikesh Homestays">
       ${isOwn ? '' : `<section class="sx-own sp-side-card" aria-labelledby="sx-own-h">
         <h2 id="sx-own-h">Our homestays <span>Book direct with us</span></h2>
+        <ul class="sx-own-perks"><li>Stay 5+ days and save 15%</li><li>No booking-site fees: you pay us direct</li><li>A local replies on WhatsApp, usually within 30 minutes</li></ul>
         <ul class="sx-list">${STAYS_OWN.map((o) => `<li class="sx-item sx-item-own"><span class="sx-name">${esc(o.n)}</span><span class="sx-meta"><span>${esc(o.a)}</span>${o.g >= 9 ? `<span>Guests ${o.g}/10</span>` : ''}</span><a class="sx-go" href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a></li>`).join('')}</ul>
       </section>`}
       <section class="sp-card sp-side-card sp-why" aria-labelledby="sp-why-h">
@@ -377,10 +378,10 @@ function drawMap(el, d) {
   const pin = (ll, style, html) => L.circleMarker(ll, style).addTo(map).bindPopup(html);
   const nearby = STAYS_INDEX.filter((x) => x.ll && !x.gm && x.id !== d.id && kmBetween(d.ll, x.ll) <= NEARBY_KM).slice(0, 60);
   nearby.forEach((x) => pin(x.ll, { radius: 6, color: '#0f6f74', weight: 1, fillColor: '#0f6f74', fillOpacity: 0.55 },
-    `<b>${esc(x.n)}</b><br>${esc(x.k)}${x.p ? ` · starting ₹${inr(x.p)} onwards` : ''}<br><a href="/hotels/stay?s=${esc(x.id)}${CQ}">View property</a>`));
+    `<b data-stay-name>${esc(x.n)}</b><br>${esc(x.k)}${x.p ? ` · starting ₹${inr(x.p)} onwards` : ''}<br><a href="/hotels/stay?s=${esc(x.id)}${CQ}">View property</a>`));
   const own = STAYS_OWN.filter((o) => o.ll && o.id !== d.id);
   own.forEach((o) => pin(o.ll, { radius: 9, color: '#9a5a10', weight: 2, fillColor: '#d98b2b', fillOpacity: 0.95 },
-    `<b>${esc(o.n)}</b><br>Our homestay · book direct<br><a href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a>`));
+    `<b data-stay-name>${esc(o.n)}</b><br>Our homestay · book direct<br><a href="${esc(o.u)}">${o.u === '/contact' ? 'Enquire' : 'View'}</a>`));
   pin(d.ll, { radius: 11, color: '#7a2f1f', weight: 3, fillColor: '#b5573f', fillOpacity: 1 }, `<b>${esc(d.n)}</b><br>${esc(d.a)}`).openPopup();
   // Fit this stay and our nearest homestay in view, if it's within ~10 km.
   const near = nearestOwn(d);

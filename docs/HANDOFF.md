@@ -6,33 +6,22 @@ This file is the one home for live numbers and owner to-dos. Other docs point he
 
 ## Session 2026-10-06: what landed and what's open
 
-Pushed in the "Ads, distance slider, PSU pages, i18n catalogues, AI citation" commit (`npm test` 846/846, `check:stays` 8/8):
-- **Ads** (`assets/js/ads.js`, plan in ARCHITECTURE): units in-feed ×2, in-article, display, multiplex. Owner rule: never in the first screen. On the homepage ads start only after "Plan beyond the room". At most 3 on screen. None on our listing, `/hotels/stay` or lead pages. Sticky sidebar gap fixed. Labelled preview boxes on localhost. Open: owner decision on in-feed between stay groups.
-- **Distance slider** on every stays list (`stays-index.js` + `build_pages.py dist_range_html`): 200 m–50 km, number boxes with an m/km select at both ends. Centre is the landmark, or Triveni Ghat / Har Ki Pauri. Default 20 km. Our stays always show ("X km away · a calmer base").
-- **PSU/institute pages**: THDC (rooms/hotels), IIT Roorkee and CBRI (40 km), BHEL, Gurukul Kangri. Researched but not added: Raiwala Junction / Military Station.
-- **AI citation**: quick-facts boxes, answer-first openings, official-source links, "Checked: Oct 2026" on the guides and every stays page. Owner to confirm: the Kedarnath Rishikesh→Sonprayag km (page says 120–125; others say ~210), and Janki Setu = Janki Pul listed twice in `places-to-visit`.
-- **Enquiry safety** (`api/contact.js`): the email still goes out if the BigQuery insert fails; new `page_lang` column (`scripts/setup-bigquery.js`, re-run it once).
-- **Languages (23, owner decision: one page per URL, translated in the browser, no `/hi/` copies)**:
-  - Catalogues `i18n/<lang>.json` cover all 15 hand-made pages, 1,540 strings. All 22 languages are translated and native-edited; QA notes are in `i18n/qa-<lang>.md`.
-  - Footer stay-link labels are in `i18n/footer/`.
-  - Tools are in `scripts/i18n/` (`extract`, `stale`, `extract-footer`).
-  - `.gitignore` now allows `i18n/**/*.json`.
-  - **Not finished:** `assets/js/i18n-runtime.js` and `modules/lang-picker.js` are a first cut from a workflow that was still running. Still to do:
-    - check that every hero slide (`data-headlines` / `data-captions` / `data-copy`) and all JS-written text translate;
-    - move the picker to a small header dropdown, each language in its own script;
-    - stays-page body text (next wave);
-    - about 118 English sentences changed by the AI-citation edits need re-translating (`node scripts/i18n/stale.mjs <lang> --fresh`).
-- **Dark/light theme**: built in a worktree (`.claude/worktrees/…`), **not merged**. Merge and check it next.
-- **Known bugs, not fixed:**
-  - `list-your-homestay.html` doesn't load libphonenumber, which can block host applications;
-  - `/homestays` shows sample listings;
-  - the hero height jumps;
-  - the cross-city links on `stay.html` are unstyled.
-- **Booking search**: still running, unattended (`search_supervisor.mjs`; 5 workers Opera×2/Chrome/Edge/Brave; 5–10 s gap; the heavy worker pauses for a random 5–10 min when memory or disk is tight).
-  - Now: `found.tsv` 1,550; `unfound.tsv` retry 2,403 · none 274 · review 110 · duplicate 95 · manual 36.
-  - Still to do: sort the duplicates at the end, then rename `unfound` to a grammatical name once every case is sorted.
-  - Found links reach the site only after a merge (below), which hasn't been run this session.
-- **Google Search Console / Bing**: `BingSiteAuth.xml` is at the root and live. Sitemap: `https://rishikeshhomestays.com/sitemap.xml`.
+Pushed first (`22b86b8`): the dark/light theme merge and libphonenumber on `list-your-homestay`. Then, in the next commit:
+- **Languages, every section** (all in `docs/I18N.md`): one flat catalogue per language keyed by a 64-bit SHA-256 id (`i18n/<lang>.json`), one English file (`i18n/en.json`), two browser files per language (`i18n/dist/`), house styles in `i18n/STYLE.md`. The generated stays pages translate through ~1,750 sentence templates + ~530 names; text written by scripts is found in the browser too (`extract-rendered.mjs`). Hero slider, stay page (map key, directions, city notes, facilities), stays lists, `/homestays` cards: all translated in 22 languages. Never translated: the brand name and logo, contact forms, proper nouns in stay names (their generic words, Hotel/Guest House/Lodge…, are). Hindi uses मोहल्ला for area. `npm test` fails while a language lacks a site text.
+- **Header**: small language pill (globe + code), site search button, theme, menu; one row at every width 320–1440 px in every language (`nav-fit.js` shrinks the desktop nav when labels run long).
+- **Site search** (fuzzy, ~70% word similarity, typo-tolerant): `assets/js/modules/site-search.js`, index `assets/search/index.json` (`npm run build:search`, run by `build:stays`). Details in `docs/ARCHITECTURE.md`.
+- **WhatsApp form link** for Instagram and social posts: `https://rishikeshhomestays.com/whatsapp` (keeps `?utm_…`).
+- **Booking links merged**: 1,155 new (`scripts/stays/merge_found.sh`, re-runnable): 2,857 stays linked (Rishikesh 1,888, Haridwar 969); BigQuery reloaded.
+- **Stays pages**: "Book direct with us" perks (5+ days save 15%, no booking-site fees, WhatsApp reply); meta descriptions end at a sentence or word (were cut mid-word).
+- **Fixes**: hero height no longer jumps between slides; hero buttons equal height; `/homestays` lists our 3 stays only (sample cards removed, Elysium added); homepage in-feed ad in the middle of the guide cards' second row.
+- **Booking search**: running (`search_supervisor.mjs`, 5 workers). Deep search order now follows what finds pages (the MakeMyTrip/EaseMyTrip/Trip.com OR search second; Goibibo/Expedia/Cleartrip, which found almost nothing, dropped by the 6-search cap). The supervisor also closes booking pages left open by stopped workers (every 5 min).
+
+Open:
+- Owner to confirm: the Kedarnath Rishikesh→Sonprayag km (page says 120–125; others say ~210), and Janki Setu = Janki Pul listed twice in `places-to-visit`.
+- English copy flagged by translators: Yoga Retreat card "Quiet private rooms with mountain near AIIMS" (missing word: "mountain views"?) in `assets/js/modules/data.js`; "Cots" (baby cots or extra beds?).
+- Machine-made translations of the stays templates were spot-checked by the agents, not read in full by native speakers.
+- The four known bugs from the last handoff are fixed or no longer reproduce (the `stay.html` cross-city links looked styled when checked on 2026-10-06).
+- Booking search: sort the duplicates at the end, then rename `unfound` once every case is sorted; merge again with `scripts/stays/merge_found.sh` when `found.tsv` has grown.
 
 ## Goal
 
@@ -40,7 +29,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 
 ## Live now (origin/main, Vercel)
 
-- **Stays on the site**: Rishikesh 1,814 and Haridwar 1,001 in the built data modules, plus our 3 pinned in both (registry `listing-ids.tsv`: 2,819 active). 405 of them are Google Maps places (`gm`: Rishikesh 210, Haridwar 195). **1,713 have a confirmed booking link** (Rishikesh 1,124, Haridwar 589; Booking.com, MakeMyTrip, EaseMyTrip, OYO, Airbnb, Agoda, Trip.com…). Recount with the snippet in "How to run things".
+- **Stays on the site**: Rishikesh 2,172 and Haridwar 1,151 in the built data modules, plus our 3 pinned in both (registry `listing-ids.tsv`: 2,819 active). 913 of them are Google Maps places (`gm`: Rishikesh 568, Haridwar 345). **2,857 have a confirmed booking link** (Rishikesh 1,888, Haridwar 969; Booking.com, MakeMyTrip, EaseMyTrip, OYO, Airbnb, Agoda, Trip.com…). Recount with the snippet in "How to run things".
 - **Generated pages in `hotels/`** (about 255): 33 `best-<category>-in-<city>` per city, 20 landmark pages `best-stays-near-<landmark>`, about 170 search-phrase pages (from `scripts/stays/search-pages.tsv`, e.g. `/hotels/cheap-hotels-in-rishikesh`, `/hotels/rooms-near-aiims-rishikesh`, `/hotels/top-10-resorts-in-haridwar`; heading = the exact phrase), and `stay.html`. Every category/phrase page exists in both cities (thin ones list the nearest stays in the other city) and the city switch always lands on its twin. All are in `sitemap.xml`; `npm run check:stays` guards the content. Category pages list the linked stays directly and fold the rest behind "View all" (owner, 2026-10-04).
 - **Stays page layout**: Rishikesh | Haridwar switch at the top (same page in the other city), category filters in a sticky **left sidebar** ("Filter stays" button on phones), compact one-row footer (brand+social | Stay | Explore | Stays in Rishikesh | Stays in Haridwar). `/hotels/stay` without `?s=` and `/stays` redirect to the stays list; `hotels/stay.html` itself is the single property page and must stay.
 - **Hand-made pages**: guides (about, places, things to do, Triveni Ghat, Kedarnath, Kumbh 2027, Driving from Delhi), Bike & Taxi Rental (Claude owns it; verified live end to end 2026-10-04), contact, homestays, Advaitam page, list-your-homestay.
@@ -59,7 +48,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 
 The search, its lists and its rules are in **`docs/booking-links/RULES.md`**. State on 2026-10-05: every stay has been searched at least once and `all.tsv` was deleted (never recreate it). `found.tsv` has 1,350 confirmed pages (one row per link), `unfound.tsv` 3,124 rows (`retry` 2,624, `review` 201, `none` 181, `duplicate` 85, `manual` 33), `review.tsv` the owner's checklist. Workers still run deep re-checks of `retry` rows under `search_supervisor.mjs`.
 
-**Found links are not on the site until merged.** The last merge was 2026-10-04 (~19:35; `ota-links.tsv` now has 1,727 verified). To merge: directory stays: `python3 scripts/stays/postcheck_matches.py <out.tsv> docs/booking-links/found.tsv`, then `merge_ota.py <out.tsv>`; Google places (`g-` keys) go to `scripts/stays/.cache/places/ota-links.tsv` instead, then `push_places.mjs` → `import_google_stays.py`. Then `process.py`, `npm run build:stays`, `push_bigquery.mjs`, commit and push. `merge_ota.py` and the places append skip keys already merged; Booking.com rows get the CJ link automatically.
+**Found links are not on the site until merged.** The last merge was 2026-10-06 (~10:15, 1,155 new). To merge again: `scripts/stays/merge_found.sh --dry`, then `scripts/stays/merge_found.sh` (snapshot of `found.tsv`, stays already linked keep their link, postcheck, directory → `merge_ota.py`, Google places → `.cache/places/ota-links.tsv` → `push_places.mjs` → `import_google_stays.py`, then `process.py`, `npm run build:stays`, `check:stays`), then `node scripts/stays/push_bigquery.mjs`, `npm test`, commit and push. Booking.com rows get the CJ link automatically.
 
 Lessons from the runs (2026-10-04):
 - Antigravity's scripted batches (`ag1`–`ag8`) mixed stays up (one "Hotel Crystal Ganga Heights" page given to five stays). Re-checked with the name rule: 40 links kept, 18 rejected.

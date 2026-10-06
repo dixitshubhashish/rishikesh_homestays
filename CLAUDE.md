@@ -12,6 +12,7 @@ Each topic has one home; other files link to it instead of repeating it.
 - `docs/TESTING.md`: running and writing tests, what each test file covers, the last full run, the 404-artwork manual checks.
 - `scripts/stays/README.md`: the stays pipeline (crawl, process, build, page rules, listing ids, BigQuery, Google Maps places).
 - `docs/booking-links/RULES.md`: the booking-link search (lists, match rules, workers, merge).
+- `docs/I18N.md`: the 23 languages: in-browser translation, the files (`i18n/en.json`, one flat `i18n/<lang>.json` keyed by a 64-bit SHA-256 id, `i18n/dist/`), what is never translated, and the sync steps after any English edit. House styles: `i18n/STYLE.md`.
 - `README.md` (public summary), `AGENTS.md` (rules for other agents) and `CLAUDE.md` stay at the repo root by convention.
 - `PROGRESS.md`: dated shipped/pending log. Stays at the root while in-flight tasks in `.agents/coordination.md` read and write it; check that file before moving it.
 - `.agents/coordination.md`: the live multi-agent ledger.
@@ -29,6 +30,7 @@ Full map in `docs/ARCHITECTURE.md`. The rules:
 **Pages and URLs**
 - Hand-made content and guide pages live **at the repo root** next to `index.html` (`/contact` → `contact.html`), not in a `pages/` folder. The URL must match the file 1:1: Vercel's `cleanUrls` (and Netlify's pretty URLs) only map a clean URL to a `.html` file at the *same* path, and a `vercel.json` rewrite to a file in another folder (`/contact` → `/pages/contact.html`) silently 404s in production while working on the local `server.js`. Old `/pages/<slug>` URLs 301 to the root URL in `server.js`, `vercel.json` and `_redirects`: keep all three in sync when adding or renaming a page, and verify new routes on the deployed site, not only locally.
 - `hotels/` holds our own hand-made listing pages (`/hotels/<slug>`, currently Advaitam) and the generated stays pages. A `STAYS` entry in `data.js` with `detailUrl: "/hotels/<slug>"` gets a clickable card.
+- Site search (header magnifier, typo-tolerant): `assets/js/modules/site-search.js` + index `assets/search/index.json`, built by `npm run build:search` (`scripts/search/build-index.mjs`; `build:stays` runs it). Rebuild after changing a hand-made page's title, description or headings. Details in `docs/ARCHITECTURE.md` "Site search".
 - `404.html` is served for any unmatched route (Vercel/Netlify convention; `server.js` has a catch-all at the end for local dev).
 
 **Generated stays pages** (`scripts/stays/`, details in its README; numbers in `docs/HANDOFF.md`)
@@ -61,6 +63,10 @@ Full map in `docs/ARCHITECTURE.md`. The rules:
 - ⚠️ The `resend` SDK does not go through a stubbed `globalThis.fetch`: running the handler locally with the real `.env` sends real email. Mock `Resend` or unset `RESEND_API_KEY` when testing.
 - `api/bigquery.js`: credentials from `GOOGLE_APPLICATION_CREDENTIALS` (local key file `credentials/bigquery-service-account.json`, gitignored, never commit it) or `GOOGLE_APPLICATION_CREDENTIALS_JSON` (the full JSON, on Vercel, since functions can't read a local path). `scripts/setup-bigquery.js` creates the `enquiries` table (safe to re-run).
 - Also `api/geo.js`, `api/currency-rates.js`, `api/otp-*.js` (optional email OTP; never blocks an enquiry).
+
+**Languages** (details in `docs/I18N.md`)
+- One English page per URL, translated in the browser (`assets/js/i18n-runtime.js`, catalogues in `i18n/`); never `/hi/` copies. Never translated: the "Rishikesh Homestays" name and logo, the contact forms (every `<form>` but the homepage search filter), stay names.
+- **After any English text change** (a page, a JS message, the stays scripts): `npm run i18n:extract`, then `npm run i18n:status`, translate what is missing with `scripts/i18n/sync.mjs jobs/merge`, then `node scripts/i18n/build-runtime.mjs`. `npm test` fails while a hand-made, footer or UI string lacks a translation; `npm run i18n:check` covers the stays pages too. Never hand-edit `i18n/en.json` or `i18n/dist/`.
 
 **Hosting**: Vercel is primary (`vercel.json`). Netlify (publish dir `.`, no build command, `_redirects`) is kept for parity, but has no functions config, so `/api/*` would not run there.
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// Collects the English UI text that lives only in JavaScript (form messages,
+// Collects the English UI text that lives only in JavaScript (plus
+// NAME_WORDS and i18n/ui/rendered.json, see extractUi below) (form messages,
 // button states, the WhatsApp popup, the stays lists, the 404 countdown...)
-// into i18n/ui/en.json, keyed by the exact English, for translators:
+// for extract.mjs, which adds it to i18n/en.json ("site"):
 //
-//   node scripts/i18n/extract-ui.mjs            write i18n/ui/en.json
-//   node scripts/i18n/extract-ui.mjs --stdout   print it instead
+//   node scripts/i18n/extract-ui.mjs --stdout   print it
 //
-// i18n/ui/<lang>.json has the same keys with translated values. A key with
+// A text with
 // {name} slots ("{n} reviews", "Starting ₹{price} onwards") is a pattern: the
 // runtime matches the English shape and puts the original values back into
 // the translation, so numbers and prices are never translated. Month and day
@@ -18,13 +18,13 @@
 // messages, enquiry email fields) are never shown translated, so they are
 // left out by EXCLUDE below. Review the diff after running it.
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PAGES } from "./extract.mjs";
+import { NAME_WORDS } from "../../assets/js/i18n-runtime.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const OUT = join(ROOT, "i18n", "ui", "en.json");
 
 export const UI_FILES = [
   "assets/js/modules/whatsapp-widget.js", "assets/js/modules/contact-form.js",
@@ -35,7 +35,7 @@ export const UI_FILES = [
   "assets/js/modules/search-form.js", "assets/js/modules/stays-renderer.js",
   "assets/js/modules/currency.js", "assets/js/modules/button-loading.js",
   "assets/js/modules/landmark-map.js", "assets/js/modules/country-select.js",
-  "assets/js/modules/lang-picker.js",
+  "assets/js/modules/lang-picker.js", "assets/js/modules/site-search.js",
 ];
 
 export const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
@@ -56,7 +56,7 @@ const EXCLUDE = [
   /^IntersectionObserver$/, /: failed to /, /failed to load$/, /^Request failed$/, /^Clicked through/,
   /^Interested in /, /^My name is /, /^No verified booking page/, /^Sent on to /, /^Ref:/,
   /^WhatsApp widget booking request/, /^We're \{guests\} in total/, /^Could you help with availability/,
-  /^(People|Pickup point):/, /^[^\p{Script=Latin}]*\p{Script=Devanagari}/u,
+  /^(People|Pickup point):/, /^search index\b/, /^[^\p{Script=Latin}]*\p{Script=Devanagari}/u,
 ];
 
 // Tokenise string literals ('..', "..", `..${x}..`) skipping comments and regexes (roughly).
@@ -172,7 +172,7 @@ function inlineScripts(page) {
   return [...html.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*application\/ld\+json)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 }
 
-export function extractUi() {
+export function extractUi(rendered = []) {
   const found = new Map();
   const add = (t, where) => { if (!found.has(t)) found.set(t, where); };
   const sources = [];
@@ -186,17 +186,15 @@ export function extractUi() {
   const out = {};
   for (const t of [...found.keys()].sort((a, b) => a.localeCompare(b))) out[t] = t;
   for (const t of [...MONTHS, ...MONTHS_SHORT, ...DAYS, ...DAYS_SHORT]) out[t] = t;
+  // generic words inside stay names ("Hotel", "Guest House"): i18n-runtime.js translates just these
+  for (const t of NAME_WORDS) out[t] = t;
+  // text the browser renders that the scan above cannot see (inside big HTML
+  // template literals, data.js cards): en.json "rendered", from extract-rendered.mjs
+  for (const t of rendered) out[t] ??= t;
   return out;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const out = extractUi();
-  const json = JSON.stringify(out, null, 2) + "\n";
-  if (process.argv.includes("--stdout")) process.stdout.write(json);
-  else {
-    mkdirSync(dirname(OUT), { recursive: true });
-    writeFileSync(OUT, json);
-    const patterns = Object.keys(out).filter((k) => /\{[a-z]+\}/.test(k)).length;
-    console.log(`i18n/ui/en.json: ${Object.keys(out).length} strings (${patterns} patterns)`);
-  }
+  const { readEn } = await import("./catalog.mjs");
+  process.stdout.write(JSON.stringify(extractUi(readEn().rendered), null, 2) + "\n");
 }

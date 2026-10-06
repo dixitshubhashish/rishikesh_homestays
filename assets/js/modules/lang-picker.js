@@ -1,4 +1,5 @@
-// Language picker (footer + phone nav drawer). Every language is shown in its
+// Language picker: a small dropdown in the site header (before the theme
+// toggle), and in the phone nav drawer, where narrow phones find it. Every language is shown in its
 // own name. Choosing one saves it ('rh-lang' in localStorage, read by the
 // rh-i18n head snippet on every page) and reloads with ?lang=<code>, so the
 // choice follows the visitor to every page. The page itself stays one English
@@ -33,10 +34,10 @@ export function chooseLang(code) {
 }
 
 let count = 0;
-export function buildPicker(doc = document, lang = currentLang()) {
+export function buildPicker(doc = document, lang = currentLang(), extraClass = "") {
   const id = `rh-lang-${++count}`;
   const wrap = doc.createElement("div");
-  wrap.className = "rh-lang-picker";
+  wrap.className = `rh-lang-picker${extraClass ? ` ${extraClass}` : ""}`;
   wrap.innerHTML = `
     <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
     <label for="${id}">Language</label>
@@ -52,12 +53,25 @@ export function buildPicker(doc = document, lang = currentLang()) {
     select.appendChild(opt);
   }
   select.addEventListener("change", () => chooseLang(select.value));
+  if (extraClass.includes("rh-lang-picker-header")) {
+    // Header: only a globe and a two-letter code show ("EN", "HI"); the native
+    // select lies invisibly on top, so its list still shows every name in full.
+    const code = doc.createElement("span");
+    code.className = "rh-lang-code";
+    code.setAttribute("aria-hidden", "true");
+    code.textContent = lang.toUpperCase();
+    wrap.appendChild(code);
+  }
   return wrap;
 }
 
 export function setupLangPicker(doc = document) {
-  const footer = doc.querySelector(".rhs-footer-bottom-inner") || doc.querySelector("footer");
-  if (footer && !footer.querySelector(".rh-lang-picker")) footer.appendChild(buildPicker(doc));
+  const header = doc.querySelector(".site-header .nav-wrap");
+  if (header && !header.querySelector(".rh-lang-picker")) {
+    const picker = buildPicker(doc, currentLang(), "rh-lang-picker-header");
+    const before = header.querySelector("[data-theme-toggle]") || header.querySelector("[data-nav-toggle]");
+    header.insertBefore(picker, before);
+  }
   const drawer = doc.querySelector("[data-nav] .nav-drawer-footer");
   if (drawer && !drawer.querySelector(".rh-lang-picker")) drawer.appendChild(buildPicker(doc));
 }

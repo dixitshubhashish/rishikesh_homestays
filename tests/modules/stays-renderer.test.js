@@ -81,7 +81,7 @@ test('Stays Renderer Module Tests', async (t) => {
   await t.test('createStayCard - should have proper semantic HTML', () => {
     const html = createStayCard(mockStay);
     assert(html.includes('<article'), 'Should use article tag');
-    assert(html.includes('<h3>'), 'Should include h3 for title');
+    assert(/<h3[ >]/.test(html), 'Should include h3 for title (marked data-stay-name so only its generic words are translated)');
     assert(html.includes('</article>'), 'Should properly close article tag');
   });
 });

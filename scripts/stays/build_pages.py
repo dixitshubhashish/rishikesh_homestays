@@ -258,6 +258,22 @@ def city_copy(slug, title, intro, guide):
     return c['intro'].format(title=title), c['guide']
 
 
+def clip_desc(text, limit=300):
+    """A meta description that fits `limit` without cutting a word: the last whole sentence that fits,
+    else the last whole word and an ellipsis (it used to be cut mid-word, '... Stays acr')."""
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    end = max(cut.rfind('. '), cut.rfind('? '), cut.rfind('! '))
+    if end >= limit // 2:
+        return cut[:end + 1]
+    return cut[:cut.rfind(' ')].rstrip(' ,;:–-') + '…'
+
+
+# Why book our own homestays direct (owner, 2026-10-06): shown under every "Book direct with us" heading.
+OWN_PERKS = '<ul class="sx-own-perks"><li>Stay 5+ days and save 15%</li><li>No booking-site fees: you pay us direct</li><li>A local replies on WhatsApp, usually within 30 minutes</li></ul>'
+
+
 AREA_NOTES = {
     'Har Ki Pauri': 'the main ghat and pilgrim centre, closest to the evening Ganga aarti',
     'Upper Road & Mayapur': 'the bazaar strip behind the ghats, walkable to Har Ki Pauri',
@@ -720,7 +736,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
                 base_line = (f'Coming for {name} but want calm nights? Base yourself at our homestays in {home_city}, about {ok:.0f} km upriver '
                              f'(roughly {drive_minutes(ok)} minutes by car), and skip the crowds after dark.')
             own_rows = ''.join(with_dist(own_html(o), f'{dist_label(k)} from {esc(name)} · ~{drive_minutes(k)} min drive') for k, o in own_d)
-            own_block = ('<section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">A calmer base <span>Book direct with us</span></h2>'
+            own_block = ('<section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">A calmer base <span>Book direct with us</span></h2>' + OWN_PERKS +
                          f'<p class="sx-base">{esc(base_line)}</p><ul class="sx-list">{own_rows}</ul></section>')
         # Quick facts: counts, closest, prices, bookable, the town centre and our homestays, all from this page's data
         qf = [f'{within1:,} stays are within 1 km of {name} and {len(near):,} within {radius:g} km, as the crow flies.',
@@ -1067,7 +1083,7 @@ def main(data_path, crawled):
             page_title = (f'Best Hotels in {CN} | All {n:,} Stays by Area & Category' if is_master
                           else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")} | {n:,} Compared by Area & Price')
         kinds_txt = 'hotels, dharamshalas, homestays, guest houses and apartments' if CITY == 'haridwar' else 'hotels, homestays, resorts, camps and hostels'
-        desc = ((intro if 'top10' in search['rule'] else f'{n:,} to compare. {intro}')[:300] if search else
+        desc = (clip_desc(intro if 'top10' in search['rule'] else f'{n:,} to compare. {intro}') if search else
                 (f'{n:,} {CN} stays compared: {kinds_txt} by area, price and facilities, '
                  f'with local tips on where to stay.') if is_master else (
                 f'Compare {n:,} {plural} in {CN} by area, price and facilities. {intro}')[:300])
@@ -1138,7 +1154,7 @@ def main(data_path, crawled):
             if not n_here:
                 intro = thin_note   # the city's usual intro would promise stays it does not have
             page_title = f'{h1} | {"Nearest Options" if not n_here else f"{n_here} Here + Nearby Picks"} & Local Tips'
-            desc = (thin_note if not n_here else f'{thin_note} {intro}')[:300]
+            desc = clip_desc(thin_note if not n_here else f'{thin_note} {intro}')
             faq = [(f'Are there {plural} in {CN}?', thin_note)] + [qa for qa in faq if qa[0].startswith('How do I book') or qa is KUMBH_FAQ]
 
         pill = lambda c: (f'<a href="/hotels/best-{c[0]}-in-{CITY}"{" aria-current=\"page\"" if c[0] == slug else ""}>'
@@ -1364,6 +1380,7 @@ def main(data_path, crawled):
           {kumbh_html}
           <section class="sx-own" aria-labelledby="sx-own-h">
             <h2 id="sx-own-h">Our homestays <span>{'Book direct with us' if CITY == DEFAULT_CITY else 'Book direct · in Rishikesh, about 25 km upriver'}</span></h2>
+            {OWN_PERKS}
             <ul class="sx-list" id="sx-own">{"".join(own_html(o) for o in own)}</ul>
           </section>
           <div class="sx-controls"{' hidden' if thin and not n_here else ''}>

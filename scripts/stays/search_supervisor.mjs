@@ -9,6 +9,9 @@
 //   - restarts a deep worker that finished its list (new 'retry' rows keep arriving), up to ROUNDS times,
 //   - stops a worker whose log has not moved for 15 min, and restarts it,
 //   - pauses every worker when the disk is almost full (swap lives on it),
+//   - closes leftover booking-site pages (owner, 2026-10-06: used tabs stayed open in Opera and Edge):
+//     a worker reads a booking page in seconds and closes it, so one still open on two sweeps 5 min
+//     apart was left behind by a stopped or crashed worker. Works with --no-tidy (Opera's two workers).
 //   - writes a status line every 30 min.
 // Run:  nohup node scripts/stays/search_supervisor.mjs >> scripts/stays/.cache/booking-search-2026-10-04/supervisor.log 2>&1 &
 // Stop: kill the supervisor first (it leaves the workers running), then stop the workers.
@@ -105,6 +108,32 @@ function counts() {
   return `queue ${n('all.tsv')}, found ${n('found.tsv')}, unfound ${JSON.stringify(statuses)}, review ${n('review.tsv')}`;
 }
 
+// Same list as isBookingTab in google_ota_search.mjs: keep both in step.
+const BOOKING_HOST = /(^|\.)(?:booking\.com|goibibo\.com|makemytrip\.[a-z.]+|agoda\.com|easemytrip\.com|trip\.com|trivago\.[a-z.]+|airbnb\.[a-z.]+|oyorooms\.com|hostelworld\.com|expedia\.[a-z.]+|hotels\.com|cleartrip\.com)$/;
+const PORTS = [...new Set(WORKERS.flatMap((w) => w.how.filter((a) => a.includes('http://')).map((a) => a.split('=')[1])))];
+let seenBooking = new Map(); // tab id -> url, from the previous sweep
+let lastSweep = 0;
+async function sweepLeftovers() {
+  const next = new Map();
+  let closed = 0;
+  for (const base of PORTS) {
+    let pages;
+    try { pages = (await (await fetch(`${base}/json/list`, { signal: AbortSignal.timeout(8000) })).json()).filter((t) => t.type === 'page'); } catch { continue; }
+    let open = pages.length;
+    for (const t of pages) {
+      let host = '';
+      try { host = new URL(t.url).hostname; } catch { continue; }
+      if (!BOOKING_HOST.test(host)) continue;
+      if (seenBooking.get(t.id) === t.url && open > 1) { // never the browser's last tab
+        await fetch(`${base}/json/close/${t.id}`, { signal: AbortSignal.timeout(8000) }).catch(() => {});
+        closed++; open--;
+      } else next.set(t.id, t.url);
+    }
+  }
+  seenBooking = next;
+  if (closed) say(`closed ${closed} leftover booking page(s)`);
+}
+
 say('supervisor up:', counts());
 for (const w of WORKERS) adopt(w);
 let lastStatus = 0, held = 0;
@@ -148,6 +177,7 @@ for (;;) {
     }
     start(w);
   }
+  if (now - lastSweep >= 5 * 60e3) { lastSweep = now; await sweepLeftovers(); }
   if (WORKERS.every((w) => w.finished)) { say('all workers finished:', counts()); break; }
   if (now - lastStatus > 30 * 60e3) {
     lastStatus = now;

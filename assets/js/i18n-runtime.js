@@ -4,9 +4,9 @@
 // (?lang=xx, else the saved choice in localStorage 'rh-lang', else English),
 // sets <html lang/dir>, hides the body for at most 1.5 s and loads this module
 // only when the language is not English. This module then:
-//   1. fetches /i18n/<lang>/_common.json (nav, footer, JS UI text, patterns)
-//      and /i18n/<lang>/<page>.json (that page's own text), both built by
-//      scripts/i18n/build-runtime.mjs from the i18n/<lang>.json catalogues;
+//   1. fetches /i18n/dist/<lang>.json (every page's text, the footer, text
+//      written by scripts, patterns), built by scripts/i18n/build-runtime.mjs
+//      from i18n/<lang>.json; one file, cached by the browser for every page;
 //   2. walks the page exactly like scripts/i18n/extract.mjs does (same runs of
 //      inline content with <0>…</0> placeholders, same sha1 ids of the
 //      normalised English) and swaps in the translation, reusing the original
@@ -15,21 +15,20 @@
 //      slider, nav drawer, WhatsApp popup, form messages, stays lists, the 404
 //      countdown) is translated too;
 //   4. adds `lang` to the JSON sent to /api/contact (stored as page_lang).
-// Anything without a translation stays English. Never translated: stay names,
-// prices, phones, emails, URLs (only catalogued text is ever replaced, and
-// href/value/data are never touched), the WhatsApp prefilled message and the
-// enquiry fields (they are built from English strings in JS, not from the page).
+//   5. on the generated stays pages (hotels/, built by scripts/stays/), also
+//      fetches /i18n/dist/<lang>.stays.json: sentence templates whose numbers
+//      ({n1}…) and names ({t1}…) are slots (scripts/i18n/extract-stays.mjs).
+// Anything without a translation stays English. Never translated (owner,
+// 2026-10-06): the "Rishikesh Homestays" name and logo, the contact forms
+// (every <form> except the homepage search filter; NO_TRANSLATE below), stay
+// names, prices, phones, emails, URLs (only catalogued text is ever replaced,
+// and href/value/data are never touched), the WhatsApp prefilled message and
+// the enquiry fields (they are built from English strings in JS, not from the page).
+// The whole pipeline, and how to keep every language in sync: docs/I18N.md.
 //
 // Kept in step with scripts/i18n/extract.mjs: tests/modules/i18n-runtime.test.js
 // checks the ids and the walk against it.
 
-export const PAGES = [
-  "index", "404", "thanks", "contact", "homestays", "about-rishikesh",
-  "places-to-visit", "things-to-do-in-rishikesh", "triveni-ghat",
-  "kedarnath-yatra", "haridwar-kumbh-2027", "list-your-homestay",
-  "driving-from-delhi-to-rishikesh", "bike-and-taxi-rental-in-rishikesh",
-  "hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh",
-];
 
 const INLINE = new Set([
   "a", "abbr", "b", "bdi", "bdo", "br", "cite", "code", "data", "dfn", "em",
@@ -38,7 +37,22 @@ const INLINE = new Set([
 ]);
 const SKIP = new Set(["script", "style", "noscript", "svg", "template", "iframe", "head", "textarea"]);
 const BLOCKY = "p, div, ul, ol, li, h1, h2, h3, h4, h5, h6, section, article, table";
-const NO_TRANSLATE = '[translate="no"], .notranslate';
+// Kept in step with NO_TRANSLATE in scripts/i18n/extract.mjs.
+export const NO_TRANSLATE = '[translate="no"], .notranslate, form:not([data-search-form]), .brand, .site-logo, .rhs-footer-logo, .sx-name, [data-stay-name], .leaflet-control-attribution, .rh-lang-code';
+// Stay names (.sx-name, [data-stay-name]) are not translated as a whole, but
+// their generic words are (owner, 2026-10-06): "Hotel Ganga View" -> "होटल Ganga View".
+// Proper nouns and institutions stay as written. Each word's translation is a
+// UI catalogue string (extract-ui.mjs adds NAME_WORDS).
+export const NAME_SELECTOR = '.sx-name, [data-stay-name], .leaflet-control-attribution, .rh-lang-code';
+export const NAME_WORDS = ['Bed & Breakfast', 'Guest House', 'Guesthouse', 'Home Stay', 'Homestays', 'Homestay',
+  'Hotels', 'Hotel', 'Lodges', 'Lodge', 'Resorts', 'Resort', 'Camps', 'Camp', 'Hostels', 'Hostel', 'Villas', 'Villa',
+  'Apartments', 'Apartment', 'Cottages', 'Cottage', 'Inn', 'Dharamshala', 'Rooms', 'Room', 'Suites', 'Tents', 'B&B'];
+const NAME_RE = new RegExp(`(?<![\\p{L}\\d])(?:${NAME_WORDS.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?![\\p{L}\\d])`, 'giu');
+const CANON = new Map(NAME_WORDS.map((w) => [w.toLowerCase(), w]));
+// "HOTEL GANGA" / "Hotel Ganga" -> the generic word translated, the rest kept.
+export function translateNameWords(name, exact) {
+  return name.replace(NAME_RE, (w) => exact(CANON.get(w.toLowerCase()) || w) || w);
+}
 export const TEXT_ATTRS = ["alt", "title", "aria-label", "placeholder"];
 export const DATA_LIST_ATTRS = ["data-captions", "data-headlines", "data-copy"];
 export const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
@@ -47,85 +61,121 @@ export const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Fr
 
 export const norm = (s) => s.replace(/\s+/g, " ").trim();
 
-// SHA-1 (synchronous, so the MutationObserver can translate in the same tick).
-export function sha1Hex(str) {
+// SHA-256 (synchronous, so the MutationObserver can translate in the same tick).
+const K256 = new Uint32Array([
+  0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+  0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+  0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+  0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+  0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+  0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+  0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+  0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2]);
+export function sha256Bytes(str) {
   const bytes = new TextEncoder().encode(str);
   const len = bytes.length;
   const words = (((len + 8) >> 6) + 1) * 16;
-  const w = new Int32Array(words);
+  const w = new Uint32Array(words);
   for (let i = 0; i < len; i++) w[i >> 2] |= bytes[i] << (24 - (i % 4) * 8);
   w[len >> 2] |= 0x80 << (24 - (len % 4) * 8);
   w[words - 1] = len * 8;
-  const W = new Int32Array(80);
-  let h0 = 0x67452301, h1 = 0xefcdab89, h2 = 0x98badcfe, h3 = 0x10325476, h4 = 0xc3d2e1f0;
-  const rol = (x, n) => (x << n) | (x >>> (32 - n));
+  w[words - 2] = Math.floor((len * 8) / 0x100000000);
+  const h = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+  const W = new Uint32Array(64);
+  const ror = (x, n) => (x >>> n) | (x << (32 - n));
   for (let i = 0; i < words; i += 16) {
     for (let t = 0; t < 16; t++) W[t] = w[i + t];
-    for (let t = 16; t < 80; t++) W[t] = rol(W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16], 1);
-    let a = h0, b = h1, c = h2, d = h3, e = h4;
-    for (let t = 0; t < 80; t++) {
-      let f, k;
-      if (t < 20) { f = (b & c) | (~b & d); k = 0x5a827999; }
-      else if (t < 40) { f = b ^ c ^ d; k = 0x6ed9eba1; }
-      else if (t < 60) { f = (b & c) | (b & d) | (c & d); k = 0x8f1bbcdc; }
-      else { f = b ^ c ^ d; k = 0xca62c1d6; }
-      const tmp = (rol(a, 5) + f + e + k + W[t]) | 0;
-      e = d; d = c; c = rol(b, 30); b = a; a = tmp;
+    for (let t = 16; t < 64; t++) {
+      const s0 = ror(W[t - 15], 7) ^ ror(W[t - 15], 18) ^ (W[t - 15] >>> 3);
+      const s1 = ror(W[t - 2], 17) ^ ror(W[t - 2], 19) ^ (W[t - 2] >>> 10);
+      W[t] = (W[t - 16] + s0 + W[t - 7] + s1) | 0;
     }
-    h0 = (h0 + a) | 0; h1 = (h1 + b) | 0; h2 = (h2 + c) | 0; h3 = (h3 + d) | 0; h4 = (h4 + e) | 0;
+    let [a, b, c, d, e, f, g, k] = h;
+    for (let t = 0; t < 64; t++) {
+      const t1 = (k + (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) + ((e & f) ^ (~e & g)) + K256[t] + W[t]) | 0;
+      const t2 = ((ror(a, 2) ^ ror(a, 13) ^ ror(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      k = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    h[0] += a; h[1] += b; h[2] += c; h[3] += d; h[4] += e; h[5] += f; h[6] += g; h[7] += k;
   }
-  return [h0, h1, h2, h3, h4].map((h) => (h >>> 0).toString(16).padStart(8, "0")).join("");
+  const out = new Uint8Array(32);
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) out[i * 4 + j] = (h[i] >>> (24 - j * 8)) & 255;
+  return out;
 }
 
-// Same id as extract.mjs's segId(): first 12 hex chars of sha1(normalised English).
+// The catalogue key of a text: the first 11 characters of the base64url SHA-256
+// of the normalised English (66 bits, owner 2026-10-06: "64 bit long"). The
+// same sentence has the same key on every page, so it is stored and translated
+// once. scripts/i18n/extract.mjs makes the same keys with node:crypto and stops
+// the build if two different texts ever share one.
+const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+export const ID_LENGTH = 11;
 const idCache = new Map();
 export function segId(text) {
   const t = norm(text);
   let id = idCache.get(t);
-  if (!id) { id = sha1Hex(t).slice(0, 12); if (idCache.size < 5000) idCache.set(t, id); }
+  if (!id) {
+    const b = sha256Bytes(t);
+    id = "";
+    for (let i = 0; i < 9; i += 3) {
+      const n = (b[i] << 16) | (b[i + 1] << 8) | b[i + 2];
+      id += B64[(n >> 18) & 63] + B64[(n >> 12) & 63] + B64[(n >> 6) & 63] + B64[n & 63];
+    }
+    id = id.slice(0, ID_LENGTH);
+    if (idCache.size < 5000) idCache.set(t, id);
+  }
   return id;
 }
 
-// "/contact" -> "contact", "/" -> "index", a page without its own file -> null.
-export function pageKey(pathname, explicit) {
-  if (explicit) return explicit;
-  let p = "";
-  try { p = decodeURIComponent(pathname || "/"); } catch { p = pathname || "/"; }
-  p = p.replace(/\/+$/, "").replace(/\.html$/, "").replace(/^\/+/, "");
-  if (!p || p === "index") p = "index";
-  return PAGES.includes(p) ? p : null;
-}
 
 const placeholders = (s) => (s.match(/<\/?\d+\/?>/g) || []).sort().join();
 const hasLetters = (s) => /\p{L}/u.test(s.replace(/<\/?\d+\/?>/g, ""));
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-// { "Starting ₹{p} onwards": "₹{p} से शुरू" } -> matchers; slot values are put
-// back untouched (numbers, prices, names).
+// { "Starting ₹{p} onwards": "₹{p} से शुरू" } -> matchers. Slot values are put
+// back untouched, except that a value with its own catalogue entry (a
+// category, area or city name in a stays sentence) is translated too. Slots:
+// {n…} numbers only, anything else any text. A slot name may repeat
+// ("{n} on {n}"): its values are put back in order.
 export function compilePatterns(patterns) {
-  return Object.entries(patterns || {}).map(([en, tr]) => {
+  return (Array.isArray(patterns) ? patterns : Object.entries(patterns || {})).map(([en, tr]) => {
     const slots = [];
+    let literal = "";
     const src = norm(en).split(/(\{[a-z0-9_]+\})/i).map((part, i) => {
-      if (i % 2) { slots.push(part); return "(.+?)"; }
+      if (i % 2) { slots.push(part); return /^\{n\d+\}$/.test(part) ? "(\\d(?:[\\d,.]*\\d)?)" : "(.+?)"; }
+      if (part.trim().length > literal.length) literal = part.trim();
       return escapeRe(part);
     }).join("");
-    return { re: new RegExp(`^${src}$`, "u"), slots, tr };
-  });
+    return { re: new RegExp(`^${src}$`, "u"), slots, tr, literal };
+  }).sort((a, b) => b.literal.length - a.literal.length); // most specific first
 }
 
 export function makeLookup(strings, patterns = []) {
-  return (english) => {
+  const exact = (english) => {
     const tr = strings[segId(english)];
-    if (tr != null) return norm(tr) && placeholders(tr) === placeholders(english) ? tr : null;
+    return tr != null && norm(tr) && placeholders(tr) === placeholders(english) ? tr : null;
+  };
+  const nameWords = (v) => { const out = translateNameWords(v, exact); return out !== v ? out : null; };
+  const lookup = (english) => {
+    const hit = exact(english);
+    if (hit != null) return hit;
     for (const p of patterns) {
+      if (p.literal && !english.includes(p.literal)) continue; // cheap filter before the regex
       const m = p.re.exec(english);
       if (!m) continue;
-      let out = p.tr;
-      p.slots.forEach((slot, i) => { out = out.split(slot).join(m[i + 1]); });
+      const values = {};
+      p.slots.forEach((slot, i) => {
+        const v = m[i + 1];
+        const t = /\p{L}/u.test(v) && !/[<>]/.test(v) ? exact(v) || nameWords(v) : null;
+        (values[slot] ||= []).push(t || v);
+      });
+      const out = p.tr.replace(/\{[a-z0-9_]+\}/gi, (slot) => (values[slot] && values[slot].length ? (values[slot].length > 1 ? values[slot].shift() : values[slot][0]) : slot));
       return placeholders(out) === placeholders(english) ? out : null;
     }
     return null;
   };
+  lookup.exact = exact;
+  return lookup;
 }
 
 // The page walker. `lookup(english)` returns the translation or null.
@@ -272,7 +322,21 @@ export function createTranslator(doc, lookup) {
     if (dtr) meta.setAttribute("content", dtr);
   }
 
-  return { walk, attrs, attrsOne, blockOf, translateDocHead };
+  // Stay names: only their generic words (translateNameWords); originals kept
+  // in data-en so a re-run never stacks translations.
+  function names(root) {
+    if (!root || root.nodeType !== 1 || !lookup.exact) return;
+    const els = root.matches && root.matches(NAME_SELECTOR) ? [root] : [...root.querySelectorAll(NAME_SELECTOR)];
+    for (const el of els) {
+      for (const n of [...el.childNodes]) {
+        if (n.nodeType !== 3 || !n.nodeValue.trim()) continue;
+        const out = translateNameWords(n.nodeValue, lookup.exact);
+        if (out !== n.nodeValue) n.nodeValue = out;
+      }
+    }
+  }
+
+  return { walk, attrs, attrsOne, blockOf, translateDocHead, names };
 }
 
 // Month and day names: the catalogue first, else the browser's own (Intl).
@@ -334,10 +398,11 @@ export async function start(lang = window.RH_LANG) {
   if (!lang || lang === "en") return reveal();
   installFetchLang(lang);
   carryLangOnLinks(lang);
-  const page = pageKey(location.pathname, root.getAttribute("data-i18n-page"));
-  const get = (path) => fetch(`/i18n/${lang}/${path}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
-  const [common, own] = await Promise.all([get("_common"), page ? get(page) : {}]);
-  const lookup = makeLookup({ ...(common.strings || {}), ...own }, compilePatterns(common.patterns));
+  // our own listing (hotels/advaitam-…) is a hand-made page: its text is in the site file
+  const stays = /^\/hotels\//.test(location.pathname) && !/^\/hotels\/advaitam-/.test(location.pathname);
+  const get = (file) => fetch(`/i18n/dist/${file}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
+  const [site, st] = await Promise.all([get(lang), stays ? get(`${lang}.stays`) : {}]);
+  const lookup = makeLookup({ ...(st.s || {}), ...(site.s || {}) }, compilePatterns([...(st.p || []), ...(site.p || [])]));
   if (document.readyState === "loading") await new Promise((r) => document.addEventListener("DOMContentLoaded", r, { once: true }));
 
   const tr = createTranslator(document, lookup);
@@ -359,6 +424,7 @@ export async function start(lang = window.RH_LANG) {
     tr.translateDocHead();
     tr.walk(document.body);
     tr.attrs(document.body);
+    tr.names(document.body);
     localiseCalendars();
   });
   reveal();
@@ -376,7 +442,8 @@ export async function start(lang = window.RH_LANG) {
     }
     run(() => {
       for (const b of blocks) if (b.isConnected && b !== document.documentElement) tr.walk(b);
-      for (const el of attrEls) if (el.isConnected) tr.attrs(el);
+      for (const el of attrEls) if (el.isConnected) { tr.attrs(el); tr.names(el); }
+      for (const b of blocks) if (b.isConnected) tr.names(b);
       localiseCalendars();
     });
   });

@@ -29,6 +29,24 @@ function fadeSwap(el, nextText) {
   }, TEXT_FADE_MS);
 }
 
+// Every slide swaps the caption, headline and copy for texts of different
+// lengths, so without help the panel (and the whole page below it) grew and
+// shrank with each slide. Each text box is given the height of its longest
+// variant at the current width; re-measured on resize and when the texts
+// change (the in-browser translation rewrites the data-* lists).
+function reserveHeight(el, texts) {
+  if (!el || texts.length < 2) return;
+  const shown = el.textContent;
+  el.style.minHeight = '';
+  let tallest = 0;
+  for (const text of texts) {
+    el.textContent = text;
+    tallest = Math.max(tallest, el.getBoundingClientRect().height);
+  }
+  el.textContent = shown;
+  if (tallest) el.style.minHeight = `${Math.ceil(tallest)}px`;
+}
+
 function pickBg(slide) {
   const wantsMobile = window.matchMedia(MOBILE_QUERY).matches;
   return (wantsMobile && slide.dataset.bgMobile) || slide.dataset.bg;
@@ -77,9 +95,9 @@ export function setupHeroSlideshow() {
   const caption = document.querySelector('.hero-caption');
   const headline = document.querySelector('.hero-headline');
   const copy = document.querySelector('.hero-copy');
-  const captions = parseJSONList(caption, 'captions');
-  const headlines = parseJSONList(headline, 'headlines');
-  const copies = parseJSONList(copy, 'copy');
+  let captions = parseJSONList(caption, 'captions');
+  let headlines = parseJSONList(headline, 'headlines');
+  let copies = parseJSONList(copy, 'copy');
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -88,6 +106,31 @@ export function setupHeroSlideshow() {
   scheduleIdle(() => preload(slides[(activeIndex + 1) % slides.length]));
 
   if (prefersReducedMotion) return;
+
+  const reserveAll = () => {
+    reserveHeight(caption, captions);
+    reserveHeight(headline, headlines);
+    reserveHeight(copy, copies);
+  };
+  reserveAll();
+  // Web fonts change line breaks once they arrive.
+  document.fonts?.ready?.then(reserveAll);
+  let lastWidth = window.innerWidth;
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === lastWidth) return; // mobile URL-bar scrolls only change the height
+    lastWidth = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(reserveAll, 150);
+  });
+  if (typeof MutationObserver === 'function') {
+    new MutationObserver(() => {
+      captions = parseJSONList(caption, 'captions');
+      headlines = parseJSONList(headline, 'headlines');
+      copies = parseJSONList(copy, 'copy');
+      reserveAll();
+    }).observe(hero || document.body, { subtree: true, attributeFilter: ['data-captions', 'data-headlines', 'data-copy'] });
+  }
 
   function showSlide(nextIndex) {
     ensureLoaded(slides[nextIndex]);

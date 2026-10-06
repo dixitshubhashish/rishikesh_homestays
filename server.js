@@ -67,6 +67,8 @@ app.get(['/hotels/stay', '/hotels/stay.html'], (req, res, next) => {
   res.redirect(302, `/hotels/best-hotels-in-${city}`);
 });
 // /stays (a guessed URL) and old /stays/best-… links → the stays pages in hotels/
+// Shareable link that opens the WhatsApp form (Instagram bio, social posts); keeps ?utm_… etc.
+app.get('/whatsapp', (req, res) => { const q = new URLSearchParams(req.query); q.set('whatsapp', 'open'); res.redirect(302, `/?${q}`); });
 app.get(['/stays', '/stays.html'], (req, res) => res.redirect(301, '/hotels/best-hotels-in-rishikesh'));
 app.get(/^\/stays\/(best-[a-z0-9-]+-in-[a-z]+)$/, (req, res) => res.redirect(301, `/hotels/${req.params[0]}`));
 app.get(['/stay', '/stay.html'], (req, res) => {

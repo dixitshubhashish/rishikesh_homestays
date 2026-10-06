@@ -3,20 +3,22 @@ import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { JSDOM, VirtualConsole } from 'jsdom';
+import { createHash } from 'node:crypto';
 import { segId as extractId, extractPage, PAGES as EXTRACT_PAGES } from '../../scripts/i18n/extract.mjs';
 import {
-  segId, sha1Hex, pageKey, compilePatterns, makeLookup, createTranslator, flatpickrLocale, PAGES,
+  segId, sha256Bytes, compilePatterns, makeLookup, createTranslator, flatpickrLocale, translateNameWords,
 } from '../../assets/js/i18n-runtime.js';
 import { langUrl, LANGUAGES } from '../../assets/js/modules/lang-picker.js';
 
 const root = process.cwd();
 const dom = (html) => new JSDOM(html, { virtualConsole: new VirtualConsole() }).window.document;
 
-test('sha1 matches node:crypto', () => {
-  assert.strictEqual(sha1Hex(''), 'da39a3ee5e6b4b0d3255bfef95601890afd80709');
-  assert.strictEqual(sha1Hex('abc'), 'a9993e364706816aba3e25717850c26c9cd0d89d');
-  const long = 'x'.repeat(1000) + ' ₹2,000 हर हर गंगे 🙏';
-  assert.strictEqual(segId(long), extractId(long));
+test('browser SHA-256 and ids match node:crypto (64-bit base64url keys)', () => {
+  for (const t of ['', 'abc', 'x'.repeat(1000) + ' ₹2,000 हर हर गंगे 🙏', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64)]) {
+    assert.strictEqual(Buffer.from(sha256Bytes(t)).toString('hex'), createHash('sha256').update(t).digest('hex'));
+    assert.strictEqual(segId(t), extractId(t));
+  }
+  assert.match(segId('Book on WhatsApp'), /^[A-Za-z0-9_-]{11}$/);
 });
 
 test('runtime ids are extract.mjs ids for every catalogued English string', () => {
@@ -27,18 +29,10 @@ test('runtime ids are extract.mjs ids for every catalogued English string', () =
   }
 });
 
-test('runtime page list is extract.mjs PAGES', () => {
-  assert.deepStrictEqual(PAGES, EXTRACT_PAGES);
-});
-
-test('page key from the address', () => {
-  assert.strictEqual(pageKey('/'), 'index');
-  assert.strictEqual(pageKey('/index.html'), 'index');
-  assert.strictEqual(pageKey('/contact'), 'contact');
-  assert.strictEqual(pageKey('/contact.html'), 'contact');
-  assert.strictEqual(pageKey('/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh'), 'hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh');
-  assert.strictEqual(pageKey('/hotels/best-hotels-in-rishikesh'), null); // shared strings only, for now
-  assert.strictEqual(pageKey('/no-such-page', '404'), '404');
+test('generic words in stay names are translated, the rest kept', () => {
+  const exact = (w) => ({ Hotel: 'होटल', 'Guest House': 'गेस्ट हाउस' })[w] || null;
+  assert.strictEqual(translateNameWords('HOTEL Ganga View Guest House', exact), 'होटल Ganga View गेस्ट हाउस');
+  assert.strictEqual(translateNameWords('Hotelier Palace', exact), 'Hotelier Palace'); // whole words only
 });
 
 // The browser walk must look up exactly what extract.mjs catalogues from the

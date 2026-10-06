@@ -347,8 +347,30 @@ export function setupWhatsAppWidget() {
         document.body.insertAdjacentHTML('beforeend', widgetHTML);
       }
       setupEventListeners();
-      setupAutoPopup();
+      if (wantsOpenFromUrl()) openFromLink();
+      else setupAutoPopup();
     }
+  }
+
+  // Shareable link that opens the WhatsApp form straight away (Instagram bio,
+  // stories, other social posts): https://rishikeshhomestays.com/whatsapp
+  // redirects to /?whatsapp=open; any page also accepts ?whatsapp=open or
+  // #whatsapp. Opened this way the drawer never idles shut and no attention
+  // effects run, since the visitor came for the form.
+  function wantsOpenFromUrl() {
+    try {
+      const params = new URLSearchParams(location.search);
+      return params.get('whatsapp') === 'open' || location.hash === '#whatsapp';
+    } catch {
+      return false;
+    }
+  }
+
+  function openFromLink() {
+    userOpenedWidget = true;
+    formEngaged = true;
+    activateForm();
+    openWidgetPopup(2 ** 31 - 1); // setTimeout's longest delay; formEngaged keeps it open anyway
   }
 
   // After a delay, draw attention to the widget on this pageview — but never

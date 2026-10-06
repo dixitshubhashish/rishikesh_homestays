@@ -92,6 +92,11 @@
       "permanent": true
     },
     {
+      "source": "/whatsapp",
+      "destination": "/?whatsapp=open",
+      "permanent": false
+    },
+    {
       "source": "/stays",
       "destination": "/hotels/best-hotels-in-rishikesh",
       "permanent": true

@@ -354,7 +354,9 @@ const isSearchTab = (u) => { try { const x = new URL(u); return (/^(?:www\.googl
 // A blank or new-tab page: nothing on it to lose.
 const isEmptyTab = (u) => /^(?:about:blank|(?:chrome|edge|brave|opera):\/\/(?:newtab|new-tab-page|startpage)\/?)$/.test(u);
 // A booking-site page (property page, its search results or a list): only our workers open these here.
-const isBookingTab = (u) => { try { return /(^|\.)(?:booking\.com|goibibo\.com|makemytrip\.[a-z.]+|agoda\.com|easemytrip\.com|trip\.com|trivago\.[a-z.]+|airbnb\.[a-z.]+)$/.test(new URL(u).hostname); } catch { return false; } };
+// Every site the search reads must be listed (OYO, Hostelworld, Expedia… were missing and their pages
+// piled up, 2026-10-06); search_supervisor.mjs keeps the same list for its leftover sweep.
+const isBookingTab = (u) => { try { return /(^|\.)(?:booking\.com|goibibo\.com|makemytrip\.[a-z.]+|agoda\.com|easemytrip\.com|trip\.com|trivago\.[a-z.]+|airbnb\.[a-z.]+|oyorooms\.com|hostelworld\.com|expedia\.[a-z.]+|hotels\.com|cleartrip\.com)$/.test(new URL(u).hostname); } catch { return false; } };
 // Keep memory in check (owner): in your own browser, close our leftovers (booking-site pages and every
 // search/challenge page but one) through the browser's plain HTTP endpoint, so a stuck tab can't block
 // it. Any other tab of yours is never touched. Returns how many were closed.
@@ -728,8 +730,11 @@ function queries(stay) {
   // deep pass, by what found pages so far (log count, 2026-10-05: of ~700 matches 611 came from the first search, then
   // Agoda 27, Airbnb 10, site:booking.com 9, Goibibo 7, the OR search 4, MakeMyTrip 3, EaseMyTrip 3; Trip.com,
   // Expedia, Hotels.com and Cleartrip none): those that never paid off only fill a slot a hostel/OYO search leaves free
-  return [withArea, q('site:agoda.com'), ...(hostel ? [q('site:hostelworld.com')] : []), ...(oyo ? [q('site:oyorooms.com')] : []),
-    q('airbnb'), `site:booking.com ${n} ${c}`, q('site:goibibo.com'), `${n} ${c} makemytrip OR easemytrip OR trip.com`,
+  // Re-ordered 2026-10-06 from the retry re-check's own finds (80 in 90 min): MakeMyTrip 21, Agoda 18, Trip.com 13,
+  // Booking.com 8, OYO/Airbnb 5 each, Goibibo 3 (496 searches), Expedia 0 (189): the OR search moves up, Goibibo,
+  // Expedia and Cleartrip go last
+  return [withArea, `${n} ${c} makemytrip OR easemytrip OR trip.com`, q('site:agoda.com'), ...(hostel ? [q('site:hostelworld.com')] : []),
+    ...(oyo ? [q('site:oyorooms.com')] : []), q('airbnb'), `site:booking.com ${n} ${c}`, q('site:goibibo.com'),
     q('site:expedia.co.in'), q('site:cleartrip.com')].slice(0, SEARCHES_PER_STAY);
 }
 // How much a link looks like this stay: core-name words in its address slug or Google result

@@ -15,7 +15,7 @@
 // at least 1.5 screens down. Nothing is re-placed on resize or re-render, so ads never refresh.
 //
 // What each kind of page gets:
-//   homepage     nothing above "Plan beyond the room": an in-feed card closing that section's guide cards
+//   homepage     nothing above "Plan beyond the room": an in-feed card in the middle of that section's second row of guide cards
 //                (<div class="rh-ad-slot" data-ad="infeed">), the Multiplex grid above the footer, and on
 //                ≥ 1580×900 windows side rails shown only once that section reaches the top, and only when
 //                there's at least half a screen of scrolling before the grid (not the case today: no rails).

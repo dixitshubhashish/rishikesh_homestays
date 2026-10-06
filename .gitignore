@@ -11,6 +11,8 @@
 # Translation catalogues and the files the browser fetches (no secrets)
 !i18n/**/*.json
 !i18n/**/*.json
+# Site search index (built by scripts/search/build-index.mjs, fetched by the browser)
+!assets/search/index.json
 credentials/
 
 # Dependencies
