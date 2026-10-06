@@ -399,7 +399,8 @@ export async function start(lang = window.RH_LANG) {
   installFetchLang(lang);
   carryLangOnLinks(lang);
   // our own listing (hotels/advaitam-…) is a hand-made page: its text is in the site file
-  const stays = /^\/hotels\//.test(location.pathname) && !/^\/hotels\/advaitam-/.test(location.pathname);
+  // /homestays lists stays too (top brands, Nirmal Bagh): their rows are patterns of the stays file
+  const stays = (/^\/hotels\//.test(location.pathname) && !/^\/hotels\/advaitam-/.test(location.pathname)) || /^\/homestays\/?$/.test(location.pathname);
   const get = (file) => fetch(`/i18n/dist/${file}.json`).then((r) => (r.ok ? r.json() : {})).catch(() => ({}));
   const [site, st] = await Promise.all([get(lang), stays ? get(`${lang}.stays`) : {}]);
   const lookup = makeLookup({ ...(st.s || {}), ...(site.s || {}) }, compilePatterns([...(st.p || []), ...(site.p || [])]));
@@ -451,7 +452,14 @@ export async function start(lang = window.RH_LANG) {
     childList: true, subtree: true, characterData: true,
     attributes: true, attributeFilter: [...TEXT_ATTRS, ...DATA_LIST_ATTRS],
   });
-  // <title> changes made by scripts (none today) would need the head observed too.
+  // <title> set by a script after the page loaded (the stay page's "This stay has checked out | …") is translated too.
+  const titleEl = document.querySelector("head > title");
+  let titleDone = document.title; // what the head translation left: a change we made ourselves is not translated again
+  if (titleEl) new MutationObserver(() => {
+    if (document.title === titleDone) return;
+    tr.translateDocHead();
+    titleDone = document.title;
+  }).observe(titleEl, { childList: true, characterData: true, subtree: true });
 }
 
 if (typeof window !== "undefined" && typeof document !== "undefined" && window.RH_LANG && window.RH_LANG !== "en") {

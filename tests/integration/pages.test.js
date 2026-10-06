@@ -16,7 +16,9 @@ const testPages = [
   { path: 'list-your-homestay.html', name: 'List Your Homestay' },
   { path: 'haridwar-kumbh-2027.html', name: 'Kumbh 2027' },
   { path: 'driving-from-delhi-to-rishikesh.html', name: 'Driving from Delhi' },
+  ...['gurugram', 'noida', 'greater-noida', 'ghaziabad', 'faridabad', 'sonipat', 'meerut', 'delhi'].flatMap((c) => ['rishikesh', 'haridwar'].filter((d) => !(c === 'delhi' && d === 'rishikesh')).map((d) => ({ path: `driving-from-${c}-to-${d}.html`, name: `driving from ${c} to ${d}` }))),
   { path: 'bike-and-taxi-rental-in-rishikesh.html', name: 'Bike & Taxi Rental' },
+  ...['bike', 'car', 'taxi'].flatMap((k) => ['rishikesh', 'haridwar'].map((c) => ({ path: `${k}-rental-in-${c}.html`, name: `${k} rental in ${c}` }))),
   { path: 'hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html', name: 'Advaitam Ganga Listing' }
 ];
 
@@ -293,8 +295,9 @@ test('Page Integration Tests', async (t) => {
     // <script>/<link> tag.
     // The bike & taxi rental page has its own visible start/end dates and
     // phone field (its enquiry form is the point of the page).
-    const eagerFlatpickrPages = ['index.html', 'contact.html', 'homestays.html', 'bike-and-taxi-rental-in-rishikesh.html'];
-    const eagerLibphonenumberPages = ['contact.html', 'homestays.html', 'list-your-homestay.html', 'bike-and-taxi-rental-in-rishikesh.html'];
+    const rentalPages = ['bike-and-taxi-rental-in-rishikesh.html', ...['bike', 'car', 'taxi'].flatMap((k) => ['rishikesh', 'haridwar'].map((c) => `${k}-rental-in-${c}.html`))];
+    const eagerFlatpickrPages = ['index.html', 'contact.html', 'homestays.html', ...rentalPages];
+    const eagerLibphonenumberPages = ['contact.html', 'homestays.html', 'list-your-homestay.html', ...rentalPages];
     testPages.forEach(({ path, name }) => {
       const content = readPage(path);
       const hasEagerFlatpickr = content.includes('flatpickr.min.js');

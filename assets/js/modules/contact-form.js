@@ -3,6 +3,7 @@ import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
 import { setupEmailVerification } from './email-otp.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
+import { postEnquiry } from './enquiry.js';
 
 const WHATSAPP_PHONE = '918050091290';
 
@@ -175,15 +176,7 @@ export function setupContactForm() {
     }
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
+      const result = await postEnquiry(data);
 
       if (result.success) {
         form.reset();

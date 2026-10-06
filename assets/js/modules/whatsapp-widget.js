@@ -2,6 +2,7 @@
 import { validatePhone, validateDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink, isMobileDevice } from './whatsapp-link.js';
+import { postEnquiry, SOURCES } from './enquiry.js';
 
 const ATTENTION_DELAY_MS = 15000;
 // Desktop auto-opens the drawer at ATTENTION_DELAY_MS; if the visitor
@@ -755,10 +756,7 @@ export function setupWhatsAppWidget() {
       const detailsText = message
         || `WhatsApp widget booking request. Check-in: ${checkin || 'flexible'}, Check-out: ${checkout || 'flexible'}.`;
 
-      fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      postEnquiry({
           name,
           phone: normalizedPhone,
           check_in: checkin || null,
@@ -768,8 +766,7 @@ export function setupWhatsAppWidget() {
           pets: pets && parseInt(pets) > 0 ? 'yes' : 'none',
           pet_count: pets,
           details: detailsText,
-          source: 'whatsapp_widget'
-        })
+          source: SOURCES.whatsapp
       }).catch((err) => {
         console.error('WhatsApp widget: failed to store enquiry in database', err);
       });

@@ -14,8 +14,9 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, rmdirSync, statSync, renameSync } from 'fs';
 import { matchReason, cleanUrl, platformOf, coreName, coreWords } from './ota-match.mjs';
 import { judge, places } from './ota-evidence.mjs';
+import { fileURLToPath } from 'url';
 
-const ROOT = new URL('../../', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const AG = `${ROOT}docs/booking-links/`, QUEUE = `${AG}all.tsv`, FOUND = `${AG}found.tsv`, UNFOUND = `${AG}unfound.tsv`, REVIEW = `${AG}review.tsv`;
 const FOUND_COLS = ['key', 'status', 'platform', 'url', 'note', 'name', 'city', 'source'];
 const UNFOUND_COLS = ['key', 'name', 'city', 'area', 'search_log', 'status'];

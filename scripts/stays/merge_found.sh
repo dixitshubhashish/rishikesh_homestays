@@ -4,6 +4,8 @@
 #
 #   scripts/stays/merge_found.sh          merge, rebuild both cities, check
 #   scripts/stays/merge_found.sh --dry    only show what would merge
+#   scripts/stays/merge_found.sh --bigquery   also load the Google Maps places into BigQuery (push_places.mjs);
+#                                          off by default (owner, 2026-10-06: BigQuery later); the local files are still written
 #
 # Steps (docs/booking-links/RULES.md §4): stays that already have a verified link keep it;
 # directory stays -> postcheck_matches.py -> merge_ota.py; Google Maps places (g- keys) ->
@@ -12,7 +14,10 @@
 # to the caller: node scripts/stays/push_bigquery.mjs, then commit and push.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+DRY=0; BQ=0
+for a in "$@"; do case "$a" in --dry) DRY=1;; --bigquery) BQ=1;; esac; done
 S=scripts/stays
+PY=${PYTHON:-python3}   # Windows (Git Bash): export PYTHON=python
 W=$S/.cache/booking-search-2026-10-04/merge-$(date +%Y%m%d-%H%M)
 mkdir -p "$W"
 cp docs/booking-links/found.tsv "$W/found.tsv"
@@ -26,15 +31,16 @@ grep -v '^g-' "$W/new.tsv" > "$W/new-dir.tsv" || true
 grep '^g-' "$W/new.tsv" > "$W/new-places.tsv" || true
 echo "new links: $(wc -l < "$W/new.tsv") (directory $(wc -l < "$W/new-dir.tsv"), Google places $(wc -l < "$W/new-places.tsv"))"
 
-python3 $S/postcheck_matches.py "$W/dir-ok.tsv" "$W/new-dir.tsv"
-STAYS_FILE=$S/.cache/places/all-stays.json python3 $S/postcheck_matches.py "$W/places-ok.tsv" "$W/new-places.tsv"
-[ "${1:-}" = "--dry" ] && { echo "dry run: nothing written ($W)"; exit 0; }
+$PY $S/postcheck_matches.py "$W/dir-ok.tsv" "$W/new-dir.tsv"
+STAYS_FILE=$S/.cache/places/all-stays.json $PY $S/postcheck_matches.py "$W/places-ok.tsv" "$W/new-places.tsv"
+[ "$DRY" = 1 ] && { echo "dry run: nothing written ($W)"; exit 0; }
 
-python3 $S/merge_ota.py "$W/dir-ok.tsv"
+$PY $S/merge_ota.py "$W/dir-ok.tsv"
 cat "$W/places-ok.tsv" >> $S/.cache/places/ota-links.tsv
-node $S/push_places.mjs
-python3 $S/import_google_stays.py
-python3 $S/process.py && python3 $S/process.py --city haridwar
+# --dry-run still writes the local files import_google_stays.py reads (new-with-link.json) and stops before BigQuery
+if [ "$BQ" = 1 ]; then node $S/push_places.mjs; else node $S/push_places.mjs --dry-run; fi
+$PY $S/import_google_stays.py
+$PY $S/process.py && $PY $S/process.py --city haridwar
 npm run --silent build:stays
 npm run --silent check:stays
 echo "merged; backups and inputs in $W. Next: node $S/push_bigquery.mjs, npm test, commit, push."

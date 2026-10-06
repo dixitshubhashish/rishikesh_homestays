@@ -22,8 +22,9 @@
 // 30 days rather than keeping the other fields longer.
 import { GoogleAuth } from 'google-auth-library';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { fileURLToPath } from 'url';
 
-const HERE = new URL('.', import.meta.url).pathname;
+const HERE = fileURLToPath(new URL('.', import.meta.url));
 const DIR = `${HERE}.cache/places`;
 const arg = (n, d) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : d);
 const PHASE = arg('--phase');

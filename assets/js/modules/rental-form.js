@@ -4,7 +4,7 @@
 // libphonenumber validation (phone normalized to E.164 before sending),
 // flatpickr start/end dates, the shared busy-state button helper, and a
 // device-aware WhatsApp link. Submits to /api/contact with
-// `source: 'rental_enquiry'`; the API only requires name/phone/details, so
+// `source: SOURCES.rental`; the API only requires name/phone/details, so
 // service, dates, pickup point, people and the guest's own notes are all
 // folded into `details` as well as sent as their own fields, so nothing is
 // lost whatever the API stores.
@@ -12,6 +12,7 @@ import { validatePhone, validateRentalDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
+import { postEnquiry, SOURCES } from './enquiry.js';
 
 const WHATSAPP_PHONE = '918050091290';
 
@@ -33,6 +34,15 @@ export function needsNotes(value) {
   return Boolean(RENTAL_SERVICES[value]?.needsNotes);
 }
 
+// "Bike", "Car" or "Taxi" for the page the guest is on; the combined page keeps "Bike & Taxi".
+function rentalTitle(service, city) {
+  if (!city) return 'Bike & Taxi';
+  if (service === 'bike') return 'Bike';
+  if (service === 'self_drive') return 'Car';
+  if (String(service || '').startsWith('taxi')) return 'Taxi';
+  return 'Bike & Taxi';
+}
+
 function dateLine(data) {
   if (data.start_date && data.end_date) {
     return data.start_date === data.end_date ? data.start_date : `${data.start_date} to ${data.end_date}`;
@@ -43,6 +53,8 @@ function dateLine(data) {
 // The `details` text the API requires (and stores as the enquiry message).
 export function buildRentalDetails(data) {
   const lines = [
+    // the city pages (bike-rental-in-haridwar...) send their city; the combined Rishikesh page sends none
+    ...(data.city ? [`City: ${data.city}`] : []),
     `Service: ${serviceLabel(data.service) || 'Not specified'}`,
     `Dates: ${dateLine(data)}`,
     `Pickup point: ${String(data.pickup_point || '').trim() || 'Not specified'}`,
@@ -56,7 +68,7 @@ export function buildRentalDetails(data) {
 // Plain-text WhatsApp message (no emoji/unicode bullets, same reason as the
 // other forms: some WhatsApp clients render those as broken "tofu").
 export function buildRentalWhatsAppMessage(data) {
-  let msg = '*Rishikesh Bike & Taxi Rental Enquiry*\n\n';
+  let msg = `*${data.city || 'Rishikesh'} ${rentalTitle(data.service, data.city)} Rental Enquiry*\n\n`;
   if (data.name) msg += `- Name: ${data.name}\n`;
   if (data.phone) msg += `- Phone: ${data.phone}\n`;
   if (data.email) msg += `- Email: ${data.email}\n`;
@@ -66,7 +78,7 @@ export function buildRentalWhatsAppMessage(data) {
   if (data.people) msg += `- People: ${data.people}\n`;
   const notes = String(data.description || '').trim();
   if (notes) msg += `\n*Details:*\n${notes}\n`;
-  msg += '\n---\n_Sent from Rishikesh Homestays - Bike & Taxi Rental_';
+  msg += `\n---\n_Sent from Rishikesh Homestays - ${rentalTitle(data.service, data.city)} Rental_`;
   return msg;
 }
 
@@ -217,12 +229,7 @@ export function setupRentalForm({ redirect = (url) => window.location.assign(url
     if (status) status.textContent = '';
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildRentalPayload(data))
-      });
-      const result = await response.json();
+      const result = await postEnquiry(buildRentalPayload(data));
       if (result.success) {
         redirect('/thanks');
         return;

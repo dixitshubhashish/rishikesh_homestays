@@ -15,10 +15,11 @@ import { readFileSync, writeFileSync, mkdtempSync, existsSync, readdirSync } fro
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { affiliateLink } from '../../assets/js/modules/affiliate-links.js';
+import { fileURLToPath } from 'url';
 
 const DATASET_ID = process.env.BIGQUERY_DATASET || 'rishikesh_homestays';
 const TABLE_ID = process.env.BIGQUERY_MARKET_TABLE || 'market_properties';
-const HERE = new URL('.', import.meta.url).pathname;
+const HERE = fileURLToPath(new URL('.', import.meta.url));
 
 function clientOptions() {
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {

@@ -35,11 +35,12 @@
 //   --recheck FILE (re-open every 'verified' line of FILE and keep only those that still match).
 // Then:  python3 scripts/stays/postcheck_matches.py <out.tsv> docs/booking-links/found.tsv, merge_ota.py <out.tsv> (see docs/HANDOFF.md)
 import { chromium, firefox, webkit } from 'playwright';
-import { readFileSync, writeFileSync, existsSync, mkdirSync, rmdirSync, statSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, rmdirSync, statSync, renameSync } from 'fs';
 import { coreName, coreWords, matchReason, cleanUrl, platformOf, PLATFORMS } from './ota-match.mjs';
 import { judge, fuzzyName } from './ota-evidence.mjs';
+import { fileURLToPath } from 'url';
 
-const ROOT = new URL('../../', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const AG = `${ROOT}docs/booking-links/`;
 const arg = (n, d) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : d);
 const flag = (n) => process.argv.includes(n);
@@ -73,8 +74,10 @@ const ATTACH = Object.fromEntries(arg('--attach', '').split(',').filter(Boolean)
   .map((x) => (/^\w+=/.test(x) ? x.split(/=(.*)/s).slice(0, 2) : ['chrome', x])));
 const BROWSERS = [...Object.keys(ATTACH), ...arg('--browsers', '').split(',').filter((b) => b && !ATTACH[b])];
 if (!BROWSERS.length && !flag('--sync')) throw new Error('give --attach name=url and/or --browsers webkit,…');
-const BRAVE = '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
-const OPERA = '/Applications/Opera.app/Contents/MacOS/Opera';
+// browsers this script launches itself (--browsers brave|opera); the ones you attach to (--attach) are already open
+const WINDOWS = process.platform === 'win32';
+const BRAVE = WINDOWS ? 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe' : '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
+const OPERA = WINDOWS ? `${process.env.LOCALAPPDATA || ''}\\Programs\\Opera\\opera.exe` : '/Applications/Opera.app/Contents/MacOS/Opera';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const jitter = (a, b) => sleep(a + Math.random() * (b - a));
@@ -775,6 +778,21 @@ function candidates(res, tried) {
   return [...found.filter((c) => c.p.name === 'Booking.com'), ...found.filter((c) => c.p.name !== 'Booking.com')];
 }
 
+// Every results page shows more than the stay searched for: up to HARVEST_MAX booking-site property links per search go to
+// seen-pages.tsv (owner, 2026-10-06: "add 4-6 properties per search"), without opening anything here. verify_seen.mjs opens
+// them in parallel within seconds, map_seen_pages.py maps each page whose pin is in Rishikesh or Haridwar to the stay it is
+// (or lists it as a new property), so a search that finds nothing still enlarges the lists.
+const SEEN = `${ROOT}docs/booking-links/seen-pages.tsv`, HARVEST_MAX = 6;
+function harvest(all, stay) {
+  if (DRY) return;
+  try {
+    if (!existsSync(SEEN)) writeFileSync(SEEN, 'url\tplatform\tlabel\tseen_for\n');
+    const rows = all.filter((c) => c.url && !c.pick).slice(0, HARVEST_MAX)
+      .map((c) => [c.url, c.p.name, (c.label || '').replace(/[\t\n\r]+/g, ' ').slice(0, 160), stay.key].join('\t'));
+    if (rows.length) appendFileSync(SEEN, rows.join('\n') + '\n');
+  } catch { /* never stops a search */ }
+}
+
 // -> 'verified' | 'none' | 'retry' | 'manual' | 'unresolved'
 async function processStay(stay) {
   // sorted meanwhile by another worker or by hand (lists are shared): never searched or written twice
@@ -838,6 +856,7 @@ async function processStay(stay) {
     usedEngines.add(combo.e);
 
     const all = candidates(res, tried).filter((c) => !skipped.has(c.p.name));
+    harvest(all, stay);
     const cands = relevant(stay, all);
     const st = stats[combo.e];
     st.searches++; if (res.links.some(platformOf) || res.picks?.length) st.withLinks++; // links on the page, tried or not
@@ -862,7 +881,7 @@ async function processStay(stay) {
       const other = r.unreadable && r.url && BROWSERS.find((b) => b !== combo.b && combos.some((c) => c.b === b && c.until !== Infinity));
       if (other) { log(`     unreadable in ${combo.b} ("${r.title}"), retrying in ${other}`); r = await check(other, stay, { p, url: r.url }); }
       log(`     ${r.ok ? 'MATCH' : r.dead ? 'closed listing' : r.duplicate ? 'DUPLICATE of an already linked stay' : r.review ? `REVIEW, ${r.review}` : r.unreadable ? 'unreadable' : `no match, ${r.why}`}: ${r.url || cand.label} "${r.title}"`);
-      if (r.dead) { deadSeen++; if (relevance(stay, cand.label || cand.url) >= Math.max(1, coreWords(stay.name).length)) closedFits.push(cand.url || cand.label); await jitter(600, 1200); continue; }
+      if (r.dead) { deadSeen++; if (relevance(stay, cand.label || cand.url) >= Math.max(1, coreWords(stay.name).length)) closedFits.push({ url: cand.url || '', label: cand.label || '', platform: platformOf(cand.url || '')?.name || '' }); await jitter(600, 1200); continue; }
       live++;
       if (r.ok) {
         st.matches++;
@@ -900,7 +919,13 @@ async function processStay(stay) {
     return 'retry';
   }
   if (DEEP && closedFits.length) {
-    log('   lists:', JSON.stringify(record(stay, 'none', { log: `closed listing: ${closedFits.join(' ')} (deep pass, ${searches} searches, no live page fits)` }) || 'dry run: not touched'));
+    // owner, 2026-10-06: a closed listing whose property page we found is still assigned (the page is the stay's own)
+    const page = closedFits.find((f) => f.url && f.platform && !ownedByOther(stay, f.url));
+    if (page) {
+      log('   lists:', JSON.stringify(record(stay, 'verified', { platform: page.platform, url: cleanUrl(page.url, page.platform), note: `closed listing: the page no longer takes bookings, assigned anyway (owner, 2026-10-06); name fits "${page.label}"`, source: `claude browser search, worker ${SHARD} (closed listing)` }) || 'dry run: not touched'));
+      return 'verified';
+    }
+    log('   lists:', JSON.stringify(record(stay, 'none', { log: `closed listing: ${closedFits.map((f) => f.url || f.label).join(' ')} (deep pass, ${searches} searches, no live page fits)` }) || 'dry run: not touched'));
     return 'none';
   }
   const miss = DEEP ? 'none' : 'retry';

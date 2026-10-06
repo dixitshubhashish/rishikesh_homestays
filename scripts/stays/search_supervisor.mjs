@@ -11,14 +11,17 @@
 //   - pauses every worker when the disk is almost full (swap lives on it),
 //   - closes leftover booking-site pages (owner, 2026-10-06: used tabs stayed open in Opera and Edge):
 //     a worker reads a booking page in seconds and closes it, so one still open on two sweeps 5 min
-//     apart was left behind by a stopped or crashed worker. Works with --no-tidy (Opera's two workers).
+//     apart was left behind by a stopped or crashed worker. Works with --no-tidy (Opera's and Edge's two workers).
 //   - writes a status line every 30 min.
 // Run:  nohup node scripts/stays/search_supervisor.mjs >> scripts/stays/.cache/booking-search-2026-10-04/supervisor.log 2>&1 &
 // Stop: kill the supervisor first (it leaves the workers running), then stop the workers.
 import { spawn, execSync } from 'child_process';
+import os from 'os';
+import { statfsSync } from 'fs';
 import { openSync, readFileSync, statSync, existsSync, mkdirSync, rmdirSync } from 'fs';
+import { fileURLToPath } from 'url';
 
-const ROOT = new URL('../../', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
 const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
 const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '5-10', '--limit', '4000'];
@@ -29,14 +32,34 @@ const ROUNDS = 4;
 const WORKERS = [
   // Opera is the steadiest browser (1,028 stays, no blocked spells): two sessions share it, each closing only its own tabs
   { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/3', '--no-tidy'], ['quick', '1/1', '--reverse', '--no-tidy'], ['deep', '5/5', '--no-tidy']] },
-  { name: 'opera2', heavy: true, how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/1', '--review', '--no-tidy'], ['deep', '4/5', '--no-tidy']] },
   { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['quick', '2/3'], ['deep', '1/5']] },
   // Brave is open anyway and was idle (owner, 2026-10-05: up to 10 agents); disk is guarded by the pause below
   { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['deep', '2/5']] },
   // a fourth worker (Brave) pushed the disk under 3 GB twice (2026-10-05): three workers is this Mac's limit
 
-  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['quick', '3/3'], ['deep', '3/5']] },
+  // Edge is the least blocked browser (owner, 2026-10-06, from the logs: Bing never challenged it, 2 stalls in 707 stays,
+  // against Opera's 27 in 1,191): it takes Opera's second session. Two sessions share it, so each closes only its own tabs.
+  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['quick', '3/3', '--no-tidy'], ['deep', '3/5', '--no-tidy']] },
+  { name: 'edge2', heavy: true, how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '4/5', '--no-tidy']] },
 ].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, crashes: [], finished: false, logOffset: 0 }));
+
+
+// Works on macOS and Windows (owner, 2026-10-06: the search moves to a Windows laptop; docs/booking-links/RULES.md §5).
+const WIN = process.platform === 'win32';
+const PY = WIN ? 'python' : 'python3'; // Windows: the python.org installer's `python` (or `py -3`)
+const sleepMs = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+const diskFreeGb = () => { try { const f = statfsSync(ROOT); return (f.bavail * f.bsize) / 1e9; } catch { return 999; } };
+// the running search workers: [{ pid, cmd }]
+function workerProcesses() {
+  try {
+    if (WIN) {
+      const out = execSync('powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name=\'node.exe\'\\" | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"', { encoding: 'utf8' });
+      const rows = [].concat(JSON.parse(out || '[]'));
+      return rows.filter((r) => /google_ota_search/.test(r.CommandLine || '')).map((r) => ({ pid: r.ProcessId, cmd: r.CommandLine.replace(/^.*?(scripts[\\/]stays[\\/]google_ota_search)/, 'node $1').replace(/\\/g, '/') }));
+    }
+    return execSync("pgrep -fl '^node scripts/stays/google_ota_search'").toString().trim().split('\n').map((l) => { const [pid, ...cmd] = l.split(' '); return { pid: Number(pid), cmd: cmd.join(' ') }; });
+  } catch { return []; }
+}
 
 const stamp = () => new Date().toTimeString().slice(0, 8);
 const say = (...a) => console.log(stamp(), ...a);
@@ -49,7 +72,7 @@ function start(w) {
   const f = logFile(w);
   w.logOffset = existsSync(f) ? statSync(f).size : 0;
   const fd = openSync(f, 'a');
-  const child = spawn('node', args, { cwd: ROOT, detached: true, stdio: ['ignore', fd, fd] });
+  const child = spawn('node', args, { cwd: ROOT, detached: true, windowsHide: true, stdio: ['ignore', fd, fd] });
   child.unref();
   w.pid = child.pid; w.startedAt = Date.now();
   say(`started ${w.name} (${mode} ${shard}) pid ${w.pid}`);
@@ -61,43 +84,42 @@ function since(w) { // this run's part of the worker's log
 }
 
 function stop(w, why) { // under the lists lock, so a list write is never cut short
-  for (let i = 0; i < 200; i++) { try { mkdirSync(LOCK); break; } catch { execSync('sleep 0.1'); } }
-  try { process.kill(w.pid, 'SIGTERM'); execSync('sleep 5'); if (alive(w.pid)) process.kill(w.pid, 'SIGKILL'); } catch { /* gone */ }
+  for (let i = 0; i < 200; i++) { try { mkdirSync(LOCK); break; } catch { sleepMs(100); } }
+  try { process.kill(w.pid, 'SIGTERM'); sleepMs(5000); if (alive(w.pid)) process.kill(w.pid, 'SIGKILL'); } catch { /* gone */ }
   try { rmdirSync(LOCK); } catch { /* not ours */ }
   say(`stopped ${w.name}: ${why}`);
 }
 
 // Disk nearly full (swap lives on it): every worker stops until there is room again.
 function diskCritical() {
-  try { return Number(execSync("df -g / | awk 'NR==2 {print $4}'").toString()) < 3; } catch { return false; }
+  return diskFreeGb() < 3;
 }
 
 // A supervisor restarted while its workers run: take them over instead of starting twins.
 function adopt(w) {
-  try {
-    const lines = execSync("pgrep -fl '^node scripts/stays/google_ota_search'").toString().trim().split('\n');
-    for (const l of lines) {
-      const [pid, ...cmd] = l.split(' ');
-      const c = cmd.join(' ');
-      w.plan.forEach(([mode, shard, ...extra], i) => {
-        // two sessions can share a browser: the extra flags (--reverse, --review) tell them apart
-        const flagsMatch = ['--reverse', '--review'].every((f) => extra.includes(f) === c.includes(f));
-        if (!w.pid && c.includes(`--shard ${shard} `) && c.includes(w.how.join(' ')) && (mode === 'deep') === c.includes('--deep') && flagsMatch
-            && !WORKERS.some((o) => o !== w && o.pid === Number(pid))) { w.pid = Number(pid); w.step = i; }
-      });
-    }
-  } catch { /* none running */ }
+  for (const { pid, cmd: c } of workerProcesses()) {
+    w.plan.forEach(([mode, shard, ...extra], i) => {
+      // two sessions can share a browser: the extra flags (--reverse, --review) tell them apart
+      const flagsMatch = ['--reverse', '--review'].every((f) => extra.includes(f) === c.includes(f));
+      if (!w.pid && c.includes(`--shard ${shard} `) && c.includes(w.how.join(' ')) && (mode === 'deep') === c.includes('--deep') && flagsMatch
+          && !WORKERS.some((o) => o !== w && o.pid === Number(pid))) { w.pid = Number(pid); w.step = i; }
+    });
+  }
   if (w.pid) { w.logOffset = existsSync(logFile(w)) ? statSync(logFile(w)).size : 0; say(`adopted running ${w.name} (${w.plan[w.step].join(' ')}) pid ${w.pid}`); }
 }
 
 function memoryTight() {
   try {
+    const disk = diskFreeGb();
+    if (WIN || process.platform === 'linux') { // free RAM under 1.5 GB, or the disk under 5 GB
+      const freeGb = os.freemem() / 1e9;
+      return freeGb < 1.5 || disk < 5 ? `free memory ${freeGb.toFixed(1)} GB, disk ${Math.round(disk)} GB free` : '';
+    }
     const lvl = Number(execSync('sysctl -n kern.memorystatus_vm_pressure_level').toString());
     // macOS keeps swap high for days and adds swap files as it needs them: what matters is swap nearly full while the disk
     // it grows onto is low too
     const swapFree = Number((execSync('sysctl -n vm.swapusage').toString().match(/free = ([0-9.]+)M/) || [])[1] || 9999);
-    const disk = Number(execSync("df -g / | awk 'NR==2 {print $4}'").toString());
-    return lvl >= 4 || (swapFree < 800 && disk < 8) || disk < 5 ? `pressure ${lvl}, swap free ${Math.round(swapFree)} MB, disk ${disk} GB free` : '';
+    return lvl >= 4 || (swapFree < 800 && disk < 8) || disk < 5 ? `pressure ${lvl}, swap free ${Math.round(swapFree)} MB, disk ${Math.round(disk)} GB free` : '';
   } catch { return ''; }
 }
 
@@ -181,6 +203,12 @@ for (;;) {
   if (WORKERS.every((w) => w.finished)) { say('all workers finished:', counts()); break; }
   if (now - lastStatus > 30 * 60e3) {
     lastStatus = now;
+    // stays that are already listed (a duplicate with its page, or a linked twin 40 m away) leave unfound.tsv: record them in found.tsv
+    // the pages the searches harvested (up to 6 per search): opened in parallel within seconds, then mapped across to our stays,
+    // and the stays that are already listed leave unfound.tsv (docs/booking-links/RULES.md)
+    const tail = (cmd, n, ms) => { try { return execSync(`${cmd} 2>&1`, { cwd: ROOT, timeout: ms, encoding: 'utf8' }).trim().split('\n').slice(-n).join(' | '); } catch (e) { return `failed: ${String(e.message).split('\n')[0]}`; } };
+    say('seen pages:', tail('node scripts/stays/verify_seen.mjs --limit 400', 1, 360000), '|', tail(`${PY} scripts/stays/map_seen_pages.py`, 2, 120000));
+    say('prune_unfound:', tail(`${PY} scripts/stays/prune_unfound.py`, 3, 120000));
     say('status:', counts(), '|', WORKERS.map((w) => `${w.name} ${w.finished ? 'finished' : w.pid && alive(w.pid) ? `${w.plan[w.step].join(' ')}` : 'waiting'}`).join(', '), tight ? `| memory: ${tight}` : '');
   }
   await new Promise((r) => setTimeout(r, 60e3));

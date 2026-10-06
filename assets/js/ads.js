@@ -30,8 +30,8 @@
 //                between rows, never right after the first group: from the third group on, two screens down)
 //                only when nothing sits beside the list (no sidebar ad, no rails); the grid;
 //                landmark pages (no sidebar) get the left rail only at ≥ 1580×900.
-//   lead pages   at most one ad, well below the main action: the grid above the footer on /homestays (only
-//                ≥ 1381px, where the form sits beside the cards); the rental page's in-article anchor before its FAQ.
+//   lead pages   at most one ad, well below the main action: /homestays' in-article anchor between the top-brand
+//                and the Nirmal Bagh lists (below the form on every screen); the rental pages' anchor before their FAQ.
 //   no ads       /hotels/stay and our own listing (no rival hotels under our booking buttons), contact,
 //                list-your-homestay, thanks and 404: that's where guests book and enquire.
 // Fixed rails sit in the empty margins beside the 1180px content (≥ 1580px wide and ≥ 900px tall, so they
@@ -39,12 +39,16 @@
 // ads in view would make more than 3 on screen, while the WhatsApp drawer is open (body.whatsapp-drawer-open),
 // and (right rail) wherever it would cover the WhatsApp hint bubble.
 const ADSENSE_CLIENT = 'ca-pub-7016219170450293';
-const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027', '/driving-from-delhi-to-rishikesh'];
+const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027', '/driving-from-delhi-to-rishikesh',
+  '/driving-from-delhi-to-haridwar', '/driving-from-gurugram-to-rishikesh', '/driving-from-gurugram-to-haridwar', '/driving-from-noida-to-rishikesh', '/driving-from-noida-to-haridwar', '/driving-from-greater-noida-to-rishikesh', '/driving-from-greater-noida-to-haridwar', '/driving-from-ghaziabad-to-rishikesh', '/driving-from-ghaziabad-to-haridwar', '/driving-from-faridabad-to-rishikesh', '/driving-from-faridabad-to-haridwar', '/driving-from-sonipat-to-rishikesh', '/driving-from-sonipat-to-haridwar', '/driving-from-meerut-to-rishikesh', '/driving-from-meerut-to-haridwar'];
 // lead pages and the one unit each may get; contact, list-your-homestay, thanks and 404 are deliberately absent
 // /hotels/stay and our own listing get none (owner, 2026-10-06: no rival hotels under our booking buttons)
 const LEAD = {
-  '/homestays': 'grid',
+  '/homestays': 'article', // the anchor between the top brands and the Nirmal Bagh homes (generated, build_pages.py)
   '/bike-and-taxi-rental-in-rishikesh': 'article',
+  '/bike-rental-in-rishikesh': 'article', '/bike-rental-in-haridwar': 'article',
+  '/car-rental-in-rishikesh': 'article', '/car-rental-in-haridwar': 'article',
+  '/taxi-rental-in-rishikesh': 'article', '/taxi-rental-in-haridwar': 'article',
 };
 function pageType(path) {
   if (GUIDES.includes(path)) return 'guide';
@@ -256,13 +260,7 @@ const PLACE = {
   },
   // lead pages: at most one unit, well below the main action
   lead() {
-    if (PATH === '/homestays') { // only where the form sits beside the cards and the cards run on past it
-      const form = document.querySelector('#contactForm');
-      const list = document.querySelector('.listing-grid');
-      if (window.innerWidth < 1381 || !form || !list
-        || list.getBoundingClientRect().bottom - form.getBoundingClientRect().bottom < 300) return;
-    }
-    if (LEAD[PATH] === 'article') return PLACE.slots(); // the rental page's anchor before its FAQ
+    if (LEAD[PATH] === 'article') return PLACE.slots(); // the rental pages' anchor before the FAQ; /homestays' between the brand and area lists
     // nothing within 400px below the last form / booking panel / WhatsApp or submit button
     const sel = 'form, .booking-panel, .side-panel, .cta-band .btn, a[href*="wa.me"], button[type=submit]';
     const ctas = [...document.querySelectorAll(`main ${sel.split(', ').join(', main ')}`)].filter((e) => e.offsetParent);

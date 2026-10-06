@@ -15,7 +15,13 @@ const PAGE_SIZE = 20; // rows per section before "Show all" on the master page
 // wait behind "View all". A list with fewer is topped up to SHOW_MIN. In step with
 // SHOW_MIN / split_shown() in scripts/stays/build_pages.py.
 const SHOW_MIN = 10;
-const shownCount = (list) => Math.max(list.filter((d) => d.o).length, Math.min(SHOW_MIN, list.length));
+// A badly rated stay (BAD_RATING or lower out of 10 from BAD_MIN_REVIEWS+ reviews) waits behind "View all" even when it has a
+// link (owner, 2026-10-06). Same constants as build_pages.py; the order itself (promising brands, then one of each letter in
+// turn, bad ratings last) is baked into the data modules by order_stays().
+const BAD_RATING = 7.0;
+const BAD_MIN_REVIEWS = 5;
+const isBad = (d) => Boolean(d.g) && d.g < BAD_RATING && (d.c || 0) >= BAD_MIN_REVIEWS;
+const shownCount = (list) => Math.max(list.filter((d) => d.o && !isBad(d)).length, Math.min(SHOW_MIN, list.length));
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const inr = (n) => n.toLocaleString('en-IN');

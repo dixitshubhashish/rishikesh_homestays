@@ -2,6 +2,7 @@ import { validatePhone } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
+import { postEnquiry, SOURCES } from './enquiry.js';
 
 const WHATSAPP_PHONE = '918050091290';
 
@@ -82,13 +83,7 @@ export function setupHostForm() {
     if (status) status.textContent = '';
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, source: 'host_application' })
-      });
-
-      const result = await response.json();
+      const result = await postEnquiry({ ...data, source: SOURCES.host });
 
       if (result.success) {
         form.reset();

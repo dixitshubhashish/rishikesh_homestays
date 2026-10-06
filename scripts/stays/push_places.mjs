@@ -23,8 +23,9 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { words, distinctive } from './booking-match.mjs';
 import { affiliateLink } from '../../assets/js/modules/affiliate-links.js';
+import { fileURLToPath } from 'url';
 
-const HERE = new URL('.', import.meta.url).pathname;
+const HERE = fileURLToPath(new URL('.', import.meta.url));
 const DATASET_ID = process.env.BIGQUERY_DATASET || 'rishikesh_homestays';
 const TABLE_ID = 'places_lodging';
 // Booking.com links: our CJ affiliate deep link (IDs in affiliate-links.js)

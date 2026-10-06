@@ -13,8 +13,9 @@
 import { chromium } from 'playwright';
 import { readFileSync, appendFileSync, existsSync, readdirSync } from 'fs';
 import { words, bookingPageMatches } from './booking-match.mjs';
+import { fileURLToPath } from 'url';
 
-const HERE = new URL('.', import.meta.url).pathname;
+const HERE = fileURLToPath(new URL('.', import.meta.url));
 const arg = (name, dflt) => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : dflt);
 const OUT = arg('--out', `${HERE}.cache/slug-guesses.tsv`);
 const TRIED = `${OUT}.tried`;

@@ -11,8 +11,9 @@
 import { chromium } from 'playwright';
 import { readFileSync, appendFileSync, existsSync, readdirSync } from 'fs';
 import { titleMatches } from './booking-match.mjs';
+import { fileURLToPath } from 'url';
 
-const HERE = new URL('.', import.meta.url).pathname;
+const HERE = fileURLToPath(new URL('.', import.meta.url));
 const arg = (name, dflt) => (process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : dflt);
 const OUT = arg('--out');
 const [SHARD, SHARDS] = arg('--shard', '1/1').split('/').map(Number);

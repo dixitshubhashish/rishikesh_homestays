@@ -12,8 +12,9 @@
 import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, existsSync, readdirSync, appendFileSync } from 'fs';
 import { bookingPageMatches } from './booking-match.mjs';
+import { fileURLToPath } from 'url';
 
-const HERE = new URL('.', import.meta.url).pathname;
+const HERE = fileURLToPath(new URL('.', import.meta.url));
 const LINKS = `${HERE}ota-links.tsv`;
 const names = {};
 // names from every city (Rishikesh at .cache/stays.json, others at .cache/<city>/)

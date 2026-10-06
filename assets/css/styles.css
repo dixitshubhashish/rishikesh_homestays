@@ -2682,6 +2682,12 @@ a.homestay-photo:hover {
   margin: 0 0 8px;
   padding-right: 24px;
   font-size: 1.2rem;}
+.ota-gate-modal .ota-gate-site {
+  margin: -6px 0 10px;
+  color: var(--river);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
 .ota-gate-modal p {
   margin: 0 0 16px;
   color: var(--muted);
@@ -3467,6 +3473,11 @@ body.whatsapp-drawer-open .rh-ad-rail {
     linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.2)),
     url("../images/rentals/bike-rental-hero.webp");
   background-position: center 62%;}
+.page-hero.rentals.rentals-cab::before {
+  background-image:
+    linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.2)),
+    url("../images/rentals/tempo-traveller-hill-road.webp");
+  background-position: center 55%;}
 .rental-intro {
   align-items: start;}
 .rental-intro-copy h2 {
@@ -3489,6 +3500,51 @@ body.whatsapp-drawer-open .rh-ad-rail {
 .rental-price span {
   color: var(--muted);
   font-weight: 700;}
+/* the rental pages' switch: bike / car / taxi, then the city (bike-rental-in-*.html, scripts/rentals/build-pages.mjs) */
+.rental-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 22px 0 0;
+}
+.drive-switch {
+  flex-direction: column;
+  gap: 10px;
+}
+.rental-switch-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.rental-switch-label {
+  min-width: 7.5em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.rental-switch-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+}
+.rental-switch a {
+  padding: 8px 18px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+.rental-switch a:hover {
+  background: var(--alt);
+}
+.rental-switch a[aria-current="page"] {
+  background: var(--river-fill);
+  color: var(--on-fill);
+}
 .rental-form h2 {
   margin: 0;
   scroll-margin-top: 110px;}
@@ -4449,3 +4505,11 @@ html.site-search-open {
   .rh-lang-picker-header {
     height: 34px;
     padding: 0 7px;}}
+
+/* /homestays: the "search more stays" links (generated block, build_pages.py write_homestays_picks) */
+.search-more-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}

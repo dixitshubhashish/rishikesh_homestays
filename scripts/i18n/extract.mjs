@@ -43,6 +43,9 @@ export const PAGES = [
   "places-to-visit", "things-to-do-in-rishikesh", "triveni-ghat",
   "kedarnath-yatra", "haridwar-kumbh-2027", "list-your-homestay",
   "driving-from-delhi-to-rishikesh", "bike-and-taxi-rental-in-rishikesh",
+  "bike-rental-in-rishikesh", "bike-rental-in-haridwar", "car-rental-in-rishikesh", "car-rental-in-haridwar",
+  "taxi-rental-in-rishikesh", "taxi-rental-in-haridwar",
+  "driving-from-delhi-to-haridwar", "driving-from-gurugram-to-rishikesh", "driving-from-gurugram-to-haridwar", "driving-from-noida-to-rishikesh", "driving-from-noida-to-haridwar", "driving-from-greater-noida-to-rishikesh", "driving-from-greater-noida-to-haridwar", "driving-from-ghaziabad-to-rishikesh", "driving-from-ghaziabad-to-haridwar", "driving-from-faridabad-to-rishikesh", "driving-from-faridabad-to-haridwar", "driving-from-sonipat-to-rishikesh", "driving-from-sonipat-to-haridwar", "driving-from-meerut-to-rishikesh", "driving-from-meerut-to-haridwar",
   "hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh",
 ];
 
@@ -83,7 +86,10 @@ function keep(text) {
 
 // Drop the generated footer-stays block (footer_links.py owns that text).
 function stripGenerated(html) {
-  return html.replace(/<!--\s*footer-stays\s*-->[\s\S]*?<!--\s*\/footer-stays\s*-->/g, "");
+  // the footer block, and the stay rows of generated lists (/homestays' top brands): a row's meta line and "View <name>"
+  // label are patterns in the stays catalogue ("Starting ₹{n1} onwards"), which the runtime loads on /homestays too
+  return html.replace(/<!--\s*footer-stays\s*-->[\s\S]*?<!--\s*\/footer-stays\s*-->/g, "")
+    .replace(/<li class="sx-item[^"]*">[\s\S]*?<\/li>/g, "");
 }
 
 // Never translated (owner, 2026-10-06): the brand name and logo, the contact

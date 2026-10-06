@@ -23,6 +23,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PAGES } from "./extract.mjs";
 import { NAME_WORDS } from "../../assets/js/i18n-runtime.js";
+import { AREAS } from "../../assets/js/modules/data.js";
+import { STAYS_INDEX as RISHIKESH_STAYS } from "../../assets/js/modules/stays-index-data.js";
+import { STAYS_INDEX as HARIDWAR_STAYS } from "../../assets/js/modules/stays-index-data-haridwar.js";
+export const SIGHTING_2 = "Possible sighting: <0>joined a Naga akhada procession at Har Ki Pauri and hasn’t looked back.</0> <1>Plan your Kumbh 2027 visit →</1>";
+const FACILITIES = [...new Set([...RISHIKESH_STAYS, ...HARIDWAR_STAYS].flatMap((d) => d.f || []))].sort();
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -56,7 +61,7 @@ const EXCLUDE = [
   /^IntersectionObserver$/, /: failed to /, /failed to load$/, /^Request failed$/, /^Clicked through/,
   /^Interested in /, /^My name is /, /^No verified booking page/, /^Sent on to /, /^Ref:/,
   /^WhatsApp widget booking request/, /^We're \{guests\} in total/, /^Could you help with availability/,
-  /^(People|Pickup point):/, /^search index\b/, /^[^\p{Script=Latin}]*\p{Script=Devanagari}/u,
+  /^(People|Pickup point|City):/, /^search index\b/, /^[^\p{Script=Latin}]*\p{Script=Devanagari}/u,
 ];
 
 // Tokenise string literals ('..', "..", `..${x}..`) skipping comments and regexes (roughly).
@@ -186,6 +191,16 @@ export function extractUi(rendered = []) {
   const out = {};
   for (const t of [...found.keys()].sort((a, b) => a.localeCompare(b))) out[t] = t;
   for (const t of [...MONTHS, ...MONTHS_SHORT, ...DAYS, ...DAYS_SHORT]) out[t] = t;
+  // the amenity labels of every stay page ("Garden furniture", "VIP check-in/ -out"): stay-page.js writes them from the data modules
+  for (const f of FACILITIES) out[f] ??= f;
+  // slot values the browser fills into a bigger text: " · 6 reviews" in "Guests 5.8/10 · 6 reviews"
+  out["· {n1} reviews"] ??= "· {n1} reviews";
+  // the 404 picks one of two "possible sighting" lines at random after the page loaded, so the whole run for the
+  // second line needs its own entry (the first is in the page's HTML); the stay page's title when a stay is not found
+  out[SIGHTING_2] ??= SIGHTING_2;
+  for (const c of ["Rishikesh", "Haridwar"]) out[`This stay has checked out | ${c} | Rishikesh Homestays`] ??= `This stay has checked out | ${c} | Rishikesh Homestays`;
+  // the area names of the search and filter dropdowns (data.js AREAS, written by search-form.js and stays-renderer.js)
+  for (const a of AREAS) out[a] ??= a;
   // generic words inside stay names ("Hotel", "Guest House"): i18n-runtime.js translates just these
   for (const t of NAME_WORDS) out[t] = t;
   // text the browser renders that the scan above cannot see (inside big HTML

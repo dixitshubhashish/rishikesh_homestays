@@ -7,6 +7,7 @@
 import { validatePhone } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
+import { postEnquiry, otaRedirectSource } from './enquiry.js';
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -34,7 +35,8 @@ const MODAL_HTML = `
     <button type="button" class="ota-gate-close" aria-label="Close">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
     </button>
-    <h3 id="ota-gate-title">Before you head to <span data-ota-gate-name>Airbnb</span></h3>
+    <h3 id="ota-gate-title">Before you head to</h3>
+    <p class="ota-gate-site" data-ota-gate-name translate="no">Airbnb</p>
     <p>Leave your name and number so we can also help directly with dates, long-stay discounts, and questions — then we'll take you straight there.</p>
     <form class="ota-gate-form" novalidate>
       <div class="whatsapp-field">
@@ -158,21 +160,16 @@ export function setupOtaLeadGate() {
     clearFieldError(phoneError, phoneInput);
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await postEnquiry({
           name,
           phone: phoneResult.normalized,
           // Never shown to the guest — this is purely for the team's own
           // notification email/BigQuery record, so it's fine (useful, even)
           // to spell out exactly which button and URL they clicked.
           details: `Clicked through to the ${pendingOtaName} listing for Advaitam Ganga & Hill View Luxury 3BHK.\nButton clicked: ${pendingOtaName}\nDestination URL: ${pendingUrl}`,
-          source: `ota_redirect_${pendingOtaName.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`
-        })
+          source: otaRedirectSource(pendingOtaName)
       });
-      const result = await response.json().catch(() => ({ success: false }));
-      if (!response.ok || !result.success) {
+      if (!result.ok) {
         throw new Error(result.message || 'Request failed');
       }
 

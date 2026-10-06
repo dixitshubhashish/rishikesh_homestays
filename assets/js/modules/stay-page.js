@@ -19,6 +19,7 @@ import { validatePhone } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
+import { postEnquiry, SOURCES, stayRedirectSource } from './enquiry.js';
 
 const WHATSAPP_PHONE = '918050091290';
 // Same icon as the site's other "WhatsApp" buttons (index.html etc.).
@@ -320,20 +321,15 @@ function setupGate(root, d) {
 
     setButtonLoading(submitBtn, 'Sending...');
     try {
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const result = await postEnquiry({
           name, email: email || undefined, phone: phone.normalized,
           preferred_stay: d.id, area: d.a, stay_name: d.n, guests_total: guests(),
           details: `Interested in ${d.n} (${d.ks.join(', ')}, ${d.a}).\nTotal guests (kids included): ${guests()}\n` +
             (ota ? `Sent on to ${ota.n}: ${ota.u}` : 'No verified booking page: please follow up with availability and price.') +
             `\nStay page: ${location.origin}/hotels/stay?s=${d.id}${CQ}`,
-          source: ota ? `stay_redirect_${ota.n.toLowerCase().replace(/[^a-z0-9]+/g, '_')}` : 'stay_enquiry'
-        })
+          source: ota ? stayRedirectSource(ota.n) : SOURCES.stayEnquiry
       });
-      const result = await res.json().catch(() => ({ success: false }));
-      if (!res.ok || !result.success) throw new Error(result.message || 'Request failed');
+      if (!result.ok) throw new Error(result.message || 'Request failed');
       // Same-tab redirect (a window.open after an await is often blocked):
       // the stay's verified booking page, else our thank-you page.
       location.assign(ota ? ota.u : '/thanks');
@@ -432,7 +428,7 @@ export async function setupStayPage() {
   const own = STAYS_OWN.find((o) => o.id === id);
   const stay = own || STAYS_INDEX.find((d) => d.id === id);
   if (!stay) {
-    document.title = `Stay not found | ${CITY_NAME} | Rishikesh Homestays`;
+    document.title = `This stay has checked out | ${CITY_NAME} | Rishikesh Homestays`;
     root.innerHTML = `<h1 class="sx-title">This stay has checked out</h1>
       <p class="sx-lede">We couldn't find it in our ${CITY_NAME} listings; it may have closed or changed its name. Here are good places to look instead, or <a href="/contact">send us your dates</a> and we'll suggest a stay.</p>
       <nav class="sx-cats" aria-label="Browse stays">${STAYS_INDEX_META.categories.filter((c) => c.filter === 'all').map((c) => `<div class="sx-cats-row"><a href="/hotels/best-${c.slug}-in-${CITY}">All stays <small>${inr(c.count)}</small></a></div>`).join('')}${catGroups().map(([label, list]) => `<div class="sx-cats-row"><span class="sx-cats-label">${label}</span>${list.map((c) => `<a href="/hotels/best-${c.slug}-in-${CITY}">${esc(c.title)} <small>${inr(c.count)}</small></a>`).join('')}</div>`).join('')}</nav>

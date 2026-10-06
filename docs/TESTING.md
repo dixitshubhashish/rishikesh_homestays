@@ -42,6 +42,10 @@ Update this section after each full run (date + counts), not with a new file.
 | `tests/visual/no-horizontal-overflow.test.js` | ~540 | Every root `.html` page and every `hotels/*.html` page at 375px and 1440px in real Chromium; fails if anything overflows the viewport (guards the `minmax(0, 1fr)` rule) |
 | `tests/integration/pages.test.js` | 33 | Page structure, doctype, title, charset/viewport, logo, stylesheet and vendor scripts, new pages registered |
 | `tests/modules/validators.test.js` | 22 | Phone + date ranges (stay rules and same-day rental rules) |
+| `tests/integration/stays-order.test.js` | 7 | Stays list order: linked first, promising brands on top, one of each letter in turn (not alphabetical), bad ratings last; build and browser constants agree |
+| `tests/modules/enquiry.test.js` | 4 | `postEnquiry` request and answer, source names, no module posts to `/api/contact` except `enquiry.js` |
+| `tests/integration/drives.test.js` | 5 | The 15 per-city driving guides: match the generator, switch, titles, master links, sitemap, ads |
+| `tests/integration/rentals.test.js` | 7 | The six generated rental pages: match the generator, kinds not mixed, switch, footer, sitemap, nav label |
 | `tests/integration/navigation.test.js` | 17 | Header/footer links (Stays division, Driving from Delhi, Bike & Taxi Rental…) |
 | `tests/modules/country-select.test.js` | 17 | Country-code select |
 | `tests/modules/currency.test.js`, `whatsapp-link.test.js`, `whatsapp-widget.test.js` | 16 each | Currency display, device-aware WhatsApp links, widget drawer |

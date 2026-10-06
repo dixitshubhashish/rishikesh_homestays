@@ -1,0 +1,6 @@
+# Line endings: LF everywhere (the lists are TSV files read by both Node and Python on macOS and Windows)
+* text=auto eol=lf
+*.tsv text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=crlf
+assets/vendor/** -text

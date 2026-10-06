@@ -10,17 +10,23 @@ to the wrong hotel; a missing link costs little (the lead is still captured), so
 |---|---|
 | `all.tsv` | stays never searched yet; deleted on 2026-10-05 once every stay had been searched (never recreate it) |
 | `found.tsv` | confirmed booking pages: `key, status, platform, url, note, name, city, source`; the note says why it matched |
-| `unfound.tsv` | stays without a confirmed page, by `status`: `retry` (search again), `none` (searched well; not on a booking site, or only closed listings: the log starts `closed listing:`), `manual` (the name cannot identify it), `duplicate` (a second entry of a place already linked), `review` (only the owner can decide) |
+| `unfound.tsv` | stays without a confirmed page, by `status`: `retry` (search again), `none` (searched well; not on a booking site, or a closed listing whose URL another stay already owns), `manual` (the name cannot identify it), `duplicate` (a second entry of a place already linked), `review` (only the owner can decide) |
+| `found-by-property.tsv` | **generated copy** of the found links, one row per property, the booking sites as columns (`booking_com_url`, `agoda_url`, …, Booking.com first): `slug` (our own, from the property's current name: lower case, letters, digits and hyphens only; a name shared by several properties adds the area, then the city, then a number, never a random suffix), `key`, `google_place_id` (the `g-` keys without the prefix), `listing_id`, names, city, area, lat/lng, a Maps link, `primary_ota`/`primary_url` (first site of `scripts/stays/ota-priority.tsv` that has a link) and `sources`. A new verified link goes into its site's column. **Close duplicates are merged** into one row (same booking-site page, or within 40 m with the same core name): the survivor is the stay the site lists, else the shortest readable name; it learns the Google place id, listing id, coordinates and any booking link it lacked, keeps the other keys in `alias_keys` and a different link of the same site in `other_urls`; `found-duplicates.tsv` lists what went where. Rows are sorted by city, then slug. No phone numbers (BigQuery `places_lodging` only). |
+| `found-links.tsv` | the same links one per row with everything the lists hold (`key, slug, ota, rank, url, status, note, checked, source_file`) |
 | `review.tsv` | the owner's checklist: the page, what it shows, and why it is doubtful |
 
 Rows move between the lists only through `scripts/stays/google_ota_search.mjs` (workers) and `scripts/stays/record_manual.mjs`
 (checks by hand), under a lock, written atomically. Never edit and save these files while workers run: an editor's stale copy
 would undo their work (an open editor tab may also show an old copy: close and reopen it).
 
+`python3 scripts/stays/prune_unfound.py` takes out of `unfound.tsv` every stay that is already listed (owner, 2026-10-06). It checks the booking page's **URL first**: a `duplicate` row whose log names a page a linked stay already has (another Google Maps listing of the same property, say a room type) is recorded in `found.tsv` under its own key with that same page (`source` says so; Booking.com stays the priority link), so the file shows the page for every listing; the site still lists the property once (`merge_found.sh` drops "page already belongs to"). Then: a `duplicate` row whose "same place as" stay is linked, any `retry`/`none`/`manual` row within 40 m of a linked stay with the same core name and size (1BHK/2BHK/studio) and the same numbers ("Army House 2" is not "Army House 4"), or a stay that has a link by now. `review` rows stay (the owner's checklist). Each removed row is kept with its reason in `duplicates-resolved.tsv`. Written under the lists lock, safe while the workers run; `--dry` shows what would go.
+
+Both generated files come from `python3 scripts/stays/organise_found.py` (found.tsv + `scripts/stays/ota-links.tsv` + the Google Maps stays' links; the originals are never changed and nothing goes to BigQuery). The booking-site order lives in one file, `scripts/stays/ota-priority.tsv` (Booking.com first: the reliable pages; reorder there).
+
 ## 2. When a page is this stay
 
 The page must be that site's **property page** (not a search, city or list page), **live** (a closed listing redirects or says
-"no longer available"), and pass the name and the place:
+"no longer available"; **exception, owner 2026-10-06:** when the deep pass finds the stay's own property page and it is closed, that page is still assigned, noted `closed listing…` in found.tsv; `scripts/stays/assign_closed.mjs` moves earlier closed-listing rows the same way), and pass the name and the place:
 
 - **Name** (`scripts/stays/ota-match.mjs`): the stay's distinctive words are on the page, in the right town; brand and unit clashes
   fail ("Zostel Tapovan" ≠ "Zostel Laxman Jhula", 1BHK ≠ 2BHK, different OYO numbers). Taglines, add-ons ("& Cats Cafe",
@@ -46,7 +52,7 @@ same village and PIN on the page: the same place.
 
 ## 3. How the search runs
 
-- **Workers**: `scripts/stays/search_supervisor.mjs` keeps them running (one per browser, two in Opera, the steadiest), restarts
+- **Workers**: `scripts/stays/search_supervisor.mjs` keeps them running (one per browser, two in Edge, the least blocked: 2026-10-06 logs show 2 all-engine stalls in 707 stays against Opera's 27 in 1,191; Opera runs one), restarts
   crashed or stalled ones, pauses all when the disk is under 3 GB (5 minutes at a time). Never more than three browsers on this
   Mac: a fourth filled the disk twice. Logs: `scripts/stays/.cache/booking-search-*/`.
 - **Order**: never-searched stays first (`all.tsv`, split between workers), likeliest first (guest reviews and a price);
@@ -66,8 +72,66 @@ same village and PIN on the page: the same place.
   browser), recorded only through `record_manual.mjs` under the same rules; a second agent re-opens every link accepted.
   Directory and comparison sites (uttarakhand-hotels.com, tiket.com, Traveloka, Kayak, …) are skipped: they are not booking pages.
 
+### Pages a search shows besides the stay (owner, 2026-10-06)
+
+Every results page shows other properties too. Per search the worker writes up to 6 booking-site property links to `seen-pages.tsv` (`harvest()` in `google_ota_search.mjs`; nothing is opened there). `scripts/stays/verify_seen.mjs` opens them **fast and in parallel** (headless, 8 at once, no images or styles, DOM-ready only, the bot check solved once per run: about 2 pages a second) and writes name, pin and town to `seen-pages-checked.tsv`; only a pin within 25 km of Rishikesh or Haridwar counts. `scripts/stays/map_seen_pages.py` then maps each such page across: to the stay **without a link** within **200 m** of the page's pin that reads as the same place (or is the only one there), recorded in `found.tsv`; to a stay we **already list** as an *extra link* if its site has none yet (never a new property: Booking.com becomes the priority link later); and only a page that matches no stay we have goes to `new-properties.tsv` for the owner to add. The supervisor runs both every 30 minutes with `prune_unfound.py`.
+
 ## 4. Onto the site
+
+`scripts/stays/merge_found.sh` is the one way verified links reach the site (never copy rows by hand). BigQuery is **off by default** (owner, 2026-10-06): the script writes the local files `push_places.mjs` makes but loads nothing; `--bigquery` loads `places_lodging`, and `push_bigquery.mjs` stays a separate step. The stays lists are then ordered by `order_stays()` (promising brands, one of each letter in turn, bad ratings behind "View all": CLAUDE.md).
+
 
 Found links reach the stays pages only when merged: `scripts/stays/postcheck_matches.py` → `merge_ota.py` → the places pipeline
 (`push_places.mjs`, `import_google_stays.py`) → `process.py` → `build_pages.py` → `push_bigquery.mjs`, then a commit and push.
 Booking.com links get the CJ affiliate wrapper on the way (`assets/js/modules/affiliate-links.js`); never add `aid=`.
+
+**Merge and push, step by step** (a merge is safe while the workers run; do the push when you decide to). BigQuery is its own, later step.
+1. `scripts/stays/merge_found.sh --dry`: shows how many rows are new and which are dropped ("page already belongs to": another listing of a stay we already link).
+2. `scripts/stays/merge_found.sh`: snapshots `found.tsv`, merges, rebuilds both cities and runs `check:stays`. Backups and inputs go to `scripts/stays/.cache/booking-search-*/merge-<date>/` (gitignored). It writes the local places files but loads **nothing** into BigQuery.
+3. `npm test` (about 3 minutes, all must pass) and `npm run i18n:status` (every language "complete").
+4. Only when the owner says so: `git add -A` (the lists in `docs/booking-links/`, `scripts/stays/ota-links.tsv`, the rebuilt `hotels/` pages, `assets/js/modules/stays-index-data*.js`, `sitemap.xml`, `llms*.txt`, `assets/search/index.json`, `i18n/`), commit, `git push`. A push that changes `sitemap.xml` pings IndexNow (`.github/workflows/indexnow.yml`) and Vercel deploys; check one new stay on the live site.
+5. Later, only when the owner says so: `node scripts/stays/push_bigquery.mjs` (directory stays) and `merge_found.sh --bigquery` / `node scripts/stays/push_places.mjs` (Google Maps places).
+Never push from a second machine while the first still has unpushed list changes: the lists are plain files and a git merge of them is not safe (see §5, one machine at a time).
+
+## 5. Running the search on the Windows laptop
+
+The search can move to a Windows laptop (owner, 2026-10-06). **One machine runs it at a time**: the lists are plain files the workers rewrite, so the Mac stops before Windows starts and the other way round. The scripts are in `scripts/windows/` (PowerShell). **Not yet run on a real Windows machine**: do the first-run check at the end of this section and report what differs.
+
+**Browsers needed** (the search drives your own browsers over a debugging port, one worker per browser; Opera must stay in the set):
+
+| Browser | Port | Installed by `setup.ps1` (winget id) | Usual path |
+|---|---|---|---|
+| Google Chrome | 9222 | `Google.Chrome` | `C:\Program Files\Google\Chrome\Application\chrome.exe` |
+| Opera | 9223 | `Opera.Opera` | `%LOCALAPPDATA%\Programs\Opera\opera.exe` |
+| Brave | 9224 | `Brave.Brave` | `C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe` |
+| Microsoft Edge | 9225 | part of Windows | `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe` |
+
+Also installed: Node.js LTS, Python 3, Git, the repo's npm packages and Playwright's own Chromium (`verify_seen.mjs` uses it for the fast page checks; it never searches). Each browser runs with its own profile folder under `%LOCALAPPDATA%\rh-search\<name>` (Chrome 136+ ignores a debugging port on your everyday profile): open google.com in each once, sign in if you like, and use them normally for a day; a brand-new profile is challenged more. Captchas: solve them yourself, the worker waits; nothing here evades a block.
+
+**Move it over**
+1. On the Mac: `node scripts/stays/search_supervisor.mjs` stopped (stop the supervisor first, then the workers, then check nothing is left: `pgrep -fl google_ota_search`), then commit and push the lists: `git add docs/booking-links scripts/stays/ota-links.tsv`, commit, push. Also pack the search's cache (gitignored, 5 files, about 5 MB): `tar -czf rh-search-cache.tgz -C scripts/stays .cache/stays.json .cache/haridwar/stays.json .cache/places/places.json .cache/places/all-stays.json .cache/places/ota-links.tsv`, and copy the archive over (AirDrop, USB, cloud drive).
+2. On Windows: install Git, `git clone` the repo (or `git pull`), then in PowerShell from the repo folder: `powershell -ExecutionPolicy Bypass -File scripts\windows\setup.ps1`. Unpack the cache: `tar -xzf rh-search-cache.tgz -C scripts\stays`.
+3. `scripts\windows\start-browsers.ps1` (opens the four browsers on ports 9222-9225, prints which answer), then `scripts\windows\start-search.ps1` (starts the supervisor; keeps the laptop awake while plugged in). `-Status` shows counts and workers; `-Stop` stops the supervisor first, then the workers, and verifies nothing is left.
+4. Back to the Mac later: `start-search.ps1 -Stop` on Windows, commit and push the lists there, `git pull` on the Mac. `merge_found.sh` (the step that puts links on the site) runs on the Mac, or in Git Bash with `export PYTHON=python`; BigQuery stays off unless asked.
+
+**What Windows will ask you to approve (once each)**
+| When | What you see | Do |
+|---|---|---|
+| `setup.ps1` | UAC "Do you want to allow this app to make changes" for each winget install | Yes |
+| `setup.ps1` | PowerShell execution policy | run with `-ExecutionPolicy Bypass` as shown |
+| first `node` run | Windows Defender Firewall "allow node.js on private networks" (it only talks to localhost) | Allow, private networks only |
+| first start of each browser | welcome / default-browser / sync pages | close them; keep the window open |
+| first search per engine | cookie banner, sometimes a captcha | accept / solve it yourself |
+| `start-search.ps1` | none; it sets "never sleep on AC" with `powercfg` | keep the charger in |
+| Claude Code on that laptop (only if you babysit with it) | a prompt per new command | allow the list below once ("don't ask again") |
+
+Claude Code allow-list for that laptop (paste into `.claude\settings.local.json` of the repo; these only run the search, the checks and read the lists):
+```json
+{ "permissions": { "allow": [
+  "Bash(node scripts/stays/*)", "Bash(python scripts/stays/*)", "Bash(python3 scripts/stays/*)", "Bash(npm test)", "Bash(npm run *)",
+  "Bash(git status*)", "Bash(git diff*)", "Bash(git pull*)", "Bash(git add docs/booking-links*)", "Bash(git commit*)", "Bash(git push*)",
+  "Bash(powershell -ExecutionPolicy Bypass -File scripts\\windows\\*)", "Bash(tar *)", "Read(docs/**)", "Read(scripts/**)" ] } }
+```
+A prompt that waits more than four minutes stalls its lane: keep the pending list in `scripts/stays/.cache/booking-search-*/pending-approvals.md` and approve in bulk when you are back.
+
+**First-run check on Windows** (report any line that differs): `node --version` (20+), `python --version` (3.10+), `node scripts/stays/verify_seen.mjs --limit 1` prints a line, `python scripts/stays/prune_unfound.py --dry` prints a count, `start-browsers.ps1` shows four "ready", `start-search.ps1` then `-Status` shows five workers (chrome, opera, brave, edge, edge2) and the log grows, and `docs\booking-links\found.tsv` has no `\r` (the `.gitattributes` keeps LF).

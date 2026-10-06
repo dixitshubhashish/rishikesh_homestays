@@ -11,8 +11,9 @@
 //   anything else                      -> not this stay
 import { readFileSync } from 'fs';
 import { coreWords, MARKETING } from './ota-match.mjs';
+import { fileURLToPath } from 'url';
 
-const ROOT = new URL('../../', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const SAME_PLACE_KM = 0.25, REVIEW_KM = 1, NEAR_KM = 2, ON_PIN_KM = 0.1;
 
 let PLACES = null;

@@ -334,6 +334,69 @@ def plural_of(slug, title):
     return PLURAL.get(slug) or lc(title)
 
 
+# ---- the order of a stays list (owner, 2026-10-06) --------------------------------------------------------------------
+# Not alphabetical, not by price: our own stays are pinned elsewhere; then, in this order,
+#   A  linked (verified booking page) stays of promising brands (promising-brands.tsv, editable)
+#   B  the other linked stays with an acceptable rating, spread: one of each first letter in turn
+#   D  stays without a link yet, acceptable rating, spread the same way
+#   C  linked stays with a bad rating      \ behind "View all", never in the directly shown part
+#   E  unlinked stays with a bad rating    /
+# "Bad rating" = BAD_RATING or lower out of 10 from at least BAD_MIN_REVIEWS reviews (an unrated stay is not bad).
+# The directly shown part is the linked stays that are not bad (topped up to SHOW_MIN). Mirrored in stays-index.js
+# (BAD_RATING, BAD_MIN_REVIEWS, isBad) and tested by tests/integration/stays-order.test.js.
+BAD_RATING = 7.0
+BAD_MIN_REVIEWS = 5
+_SKIP_WORDS = {'hotel', 'the', 'shri', 'shree', 'sri', 'new', 'a', 'hostel', 'homestay', 'resort'}
+
+
+def is_bad(stay):
+    return bool(stay.get('g')) and stay['g'] < BAD_RATING and (stay.get('c') or 0) >= BAD_MIN_REVIEWS
+
+
+def promising_brands():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'promising-brands.tsv')
+    if not os.path.exists(path):
+        return []
+    return [re.compile(r'(?<![A-Za-z])' + re.escape(l.split('\t')[0]) + r'(?![A-Za-z])', re.I)
+            for l in open(path, encoding='utf8').read().splitlines()[1:] if l.strip()]
+
+
+def is_promising(stay, brands):
+    return any(b.search(stay['n']) for b in brands)
+
+
+def _letter(stay):
+    words = [w for w in re.findall(r'[A-Za-z0-9]+', stay['n']) if w.lower() not in _SKIP_WORDS]
+    return (words[0][0] if words else stay['n'][:1] or '#').lower()
+
+
+def spread(items):
+    """One of each first letter in turn, the letters and the stays within a letter in a fixed pseudo-random order."""
+    buckets = {}
+    for s in sorted(items, key=lambda s: hashlib.sha1(s['u'].encode()).hexdigest()):
+        buckets.setdefault(_letter(s), []).append(s)
+    letters = sorted(buckets, key=lambda L: hashlib.sha1(('letter-' + L).encode()).hexdigest())
+    out, i = [], 0
+    while len(out) < len(items):
+        for L in letters:
+            if i < len(buckets[L]):
+                out.append(buckets[L][i])
+        i += 1
+    return out
+
+
+def order_stays(stays):
+    brands = promising_brands()
+    linked = [s for s in stays if 'o' in s]
+    free = [s for s in stays if 'o' not in s]
+    a = [s for s in linked if not is_bad(s) and is_promising(s, brands)]
+    b = [s for s in linked if not is_bad(s) and not is_promising(s, brands)]
+    c = [s for s in linked if is_bad(s)]
+    d = [s for s in free if not is_bad(s)]
+    e = [s for s in free if is_bad(s)]
+    return (sorted(a, key=stable_key) + spread(b) + spread(d) + spread(c) + spread(e))
+
+
 def stable_key(stay):
     # Neutral fixed order: not ranked by stars, rating or price, and identical
     # on every visit and every crawl of the same data.
@@ -371,6 +434,63 @@ def item_html(d, city=None):
             f'<a class="sx-go" href="/hotels/stay?s={esc(d["id"])}{qs}" aria-label="View {esc(d["n"])}">View property</a></li>')
 
 
+# ---- the /homestays page: our three stays on top (data.js, no special mention), then these picks --------------------
+# Top brands and the Nirmal Bagh homes come from the same ordered list as the stays pages (linked, not badly rated),
+# with clear links to search more stays. Written between <!-- homestays-picks --> markers in homestays.html on every build.
+PICKS_START, PICKS_END = '<!-- homestays-picks -->', '<!-- /homestays-picks -->'
+PICKS_BRANDS, PICKS_AREA_ROWS = 8, 8
+PICKS_AREA = 'Nirmal Bagh near Ganges'  # the area name in AREAS (data.js)
+# the same words as the footer links ("Best Hotels in Rishikesh"), so the texts are translated once
+SEARCH_TITLES = {'hotels': 'Hotels', 'homestays': 'Homestays', 'guest-houses': 'Guest Houses', 'apartments': 'Apartments', 'resorts': 'Resorts',
+                 'hostels': 'Hostels', 'villas': 'Villas', 'ganga-view-stays': 'Ganga View Stays', 'budget-stays': 'Budget Stays',
+                 'luxury-stays': 'Luxury Stays'}
+PICKS_SEARCH = list(SEARCH_TITLES)
+
+
+def write_homestays_picks(stays):
+    path = os.path.join(ROOT, 'homestays.html')
+    page = open(path, encoding='utf8').read()
+    if PICKS_START not in page:
+        return
+    brands = promising_brands()
+    fine = [d for d in stays if 'o' in d and not is_bad(d)]
+    top = [d for d in fine if is_promising(d, brands)][:PICKS_BRANDS]
+    nb = [d for d in fine if d['a'] == PICKS_AREA and d not in top][:PICKS_AREA_ROWS]
+    ul = lambda items: '<ul class="sx-list">' + ''.join(item_html(d) for d in items) + '</ul>'
+    links = ''.join(f'<a class="btn btn-secondary" href="/hotels/best-{s_}-in-rishikesh">Best {SEARCH_TITLES[s_]} in Rishikesh</a>'
+                    for s_ in PICKS_SEARCH if os.path.exists(os.path.join(ROOT, 'hotels', f'best-{s_}-in-rishikesh.html')))
+    haridwar = ''.join(f'<a class="btn btn-secondary" href="/hotels/best-{s_}-in-haridwar">Best {SEARCH_TITLES[s_]} in Haridwar</a>'
+                       for s_ in PICKS_SEARCH[:3] if os.path.exists(os.path.join(ROOT, 'hotels', f'best-{s_}-in-haridwar.html')))
+    block = f"""{PICKS_START}
+      <section class="section" id="top-brands" aria-labelledby="top-brands-h">
+        <div class="container">
+          <p class="eyebrow">More stays</p>
+          <h2 id="top-brands-h">Top brands in Rishikesh</h2>
+          <p>Well-known hotel brands in Rishikesh, each with a verified booking page. Pick one and leave your name and number: we send you on to the booking site and can help with dates.</p>
+          {ul(top)}
+        </div>
+      </section>
+      <div class="container"><div class="rh-ad-slot" data-ad="article"></div></div>
+      <section class="section alt" id="nirmal-bagh-homes" aria-labelledby="nirmal-bagh-h">
+        <div class="container">
+          <h2 id="nirmal-bagh-h">Homes in Nirmal Bagh</h2>
+          <p>Stays in Nirmal Bagh, a quieter residential pocket by the Ganga, away from the Tapovan and Laxman Jhula lanes.</p>
+          {ul(nb)}
+        </div>
+      </section>
+      <section class="section" id="search-more" aria-labelledby="search-more-h">
+        <div class="container">
+          <h2 id="search-more-h">Search more stays in Rishikesh</h2>
+          <p>Every hotel, homestay, guest house and hostel we list, with filters for area, price and distance.</p>
+          <div class="search-more-links">{links}{haridwar}</div>
+        </div>
+      </section>
+      {PICKS_END}"""
+    out = page[:page.index(PICKS_START)] + block + page[page.index(PICKS_END) + len(PICKS_END):]
+    if out != page:
+        open(path, 'w', encoding='utf8').write(out)
+
+
 def load_ota_links():
     """ota-links.tsv: one booking-site page per stay, found by web search and
     checked on name + area. Only 'verified' rows are used; doubtful/none are
@@ -403,8 +523,7 @@ def prepared_stays(city, ota):
     for s in out:
         if s['id'] in ota:
             s['o'] = ota[s['id']]
-    out.sort(key=lambda s: (0 if 'o' in s else 1, stable_key(s)))
-    return out
+    return order_stays(out)
 
 
 # Words kept as written when a phrase is used in running text.
@@ -439,7 +558,7 @@ def own_mix_html(o, private):
             f'<a class="sx-go" href="{esc(o["u"])}">View property</a></li>')
 
 
-# Owner, 2026-10-04: stays with a verified booking link are listed directly;
+# Owner, 2026-10-04: stays with a verified booking link are listed directly (owner, 2026-10-06: unless badly rated);
 # the rest wait behind "View all" (still in the HTML, so crawlers see them).
 # A list with fewer linked stays is topped up to SHOW_MIN so it never looks empty.
 # Must stay in step with SHOW_MIN / shownCount() in stays-index.js.
@@ -447,8 +566,8 @@ SHOW_MIN = 10
 
 
 def split_shown(items):
-    """items sorted linked-first -> (shown directly, behind "View all")."""
-    n = max(sum('o' in d for d in items), min(SHOW_MIN, len(items)))
+    """items in order_stays order -> (shown directly: the linked stays that are not badly rated, behind "View all")."""
+    n = max(sum('o' in d and not is_bad(d) for d in items), min(SHOW_MIN, len(items)))
     return items[:n], items[n:]
 
 
@@ -973,7 +1092,7 @@ def main(data_path, crawled):
         if s['id'] in ota:
             s['o'] = ota[s['id']]
     # Verified booking matches first, then the rest; fixed order within each.
-    stays.sort(key=lambda s: (0 if 'o' in s else 1, stable_key(s)))
+    stays = order_stays(stays)
     everyone = stays + own
 
     # Every page exists in every city (owner, 2026-10-05), so the Rishikesh / Haridwar switch always
@@ -1501,6 +1620,8 @@ def main(data_path, crawled):
 
     print('pages:', ', '.join(f'{c[0]} ({counts[c[0]]})' for c in live))
     print('skipped:', ', '.join(f'{c[0]} ({counts[c[0]]})' for c in CATEGORIES if c not in live) or 'none')
+    if CITY == DEFAULT_CITY:
+        write_homestays_picks(stays)
     # every page's footer lists all category pages of both cities (footer_links.py)
     from footer_links import write_footers
     write_footers()
