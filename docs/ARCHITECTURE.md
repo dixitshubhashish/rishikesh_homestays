@@ -77,7 +77,7 @@ tests/                               see docs/TESTING.md
 | `stay-page.js` | Property page (reads `?s=` and `?c=`): facts, lead popup → one booking redirect, WhatsApp, sidebar (our homestays + grouped "More stays in …"), Leaflet map (not for `gm` stays: "View on Google Maps") |
 | `landmark-map.js` | Lazy Leaflet map on landmark pages |
 | `site-search.js` | `setupSiteSearch` (called by `site.js`): header search button + panel; pure `tokenise`, `similarity`, `wordSimilarity`, `score`, `search`, `highlight` (see Site search below) |
-| `affiliate-links.js` | The only place for affiliate IDs: `CJ_PID` 101895722, `CJ_BOOKING_LINK_ID` 17323528, `affiliateLink(site, url)` wraps a Booking.com page in `https://www.anrdoezrs.net/click-<PID>-<LINK>?url=<page>`. `build_pages.py` reads the constants from this file; the Node scripts import it |
+| `affiliate-links.js` | The only place for affiliate IDs: `CJ_PID` 101895722, `CJ_BOOKING_LINK_ID` 17293139 (approved 2026-10-07; the search widget in `ads.js` keeps 17323528), `affiliateLink(site, url)` wraps a Booking.com page in `https://www.kqzyfj.com/click-<PID>-<LINK>?url=<page>`. `build_pages.py` reads the constants from this file; the Node scripts import it |
 
 `assets/js/index.js` imports `nav`, `search-form`, `stays-renderer` and `enquiry-prefill` and runs them on `DOMContentLoaded`, but no page loads it; pages use the `site.js` shim.
 

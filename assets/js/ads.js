@@ -33,7 +33,7 @@
 //   lead pages   at most one ad, well below the main action: /homestays' in-article anchor between the top-brand
 //                and the Nirmal Bagh lists (below the form on every screen); the rental pages' anchor before their FAQ.
 //   no ads       /hotels/stay and our own listing (no rival hotels under our booking buttons), contact,
-//                list-your-homestay, thanks and 404: that's where guests book and enquire.
+//                list-your-homestay, report-a-bug, thanks and 404: that's where guests book, enquire and report problems.
 // Fixed rails sit in the empty margins beside the 1180px content (≥ 1580px wide and ≥ 900px tall, so they
 // never run under the WhatsApp button), never with a sidebar ad, and hide over the grid/footer, while in-content
 // ads in view would make more than 3 on screen, while the WhatsApp drawer is open (body.whatsapp-drawer-open),
@@ -41,7 +41,7 @@
 const ADSENSE_CLIENT = 'ca-pub-7016219170450293';
 const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027', '/driving-from-delhi-to-rishikesh',
   '/driving-from-delhi-to-haridwar', '/driving-from-gurugram-to-rishikesh', '/driving-from-gurugram-to-haridwar', '/driving-from-noida-to-rishikesh', '/driving-from-noida-to-haridwar', '/driving-from-greater-noida-to-rishikesh', '/driving-from-greater-noida-to-haridwar', '/driving-from-ghaziabad-to-rishikesh', '/driving-from-ghaziabad-to-haridwar', '/driving-from-faridabad-to-rishikesh', '/driving-from-faridabad-to-haridwar', '/driving-from-sonipat-to-rishikesh', '/driving-from-sonipat-to-haridwar', '/driving-from-meerut-to-rishikesh', '/driving-from-meerut-to-haridwar'];
-// lead pages and the one unit each may get; contact, list-your-homestay, thanks and 404 are deliberately absent
+// lead pages and the one unit each may get; contact, list-your-homestay, report-a-bug, thanks and 404 are deliberately absent
 // /hotels/stay and our own listing get none (owner, 2026-10-06: no rival hotels under our booking buttons)
 const LEAD = {
   '/homestays': 'article', // the anchor between the top brands and the Nirmal Bagh homes (generated, build_pages.py)
@@ -60,10 +60,23 @@ function pageType(path) {
 }
 const PATH = window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
 const PLAN = {
-  home: ['slots', 'grid', 'rails'], // grid before rails, so the rails can watch it
-  guide: ['feed', 'slots', 'sidebar', 'grid', 'rails'],
-  stays: ['side', 'slots', 'feed', 'grid', 'rails'],
+  home: ['slots', 'widget', 'grid', 'rails'], // grid before rails, so the rails can watch it
+  guide: ['feed', 'slots', 'sidebar', 'widget', 'grid', 'rails'],
+  stays: ['side', 'slots', 'feed', 'widget', 'grid', 'rails'],
   lead: ['lead'],
+};
+
+// The Booking.com search widget (owner, 2026-10-07: "place it like the ads"). Not an AdSense unit, but it is placed
+// by the same rules and in the same page types: below the first screen, never on lead pages, our own listing,
+// contact, report-a-bug, thanks or 404, never in the owner's opt-out browser (no self-clicks), nothing in automated
+// tests, a labelled box on localhost. Home: the page's own <div data-booking-widget> (below the homestay sections);
+// guides and stays lists: a section just above the footer (before the Multiplex grid). Same CJ link and pixel as
+// CJ_PID / CJ_BOOKING_LINK_ID in assets/js/modules/affiliate-links.js (this file is not a module: keep them in step).
+const BOOKING = {
+  id: 'bookingAffiliateWidget_386d39d7-2d08-41b5-af0f-0fc2c536b862',
+  link: 'http://www.jdoqocy.com/click-101895722-17323528?sid=',
+  pixel: 'https://www.awltovhc.com/image-101895722-17323528',
+  sdk: 'https://www.booking.com/affiliate/prelanding_sdk',
 };
 
 // AdSense units. Translating AdSense's AMP code: data-ad-slot → slot;
@@ -191,6 +204,31 @@ const PLACE = {
     col.append(aside, ad);
     if (!belowFold(ad)) { col.replaceWith(aside); return; } // first-screen rule
     push();
+  },
+  // the Booking.com widget: the home page's own anchor, else a section above the footer (long pages only)
+  widget() {
+    const anchor = document.querySelector('[data-booking-widget]');
+    let host = anchor;
+    if (!host) {
+      const footer = document.querySelector('footer.rhs-footer');
+      if (pageType(PATH) === 'home' || !footer || docTop(footer) < window.innerHeight * 1.5) return;
+      const sec = document.createElement('section');
+      sec.className = 'section booking-widget';
+      sec.innerHTML = '<div class="container"></div>';
+      footer.before(sec);
+      host = sec.firstChild;
+    }
+    if (PREVIEW) { host.innerHTML = '<div class="rh-ad-preview" style="display:block;min-height:200px">Booking.com search widget</div>'; return; }
+    host.innerHTML = `<div id="${BOOKING.id}">&nbsp;</div>`;
+    const px = new Image(1, 1); px.alt = ''; px.src = BOOKING.pixel; host.append(px);
+    const start = () => new window.Booking.AffiliateWidget({
+      iframeSettings: { selector: BOOKING.id, responsive: true },
+      widgetSettings: { destinationurloverride: BOOKING.link },
+    });
+    if (window.Booking) { start(); return; }
+    const s = document.createElement('script');
+    s.async = true; s.src = BOOKING.sdk; s.onload = start;
+    document.head.append(s);
   },
   // after all the content, just above the footer
   grid() {

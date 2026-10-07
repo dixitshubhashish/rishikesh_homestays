@@ -59,7 +59,7 @@ Full map in `docs/ARCHITECTURE.md`. The rules:
 - Vendor libraries in `assets/vendor/` (flatpickr, libphonenumber, leaflet) are self-hosted (no CDN) and loaded as classic `<script src>` **before** the module scripts that use their globals.
 
 **Affiliate links**
-- `assets/js/modules/affiliate-links.js` is the single place for affiliate IDs (CJ publisher `CJ_PID` 101895722, Booking.com APAC link `CJ_BOOKING_LINK_ID` 17323528) and `affiliateLink(site, url)`. Every Booking.com link (site, BigQuery `booking_link`, `stays_sheet`) is a CJ deep link to the same property page. Never append `?aid=` (7854081 was Booking.com APAC's CJ advertiser ID, not ours).
+- `assets/js/modules/affiliate-links.js` is the single place for affiliate IDs (CJ publisher `CJ_PID` 101895722, Booking.com link `CJ_BOOKING_LINK_ID` 17293139, approved by Booking.com in CJ on 2026-10-07, host `kqzyfj.com`) and `affiliateLink(site, url)`. Every Booking.com link (site, BigQuery `booking_link`, `stays_sheet`) is a CJ deep link to the same property page. The homepage Booking.com search widget (`BOOKING` in `assets/js/ads.js`, placed by the same rules as the ads: home, guides and stays lists, none on lead pages) keeps CJ link 17323528 and its own tracking pixel. Never append `?aid=` (7854081 was Booking.com APAC's CJ advertiser ID, not ours).
 - Booking.com's old affiliate widgets (`flexiproduct.js`) are retired (every product redirects to a 400): don't use them.
 
 **Backend** (contracts in `docs/ARCHITECTURE.md`)
