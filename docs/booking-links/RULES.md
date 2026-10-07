@@ -99,14 +99,26 @@ The search can move between the Mac and a Windows laptop (owner, 2026-10-06). **
 
 | Command | What it does |
 |---|---|
-| `npm run search:browsers` | opens the four browsers on ports 9222-9225 (each already listening is left alone) and prints which answer |
+| `npm run search:browsers` | opens the three search browsers on ports 9223 (Opera), 9224 (Brave) and 9225 (Edge) on google.com, **Opera and Brave in a private window, all three with extensions off** (each already listening is left alone), and prints which answer; `--all` also opens Chrome (9222), a spare the supervisor does not use |
 | `npm run search:start` | starts the supervisor detached and hidden, keeps the machine awake (Windows: `powercfg` never sleep on AC; macOS: `caffeinate` for as long as the supervisor lives), then shows the status. It refuses, and says why, when a supervisor already runs, when the search cache (below) is missing, or when a debugging port does not answer (it names the port) |
 | `npm run search:status` | supervisor and worker pids, the ports, found/unfound/review counts, the last supervisor log lines |
-| `npm run search:stop` | stops the supervisor FIRST, then every worker, then checks nothing is left (exit 1 if something is) |
+| `npm run search:stop` | stops the supervisor FIRST, then every worker, then checks nothing is left (exit 1 if something is); `-- --close-browsers` (or `node scripts/search-ctl.mjs stop --close-browsers`) also closes the search browsers |
+| `node scripts/search-ctl.mjs trim` | **the memory rule** (below): closes every browser that is not a search browser; `--all` the search browsers too, `--dry` only counts |
 
 `scripts/windows/setup.ps1` (one-time installs) is Windows-only; `scripts\windows\start-browsers.ps1` and `start-search.ps1 [-Status|-Stop]` are thin wrappers that run the same commands. **First-run checks on Windows done 2026-10-07** (status, port check and stop against the four open browsers); the full start has not yet run on real Windows: do the first-run check at the end of this section and report what differs.
 
-**Browsers needed** (the search drives your own browsers over a debugging port, one worker per browser; Opera must stay in the set):
+**Memory rule and one-click files (owner, 2026-10-07: "I don't need any browser for myself, manage them yourself").** The laptop in use has 16 GB; five browsers with their extensions left about 0.4 GB free, tabs stopped answering, every search engine "rested" and the workers found a handful of links in three hours. So:
+1. **Three workers, three browsers** (Opera, Brave, Edge; the supervisor's `WORKERS` list). Chrome is a spare. A fourth browser costs about 1 GB.
+2. **Private window, no extensions** for the search browsers (`--private` Opera, `--incognito` Brave, `--disable-extensions` all three): extensions are the biggest idle memory. Edge stays a normal window (its InPrivate window hides the tabs the workers open: tested 2026-10-07). A private window forgets cookies on close, so accept each browser's cookie banner once after `search:browsers`.
+3. **Every other browser is closed when memory is tight**: the supervisor runs `node scripts/search-ctl.mjs trim` (at most every 10 minutes) when free memory is under 0.8 GB on Windows (1.5 GB on Linux; macOS: pressure level or swap), and `scripts\windows\search-start.bat` runs it first. It kills browser processes (chrome, brave, opera, msedge, firefox) that are not in the process tree of a search browser (started with `--remote-debugging-port` and the `rh-search` profile), the owner's own windows included. Claude Desktop, VS Code and Edge WebView2 are never matched. A few processes may refuse to close (access denied): they are left.
+4. **No extra load next to the workers**: no parallel hand-check agents or second scripts driving the same browsers while the workers run (2026-10-07: four agents on the same browsers got nothing done).
+5. **Do not try ReadyBoost** (a USB drive as cache): Windows turns it off on an SSD, and a flash drive is slower than the laptop's disk anyway. The cure for short memory is fewer processes (this rule), not a faster pagefile. More RAM (a 32 GB laptop) would be the real fix.
+
+One-click files for Windows in `scripts\windows\`: `search-start.bat` (trim, browsers, start), `search-stop.bat` (stop and close the search browsers), `search-status.bat`, `search-trim.bat [--all|--dry]`. They only run the commands above, from the repo folder, whatever the current directory. The same commands work on macOS by npm or `node scripts/search-ctl.mjs`.
+
+**New Windows machine or reinstall**: `scripts\windows\setup.ps1` (installs Git, Node, Python, the browsers, npm packages, Playwright's Chromium), unpack the search cache (`rh-search-cache.tgz`, "Move it over"), double-click `search-start.bat`. Nothing in the code depends on this machine's user name or drive.
+
+**Browsers needed** (the search drives these browsers over a debugging port, one worker per browser; Opera must stay in the set; Chrome is the optional spare):
 
 | Browser | Port | Installed by `setup.ps1` (winget id) | Usual path |
 |---|---|---|---|

@@ -159,10 +159,16 @@ async function sweepLeftovers() {
 
 say('supervisor up:', counts());
 for (const w of WORKERS) adopt(w);
-let lastStatus = 0, held = 0;
+let lastStatus = 0, held = 0, lastTrim = 0;
 for (;;) {
   const now = Date.now();
   const tight = memoryTight();
+  // memory rule (owner, 2026-10-07: "I don't need any browser for myself"): when memory is tight, every browser that is not a
+  // search browser is closed, at most every 10 minutes (node scripts/search-ctl.mjs trim; RULES.md section 5)
+  if (tight && now - lastTrim > 10 * 60e3) {
+    lastTrim = now;
+    try { say('memory rule:', execSync('node scripts/search-ctl.mjs trim', { cwd: ROOT, encoding: 'utf8', timeout: 120000, windowsHide: true }).trim()); } catch (e) { say('memory rule: trim failed:', String(e.message).split(/\r?\n/)[0]); }
+  }
   if (diskCritical()) {
     for (const w of WORKERS) if (w.pid && alive(w.pid)) { stop(w, 'disk almost full (under 3 GB): paused 5 min'); w.notBefore = now + 5 * 60e3; w.pid = 0; }
     await new Promise((r) => setTimeout(r, 60e3));

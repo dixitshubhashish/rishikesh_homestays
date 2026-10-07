@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Starts, checks and stops the booking-link search, the same way on macOS, Windows and Linux
 // (docs/booking-links/RULES.md section 5). The npm scripts are the one way to run it:
-//   npm run search:browsers   open the four browsers with their debugging ports (Chrome 9222, Opera 9223, Brave 9224, Edge 9225)
+//   npm run search:browsers   open the search browsers with their debugging ports, in incognito/private mode with extensions off
+//                             (Opera 9223 and Brave 9224 private, Edge 9225 normal window with extensions off; Chrome 9222 only with --all: the supervisor runs three workers)
 //   npm run search:start      start the supervisor (it starts and watches one worker per browser) and keep the machine awake
 //   npm run search:status     supervisor and worker pids, ports, found/unfound/review counts, the last supervisor lines
-//   npm run search:stop       stop the supervisor FIRST, then every worker, then verify nothing is left
+//   npm run search:stop       stop the supervisor FIRST, then every worker, then verify nothing is left (--close-browsers also closes the search browsers)
+//   node scripts/search-ctl.mjs trim   memory rule: close every browser that is not a search browser (--all: the search browsers too, --dry: list only)
 // Only ONE machine may run the search at a time, and nobody edits docs/booking-links/*.tsv by hand while it runs.
 import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, openSync, closeSync, readSync, statSync, readFileSync } from 'node:fs';
@@ -46,8 +48,12 @@ function browserSpecs() {
     edge: WIN ? [`${pf86}\\Microsoft\\Edge\\Application\\msedge.exe`, `${pf}\\Microsoft\\Edge\\Application\\msedge.exe`]
       : MAC ? mac('Microsoft Edge', 'Microsoft Edge') : ['microsoft-edge', 'microsoft-edge-stable'],
   };
-  return [['chrome', 9222], ['opera', 9223], ['brave', 9224], ['edge', 9225]]
-    .map(([name, port]) => ({ name, port, exes: exe[name], profile: path.join(profiles, name) }));
+  // Incognito/private windows run without extensions (owner, 2026-10-07: saves their memory); the profile folder only holds the debugging session.
+  // The supervisor runs workers on Opera, Edge and Brave; Chrome is a spare (opened only with --all): a fourth browser costs about 1 GB.
+  // Edge stays a normal window (extensions off): in an InPrivate window the workers never see the tabs they open (tested 2026-10-07).
+  const privateFlag = { chrome: '--incognito', brave: '--incognito', opera: '--private', edge: '' };
+  return [['chrome', 9222, false], ['opera', 9223, true], ['brave', 9224, true], ['edge', 9225, true]]
+    .map(([name, port, needed]) => ({ name, port, needed, exes: exe[name], profile: path.join(profiles, name), privateFlag: privateFlag[name] }));
 }
 
 // An absolute candidate must exist; a bare name (Linux) is looked up on PATH.
@@ -125,8 +131,8 @@ async function status() {
     console.log(`  worker ${p.pid}: ${attach || '?'} shard ${shard || '?'} ${flags}`.trimEnd());
   }
   if (!workers.length) console.log('  no workers');
-  const ports = await Promise.all(browserSpecs().map(async (b) => `${b.name} ${b.port} ${await listening(b.port) ? 'ready' : 'NOT answering'}`));
-  console.log('browsers:', ports.join(', '));
+  const ports = await Promise.all(browserSpecs().map(async (b) => { const up = await listening(b.port); return up || b.needed ? `${b.name} ${b.port} ${up ? 'ready' : 'NOT answering'}` : ''; }));
+  console.log('browsers:', ports.filter(Boolean).join(', '));
   for (const f of ['found', 'unfound', 'review']) console.log(`  ${f.padEnd(8)}${rowCount(`${f}.tsv`)} rows`);
   const log = supervisorLog();
   const lines = tailLines(log, 6);
@@ -136,18 +142,18 @@ async function status() {
 // ---- browsers -------------------------------------------------------------------------------------------------------
 
 async function browsers() {
-  const specs = browserSpecs();
+  const specs = browserSpecs().filter((b) => b.needed || process.argv.includes('--all'));
   for (const b of specs) {
     if (await listening(b.port)) { console.log(`${b.name}: already listening on ${b.port}`); continue; }
     const exe = findExe(b.exes);
     if (!exe) { console.log(`${b.name}: NOT INSTALLED${WIN ? ' (run scripts\\windows\\setup.ps1)' : ''}`); continue; }
     mkdirSync(b.profile, { recursive: true });
     // detached and unref'd: the browser must outlive this command. Node quotes an argument that holds spaces itself.
-    const child = spawn(exe, [`--remote-debugging-port=${b.port}`, `--user-data-dir=${b.profile}`, '--no-first-run', '--no-default-browser-check', 'https://www.google.com/'],
+    const child = spawn(exe, [`--remote-debugging-port=${b.port}`, `--user-data-dir=${b.profile}`, ...(b.privateFlag ? [b.privateFlag] : []), '--disable-extensions', '--no-first-run', '--no-default-browser-check', 'https://www.google.com/'],
       { detached: true, stdio: 'ignore' });
     child.on('error', (e) => console.log(`${b.name}: could not start (${e.message})`));
     child.unref();
-    console.log(`${b.name}: started on port ${b.port} (profile ${b.profile})`);
+    console.log(`${b.name}: started on port ${b.port}${b.privateFlag ? ', private window' : ''}, extensions off (profile ${b.profile})`);
   }
   await sleep(5000);
   let missing = 0;
@@ -156,7 +162,7 @@ async function browsers() {
     if (!ok) missing++;
     console.log(`${b.name.padEnd(7)} port ${b.port}: ${ok ? 'ready' : 'NOT answering'}`);
   }
-  console.log('\nFirst time: in each browser open google.com once and accept cookies; sign in if you like. Then: npm run search:start');
+  console.log('\nEach browser opens google.com: accept its cookie banner once (a private window forgets it when closed). Then: npm run search:start');
   return missing ? 1 : 0;
 }
 
@@ -176,7 +182,7 @@ async function start() {
   const empty = CACHE.slice(0, 2).filter((f) => { try { return JSON.parse(readFileSync(f, 'utf8')).length < 100; } catch { return true; } });
   if (empty.length) { console.error(`not starting: ${empty.map(rel).join(', ')} holds no stays yet (the crawl and process.py must finish: node scripts/py.mjs scripts/stays/crawl.py; process.py, then --city haridwar).`); return 1; }
   const down = [];
-  for (const b of browserSpecs()) if (!await listening(b.port)) down.push(`${b.name} (${b.port})`);
+  for (const b of browserSpecs().filter((x) => x.needed)) if (!await listening(b.port)) down.push(`${b.name} (${b.port})`);
   if (down.length) { console.error(`not starting: no browser answers on ${down.join(', ')}. Run: npm run search:browsers`); return 1; }
 
   mkdirSync(LOGS, { recursive: true });
@@ -201,7 +207,7 @@ function kill(pid, signal) { try { process.kill(pid, signal); } catch { /* gone 
 
 async function stop() {
   const first = searchProcesses();
-  if (!first.length) { console.log('stopped: no supervisor and no worker running'); return 0; }
+  if (!first.length) { console.log('stopped: no supervisor and no worker running'); if (process.argv.includes('--close-browsers')) await trim(['--all']); return 0; }
   // the supervisor first, or it restarts the workers we are stopping. The lists are written to a temp file and renamed
   // (google_ota_search.mjs), so even a hard kill never leaves half a list. On Windows any signal is TerminateProcess.
   for (const p of first.filter((x) => x.kind === 'supervisor')) kill(p.pid, 'SIGTERM');
@@ -218,15 +224,52 @@ async function stop() {
   if (left.length && !WIN) { for (const p of left) kill(p.pid, 'SIGKILL'); await sleep(1000); left = searchProcesses(); }
   if (left.length) { console.error(`STILL RUNNING: ${left.map((p) => `${p.kind} ${p.pid}`).join(', ')}`); return 1; }
   console.log('stopped: no supervisor and no worker left');
+  if (process.argv.includes('--close-browsers')) await trim(['--all']);
+  return 0;
+}
+
+// ---- trim: the memory rule ------------------------------------------------------------------------------------------
+// Owner, 2026-10-07: "I don't need any browser for myself", so when memory is short every browser that is not a search
+// browser is closed (the owner's own windows included); --all closes the search browsers as well (search:stop
+// --close-browsers); --dry only lists. A search browser = a browser started with a debugging port and our rh-search profile,
+// plus everything below it in the process tree. Claude Desktop, VS Code and Edge WebView2 are never matched.
+function allProcesses() {
+  if (WIN) {
+    const out = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+      'Get-CimInstance Win32_Process | Select-Object ProcessId,ParentProcessId,Name,CommandLine | ConvertTo-Json -Compress'],
+    { encoding: 'utf8', windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
+    return [].concat(JSON.parse(out.trim() || '[]')).map((r) => ({ pid: r.ProcessId, ppid: r.ParentProcessId, name: r.Name || '', cmd: r.CommandLine || '' }));
+  }
+  const out = execFileSync('ps', ['-axo', 'pid=,ppid=,command='], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  return out.split(/\r?\n/).map((l) => l.match(/^\s*(\d+)\s+(\d+)\s+(.*)$/)).filter(Boolean)
+    .map((m) => ({ pid: Number(m[1]), ppid: Number(m[2]), name: '', cmd: m[3] }));
+}
+const BROWSER_EXE_WIN = /^(chrome|brave|opera|msedge|firefox)\.exe$/i;
+const BROWSER_PATH = /(Google Chrome|Brave Browser|Opera\.app|\/Opera|Microsoft Edge|firefox|chromium|google-chrome|brave-browser|microsoft-edge)/i;
+const isBrowser = (p) => (WIN ? BROWSER_EXE_WIN.test(p.name) : BROWSER_PATH.test(p.cmd.split(' --')[0]));
+async function trim(args = process.argv.slice(3)) {
+  const all = args.includes('--all'), dry = args.includes('--dry');
+  const procs = allProcesses().filter((p) => p.pid !== process.pid);
+  const children = new Map();
+  for (const p of procs) children.set(p.ppid, [...(children.get(p.ppid) || []), p.pid]);
+  const keep = new Set();
+  const protect = (pid) => { if (keep.has(pid)) return; keep.add(pid); for (const c of children.get(pid) || []) protect(c); };
+  if (!all) for (const p of procs) if (isBrowser(p) && /--remote-debugging-port=/.test(p.cmd) && /rh-search/.test(p.cmd)) protect(p.pid);
+  const victims = procs.filter((p) => !keep.has(p.pid) && isBrowser(p));
+  if (!victims.length) { console.log('trim: no browser to close'); return 0; }
+  let closed = 0, denied = 0;
+  if (!dry) for (const v of victims) { try { process.kill(v.pid, 'SIGKILL'); closed++; } catch (e) { if (e.code !== 'ESRCH') denied++; } }
+  console.log(dry ? `trim (dry): would close ${victims.length} browser processes`
+    : `trim: closed ${closed} browser processes${denied ? `, ${denied} refused (access denied)` : ''}${all ? ' (search browsers too)' : ', search browsers kept'}`);
   return 0;
 }
 
 // ---- main -----------------------------------------------------------------------------------------------------------
 
-const COMMANDS = { browsers, start, status: async () => { await status(); return 0; }, stop };
+const COMMANDS = { browsers, start, status: async () => { await status(); return 0; }, stop, trim };
 const cmd = process.argv[2];
 if (!COMMANDS[cmd]) {
-  console.error('usage: node scripts/search-ctl.mjs browsers | start | status | stop   (npm run search:browsers|start|status|stop)');
+  console.error('usage: node scripts/search-ctl.mjs browsers | start | status | stop | trim   (npm run search:browsers|start|status|stop)');
   process.exit(2);
 }
 try { process.exit(await COMMANDS[cmd]()); } catch (e) { console.error(e.message); process.exit(1); }
