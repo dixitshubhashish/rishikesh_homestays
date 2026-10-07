@@ -18,8 +18,8 @@ const WIN = PLATFORM === 'win32';
 const MAC = PLATFORM === 'darwin';
 const LOGS = path.join(ROOT, 'scripts', 'stays', '.cache', 'booking-search-2026-10-04');
 const LISTS = path.join(ROOT, 'docs', 'booking-links');
-// the five gitignored files the search reads (RULES.md section 5, "Move it over")
-const CACHE = ['stays.json', 'haridwar/stays.json', 'places/places.json', 'places/all-stays.json', 'places/ota-links.tsv']
+// the six gitignored files the search reads (RULES.md section 5, "Move it over"; phones.json feeds push_places.mjs)
+const CACHE = ['stays.json', 'haridwar/stays.json', 'places/places.json', 'places/all-stays.json', 'places/ota-links.tsv', 'places/phones.json']
   .map((f) => path.join(ROOT, 'scripts', 'stays', '.cache', ...f.split('/')));
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -143,7 +143,7 @@ async function browsers() {
     if (!exe) { console.log(`${b.name}: NOT INSTALLED${WIN ? ' (run scripts\\windows\\setup.ps1)' : ''}`); continue; }
     mkdirSync(b.profile, { recursive: true });
     // detached and unref'd: the browser must outlive this command. Node quotes an argument that holds spaces itself.
-    const child = spawn(exe, [`--remote-debugging-port=${b.port}`, `--user-data-dir=${b.profile}`, '--no-first-run', '--no-default-browser-check', 'about:blank'],
+    const child = spawn(exe, [`--remote-debugging-port=${b.port}`, `--user-data-dir=${b.profile}`, '--no-first-run', '--no-default-browser-check', 'https://www.google.com/'],
       { detached: true, stdio: 'ignore' });
     child.on('error', (e) => console.log(`${b.name}: could not start (${e.message})`));
     child.unref();
@@ -172,6 +172,9 @@ async function start() {
       'Another machine may still be running the search: only one may at a time.');
     return 1;
   }
+  // without the directory stays the pins, names and duplicate checks silently run on Google places alone
+  const empty = CACHE.slice(0, 2).filter((f) => { try { return JSON.parse(readFileSync(f, 'utf8')).length < 100; } catch { return true; } });
+  if (empty.length) { console.error(`not starting: ${empty.map(rel).join(', ')} holds no stays yet (the crawl and process.py must finish: node scripts/py.mjs scripts/stays/crawl.py; process.py, then --city haridwar).`); return 1; }
   const down = [];
   for (const b of browserSpecs()) if (!await listening(b.port)) down.push(`${b.name} (${b.port})`);
   if (down.length) { console.error(`not starting: no browser answers on ${down.join(', ')}. Run: npm run search:browsers`); return 1; }

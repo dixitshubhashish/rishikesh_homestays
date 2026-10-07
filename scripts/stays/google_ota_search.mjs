@@ -595,12 +595,16 @@ async function search(combo, query, stay) {
 async function openBackground(b, url) {
   const ctx = await context(b);
   if (!ATTACH[b]) { const p = await ctx.newPage(); await p.goto(url, { waitUntil: 'commit', timeout: 25000 }).catch(() => {}); return p; }
-  const before = new Set(ctx.pages());
-  const cdp = await ctx.browser().newBrowserCDPSession();
-  try { await cdp.send('Target.createTarget', { url, background: true }); } finally { await cdp.detach().catch(() => {}); }
-  for (const end = Date.now() + 15000; Date.now() < end; await sleep(200)) {
-    const p = ctx.pages().find((x) => !before.has(x)); // one worker per browser: the new tab is ours
-    if (p) return p;
+  // a busy or half-frozen browser may need a second or third ask (it used to end the worker with "new tab did not open")
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const before = new Set(ctx.pages());
+    const cdp = await ctx.browser().newBrowserCDPSession();
+    try { await cdp.send('Target.createTarget', { url, background: true }); } catch { /* try again */ } finally { await cdp.detach().catch(() => {}); }
+    for (const end = Date.now() + 15000; Date.now() < end; await sleep(200)) {
+      const p = ctx.pages().find((x) => !before.has(x)); // one worker per browser: the new tab is ours
+      if (p) return p;
+    }
+    log(`   ${b}: new tab did not open (try ${attempt} of 3)`);
   }
   throw new Error('new tab did not open');
 }
@@ -786,15 +790,17 @@ function candidates(res, tried) {
 }
 
 // Every results page shows more than the stay searched for: up to HARVEST_MAX booking-site property links per search go to
-// seen-pages.tsv (owner, 2026-10-06: "add 4-6 properties per search"), without opening anything here. verify_seen.mjs opens
+// seen-pages.tsv (owner, 2026-10-06: "add 4-6 properties per search"; 2026-10-07: "5-10 more", Booking.com first), without opening anything here. verify_seen.mjs opens
 // them in parallel within seconds, map_seen_pages.py maps each page whose pin is in Rishikesh or Haridwar to the stay it is
 // (or lists it as a new property), so a search that finds nothing still enlarges the lists.
-const SEEN = `${ROOT}docs/booking-links/seen-pages.tsv`, HARVEST_MAX = 6;
+const SEEN = `${ROOT}docs/booking-links/seen-pages.tsv`, HARVEST_MAX = 10;
 function harvest(all, stay) {
   if (DRY) return;
   try {
     if (!existsSync(SEEN)) writeFileSync(SEEN, 'url\tplatform\tlabel\tseen_for\n');
-    const rows = all.filter((c) => c.url && !c.pick).slice(0, HARVEST_MAX)
+    const seen = new Set();
+    const rows = all.filter((c) => c.url && !c.pick && !seen.has(c.url) && seen.add(c.url))
+      .sort((a, b) => (b.p.name === 'Booking.com') - (a.p.name === 'Booking.com')).slice(0, HARVEST_MAX)
       .map((c) => [c.url, c.p.name, (c.label || '').replace(/[\t\n\r]+/g, ' ').slice(0, 160), stay.key].join('\t'));
     if (rows.length) appendFileSync(SEEN, rows.join('\n') + '\n');
   } catch { /* never stops a search */ }

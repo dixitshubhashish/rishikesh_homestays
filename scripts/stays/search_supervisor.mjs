@@ -53,7 +53,7 @@ const diskFreeGb = () => { try { const f = statfsSync(ROOT); return (f.bavail * 
 function workerProcesses() {
   try {
     if (WIN) {
-      const out = execSync('powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name=\'node.exe\'\\" | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"', { encoding: 'utf8' });
+      const out = execSync('powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name=\'node.exe\'\\" | Select-Object ProcessId,CommandLine | ConvertTo-Json -Compress"', { encoding: 'utf8', windowsHide: true });
       const rows = [].concat(JSON.parse(out || '[]'));
       return rows.filter((r) => /google_ota_search/.test(r.CommandLine || '')).map((r) => ({ pid: r.ProcessId, cmd: r.CommandLine.replace(/^.*?(scripts[\\/]stays[\\/]google_ota_search)/, 'node $1').replace(/\\/g, '/') }));
     }
@@ -208,9 +208,11 @@ for (;;) {
     // and the stays that are already listed leave unfound.tsv (docs/booking-links/RULES.md)
     // Python is looked up inside tail's try (cmd may be a function), so a missing Python fails only these two steps, not the supervisor
     const py = (script) => () => `${pythonCommand().map((x) => (/\s/.test(x) ? `"${x}"` : x)).join(' ')} ${script}`;
-    const tail = (cmd, n, ms) => { try { return execSync(`${typeof cmd === 'function' ? cmd() : cmd} 2>&1`, { cwd: ROOT, timeout: ms, encoding: 'utf8', env: pythonEnv }).trim().split(/\r?\n/).slice(-n).join(' | '); } catch (e) { return `failed: ${String(e.message).split('\n')[0]}`; } };
-    say('seen pages:', tail('node scripts/stays/verify_seen.mjs --limit 400', 1, 360000), '|', tail(py('scripts/stays/map_seen_pages.py'), 2, 120000));
+    const tail = (cmd, n, ms) => { try { return execSync(`${typeof cmd === 'function' ? cmd() : cmd} 2>&1`, { cwd: ROOT, timeout: ms, encoding: 'utf8', env: pythonEnv, windowsHide: true }).trim().split(/\r?\n/).slice(-n).join(' | '); } catch (e) { return `failed: ${String(e.message).split('\n')[0]}`; } };
+    say('seen pages:', tail('node scripts/stays/verify_seen.mjs --limit 400 --refresh-days 10', 1, 360000), '|', tail(py('scripts/stays/map_seen_pages.py'), 2, 120000));
     say('prune_unfound:', tail(py('scripts/stays/prune_unfound.py'), 3, 120000));
+    // what merge_found.sh would auto-list from new-properties.tsv: a dry run, it writes nothing (the merge is serialised and owner-run)
+    say('new stays:', tail(py('scripts/stays/import_new_stays.py --dry'), 2, 120000));
     say('status:', counts(), '|', WORKERS.map((w) => `${w.name} ${w.finished ? 'finished' : w.pid && alive(w.pid) ? `${w.plan[w.step].join(' ')}` : 'waiting'}`).join(', '), tight ? `| memory: ${tight}` : '');
   }
   await new Promise((r) => setTimeout(r, 60e3));
