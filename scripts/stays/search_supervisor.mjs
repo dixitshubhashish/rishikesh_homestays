@@ -32,16 +32,17 @@ const ROUNDS = 4;
 // owner, 2026-10-05: the never-searched list (all.tsv) first, split three ways, then the re-checks
 const WORKERS = [
   // Opera is the steadiest browser (1,028 stays, no blocked spells): two sessions share it, each closing only its own tabs
-  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/3', '--no-tidy'], ['quick', '1/1', '--reverse', '--no-tidy'], ['deep', '5/5', '--no-tidy']] },
-  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['quick', '2/3'], ['deep', '1/5']] },
+  // 2026-10-07, Windows laptop (15.8 GB, 0.4 GB free with five workers): every engine rested or blocked and tabs did not answer, so three
+  // workers (Opera, Edge, Brave; Chrome is attached but idle) share the deep re-check in thirds. The 159 review rows come first on Opera:
+  // they re-open pages already stored, so no search engine is asked.
+  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/1', '--review', '--no-tidy'], ['deep', '1/3', '--no-tidy']] },
   // Brave is open anyway and was idle (owner, 2026-10-05: up to 10 agents); disk is guarded by the pause below
-  { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['deep', '2/5']] },
+  { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['deep', '3/3']] },
   // a fourth worker (Brave) pushed the disk under 3 GB twice (2026-10-05): three workers is this Mac's limit
 
   // Edge is the least blocked browser (owner, 2026-10-06, from the logs: Bing never challenged it, 2 stalls in 707 stays,
   // against Opera's 27 in 1,191): it takes Opera's second session. Two sessions share it, so each closes only its own tabs.
-  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['quick', '3/3', '--no-tidy'], ['deep', '3/5', '--no-tidy']] },
-  { name: 'edge2', heavy: true, how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '4/5', '--no-tidy']] },
+  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '2/3', '--no-tidy']] },
 ].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, crashes: [], finished: false, logOffset: 0 }));
 
 
