@@ -4,6 +4,38 @@ Read `CLAUDE.md` first (rules, where things live), then this file. Then, as need
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
 
+## Session 2026-10-07 (Windows laptop): handoff to the Mac
+
+**State at the end:** the booking-link search is **stopped** on the Windows laptop (supervisor, workers and the search browsers closed; no lock file). Everything is pushed to `main` (last commit `1446aba`). The Mac may start the search now (one machine at a time).
+
+**What landed on main** (`daa82ca`, `ae335b3`, `f3ffc34`, `1993dbd`, `1446aba`):
+- **Same code on Windows and macOS** (`fc03ada`, earlier): `scripts/search-ctl.mjs`, `scripts/py.mjs`, rule in CLAUDE.md.
+- **Affiliate**: Booking.com approved us in CJ. Every Booking.com link now uses CJ link **17293139** on `kqzyfj.com` (`affiliate-links.js`, 1,377 links in the two stays data modules). The Booking.com **search widget** (link 17323528, its own pixel) is placed by `assets/js/ads.js` like the ads: home (below the homestay sections), guides and stays lists (above the footer), none on lead pages or our own listing, none in your opt-out browser.
+- **Report a bug** page (`/report-a-bug`, footer link on every page) and an open-source proof-of-work **captcha on every form** (`api/captcha*.js`, `assets/js/modules/captcha.js`). **The captcha is OFF until `CAPTCHA_SECRET` is set in Vercel**; forms behave as before until then.
+- **Coverage / auto-list** scripts for new properties (`import_new_stays.py`, `coverage_report.py`, `booking_stays.py`, tests). The supervisor only runs `import_new_stays.py --dry`; nothing is auto-listed on the site yet.
+- **22 languages** for the new strings (machine-made, like the rest).
+- **Search**: up to 10 other booking pages saved per search (Booking.com first); child windows hidden on Windows; tab retries; **memory rule** (RULES.md section 5): three workers (Opera, Brave, Edge), search browsers in private windows with extensions off (Edge stays a normal window), `node scripts/search-ctl.mjs trim` closes non-search browsers when memory is tight, idle tabs are swept, Windows one-click files `scripts\windows\search-*.bat`.
+
+**Start the search on the Mac**
+1. `git pull` (the Mac must have no unpushed list changes), `npm install` (new dependency `altcha-lib`).
+2. Keep the Mac's own search cache (`scripts/stays/.cache/`). Do **not** copy the Windows one: it was rebuilt from BigQuery by `scripts/stays/rebuild_places_cache.mjs` and the fresh crawl differs (Haridwar 798 stays here against about 806).
+3. `npm run search:browsers` (Opera and Brave private, Edge normal, extensions off), accept each browser's cookie banner once, then `npm run search:start`; `npm run search:status` to watch. The supervisor runs three workers: Opera first re-checks the 158 `review` rows (no search engine needed), then the deep re-check of the `retry` rows is split in thirds. With plenty of RAM on the Mac, more workers can be added back to `WORKERS` in `search_supervisor.mjs` (change the shard denominators together).
+4. **Untested on macOS**: the private-window flags, `search-ctl.mjs trim` (process list via `ps`) and the idle-tab sweep were only run on Windows. Run `node scripts/search-ctl.mjs trim --dry` first and read what it lists before relying on it.
+
+**Open, for the owner**
+- Vercel: set `CAPTCHA_SECRET`. Then check live: `/report-a-bug`, the footer link, the homepage Booking.com widget (in headless Chromium the iframe measured 0 px tall: look in a real browser), a stay's Booking.com link redirecting through `kqzyfj.com`, and the first clicks in CJ.
+- Which CJ link the stays should use: 17293139 (now) or the older 17323528 (the widget keeps it).
+- The search found only about 16 new links in three hours on this laptop: the engines rested or blocked the browsers while memory was short (0.4 GB free). After the memory rule it ran, but not long enough to judge. Counts at the stop: found 2,096, unfound 2,349 (retry 1,643, none 515, review 158, manual 33), `review.tsv` 159.
+- `merge_found.sh` was **not** run: only a handful of new links since `469055a`. Run `--dry` first when you merge.
+- `docs/booking-links/new-properties.tsv` (20 pages that match no stay we have): four rows carry a wrong town label (Haridwar pins labelled rishikesh). Check them before any is listed.
+- **Held back from main on purpose**, saved on the branch `windows-wip-2026-10-07` (never merge it): `scripts/stays/listing-ids.tsv` (the Windows crawl flipped about 1,145 stays to inactive) and the generated lists `found-by-property.tsv`, `found-duplicates.tsv`, `found-links.tsv`, `seen-pages-checked.tsv` (written by a dry run against the rebuilt cache). On the Mac regenerate the lists with `node scripts/py.mjs scripts/stays/organise_found.py` and check `git diff scripts/stays/listing-ids.tsv` stays empty after `process.py`.
+- Hand checks done by four agents in browsers were thin (the laptop was overloaded): three generic-name rows were put back to `manual`; do not repeat agents next to the workers.
+
+**Lessons from this laptop**
+- Agents that run `find / -name …` through Git Bash hang for hours and use a full CPU each (18 of them held the CPU at 100% until a restart). Tell agents to search only inside the repo or the scratchpad.
+- Do not uninstall Git for Windows (`.git` stays, but nothing runs: git, Git Bash, the `.sh` files). Reinstalling needs no stuck processes in `C:\Program Files\Git`.
+- ReadyBoost (a USB cache) does nothing on an SSD laptop; free memory is the fix.
+
 ## Session 2026-10-06: what landed and what's open
 
 Pushed first (`22b86b8`): the dark/light theme merge and libphonenumber on `list-your-homestay`. Then, in the next commit:

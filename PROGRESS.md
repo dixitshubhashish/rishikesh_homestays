@@ -1,4 +1,5 @@
 # Progress Tracker
+- **2026-10-07 Windows laptop session, handed to the Mac**: search stopped; Booking.com approved in CJ (link 17293139, widget placed like the ads); report-a-bug page and captcha (off until CAPTCHA_SECRET), 22 languages, memory rule and private-window launch for the search, Windows .bat files. Details and the Mac start steps: docs/HANDOFF.md "Session 2026-10-07".
 - **2026-10-07 Booking.com approved in CJ**: every Booking.com link now uses CJ link 17293139 on kqzyfj.com (constants in `affiliate-links.js`, 1,377 links in the stays data modules); the Booking.com search widget is placed by `ads.js` (home, guides, stays lists).
 
 ## Deployed 404 Choti And Two-Line Offer (Codex, 2026-10-03)
