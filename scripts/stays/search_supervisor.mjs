@@ -144,9 +144,13 @@ async function sweepLeftovers() {
     try { pages = (await (await fetch(`${base}/json/list`, { signal: AbortSignal.timeout(8000) })).json()).filter((t) => t.type === 'page'); } catch { continue; }
     let open = pages.length;
     for (const t of pages) {
+      // a booking page, or a tab doing nothing (blank, a browser start page, google.com's home page) that sat unchanged for two sweeps
+      // (owner, 2026-10-07: "close tabs that are not in use"): a worker's own tab is always on a results page or on its way to one
       let host = '';
-      try { host = new URL(t.url).hostname; } catch { continue; }
-      if (!BOOKING_HOST.test(host)) continue;
+      try { host = new URL(t.url).hostname; } catch { /* about:blank and the like */ }
+      const idleTab = /^(?:about:blank|(?:chrome|edge|opera|brave):\/\/(?:newtab|new-tab-page|startpage|welcome|easy-setup)\/?)$/.test(t.url)
+        || (/^www\.google\.[a-z.]+$/.test(host) && new URL(t.url).pathname === '/' && !new URL(t.url).search);
+      if (!BOOKING_HOST.test(host) && !idleTab) continue;
       if (seenBooking.get(t.id) === t.url && open > 1) { // never the browser's last tab
         await fetch(`${base}/json/close/${t.id}`, { signal: AbortSignal.timeout(8000) }).catch(() => {});
         closed++; open--;
@@ -154,7 +158,7 @@ async function sweepLeftovers() {
     }
   }
   seenBooking = next;
-  if (closed) say(`closed ${closed} leftover booking page(s)`);
+  if (closed) say(`closed ${closed} leftover booking or idle page(s)`);
 }
 
 say('supervisor up:', counts());

@@ -20,6 +20,7 @@ import { setupCountryPhoneField } from './country-select.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
 import { postEnquiry, SOURCES, stayRedirectSource } from './enquiry.js';
+import { CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE } from './captcha.js';
 
 const WHATSAPP_PHONE = '918050091290';
 // Same icon as the site's other "WhatsApp" buttons (index.html etc.).
@@ -328,7 +329,11 @@ function setupGate(root, d) {
             (ota ? `Sent on to ${ota.n}: ${ota.u}` : 'No verified booking page: please follow up with availability and price.') +
             `\nStay page: ${location.origin}/hotels/stay?s=${d.id}${CQ}`,
           source: ota ? stayRedirectSource(ota.n) : SOURCES.stayEnquiry
-      });
+      }, { button: submitBtn });
+      if (result.code === CAPTCHA_FAILED_CODE) {
+        err('phone', phoneIn, CAPTCHA_FAILED_MESSAGE);
+        return;
+      }
       if (!result.ok) throw new Error(result.message || 'Request failed');
       // Same-tab redirect (a window.open after an await is often blocked):
       // the stay's verified booking page, else our thank-you page.

@@ -28,6 +28,7 @@ Full details for AI assistants (every stays page with prices, areas, best-review
 - [Driving from Delhi to Rishikesh & Haridwar](https://rishikeshhomestays.com/driving-from-delhi-to-rishikesh): road-trip guide comparing the Delhi–Dehradun Expressway (Akshardham to Dehradun, then via Doiwala and Jolly Grant to Rishikesh) with the old Meerut–Muzaffarnagar–Roorkee–Haridwar highway: typical drive times, tolls and FASTag, the upcoming Haridwar spur, food stops, best times to leave, Kanwar Yatra and Kumbh 2027 traffic, parking in Rishikesh's narrow lanes, and an easy-parking base at our Advaitam homestay in Nirmal Bagh.
 - [Driving from other Delhi NCR cities](https://rishikeshhomestays.com/driving-from-gurugram-to-rishikesh): one road-trip guide per starting city (Delhi, Gurugram, Noida, Greater Noida, Ghaziabad, Faridabad, Sonipat, Meerut) and destination (Rishikesh, Haridwar): distance, route, when to leave and where to stay. Pages: /driving-from-<city>-to-rishikesh and /driving-from-<city>-to-haridwar.
 - [List Your Homestay](https://rishikeshhomestays.com/list-your-homestay): for property owners in Rishikesh who want to list their homestay/guest house with us — application form, no listing fee.
+- [Report a bug](https://rishikeshhomestays.com/report-a-bug): form for visitors to report a problem on this website (page, steps to reproduce, what was expected and what happened, device); the report goes to the site team by email.
 
 ## Haridwar Kumbh Mela 2027: where to stay
 

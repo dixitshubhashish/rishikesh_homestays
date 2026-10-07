@@ -18,6 +18,7 @@ the owner's own booking-site page on Google).
 import json, os, re, sys, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cities import cache_dir, CITIES
+import booking_stays
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 places = json.load(open(os.path.join(HERE, '.cache', 'places', 'new-with-link.json'), encoding='utf8'))
@@ -38,6 +39,10 @@ for city in CITIES:
     f = os.path.join(cache_dir(city), 'stays.json')
     if os.path.exists(f):
         taken |= {s['id'] for s in json.load(open(f, encoding='utf8')) if not s.get('gm')}
+# a Google place never reuses the slug of a booking-found stay (import_new_stays.py's registry), so one listing_id never maps
+# to two stays. (Not every slug of listing-ids.tsv: the Google stays' own slugs are in it, and taking them would rename
+# every Google stay on the next run.)
+taken |= {r['slug'] for r in booking_stays.load_registry()}
 ota_rows, per_city = [], {}
 for p in sorted(places, key=lambda p: p['place_id']):
     slug = slugify(p['name'])

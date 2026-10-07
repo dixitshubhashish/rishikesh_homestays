@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { Resend } from 'resend';
 import { isOtpConfigured, generateOtp } from './otp-helpers.js';
+import { verifyCaptcha, CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE } from './captcha.js';
 
 // Built on the first request, not at import: the SDK throws without a key, and server.js imports this file.
 let resend;
@@ -9,6 +10,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
+
+  // This endpoint emails an arbitrary address, so it is an abuse vector: it needs
+  // the same bot check as the enquiry (a no-op while CAPTCHA_SECRET is empty).
+  if (!(await verifyCaptcha(req.body?.captcha))) {
+    return res.status(400).json({ success: false, code: CAPTCHA_FAILED_CODE, message: CAPTCHA_FAILED_MESSAGE });
   }
 
   if (!isOtpConfigured()) {

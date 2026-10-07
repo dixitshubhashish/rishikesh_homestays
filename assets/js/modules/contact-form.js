@@ -176,7 +176,7 @@ export function setupContactForm() {
     }
 
     try {
-      const result = await postEnquiry(data);
+      const result = await postEnquiry(data, { button: btn });
 
       if (result.success) {
         form.reset();

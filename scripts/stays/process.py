@@ -30,6 +30,11 @@ rows=[r for r in rows if not r.get('error')]
 # (import_google_stays.py): same row shape, marked with gm (their Maps link)
 if os.path.exists(f'{S}/google-extra.jsonl'):
     rows+=[json.loads(l) for l in open(f'{S}/google-extra.jsonl',encoding='utf8') if l.strip()]
+# Booking-found stays (import_new_stays.py): the committed registry scripts/stays/booking-stays.tsv, read directly so a
+# rebuild on a machine without .cache/google-extra.jsonl keeps them. Ordinary stays: no gm, the booking page's own pin.
+# They come after the crawl and Google rows, so the 150 m same-name drop below lets those win a clash.
+from booking_stays import registry_rows
+rows+=registry_rows(CITY)
 
 SMALL={'in','on','by','the','and','of','at','with','near','to','for','from'}
 UPPER={'bhk':'BHK','ac':'AC','ii':'II','iii':'III','iv':'IV','yha':'YHA','gmvn':'GMVN','oyo':'OYO','bnb':'BnB','wifi':'WiFi','tv':'TV','dlx':'Dlx','aiims':'AIIMS','spa':'Spa','nh':'NH','vip':'VIP','b&b':'B&B','bbq':'BBQ'}
@@ -198,6 +203,7 @@ def bedrooms(r):
     v=found.pop()
     return 9 if v>8 else v
 data=[{'id':r['url'].split('//')[1].split('.')[0],'ad':r.get('address') or '','ll':[r['lat'],r['lng']] if r.get('lat') else None,'t':tags(r),'n':r['clean'],'u':r['url'],'s':int(r['stars'] or 0),'a':r['area'],'k':r['kind'],'ks':r['ks'],'g':r.get('guestRating'),'c':r.get('reviews'),'f':r.get('facilities') or [],'p':(int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None)} for r in out]
+assert len({x['id'] for x in data})==len(data), 'two stays share one id (a Google/registry slug clash would map them to one listing_id)'
 for x,r in zip(data,out):
     if r.get('gm'): x['gm']=r['gm']
     b=bedrooms(r)

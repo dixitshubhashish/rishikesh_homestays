@@ -41,6 +41,7 @@ export const UI_FILES = [
   "assets/js/modules/currency.js", "assets/js/modules/button-loading.js",
   "assets/js/modules/landmark-map.js", "assets/js/modules/country-select.js",
   "assets/js/modules/lang-picker.js", "assets/js/modules/site-search.js",
+  "assets/js/modules/captcha.js",
 ];
 
 export const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
@@ -58,7 +59,7 @@ const EXCLUDE = [
   /^(Rishikesh|Haridwar|India|INR|USD|EUR|GBP|AUD|CAD|JPY)$/, /^Ad area/,
   // message and email lines that go to the owner, console and library text
   /^- /, /^---/, /^\((max-width|min-width|prefers-)/, /^[A-Z]\$$/, /^[dYmMDjF][ -/][dYmMDjF]/,
-  /^IntersectionObserver$/, /: failed to /, /failed to load$/, /^Request failed$/, /^Clicked through/,
+  /^IntersectionObserver$/, /^SHA-\d+$/, /: failed to /, /failed to load$/, /^Request failed$/, /^Clicked through/,
   /^Interested in /, /^My name is /, /^No verified booking page/, /^Sent on to /, /^Ref:/,
   /^WhatsApp widget booking request/, /^We're \{guests\} in total/, /^Could you help with availability/,
   /^(People|Pickup point|City):/, /^search index\b/, /^[^\p{Script=Latin}]*\p{Script=Devanagari}/u,

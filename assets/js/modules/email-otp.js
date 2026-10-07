@@ -3,6 +3,7 @@
 // backend isn't configured (no OTP_SECRET set), this silently does nothing
 // and the email field behaves exactly as it did before.
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
+import { withCaptcha, CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE } from './captcha.js';
 let otpConfigured = null;
 
 async function checkConfigured() {
@@ -83,15 +84,18 @@ export async function setupEmailVerification(emailInput) {
     statusEl.textContent = '';
 
     try {
-      const response = await fetch('/api/otp-send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      const result = await response.json();
+      // /api/otp-send emails an address of the caller's choosing, so it needs the captcha like every form.
+      const result = await withCaptcha(async (captcha) => {
+        const response = await fetch('/api/otp-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(captcha ? { email, captcha } : { email })
+        });
+        return response.json();
+      }, { button: verifyBtn });
 
       if (!result.success) {
-        statusEl.textContent = result.message || 'Could not send the code.';
+        statusEl.textContent = result.code === CAPTCHA_FAILED_CODE ? CAPTCHA_FAILED_MESSAGE : (result.message || 'Could not send the code.');
       } else {
         pendingToken = result.token;
         codeRow.hidden = false;

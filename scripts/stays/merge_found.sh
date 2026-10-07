@@ -10,7 +10,10 @@
 # Steps (docs/booking-links/RULES.md §4): stays that already have a verified link keep it;
 # directory stays -> postcheck_matches.py -> merge_ota.py; Google Maps places (g- keys) ->
 # postcheck against .cache/places/ota-links.tsv -> push_places.mjs -> import_google_stays.py;
-# then process.py, npm run build:stays, npm run check:stays. BigQuery and the commit are left
+# pages the search found for properties we do not list (docs/booking-links/new-properties.tsv) are AUTO-LISTED first by
+# import_new_stays.py (owner, 2026-10-07: no listing missed): it appends to the committed registry
+# scripts/stays/booking-stays.tsv and writes their verified ota-links.tsv rows (commit both together);
+# then process.py (reads the registry), npm run build:stays, npm run check:stays. BigQuery and the commit are left
 # to the caller: node scripts/stays/push_bigquery.mjs, then commit and push.
 # Runs on macOS, Linux and Windows (Git Bash: bash scripts/stays/merge_found.sh). The Python interpreter is
 # chosen by scripts/py.mjs from the OS (no override).
@@ -39,12 +42,15 @@ echo "new links: $(wc -l < "$W/new.tsv") (directory $(wc -l < "$W/new-dir.tsv"),
 
 $PY $S/postcheck_matches.py "$W/dir-ok.tsv" "$W/new-dir.tsv"
 STAYS_FILE=$S/.cache/places/all-stays.json $PY $S/postcheck_matches.py "$W/places-ok.tsv" "$W/new-places.tsv"
+$PY $S/import_new_stays.py --dry
 [ "$DRY" = 1 ] && { echo "dry run: nothing written ($W)"; exit 0; }
 
 $PY $S/merge_ota.py "$W/dir-ok.tsv"
 tr -d '\r' < "$W/places-ok.tsv" >> $S/.cache/places/ota-links.tsv
 # --dry-run still writes the local files import_google_stays.py reads (new-with-link.json) and stops before BigQuery
 if [ "$BQ" = 1 ]; then node $S/push_places.mjs; else node $S/push_places.mjs --dry-run; fi
+# new stays from booking pages (registry + ota-links.tsv); before the Google import so its slugs never clash with theirs
+$PY $S/import_new_stays.py
 $PY $S/import_google_stays.py
 $PY $S/process.py && $PY $S/process.py --city haridwar
 npm run --silent build:stays

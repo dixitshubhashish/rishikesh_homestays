@@ -6,8 +6,11 @@ A checked page counts when its pin is in Rishikesh or Haridwar (state `ok`). It 
 within 200 m of the page's pin in the same city and reads as the same place: the same words and numbers in the name
 (organise_found.same_name; a different size, 1BHK / 2BHK, is another place), or the only stay without a link within 200 m.
 A mapped page is recorded in found.tsv (verified, under that stay's key, the note says how). A page with no stay for it is a
-new property: it goes to docs/booking-links/new-properties.tsv (name, town, pin, page) for the owner to add to the lists.
-Written under the lists lock, safe while the workers run.
+new property: it goes to docs/booking-links/new-properties.tsv (name, town, pin, page), and import_new_stays.py (run by
+merge_found.sh, owner 2026-10-07) lists it automatically as a new stay when it passes its checks. Only DISTANCE decides here:
+200 m cannot cross from one city to the other, and the town stored with a page was once the FIRST centre within 25 km, not the
+nearer one, so the city is worked out again from the pin (booking_stays.city_of). The pages the registry of auto-listed stays
+already uses are never new properties again. Written under the lists lock, safe while the workers run.
 
   python3 scripts/stays/map_seen_pages.py [--dry]
 """
@@ -17,6 +20,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import booking_stays as bs  # noqa: E402
 import organise_found as of  # noqa: E402
 import prune_unfound as pu  # noqa: E402
 
@@ -25,15 +29,37 @@ DRY = '--dry' in sys.argv
 NEW_COLS = ['url', 'platform', 'name', 'town', 'lat', 'lng', 'seen_for', 'checked']
 
 
+def checked_pages():
+    """The pages verify_seen.mjs read, the latest row per page (a re-read appends), whose pin is in Rishikesh or Haridwar:
+    state `ok`, or `elsewhere` under the old centres but within 25 km of a cities.py centre. `town` is the nearer centre."""
+    latest = {}
+    for r in of.tsv(os.path.join(BL, 'seen-pages-checked.tsv')):
+        if r.get('url'):
+            latest[bs.canon_url(r['url'])] = r
+    out = []
+    for r in latest.values():
+        if r.get('state') not in ('ok', 'elsewhere'):
+            continue
+        try:
+            town = bs.city_of(float(r['lat']), float(r['lng']))
+        except (TypeError, ValueError):
+            continue
+        if town:
+            out.append(dict(r, town=town))
+    return out
+
+
 def main():
-    checked = [r for r in of.tsv(os.path.join(BL, 'seen-pages-checked.tsv')) if r['state'] == 'ok' and r['town'] in ('rishikesh', 'haridwar')]
+    checked = checked_pages()
     if not checked:
         print('map_seen_pages: nothing checked yet')
         return
     of.main()
     linked = of.tsv(os.path.join(BL, 'found-by-property.tsv'))
     linked_keys = {k for r in linked for k in [r['key']] + [a for a in r['alias_keys'].split(';') if a]}
-    linked_urls = {pu.norm_url(l['url']) for l in of.tsv(os.path.join(BL, 'found-links.tsv'))}
+    linked_urls = {bs.canon_url(l['url']) for l in of.tsv(os.path.join(BL, 'found-links.tsv'))}
+    registry = bs.load_registry()   # auto-listed stays (booking-stays.tsv): their pages, primary and extra, are taken
+    linked_urls |= set(bs.registry_urls(registry))
 
     index, processed = of.stays_index(), of.processed_stays()
     pl_path = os.path.join(HERE, '.cache', 'places', 'all-stays.json')
@@ -55,6 +81,14 @@ def main():
             if s_.get('ll') and s_['ll'][0] not in ('', None):
                 everyone[k] = dict(key=k, name=s_.get('n', ''), city=s_.get('cy') or ('haridwar' if 'haridwar' in (s_.get('ad', '') or '').lower() else 'rishikesh'),
                                    ll=(s_['ll'][0], s_['ll'][1]), tok=of.tokens(s_.get('n', '')), unit=of.unit(s_.get('n', '')))
+    for k, s_ in bs.own_stays().items():   # our own stays, and the auto-listed ones (until the next build puts them in the index)
+        if k not in everyone and s_.get('ll'):
+            everyone[k] = dict(key=k, name=s_.get('n', ''), city=bs.city_of(*s_['ll']) or 'rishikesh', ll=(s_['ll'][0], s_['ll'][1]),
+                               tok=of.tokens(s_.get('n', '')), unit=of.unit(s_.get('n', '')))
+    for g in registry:
+        if g['slug'] not in everyone:
+            everyone[g['slug']] = dict(key=g['slug'], name=g['name'], city=g['city'], ll=(float(g['lat']), float(g['lng'])),
+                                       tok=of.tokens(g['name']), unit=of.unit(g['name']))
     for r in linked:  # a merged duplicate's other keys are the same property as its survivor
         for a in [x for x in r['alias_keys'].split(';') if x]:
             if a in everyone and r['key'] in everyone:
@@ -65,11 +99,11 @@ def main():
     metres = lambda a, b: (((a[0] - b[0]) * 111320) ** 2 + ((a[1] - b[1]) * 111320 * 0.87) ** 2) ** 0.5
     found_rows, new_rows, extra_rows, used = [], [], [], set()
     for r in checked:
-        if pu.norm_url(r['url']) in linked_urls:
+        if bs.canon_url(r['url']) in linked_urls:
             continue
         pin = (float(r['lat']), float(r['lng']))
         tok, unit = of.tokens(r['name']), of.unit(r['name'])
-        near = [(metres(pin, s['ll']), s) for s in stays.values() if s['city'] == r['town'] and s['key'] not in used and abs(s['ll'][0] - pin[0]) < 0.0025]
+        near = [(metres(pin, s['ll']), s) for s in stays.values() if s['key'] not in used and abs(s['ll'][0] - pin[0]) < 0.0025]
         near = sorted(((d, s) for d, s in near if d <= pu.SAME_PIN_M), key=lambda t: t[0])
         pick = next(((d, s) for d, s in near if s['unit'] == unit and of.same_name(tok, s['tok'])), None)
         if not pick and len(near) == 1 and near[0][1]['unit'] == unit:
@@ -83,7 +117,7 @@ def main():
         else:
             # not for a stay without a link: is it a property we already list (linked, any site)? then it is no new property;
             # when its site is one that stay has no link for yet, it is an extra link for that stay (Booking.com first later)
-            same = next((s for s in everyone.values() if s['city'] == r['town'] and abs(s['ll'][0] - pin[0]) < 0.0025
+            same = next((s for s in everyone.values() if abs(s['ll'][0] - pin[0]) < 0.0025
                          and metres(pin, s['ll']) <= pu.SAME_PIN_M and s['unit'] == unit and of.same_name(tok, s['tok'])), None)
             if same:
                 owner = same.get('survivor', same['key'])
@@ -93,7 +127,7 @@ def main():
                                            source='map_seen_pages.py, extra link for a listed stay'))
                     links_of.setdefault(owner, set()).add(r['platform'])
             else:
-                new_rows.append(dict(r, name=r['name']))
+                new_rows.append({c: (r.get(c) or '') for c in NEW_COLS})
     print(f'map_seen_pages: {len(checked)} checked page(s) in Rishikesh/Haridwar: {len(found_rows)} mapped to a stay without a link, {len(extra_rows)} extra links for listed stays, {len(new_rows)} new properties')
     if DRY:
         for f in found_rows[:6]:
@@ -111,9 +145,10 @@ def main():
             pu.write(os.path.join(BL, 'found.tsv'), pu.FOUND_COLS, found + add)
         newp = os.path.join(BL, 'new-properties.tsv')
         old = of.tsv(newp)
-        seen = {pu.norm_url(o['url']) for o in old}
-        pu.write(newp, NEW_COLS, old + [dict(n, checked=n['checked']) for n in new_rows if pu.norm_url(n['url']) not in seen])
-    print(f'  recorded {len(add) + len(extra)} in found.tsv ({len(extra)} extra links); new-properties.tsv has {len(old) + sum(1 for n in new_rows if pu.norm_url(n["url"]) not in seen)} row(s)')
+        seen = {bs.canon_url(o['url']) for o in old}
+        fresh = [n for n in new_rows if bs.canon_url(n['url']) not in seen]
+        pu.write(newp, NEW_COLS, [{c: (o.get(c) or '') for c in NEW_COLS} for o in old] + fresh)
+    print(f'  recorded {len(add) + len(extra)} in found.tsv ({len(extra)} extra links); new-properties.tsv has {len(old) + len(fresh)} row(s)')
 
 
 if __name__ == '__main__':

@@ -21,10 +21,12 @@
     "search:browsers": "node scripts/search-ctl.mjs browsers",
     "search:start": "node scripts/search-ctl.mjs start",
     "search:status": "node scripts/search-ctl.mjs status",
-    "search:stop": "node scripts/search-ctl.mjs stop"
+    "search:stop": "node scripts/search-ctl.mjs stop",
+    "report:coverage": "node scripts/py.mjs scripts/stays/coverage_report.py"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^9.1.0",
+    "altcha-lib": "^2.6.0",
     "body-parser": "^1.20.2",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

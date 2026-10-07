@@ -8,6 +8,7 @@ import { validatePhone } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 import { postEnquiry, otaRedirectSource } from './enquiry.js';
+import { CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE } from './captcha.js';
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -168,7 +169,11 @@ export function setupOtaLeadGate() {
           // to spell out exactly which button and URL they clicked.
           details: `Clicked through to the ${pendingOtaName} listing for Advaitam Ganga & Hill View Luxury 3BHK.\nButton clicked: ${pendingOtaName}\nDestination URL: ${pendingUrl}`,
           source: otaRedirectSource(pendingOtaName)
-      });
+      }, { button: submitBtn });
+      if (result.code === CAPTCHA_FAILED_CODE) {
+        showFieldError(phoneError, phoneInput, CAPTCHA_FAILED_MESSAGE);
+        return;
+      }
       if (!result.ok) {
         throw new Error(result.message || 'Request failed');
       }

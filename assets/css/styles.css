@@ -4513,3 +4513,68 @@ html.site-search-open {
   gap: 10px;
   margin-top: 14px;
 }
+
+/* ============================================================
+   Report a bug (/report-a-bug, assets/js/modules/bug-report-form.js).
+   Colours are theme tokens only, so dark needs no extra rules.
+   ============================================================ */
+.page-hero.bug {
+  min-height: 340px;
+}
+.page-hero.bug .page-hero-inner {
+  padding: 72px 0 44px;
+}
+.bug-main {
+  min-width: 0;
+}
+.bug-form[hidden],
+.bug-thanks[hidden],
+.bug-form .field-error[hidden],
+.bug-thanks [hidden] {
+  display: none;
+}
+.bug-form .field select.field-invalid,
+.bug-form .field textarea.field-invalid {
+  border-color: var(--clay);
+}
+.bug-form .field input,
+.bug-form .field select,
+.bug-form .field textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+.bug-form .field textarea {
+  min-height: 96px;
+}
+.bug-form .form-status {
+  margin: 0;
+  font-weight: 700;
+}
+.bug-form .form-status:empty {
+  display: none;
+}
+.bug-thanks {
+  display: grid;
+  gap: 8px;
+}
+.bug-thanks:focus {
+  outline: none;
+}
+.bug-thanks h2,
+.bug-thanks p {
+  margin: 0;
+}
+.bug-thanks .hero-actions {
+  margin-top: 14px;
+}
+@media (max-width: 560px) {
+  .page-hero.bug {
+    min-height: 0;
+  }
+  .page-hero.bug .page-hero-inner {
+    padding: 56px 0 32px;
+  }
+  .bug-thanks .hero-actions .btn {
+    flex: 1 1 100%;
+  }
+}

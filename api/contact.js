@@ -4,6 +4,7 @@ import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { validateDateRange, validateRentalDateRange } from '../assets/js/modules/validators.js';
 import { insertEnquiry } from './bigquery.js';
 import { randomUUID } from 'crypto';
+import { verifyCaptcha, CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE } from './captcha.js';
 
 // Every error response carries a machine-readable `code` next to the English
 // `message`, so a translated page can show its own wording for the code and
@@ -17,6 +18,188 @@ const fail = (res, status, code, message) =>
 export function normalizePageLang(value) {
   const lang = String(value || '').trim().toLowerCase();
   return /^[a-z]{2,5}$/.test(lang) ? lang : 'en';
+}
+
+// ---- Bug reports (source 'bug_report', page /report-a-bug) -----------------
+// Anonymous by design: no name or phone. The email goes ONLY to CONTACT_EMAIL;
+// the reporter's address (optional) is never a recipient, so the form cannot be
+// used to send mail to someone else. Everything is untrusted, so every value is
+// length-capped, stripped of control characters and HTML-escaped in the email.
+export const BUG_TYPES = {
+  layout: 'Layout or looks',
+  language: 'Translation or language',
+  form: 'Form or enquiry',
+  stays: 'Stays page',
+  search: 'Search',
+  map: 'Map',
+  speed: 'Speed',
+  other: 'Other'
+};
+export const BUG_SEVERITIES = {
+  cosmetic: 'Cosmetic',
+  minor: 'Small annoyance',
+  serious: 'Serious',
+  blocking: 'Blocks booking or enquiry'
+};
+export const BUG_LIMITS = { summaryMin: 5, summary: 120, steps: 2000, expected: 1000, actual: 1000, device: 300, page: 300, url: 500, email: 254, name: 80 };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// One line: control characters (newlines too) become spaces, runs collapse.
+const oneLine = (value, max) => String(value ?? '').replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+// Several lines: keep \n, drop every other control character.
+const multiLine = (value, max) => String(value ?? '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f]/g, '').trim().slice(0, max);
+
+// Returns { report } or { code, message }. Required: summary (5-120), steps,
+// expected, actual. Everything else is optional; over-long free text is cut,
+// not rejected, so a long report is never lost.
+export function normalizeBugReport(data) {
+  const summary = oneLine(data.summary, 1000);
+  const steps = multiLine(data.steps, BUG_LIMITS.steps);
+  const expected = multiLine(data.expected, BUG_LIMITS.expected);
+  const actual = multiLine(data.actual, BUG_LIMITS.actual);
+  if (!summary || !steps || !expected || !actual) {
+    return { code: 'missing_fields', message: 'Please complete the required fields before sending your report.' };
+  }
+  if (summary.length < BUG_LIMITS.summaryMin || summary.length > BUG_LIMITS.summary) {
+    return { code: 'invalid_summary', message: `Please describe the problem in ${BUG_LIMITS.summaryMin} to ${BUG_LIMITS.summary} characters.` };
+  }
+  const bugType = String(data.bug_type || 'other').trim().toLowerCase();
+  if (!Object.hasOwn(BUG_TYPES, bugType)) {
+    return { code: 'invalid_bug_type', message: 'Please choose what kind of problem this is.' };
+  }
+  const severity = String(data.severity || 'minor').trim().toLowerCase();
+  if (!Object.hasOwn(BUG_SEVERITIES, severity)) {
+    return { code: 'invalid_severity', message: 'Please choose how serious the problem is.' };
+  }
+  const email = oneLine(data.email, 1000);
+  if (email && (email.length > BUG_LIMITS.email || !EMAIL_RE.test(email))) {
+    return { code: 'invalid_email', message: 'Please provide a valid email address, or leave it empty.' };
+  }
+  const screenshotUrl = oneLine(data.screenshot_url, 1000);
+  if (screenshotUrl) {
+    let ok = screenshotUrl.length <= BUG_LIMITS.url;
+    try { ok = ok && /^https?:$/.test(new URL(screenshotUrl).protocol); } catch { ok = false; }
+    if (!ok) return { code: 'invalid_url', message: 'Please give the screenshot link as a full web address (https://...), or leave it empty.' };
+  }
+  return {
+    report: {
+      summary,
+      steps,
+      expected,
+      actual,
+      bugType,
+      severity,
+      page: oneLine(data.page_url, BUG_LIMITS.page),
+      device: oneLine(data.device, BUG_LIMITS.device),
+      email,
+      screenshotUrl,
+      name: oneLine(data.name, BUG_LIMITS.name) || 'Anonymous'
+    }
+  };
+}
+
+function bugReportText(r) {
+  return [
+    `Summary: ${r.summary}`,
+    `Type: ${BUG_TYPES[r.bugType]}`,
+    `Severity: ${BUG_SEVERITIES[r.severity]}`,
+    `Page: ${r.page || 'Not given'}`,
+    `Device: ${r.device || 'Not given'}`,
+    `Reporter email: ${r.email || 'Not given'}`,
+    `Screenshot: ${r.screenshotUrl || 'None'}`,
+    '',
+    'Steps to reproduce:', r.steps,
+    '',
+    'Expected:', r.expected,
+    '',
+    'Actual:', r.actual
+  ].join('\n');
+}
+
+function bugReportHtml(r, stored, id) {
+  const row = (label, value) => `<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#66726f;font-size:13px;width:34%;vertical-align:top;">${label}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;color:#17211f;font-size:14px;vertical-align:top;white-space:pre-wrap;">${value}</td></tr>`;
+  const link = (value) => (/^https?:\/\//i.test(value) ? `<a href="${escapeHtml(value)}">${escapeHtml(value)}</a>` : escapeHtml(value || 'Not given'));
+  const email = r.email ? `<a href="mailto:${escapeHtml(r.email)}">${escapeHtml(r.email)}</a>` : 'Not given';
+  return `<div style="font-family:-apple-system,'Segoe UI',Arial,sans-serif;max-width:640px;">
+    <h1 style="color:#14524a;font-size:20px;margin:0 0 12px;">Bug report: ${escapeHtml(r.summary)}</h1>
+    <table role="presentation" style="width:100%;border-collapse:collapse;border:1px solid #ded8ca;">
+      ${row('Type', escapeHtml(BUG_TYPES[r.bugType]))}
+      ${row('Severity', escapeHtml(BUG_SEVERITIES[r.severity]))}
+      ${row('Page', link(r.page))}
+      ${row('Device', escapeHtml(r.device || 'Not given'))}
+      ${row('Reporter email', email)}
+      ${row('Screenshot', r.screenshotUrl ? link(r.screenshotUrl) : 'None')}
+      ${row('Steps to reproduce', escapeHtml(r.steps))}
+      ${row('Expected', escapeHtml(r.expected))}
+      ${row('Actual', escapeHtml(r.actual))}
+    </table>
+    <p style="color:#66726f;font-size:12px;margin-top:16px;">${stored ? 'Logged in your database.' : `Could NOT be saved to the database (id ${escapeHtml(id)}); this email is the only copy.`} The reporter was not emailed.</p>
+  </div>`;
+}
+
+async function handleBugReport(req, res, data, { storeEnquiry, sendEmail }) {
+  const result = normalizeBugReport(data);
+  if (!result.report) return fail(res, 400, result.code, result.message);
+  const report = result.report;
+  const id = randomUUID();
+  const headers = req.headers || {};
+
+  try {
+    // Fits the existing table with no schema change: name and phone are REQUIRED
+    // columns, so they get 'Anonymous' and an empty string (a REQUIRED column
+    // refuses NULL, not ''); every other column that does not apply stays null.
+    const row = {
+      id,
+      created_at: new Date().toISOString(),
+      name: report.name,
+      email: report.email || null,
+      email_verified: false,
+      phone: '',
+      check_in: null,
+      check_out: null,
+      adults: null,
+      children: null,
+      guests: null,
+      property_slug: null,
+      area: null,
+      coming_from_city: null,
+      pets: null,
+      pet_count: null,
+      message: bugReportText(report),
+      source: 'bug_report',
+      page_lang: normalizePageLang(data.lang),
+      status: 'pending',
+      ip_address: headers['x-forwarded-for'] || (req.connection && req.connection.remoteAddress) || null,
+      user_agent: headers['user-agent'] || null,
+      referrer: headers['referer'] || null
+    };
+    let stored = false;
+    try {
+      await storeEnquiry(row);
+      stored = true;
+      console.log('✅ Bug report stored in BigQuery:', id);
+    } catch (dbError) {
+      console.error('❌ BigQuery insert failed for a bug report, sending the email anyway:', id, dbError && dbError.message);
+    }
+
+    const message = {
+      from: 'noreply@rishikeshhomestays.com',
+      to: process.env.CONTACT_EMAIL || 'hello@rishikeshhomestays.com',
+      subject: `Bug report [${report.severity}]: ${report.summary}`,
+      html: bugReportHtml(report, stored, id),
+      text: bugReportText(report)
+    };
+    // Replying from the inbox goes to the reporter; they are never a recipient.
+    if (report.email) message.reply_to = report.email;
+    await sendEmail(message);
+    console.log('✅ Bug report email sent via Resend:', id);
+
+    return res.json({ success: true, message: 'Thank you! We will look into it.', enquiryId: id });
+  } catch (error) {
+    console.error('Error processing bug report:', error.message);
+    return fail(res, 500, 'server_error', 'We encountered an error. Please try again or contact us directly.');
+  }
 }
 
 // Resend is created on first use, so tests (and a missing RESEND_API_KEY)
@@ -39,6 +222,18 @@ return async function handler(req, res) {
   }
 
   const data = req.body || {};
+
+  // Bot check first, for every source (a no-op while CAPTCHA_SECRET is empty).
+  // Each solved challenge is single-use, so a client that gets any other error
+  // back (say a bad phone) must fetch a fresh challenge before it retries.
+  if (!(await verifyCaptcha(data.captcha))) {
+    return fail(res, 400, CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE);
+  }
+
+  if (data.source === 'bug_report') {
+    return handleBugReport(req, res, data, { storeEnquiry, sendEmail });
+  }
+
   const requiredFields = ["name", "phone", "details"];
   const missingFields = requiredFields.filter((field) => !String(data[field] || "").trim());
 

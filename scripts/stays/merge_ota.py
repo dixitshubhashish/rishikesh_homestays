@@ -6,7 +6,8 @@ A newer row for the same key replaces the older one, except that a
 'verified' row is never downgraded by a later doubtful/none.
 """
 import os, sys, datetime
-PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ota-links.tsv')
+# RH_OTA_LINKS points tests and import_new_stays.py --root at another tree's file
+PATH = os.environ.get('RH_OTA_LINKS') or os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ota-links.tsv')
 HEADER = 'key\tstatus\tota\turl\tnote\tchecked'
 rows = {}
 if os.path.exists(PATH):

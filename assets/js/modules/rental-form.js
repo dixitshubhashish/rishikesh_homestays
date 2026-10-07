@@ -229,7 +229,7 @@ export function setupRentalForm({ redirect = (url) => window.location.assign(url
     if (status) status.textContent = '';
 
     try {
-      const result = await postEnquiry(buildRentalPayload(data));
+      const result = await postEnquiry(buildRentalPayload(data), { button: btn });
       if (result.success) {
         redirect('/thanks');
         return;
