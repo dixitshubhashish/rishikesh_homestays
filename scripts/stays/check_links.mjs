@@ -6,14 +6,15 @@
 // MakeMyTrip blocks automated browsers, so its failures are inconclusive.
 // Usage: node scripts/stays/check_links.mjs
 import { chromium } from 'playwright';
+import { BROWSER_UA } from './booking-match.mjs';
 import { readFileSync } from 'fs';
 
-const rows = readFileSync(new URL('./ota-links.tsv', import.meta.url), 'utf8').trim().split('\n').slice(1)
+const rows = readFileSync(new URL('./ota-links.tsv', import.meta.url), 'utf8').trim().split(/\r?\n/).slice(1)
   .map((l) => l.split('\t')).filter((c) => c[1] === 'verified');
 const browser = await chromium.launch();
 const results = [];
 async function check([key, , ota, url]) {
-  const page = await browser.newPage({ locale: 'en-GB', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36' });
+  const page = await browser.newPage({ locale: 'en-GB', userAgent: BROWSER_UA });
   const r = { key, ota, url, ok: false, why: '' };
   try {
     const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });

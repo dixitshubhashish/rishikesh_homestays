@@ -53,7 +53,7 @@ LASTMOD_TOKEN = '__LASTMOD__'
 
 def write_dated(stem, head, main_html, tail):
     LASTMOD[stem] = page_dates.date_for(DATES, f'/hotels/{stem}', main_html)
-    open(f'{STAYS_DIR}/{stem}.html', 'w').write(head.replace(LASTMOD_TOKEN, LASTMOD[stem]) + main_html + tail)
+    open(f'{STAYS_DIR}/{stem}.html', 'w', encoding='utf8', newline='\n').write(head.replace(LASTMOD_TOKEN, LASTMOD[stem]) + main_html + tail)
 
 
 def city_qs():
@@ -75,7 +75,7 @@ OG_IMAGE = f'{SITE}/assets/images/rishikesh-homestay-hero.webp'
 # Booking.com affiliate ID (Partner Centre). When set, every verified
 # Booking.com links go through our CJ affiliate deep link. The IDs live in one
 # place, assets/js/modules/affiliate-links.js (read here, imported by the JS).
-_AFF = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'assets', 'js', 'modules', 'affiliate-links.js')).read()
+_AFF = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'assets', 'js', 'modules', 'affiliate-links.js'), encoding='utf8').read()
 CJ_PID, CJ_BOOKING_LINK, CJ_CLICK_HOST = (re.search(rf"export const {k} = '([^']+)'", _AFF).group(1)
                                           for k in ('CJ_PID', 'CJ_BOOKING_LINK_ID', 'CJ_CLICK_HOST'))
 
@@ -488,7 +488,7 @@ def write_homestays_picks(stays):
       {PICKS_END}"""
     out = page[:page.index(PICKS_START)] + block + page[page.index(PICKS_END) + len(PICKS_END):]
     if out != page:
-        open(path, 'w', encoding='utf8').write(out)
+        open(path, 'w', encoding='utf8', newline='\n').write(out)
 
 
 def load_ota_links():
@@ -498,7 +498,7 @@ def load_ota_links():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ota-links.tsv')
     links = {}
     if os.path.exists(path):
-        for line in open(path).read().splitlines()[1:]:
+        for line in open(path, encoding='utf8').read().splitlines()[1:]:
             cols = line.split('\t')
             if len(cols) >= 4 and cols[1] == 'verified' and cols[3].startswith('https://'):
                 url = cols[3]
@@ -518,7 +518,7 @@ def prepared_stays(city, ota):
         # use its committed data module, which already has our stays out, links in and this order
         module = open(f'{ROOT}/assets/js/modules/{data_module_name(city)}', encoding='utf8').read()
         return json.loads(re.search(r'export const STAYS_INDEX = (\[.*\]);', module).group(1).replace('<\\/', '</'))
-    out = [s for s in json.load(open(path))
+    out = [s for s in json.load(open(path, encoding='utf8'))
            if s['id'] not in OWN_ALIASES and not any(k in s['u'] for k in keys)]
     for s in out:
         if s['id'] in ota:
@@ -711,7 +711,7 @@ LANDMARK_MAX_ROWS = 100
 def load_landmarks(city):
     import csv
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'landmarks.tsv')
-    return [r for r in csv.DictReader(open(path), delimiter='\t') if r['city'] == city]
+    return [r for r in csv.DictReader(open(path, encoding='utf8', newline=''), delimiter='\t') if r['city'] == city]
 
 
 def km_between(a, b):
@@ -1021,13 +1021,13 @@ def full_entry(h1, url, summary, st, facts, tips, faq, picks, ranked, alts):
 
 def write_llms_full(section, own):
     path = f'{ROOT}/llms-full.txt'
-    old = open(path).read() if os.path.exists(path) else ''
+    old = open(path, encoding='utf8').read() if os.path.exists(path) else ''
     secs = {}
     for k in CITIES:
         m = re.search(rf'<!-- full-{k}:start -->\n(.*?)<!-- full-{k}:end -->', old, re.S)
         secs[k] = m.group(1) if m else ''
     secs[CITY] = section
-    llms = open(f'{ROOT}/llms.txt').read()
+    llms = open(f'{ROOT}/llms.txt', encoding='utf8').read()
     head = re.sub(r'Full details for AI assistants.*?\n\n', '', llms[:llms.index('## Key pages')], flags=re.S)
     key_pages = llms[llms.index('## Key pages'):llms.index('## Where to stay')]   # key pages + the Kumbh section
     tail = llms[llms.index('## Contact'):]
@@ -1044,37 +1044,37 @@ def write_llms_full(section, own):
             + 'Listed starting prices change with dates and seasons; quote them as "from", and send travellers to the page or WhatsApp for the current rate.\n\n'
             + ''.join(f'## Stays in {CITIES[k]["name"]}\n\n<!-- full-{k}:start -->\n{secs[k]}<!-- full-{k}:end -->\n\n' for k in CITIES)
             + tail)
-    open(path, 'w').write(body)
+    open(path, 'w', encoding='utf8', newline='\n').write(body)
 
 
 def ensure_markers(path, before, indent, heading=''):
     """Add this city's start/end markers ahead of `before` the first time."""
-    s = open(path).read()
+    s = open(path, encoding='utf8').read()
     if f'<!-- {marker()}:start -->' in s:
         return
     block = f'{heading}{indent}<!-- {marker()}:start -->\n{indent}<!-- {marker()}:end -->\n'
     s = s.replace(before, block + before, 1)
-    open(path, 'w').write(s)
+    open(path, 'w', encoding='utf8', newline='\n').write(s)
 
 
 def replace_between(path, start, end, body):
-    s = open(path).read()
+    s = open(path, encoding='utf8').read()
     if start in s and end in s:
         s = s[:s.index(start) + len(start)] + body + s[s.index(end):]
     else:
         raise SystemExit(f'markers {start!r} missing in {path}')
-    open(path, 'w').write(s)
+    open(path, 'w', encoding='utf8', newline='\n').write(s)
 
 
 def main(data_path, crawled):
     DATES.update(page_dates.load())
     today = datetime.date.today()
-    date = today.strftime('%-d %B %Y')
-    stays = json.load(open(data_path))
+    date = f"{today.day} {today.strftime('%B %Y')}"  # not %-d: Windows' C runtime rejects it
+    stays = json.load(open(data_path, encoding='utf8'))
     own = []
     # Our stays are in Rishikesh; other cities borrow them from Rishikesh's data
     # (labelled with the town) so every city's pages still pin and mix them in.
-    home = stays if CITY == DEFAULT_CITY else json.load(open(os.path.join(cache_dir(DEFAULT_CITY), 'stays.json')))
+    home = stays if CITY == DEFAULT_CITY else json.load(open(os.path.join(cache_dir(DEFAULT_CITY), 'stays.json'), encoding='utf8'))
     for key, name, href in OWN:
         hit = next((s for s in home if key in s['u']), None)
         if hit:
@@ -1125,7 +1125,7 @@ def main(data_path, crawled):
             searches.append({'h1': heading(phrase, CN), 'stem': phrase_path(phrase, CN), 'phrase': phrase, 'rule': rule,
                              'rule_t': rule_t, 'group': group, 'intro': s_intro.replace('{City}', CN), 'count': n_search(CITY, rule)})
     module_path = f'{ROOT}/assets/js/modules/{data_module_name()}'
-    old_meta = re.search(r'export const STAYS_INDEX_META = (\{.*?\});\n', open(module_path).read()) if os.path.exists(module_path) else None
+    old_meta = re.search(r'export const STAYS_INDEX_META = (\{.*?\});\n', open(module_path, encoding='utf8').read()) if os.path.exists(module_path) else None
     old_stems = {x['stem'] for x in json.loads(old_meta.group(1)).get('searches', [])} if old_meta else set()
     meta = {
             'categories': [{'slug': c[0], 'title': c[1], 'filter': c[3], 'count': counts[c[0]], 'group': cat_group(c[3])} for c in live],
@@ -1137,14 +1137,14 @@ def main(data_path, crawled):
             'river': RIVER_AREAS.get(CITY, []),
             'kinds': {k: sorted(v) for k, v in SEARCH_KINDS.items()}}
     dump = lambda o: json.dumps(o, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-    with open(module_path, 'w') as fh:
+    with open(module_path, 'w', encoding='utf8', newline='\n') as fh:
         fh.write('// Generated by scripts/stays/build_pages.py. Do not hand-edit.\n')
         fh.write(f'export const STAYS_INDEX_META = {dump(meta)};\n')
         fh.write(f'export const STAYS_OWN = {dump(own)};\n')
         # Public file: drop the source-listing URL (not used by the pages).
         fh.write(f'export const STAYS_INDEX = {dump([{k: v for k, v in s.items() if k != "u"} for s in stays])};\n')
 
-    shell = open(f'{ROOT}/thanks.html').read()
+    shell = open(f'{ROOT}/thanks.html', encoding='utf8').read()
     top, rest = shell.split('<main>', 1)
     bottom = rest.split('</main>', 1)[1].replace(
         '    <script type="module" src="/assets/js/site.js"></script>\n',
@@ -1613,7 +1613,7 @@ def main(data_path, crawled):
       </section>
     </main>'''
     stay_bottom = bottom.replace('/assets/js/modules/stays-index.js', '/assets/js/modules/stay-page.js')
-    open(f'{STAYS_DIR}/stay.html', 'w').write(stay_top + stay_main + stay_bottom)
+    open(f'{STAYS_DIR}/stay.html', 'w', encoding='utf8', newline='\n').write(stay_top + stay_main + stay_bottom)
     if os.path.exists(f'{ROOT}/stay.html'):
         os.remove(f'{ROOT}/stay.html')  # pre-move copy
     print('verified booking links:', sum('o' in s for s in stays))
@@ -1632,5 +1632,5 @@ if __name__ == '__main__':
     CITY = city_from_argv()   # --city <key>; default rishikesh
     CN = CITIES[CITY]['name']
     cache = cache_dir(CITY)
-    crawled = sum(1 for _ in open(f'{cache}/props.jsonl'))
+    crawled = sum(1 for _ in open(f'{cache}/props.jsonl', encoding='utf8'))
     main(f'{cache}/stays.json', crawled)

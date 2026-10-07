@@ -93,9 +93,18 @@ Booking.com links get the CJ affiliate wrapper on the way (`assets/js/modules/af
 5. Later, only when the owner says so: `node scripts/stays/push_bigquery.mjs` (directory stays) and `merge_found.sh --bigquery` / `node scripts/stays/push_places.mjs` (Google Maps places).
 Never push from a second machine while the first still has unpushed list changes: the lists are plain files and a git merge of them is not safe (see §5, one machine at a time).
 
-## 5. Running the search on the Windows laptop
+## 5. Running the search (Windows and macOS)
 
-The search can move to a Windows laptop (owner, 2026-10-06). **One machine runs it at a time**: the lists are plain files the workers rewrite, so the Mac stops before Windows starts and the other way round. The scripts are in `scripts/windows/` (PowerShell). **Not yet run on a real Windows machine**: do the first-run check at the end of this section and report what differs.
+The search can move between the Mac and a Windows laptop (owner, 2026-10-06). **One machine runs it at a time**: the lists are plain files the workers rewrite, so the Mac stops before Windows starts and the other way round. **The commands are the same on both machines** (`scripts/search-ctl.mjs` picks browser paths, profile folders, keep-awake and process handling from the OS it runs on):
+
+| Command | What it does |
+|---|---|
+| `npm run search:browsers` | opens the four browsers on ports 9222-9225 (each already listening is left alone) and prints which answer |
+| `npm run search:start` | starts the supervisor detached and hidden, keeps the machine awake (Windows: `powercfg` never sleep on AC; macOS: `caffeinate` for as long as the supervisor lives), then shows the status. It refuses, and says why, when a supervisor already runs, when the search cache (below) is missing, or when a debugging port does not answer (it names the port) |
+| `npm run search:status` | supervisor and worker pids, the ports, found/unfound/review counts, the last supervisor log lines |
+| `npm run search:stop` | stops the supervisor FIRST, then every worker, then checks nothing is left (exit 1 if something is) |
+
+`scripts/windows/setup.ps1` (one-time installs) is Windows-only; `scripts\windows\start-browsers.ps1` and `start-search.ps1 [-Status|-Stop]` are thin wrappers that run the same commands. **First-run checks on Windows done 2026-10-07** (status, port check and stop against the four open browsers); the full start has not yet run on real Windows: do the first-run check at the end of this section and report what differs.
 
 **Browsers needed** (the search drives your own browsers over a debugging port, one worker per browser; Opera must stay in the set):
 
@@ -106,13 +115,13 @@ The search can move to a Windows laptop (owner, 2026-10-06). **One machine runs 
 | Brave | 9224 | `Brave.Brave` | `C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe` |
 | Microsoft Edge | 9225 | part of Windows | `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe` |
 
-Also installed: Node.js LTS, Python 3, Git, the repo's npm packages and Playwright's own Chromium (`verify_seen.mjs` uses it for the fast page checks; it never searches). Each browser runs with its own profile folder under `%LOCALAPPDATA%\rh-search\<name>` (Chrome 136+ ignores a debugging port on your everyday profile): open google.com in each once, sign in if you like, and use them normally for a day; a brand-new profile is challenged more. Captchas: solve them yourself, the worker waits; nothing here evades a block.
+Also installed: Node.js LTS, Python 3, Git, the repo's npm packages and Playwright's own Chromium (`verify_seen.mjs` uses it for the fast page checks; it never searches). Each browser runs with its own profile folder (Windows `%LOCALAPPDATA%\rh-search\<name>`, macOS `~/Library/Application Support/rh-search/<name>`, Linux `~/.local/share/rh-search/<name>`; Chrome 136+ ignores a debugging port on your everyday profile): open google.com in each once, sign in if you like, and use them normally for a day; a brand-new profile is challenged more. Captchas: solve them yourself, the worker waits; nothing here evades a block.
 
 **Move it over**
-1. On the Mac: `node scripts/stays/search_supervisor.mjs` stopped (stop the supervisor first, then the workers, then check nothing is left: `pgrep -fl google_ota_search`), then commit and push the lists: `git add docs/booking-links scripts/stays/ota-links.tsv`, commit, push. Also pack the search's cache (gitignored, 5 files, about 5 MB): `tar -czf rh-search-cache.tgz -C scripts/stays .cache/stays.json .cache/haridwar/stays.json .cache/places/places.json .cache/places/all-stays.json .cache/places/ota-links.tsv`, and copy the archive over (AirDrop, USB, cloud drive).
+1. On the machine that runs it now: `npm run search:stop` (supervisor first, then the workers, then it checks nothing is left), then commit and push the lists: `git add docs/booking-links scripts/stays/ota-links.tsv`, commit, push. Also pack the search's cache (gitignored, 5 files, about 5 MB): `tar -czf rh-search-cache.tgz -C scripts/stays .cache/stays.json .cache/haridwar/stays.json .cache/places/places.json .cache/places/all-stays.json .cache/places/ota-links.tsv`, and copy the archive over (AirDrop, USB, cloud drive).
 2. On Windows: install Git, `git clone` the repo (or `git pull`), then in PowerShell from the repo folder: `powershell -ExecutionPolicy Bypass -File scripts\windows\setup.ps1`. Unpack the cache: `tar -xzf rh-search-cache.tgz -C scripts\stays`.
-3. `scripts\windows\start-browsers.ps1` (opens the four browsers on ports 9222-9225, prints which answer), then `scripts\windows\start-search.ps1` (starts the supervisor; keeps the laptop awake while plugged in). `-Status` shows counts and workers; `-Stop` stops the supervisor first, then the workers, and verifies nothing is left.
-4. Back to the Mac later: `start-search.ps1 -Stop` on Windows, commit and push the lists there, `git pull` on the Mac. `merge_found.sh` (the step that puts links on the site) runs on the Mac, or in Git Bash with `export PYTHON=python`; BigQuery stays off unless asked.
+3. `npm run search:browsers` (opens the four browsers on ports 9222-9225, prints which answer), then `npm run search:start`. `npm run search:status` shows counts and workers.
+4. Back to the other machine later: `npm run search:stop`, commit and push the lists, `git pull` there. `merge_found.sh` (the step that puts links on the site) runs on either machine: `scripts/stays/merge_found.sh` on the Mac, `bash scripts/stays/merge_found.sh` from Git Bash on Windows (use Git Bash, not a bare `bash` from PowerShell, which can be WSL). It finds Python itself through `scripts/py.mjs` (`python3` on macOS, `python` or `py -3` on Windows; there is no override), so no export is needed. BigQuery stays off unless asked.
 
 **What Windows will ask you to approve (once each)**
 | When | What you see | Do |
@@ -122,7 +131,7 @@ Also installed: Node.js LTS, Python 3, Git, the repo's npm packages and Playwrig
 | first `node` run | Windows Defender Firewall "allow node.js on private networks" (it only talks to localhost) | Allow, private networks only |
 | first start of each browser | welcome / default-browser / sync pages | close them; keep the window open |
 | first search per engine | cookie banner, sometimes a captcha | accept / solve it yourself |
-| `start-search.ps1` | none; it sets "never sleep on AC" with `powercfg` | keep the charger in |
+| `npm run search:start` | none; on Windows it sets "never sleep on AC" with `powercfg` | keep the charger in |
 | Claude Code on that laptop (only if you babysit with it) | a prompt per new command | allow the list below once ("don't ask again") |
 
 Claude Code allow-list for that laptop (paste into `.claude\settings.local.json` of the repo; these only run the search, the checks and read the lists):
@@ -130,8 +139,8 @@ Claude Code allow-list for that laptop (paste into `.claude\settings.local.json`
 { "permissions": { "allow": [
   "Bash(node scripts/stays/*)", "Bash(python scripts/stays/*)", "Bash(python3 scripts/stays/*)", "Bash(npm test)", "Bash(npm run *)",
   "Bash(git status*)", "Bash(git diff*)", "Bash(git pull*)", "Bash(git add docs/booking-links*)", "Bash(git commit*)", "Bash(git push*)",
-  "Bash(powershell -ExecutionPolicy Bypass -File scripts\\windows\\*)", "Bash(tar *)", "Read(docs/**)", "Read(scripts/**)" ] } }
+  "Bash(npm run search:*)", "Bash(tar *)", "Read(docs/**)", "Read(scripts/**)" ] } }
 ```
 A prompt that waits more than four minutes stalls its lane: keep the pending list in `scripts/stays/.cache/booking-search-*/pending-approvals.md` and approve in bulk when you are back.
 
-**First-run check on Windows** (report any line that differs): `node --version` (20+), `python --version` (3.10+), `node scripts/stays/verify_seen.mjs --limit 1` prints a line, `python scripts/stays/prune_unfound.py --dry` prints a count, `start-browsers.ps1` shows four "ready", `start-search.ps1` then `-Status` shows five workers (chrome, opera, brave, edge, edge2) and the log grows, and `docs\booking-links\found.tsv` has no `\r` (the `.gitattributes` keeps LF).
+**First-run check on Windows** (report any line that differs): `node --version` (20+), `node scripts/py.mjs --version` (3.10+; it picks `python3`, `python` or `py -3` and forces UTF-8), `node scripts/stays/verify_seen.mjs --limit 1` prints a line, `node scripts/py.mjs scripts/stays/prune_unfound.py --dry` prints a count, `npm run search:browsers` shows four "ready", `npm run search:start` then `npm run search:status` shows five workers (chrome, opera, brave, edge, edge2) and the log grows, and `docs\booking-links\found.tsv` has no `\r` (the `.gitattributes` keeps LF).

@@ -18,15 +18,18 @@ Usage: python3 scripts/stays/process.py [--names]
 import json, re, math, statistics, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cities import city_from_argv, cache_dir, CITIES, DEFAULT_CITY
+# Names can hold characters a Windows console code page can't encode (Rishīkesh, Devanagari).
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 CITY=city_from_argv()            # --city <key>; default rishikesh
 CITY_NAME=CITIES[CITY]['name']
 S=cache_dir(CITY)
-rows=[json.loads(l) for l in open(f'{S}/props.jsonl')]
+rows=[json.loads(l) for l in open(f'{S}/props.jsonl',encoding='utf8')]
 rows=[r for r in rows if not r.get('error')]
 # Google Maps places new to us with a confirmed booking link
 # (import_google_stays.py): same row shape, marked with gm (their Maps link)
 if os.path.exists(f'{S}/google-extra.jsonl'):
-    rows+=[json.loads(l) for l in open(f'{S}/google-extra.jsonl') if l.strip()]
+    rows+=[json.loads(l) for l in open(f'{S}/google-extra.jsonl',encoding='utf8') if l.strip()]
 
 SMALL={'in','on','by','the','and','of','at','with','near','to','for','from'}
 UPPER={'bhk':'BHK','ac':'AC','ii':'II','iii':'III','iv':'IV','yha':'YHA','gmvn':'GMVN','oyo':'OYO','bnb':'BnB','wifi':'WiFi','tv':'TV','dlx':'Dlx','aiims':'AIIMS','spa':'Spa','nh':'NH','vip':'VIP','b&b':'B&B','bbq':'BBQ'}
@@ -132,7 +135,7 @@ if os.path.isdir(odir):
         if not m: continue
         key=m.group(2); target=(OFFICIAL_TYPE if m.group(1)=='type' else OFFICIAL_THEME).get(key)
         if not target: continue
-        for u in set(re.findall(r'href="(https://[a-z0-9-]+\.uttarakhand-hotels\.com/en/)"',open(f'{odir}/{fn}').read())):
+        for u in set(re.findall(r'href="(https://[a-z0-9-]+\.uttarakhand-hotels\.com/en/)"',open(f'{odir}/{fn}',encoding='utf8').read())):
             (official_types if m.group(1)=='type' else official_themes).setdefault(u,set()).add(target)
 for r in rows:
     # Every type with evidence: the directory's own section and type pages,
@@ -206,7 +209,7 @@ REG=os.path.join(os.path.dirname(os.path.abspath(__file__)),'listing-ids.tsv')
 OWN_KEYS=['advaitam-ganga-hill-view-homestay-by-the-ganges-ghat','villa-elysium-the-himalayan-ganges-view-yoga-retreat','villa-yoga-retreat-at-the-ganges-in']
 reg={}; reg_city={}; reg_active={}
 if os.path.exists(REG):
-    for line in open(REG).read().splitlines()[1:]:
+    for line in open(REG,encoding='utf8').read().splitlines()[1:]:
         c=line.split('\t'); lid,slug=c[0],c[1]
         reg[slug]=int(lid); reg_active[slug]=c[2] if len(c)>2 else '1'
         reg_city[slug]=c[3] if len(c)>3 else DEFAULT_CITY
@@ -220,11 +223,11 @@ for x in data: x['lid']=reg[x['id']]; x['cy']=CITY
 live={x['id'] for x in data}
 for slug in reg:
     if reg_city.get(slug)==CITY: reg_active[slug]='1' if slug in live else '0'
-with open(REG,'w') as fh:
+with open(REG,'w',encoding='utf8',newline='\n') as fh:
     fh.write('listing_id\tslug\tactive\tcity\n')
     for slug,lid in sorted(reg.items(),key=lambda kv:kv[1]): fh.write(f"{lid}\t{slug}\t{reg_active.get(slug,'1')}\t{reg_city.get(slug,DEFAULT_CITY)}\n")
 data.sort(key=lambda d:d['n'].lower())
-json.dump(data,open(f'{S}/stays.json','w'),ensure_ascii=False,separators=(',',':'))
+with open(f'{S}/stays.json','w',encoding='utf8',newline='\n') as fh: json.dump(data,fh,ensure_ascii=False,separators=(',',':'))
 from collections import Counter
 print('rows',len(rows),'kept',len(data))
 print('stars',sorted(Counter(d['s'] for d in data).items()))

@@ -28,6 +28,10 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import organise_found as of  # noqa: E402
 
+# Names can hold characters a Windows console code page can't encode (Rishīkesh, Devanagari).
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 HERE = of.HERE
 BL = of.BL
 DRY = '--dry' in sys.argv
@@ -73,7 +77,14 @@ def write(path, cols, rows, mode='w', header=True):
             f.write('\t'.join(cols) + '\n')
         for r in rows:
             f.write('\t'.join(clean(r.get(c, '')) for c in cols) + '\n')
-    os.replace(tmp, path)
+    for attempt in range(20):   # Windows refuses the rename while a worker has the target open for a moment
+        try:
+            os.replace(tmp, path)
+            break
+        except PermissionError:
+            if attempt == 19:
+                raise
+            time.sleep(0.1)
 
 
 class Lock:
@@ -83,7 +94,7 @@ class Lock:
             try:
                 os.mkdir(self.dir)
                 return self
-            except FileExistsError:
+            except (FileExistsError, PermissionError):   # Windows: PermissionError while a just-removed lock dir is pending delete
                 try:
                     if time.time() - os.stat(self.dir).st_mtime > 30:
                         os.rmdir(self.dir)

@@ -13,9 +13,11 @@ const FOUND_COLS = ['key', 'status', 'platform', 'url', 'note', 'name', 'city', 
 const UNFOUND_COLS = ['key', 'name', 'city', 'area', 'search_log', 'status'];
 const DRY = process.argv.includes('--dry');
 
-const tsv = (f) => { if (!existsSync(f)) return []; const [h, ...r] = readFileSync(f, 'utf8').trim().split('\n').map((l) => l.split('\t')); return r.map((x) => Object.fromEntries(h.map((c, i) => [c, x[i] ?? '']))); };
+const tsv = (f) => { if (!existsSync(f)) return []; const [h, ...r] = readFileSync(f, 'utf8').trim().split(/\r?\n/).map((l) => l.split('\t')); return r.map((x) => Object.fromEntries(h.map((c, i) => [c, x[i] ?? '']))); };
 const clean = (v) => String(v ?? '').replace(/[\t\n\r\u0085\u2028\u2029]/g, ' ');
-const writeTsv = (f, cols, rows) => { const t = `${f}.tmp-${process.pid}`; writeFileSync(t, [cols.join('\t'), ...rows.map((r) => cols.map((c) => clean(r[c])).join('\t'))].join('\n') + '\n'); renameSync(t, f); };
+// Windows refuses to replace a file another process has open (Python's open(), Defender, an editor): retry briefly. POSIX never throws these.
+const renameRetry = (a, b) => { for (let i = 0; ; i++) { try { return renameSync(a, b); } catch (e) { if (i >= 40 || !['EPERM', 'EBUSY', 'EACCES'].includes(e.code)) throw e; sleep(50); } } };
+const writeTsv = (f, cols, rows) => { const t = `${f}.tmp-${process.pid}`; writeFileSync(t, [cols.join('\t'), ...rows.map((r) => cols.map((c) => clean(r[c])).join('\t'))].join('\n') + '\n'); renameRetry(t, f); };
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 function withLock(fn) {
   const dir = `${AG}.lists-lock`;

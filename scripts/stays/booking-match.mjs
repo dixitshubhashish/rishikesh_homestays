@@ -1,6 +1,11 @@
 // The one rule both Booking.com checkers (verify_candidates.mjs and
 // guess_booking_slugs.mjs) use to decide that a Booking property page is the
 // same stay as ours: its title must name the stay and sit in the stay's city.
+// The user agent the page checkers send: it must match the OS, because Chromium's own client hints (Sec-CH-UA-Platform) say
+// Windows or macOS and a contradicting UA is a bot sign to Booking.com and Agoda. macOS and Linux keep the old Mac string.
+export const BROWSER_UA = process.platform === 'win32'
+  ? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36'
+  : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36';
 export const STOP = new Set(('hotel hotels resort resorts rishikesh rishīkesh haridwar hardwar by the a an and of in at near on with stay stays ' +
   'homestay homestays home house guest guesthouse hostel apartment apartments villa inn lodge cottage cottages ' +
   'camp camps tapovan laxman jhula ram ganga ganges view river luxury premium boutique bhk 1bhk 2bhk 3bhk room rooms'

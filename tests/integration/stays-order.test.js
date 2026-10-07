@@ -14,7 +14,7 @@ const js = readFileSync(join(ROOT, 'assets/js/modules/stays-index.js'), 'utf8');
 const num = (src, re) => Number(src.match(re)[1]);
 const BAD_RATING = num(py, /^BAD_RATING = ([\d.]+)/m), BAD_MIN = num(py, /^BAD_MIN_REVIEWS = (\d+)/m);
 const isBad = (d) => Boolean(d.g) && d.g < BAD_RATING && (d.c || 0) >= BAD_MIN;
-const brands = readFileSync(join(ROOT, 'scripts/stays/promising-brands.tsv'), 'utf8').trim().split('\n').slice(1)
+const brands = readFileSync(join(ROOT, 'scripts/stays/promising-brands.tsv'), 'utf8').trim().split(/\r?\n/).slice(1)
   .map((l) => new RegExp(`(?<![A-Za-z])${l.split('\t')[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z])`, 'i'));
 const promising = (d) => brands.some((b) => b.test(d.n));
 // A linked, fine; D unlinked, fine; C linked, bad; E unlinked, bad

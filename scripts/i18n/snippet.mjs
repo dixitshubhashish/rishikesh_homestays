@@ -13,7 +13,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { PAGES } from "./extract.mjs";
 import { LANGS } from "./build-runtime.mjs";
 
@@ -39,7 +39,7 @@ export function withSnippet(html) {
   return clean.replace(/(<meta name="viewport"[^>]*>)/, `$1\n${indent}${SNIPPET}`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const check = process.argv.includes("--check");
   let bad = 0;
   for (const page of PAGES) {

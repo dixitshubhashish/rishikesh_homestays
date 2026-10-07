@@ -10,14 +10,14 @@
 //
 // After running: node scripts/i18n/snippet.mjs is not needed (the head is the hub's); run `npm run i18n:extract`
 // (the new pages are in PAGES of scripts/i18n/extract.mjs), then the sync steps of docs/I18N.md, and
-// python3 scripts/stays/footer_links.py (the footer finds these pages by file name: FAMILIES there)
+// node scripts/py.mjs scripts/stays/footer_links.py (the footer finds these pages by file name: FAMILIES there)
 //
 // Copy rules (docs/HANDOFF.md): guide voice, no invented facts, no dates, no "official". The ₹700 line exists for
 // Rishikesh bikes only (the owner's own figure); Haridwar pages promise no price.
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SITE = "https://rishikeshhomestays.com";
@@ -285,7 +285,7 @@ export function buildPage(hub, r) {
   return stripMarkers(h);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const hubFile = join(ROOT, `${HUB}.html`);
   const hub = readFileSync(hubFile, "utf8");
   for (const r of RENTALS) writeFileSync(join(ROOT, `${r.slug}.html`), buildPage(hub, r));

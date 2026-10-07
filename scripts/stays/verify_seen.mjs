@@ -20,14 +20,14 @@ const CENTRES = { rishikesh: [30.0869, 78.2676], haridwar: [29.9457, 78.1642] };
 const km = (a, b) => Math.hypot((a[0] - b[0]) * 111.32, (a[1] - b[1]) * 111.32 * 0.87);
 const townOf = (pin) => Object.entries(CENTRES).find(([, c]) => km(pin, c) <= 25)?.[0] || '';
 const norm = (u) => u.split('?')[0].replace(/\/+$/, '').toLowerCase();
-const lines = (f) => (existsSync(f) ? readFileSync(f, 'utf8').split('\n').slice(1).filter(Boolean).map((l) => l.split('\t')) : []);
+const lines = (f) => (existsSync(f) ? readFileSync(f, 'utf8').split(/\r?\n/).slice(1).filter(Boolean).map((l) => l.split('\t')) : []);
 
 const done = new Set(lines(CHECKED).map((c) => norm(c[0])));
 // pages a stay already has need no look: found.tsv, ota-links.tsv and the places' links
 const have = new Set();
 for (const f of [`${BL}found.tsv`, `${ROOT}scripts/stays/ota-links.tsv`, `${ROOT}scripts/stays/.cache/places/ota-links.tsv`]) {
   if (!existsSync(f)) continue;
-  for (const l of readFileSync(f, 'utf8').split('\n').slice(1)) { const c = l.split('\t'); const u = c.find((x) => /^https?:\/\//.test(x)); if (u) have.add(norm(u)); }
+  for (const l of readFileSync(f, 'utf8').split(/\r?\n/).slice(1)) { const c = l.split('\t'); const u = c.find((x) => /^https?:\/\//.test(x)); if (u) have.add(norm(u)); }
 }
 const queue = [];
 for (const [url, platform, label, seenFor] of lines(SEEN)) {

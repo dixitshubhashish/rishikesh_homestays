@@ -41,7 +41,7 @@ def load():
 
 def save(reg):
     tmp = f'{REGISTRY}.tmp-{os.getpid()}'
-    with open(tmp, 'w', encoding='utf8') as fh:
+    with open(tmp, 'w', encoding='utf8', newline='\n') as fh:
         fh.write('path\tfingerprint\tlastmod\n')
         for path in sorted(reg):
             fh.write(f'{path}\t{reg[path][0]}\t{reg[path][1]}\n')
@@ -138,7 +138,7 @@ def refresh_static(sitemap=os.path.join(ROOT, 'sitemap.xml')):
 
     out = re.sub(r'<url>\s*<loc>([^<]+)</loc>\s*<lastmod>([^<]+)</lastmod>.*?</url>', fix, s, flags=re.S)
     if out != s:
-        open(sitemap, 'w', encoding='utf8').write(out)
+        open(sitemap, 'w', encoding='utf8', newline='\n').write(out)
     save(reg)
 
 

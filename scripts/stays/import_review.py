@@ -14,7 +14,7 @@ import csv, os, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 out = []
-for row in csv.DictReader(open(sys.argv[1], newline='')):
+for row in csv.DictReader(open(sys.argv[1], encoding='utf8', newline='')):
     flag = (row.get('Confirmed (Y/N)') or '').strip().upper()
     if flag not in ('Y', 'N'):
         continue
@@ -24,7 +24,10 @@ for row in csv.DictReader(open(sys.argv[1], newline='')):
         out.append([row['Key'], 'verified', site, url, 'confirmed by owner in review sheet'])
     elif flag == 'N':
         out.append([row['Key'], 'none', '-', '-', 'rejected by owner in review sheet'])
-with tempfile.NamedTemporaryFile('w', suffix='.tsv', delete=False) as fh:
+with tempfile.NamedTemporaryFile('w', suffix='.tsv', delete=False, encoding='utf8', newline='\n') as fh:
     fh.write(''.join('\t'.join(r) + '\n' for r in out))
 print(f'{len(out)} reviewed rows')
-subprocess.run([sys.executable, os.path.join(HERE, 'merge_ota.py'), fh.name], check=True)
+try:
+    subprocess.run([sys.executable, os.path.join(HERE, 'merge_ota.py'), fh.name], check=True)
+finally:
+    os.unlink(fh.name)   # closed by now, so Windows allows it

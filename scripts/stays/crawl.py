@@ -21,8 +21,8 @@ if not os.path.exists(f'{S}/all-accommodations.html'):
     req=urllib.request.Request(LISTING,headers={'User-Agent':'Mozilla/5.0','Accept-Encoding':'gzip'})
     with urllib.request.urlopen(req,timeout=60) as r:
         b=r.read(); b=gzip.decompress(b) if r.headers.get('Content-Encoding')=='gzip' else b
-    open(f'{S}/all-accommodations.html','w').write(b.decode('utf-8','replace'))
-src=open(f'{S}/all-accommodations.html').read()
+    open(f'{S}/all-accommodations.html','w',encoding='utf8',newline='\n').write(b.decode('utf-8','replace'))
+src=open(f'{S}/all-accommodations.html',encoding='utf8').read()
 # The directory's own type and theme pages (first ~50 members each; the rest
 # load by script). process.py uses them as official evidence for categories.
 os.makedirs(f'{S}/official',exist_ok=True)
@@ -33,7 +33,7 @@ for path in sorted(set(re.findall(r'href="(/en/'+DIRECTORY+r'/(?:type|theme)/[a-
         req=urllib.request.Request('https://www.uttarakhand-hotels.com'+path,headers={'User-Agent':'Mozilla/5.0','Accept-Encoding':'gzip'})
         with urllib.request.urlopen(req,timeout=60) as r:
             b=r.read(); b=gzip.decompress(b) if r.headers.get('Content-Encoding')=='gzip' else b
-        open(f'{S}/official/{name}','w').write(b.decode('utf-8','replace')); time.sleep(1)
+        open(f'{S}/official/{name}','w',encoding='utf8',newline='\n').write(b.decode('utf-8','replace')); time.sleep(1)
     except Exception as e:
         print('official page failed',path,e,flush=True)
 # property list grouped by <h3> type sections
@@ -44,11 +44,11 @@ for m in re.finditer(r'<h3[^>]*>\s*([^<(]+?)\s*<span>|<a href="(https://[a-z0-9-
     if url in seen: continue
     seen.add(url); items.append({'url':url,'listName':name,'type':typ})
 print('properties:',len(items),flush=True)
-TOTAL=len(items); json.dump({'total':TOTAL},open(f'{S}/total.json','w'))
+TOTAL=len(items); json.dump({'total':TOTAL},open(f'{S}/total.json','w',encoding='utf8',newline='\n'))
 out=f'{S}/props.jsonl'
 done=set()
 if os.path.exists(out):
-    for l in open(out): done.add(json.loads(l)['url'])
+    for l in open(out,encoding='utf8'): done.add(json.loads(l)['url'])
 todo=[i for i in items if i['url'] not in done]
 UA='Mozilla/5.0 (compatible; research crawl for rishikeshhomestays.com)'
 def fetch(it):
@@ -86,7 +86,7 @@ def fetch(it):
     rec['address']=g('streetAddress') or g('addressLocality'); rec['price']=g('priceRange')
     time.sleep(0.6)
     return rec
-with open(out,'a') as f, cf.ThreadPoolExecutor(4) as ex:
+with open(out,'a',encoding='utf8',newline='\n') as f, cf.ThreadPoolExecutor(4) as ex:
     for n,rec in enumerate(ex.map(fetch,todo),1):
         f.write(json.dumps(rec,ensure_ascii=False)+'\n'); f.flush()
         if n%100==0: print(n,'/',len(todo),flush=True)

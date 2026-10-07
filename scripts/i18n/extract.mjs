@@ -30,7 +30,7 @@
 
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { JSDOM, VirtualConsole } from "jsdom";
 import { segId, norm, addText, readEn, writeEn, slotOnly } from "./catalog.mjs";
 
@@ -251,7 +251,7 @@ export async function buildEnglish({ stays = true } = {}) {
 
 // No top-level await: extract-ui.mjs and extract-stays.mjs import this module, so it
 // must finish loading before buildEnglish() imports them.
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   buildEnglish().then((en) => {
     if (process.argv.includes("--stdout")) return process.stdout.write(JSON.stringify(en, null, 1) + "\n");
     writeEn(en);

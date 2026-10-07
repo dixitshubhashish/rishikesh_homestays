@@ -2,7 +2,8 @@ import 'dotenv/config';
 import { Resend } from 'resend';
 import { isOtpConfigured, generateOtp } from './otp-helpers.js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Built on the first request, not at import: the SDK throws without a key, and server.js imports this file.
+let resend;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default async function handler(req, res) {
@@ -13,6 +14,8 @@ export default async function handler(req, res) {
   if (!isOtpConfigured()) {
     return res.json({ success: true, configured: false });
   }
+
+  resend ||= new Resend(process.env.RESEND_API_KEY);
 
   const email = String(req.body?.email || '').trim();
   if (!EMAIL_RE.test(email)) {

@@ -7,10 +7,10 @@
 //   --slow: one page at a time with a 4 s gap (for sites that push back on bursts).
 // If the site keeps refusing (5xx/429 on 8 pages in a row) the run stops by
 // itself instead of pressing on; re-run later, matched stays are kept.
-// Then:  python3 scripts/stays/merge_ota.py <results.tsv> [...]
+// Then:  node scripts/py.mjs scripts/stays/merge_ota.py <results.tsv> [...]
 import { chromium } from 'playwright';
 import { readFileSync, appendFileSync, existsSync, readdirSync } from 'fs';
-import { titleMatches } from './booking-match.mjs';
+import { titleMatches, BROWSER_UA } from './booking-match.mjs';
 import { fileURLToPath } from 'url';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -38,7 +38,7 @@ const names = {}, cityOf = {};
 const cityFiles = process.env.STAYS_FILE ? [process.env.STAYS_FILE] : [`${HERE}.cache/stays.json`, ...readdirSync(`${HERE}.cache`, { withFileTypes: true })
   .filter((e) => e.isDirectory()).map((e) => `${HERE}.cache/${e.name}/stays.json`).filter((f) => existsSync(f))];
 for (const f of cityFiles) for (const s of JSON.parse(readFileSync(f, 'utf8'))) { names[s.id] = s.n; cityOf[s.id] = s.cy || 'rishikesh'; }
-const candidates = readFileSync(process.argv[2], 'utf8').trim().split('\n').map((l) => l.split('\t'))
+const candidates = readFileSync(process.argv[2], 'utf8').trim().split(/\r?\n/).map((l) => l.split('\t'))
   .filter((c) => PLATFORMS[c[2]] && c[3]?.startsWith('https://'));
 // shard by stay, so all of one stay's candidates are checked in the same run
 const keys = [...new Set(candidates.map((c) => c[0]))];
@@ -46,7 +46,7 @@ const mine = new Set(keys.filter((_, i) => i % SHARDS === SHARD - 1));
 candidates.splice(0, candidates.length, ...candidates.filter((c) => mine.has(c[0])));
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ locale: 'en-GB', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36' });
+const ctx = await browser.newContext({ locale: 'en-GB', userAgent: BROWSER_UA });
 await ctx.route(/\.(png|jpe?g|webp|gif|svg|woff2?|mp4)(\?|$)/, (r) => r.abort()); // pages only, no media
 const confirmed = new Set();
 let found = 0, missed = 0, skipped = 0, refusedInARow = 0;

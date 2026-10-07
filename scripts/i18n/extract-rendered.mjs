@@ -95,7 +95,7 @@ async function main() {
       if (slotOnly(k)) continue;
       out[k] = k;
     }
-    en.rendered = Object.keys(out).sort((a, b) => a.localeCompare(b));
+    en.rendered = Object.keys(out).sort((a, b) => a.localeCompare(b, "en"));
     writeEn(en);
     console.log(`i18n/en.json "rendered": ${en.rendered.length} texts the browser shows that the source scans miss (${views.length} views × 2 widths). Now run node scripts/i18n/extract.mjs`);
   } finally {

@@ -100,7 +100,7 @@ test('every stays page is in sitemap.xml, and every sitemap stays URL exists', (
 
 test('every stays page is in llms.txt (index) and llms-full.txt (details with a link to act on)', () => {
   const llms = readFileSync(join(root, 'llms.txt'), 'utf-8');
-  const full = readFileSync(join(root, 'llms-full.txt'), 'utf-8');
+  const full = readFileSync(join(root, 'llms-full.txt'), 'utf-8').replace(/\r\n/g, '\n');
   assert(llms.includes('https://rishikeshhomestays.com/llms-full.txt'), 'llms.txt should point to llms-full.txt');
   for (const p of pages) {
     const url = `https://rishikeshhomestays.com/hotels/${p.file.replace(/\.html$/, '')}`;

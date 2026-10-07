@@ -46,16 +46,16 @@ def url_words(platform, url):
 def main():
     platform, urls_file = sys.argv[1], sys.argv[2]
     out = sys.argv[3] if len(sys.argv) > 3 else os.path.join(HERE, '.cache', f'{platform}-candidates.tsv')
-    verified = {l.split('\t')[0] for l in open(os.path.join(HERE, 'ota-links.tsv')).read().splitlines()[1:]
+    verified = {l.split('\t')[0] for l in open(os.path.join(HERE, 'ota-links.tsv'), encoding='utf8').read().splitlines()[1:]
                 if l.split('\t')[1] == 'verified'}
     stays = []
     files = [os.environ['STAYS_FILE']] if os.environ.get('STAYS_FILE') else \
         [os.path.join(HERE, '.cache', 'stays.json')] + glob.glob(os.path.join(HERE, '.cache', '*', 'stays.json'))
     for f in files:
-        for s in json.load(open(f)):
+        for s in json.load(open(f, encoding='utf8')):
             if s['id'] not in verified and not s.get('own'):
                 stays.append((s['id'], s['n'], s.get('cy') or 'rishikesh'))
-    urls = [u.strip() for u in open(urls_file) if u.strip()]
+    urls = [u.strip() for u in open(urls_file, encoding='utf8') if u.strip()]
     urls = [u if u.startswith('http') else f'https://www.{u}.html' if platform == 'booking' else u for u in urls]
     uw = [set(url_words(platform, u)) for u in urls]
     index = defaultdict(set)
@@ -76,7 +76,7 @@ def main():
         for i in ranked[:2]:
             rows.append(f'{key}\tdoubtful\t{SITE[platform]}\t{urls[i]}\tsitemap name match\n')
         matched += bool(ranked)
-    open(out, 'w').write(''.join(rows))
+    open(out, 'w', encoding='utf8', newline='\n').write(''.join(rows))
     print(f'{platform}: {len(stays)} stays without a link, {matched} have a sitemap name match, '
           f'{len(rows)} candidate URLs -> {out}')
 

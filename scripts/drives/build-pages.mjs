@@ -9,9 +9,9 @@
 //   node scripts/drives/build-pages.mjs    writes the pages and the master guide's "other starting points" links
 //
 // The head, header and footer are the master guide's; only <main>, the title and the structured data change.
-// After running: python3 scripts/stays/footer_links.py (the footer finds these pages by file name: FAMILIES there), then
+// After running: node scripts/py.mjs scripts/stays/footer_links.py (the footer finds these pages by file name: FAMILIES there), then
 // `npm run i18n:extract` (pages are listed in PAGES of scripts/i18n/extract.mjs via DRIVES), `npm run build:search`,
-// `python3 scripts/stays/page_dates.py`, then the sync steps of docs/I18N.md.
+// `node scripts/py.mjs scripts/stays/page_dates.py`, then the sync steps of docs/I18N.md.
 //
 // Copy rules (docs/HANDOFF.md): guide voice, no invented facts. Distances are rounded to 10 km from several
 // routing sources (they differ by 10-30 km depending on where in the city you start): always "about".
@@ -20,7 +20,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SITE = "https://rishikeshhomestays.com";
@@ -239,7 +239,7 @@ export function otherStarts() {
   return `<h2>Starting from elsewhere?</h2>\n            ${links.join("\n            ")}`;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const file = join(ROOT, `${MASTER}.html`);
   let master = readFileSync(file, "utf8");
   // the master keeps its own region up to date (this is the only part of it the script writes)

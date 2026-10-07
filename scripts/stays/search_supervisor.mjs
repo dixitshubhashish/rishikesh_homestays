@@ -20,6 +20,7 @@ import os from 'os';
 import { statfsSync } from 'fs';
 import { openSync, readFileSync, statSync, existsSync, mkdirSync, rmdirSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { pythonCommand, pythonEnv } from '../py.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
@@ -46,7 +47,6 @@ const WORKERS = [
 
 // Works on macOS and Windows (owner, 2026-10-06: the search moves to a Windows laptop; docs/booking-links/RULES.md §5).
 const WIN = process.platform === 'win32';
-const PY = WIN ? 'python' : 'python3'; // Windows: the python.org installer's `python` (or `py -3`)
 const sleepMs = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 const diskFreeGb = () => { try { const f = statfsSync(ROOT); return (f.bavail * f.bsize) / 1e9; } catch { return 999; } };
 // the running search workers: [{ pid, cmd }]
@@ -57,7 +57,7 @@ function workerProcesses() {
       const rows = [].concat(JSON.parse(out || '[]'));
       return rows.filter((r) => /google_ota_search/.test(r.CommandLine || '')).map((r) => ({ pid: r.ProcessId, cmd: r.CommandLine.replace(/^.*?(scripts[\\/]stays[\\/]google_ota_search)/, 'node $1').replace(/\\/g, '/') }));
     }
-    return execSync("pgrep -fl '^node scripts/stays/google_ota_search'").toString().trim().split('\n').map((l) => { const [pid, ...cmd] = l.split(' '); return { pid: Number(pid), cmd: cmd.join(' ') }; });
+    return execSync("pgrep -fl '^node scripts/stays/google_ota_search'").toString().trim().split(/\r?\n/).map((l) => { const [pid, ...cmd] = l.split(' '); return { pid: Number(pid), cmd: cmd.join(' ') }; });
   } catch { return []; }
 }
 
@@ -85,7 +85,7 @@ function since(w) { // this run's part of the worker's log
 
 function stop(w, why) { // under the lists lock, so a list write is never cut short
   for (let i = 0; i < 200; i++) { try { mkdirSync(LOCK); break; } catch { sleepMs(100); } }
-  try { process.kill(w.pid, 'SIGTERM'); sleepMs(5000); if (alive(w.pid)) process.kill(w.pid, 'SIGKILL'); } catch { /* gone */ }
+  try { process.kill(w.pid, 'SIGTERM'); if (!WIN) sleepMs(5000); /* Windows ends it at once: no handler runs, so nothing to wait for */ if (alive(w.pid)) process.kill(w.pid, 'SIGKILL'); } catch { /* gone */ }
   try { rmdirSync(LOCK); } catch { /* not ours */ }
   say(`stopped ${w.name}: ${why}`);
 }
@@ -111,9 +111,9 @@ function adopt(w) {
 function memoryTight() {
   try {
     const disk = diskFreeGb();
-    if (WIN || process.platform === 'linux') { // free RAM under 1.5 GB, or the disk under 5 GB
+    if (WIN || process.platform === 'linux') { // free RAM under 1.5 GB (0.8 on Windows, where five browsers sit near that line all day), or the disk under 5 GB
       const freeGb = os.freemem() / 1e9;
-      return freeGb < 1.5 || disk < 5 ? `free memory ${freeGb.toFixed(1)} GB, disk ${Math.round(disk)} GB free` : '';
+      return freeGb < (WIN ? 0.8 : 1.5) || disk < 5 ? `free memory ${freeGb.toFixed(1)} GB, disk ${Math.round(disk)} GB free` : '';
     }
     const lvl = Number(execSync('sysctl -n kern.memorystatus_vm_pressure_level').toString());
     // macOS keeps swap high for days and adds swap files as it needs them: what matters is swap nearly full while the disk
@@ -124,9 +124,9 @@ function memoryTight() {
 }
 
 function counts() {
-  const n = (f) => { try { return readFileSync(`${ROOT}docs/booking-links/${f}`, 'utf8').trim().split('\n').length - 1; } catch { return 0; } };
+  const n = (f) => { try { return readFileSync(`${ROOT}docs/booking-links/${f}`, 'utf8').trim().split(/\r?\n/).length - 1; } catch { return 0; } };
   const statuses = {};
-  try { for (const l of readFileSync(`${ROOT}docs/booking-links/unfound.tsv`, 'utf8').trim().split('\n').slice(1)) { const s = l.split('\t')[5]; statuses[s] = (statuses[s] || 0) + 1; } } catch { /* mid-write */ }
+  try { for (const l of readFileSync(`${ROOT}docs/booking-links/unfound.tsv`, 'utf8').trim().split(/\r?\n/).slice(1)) { const s = l.split('\t')[5]; statuses[s] = (statuses[s] || 0) + 1; } } catch { /* mid-write */ }
   return `queue ${n('all.tsv')}, found ${n('found.tsv')}, unfound ${JSON.stringify(statuses)}, review ${n('review.tsv')}`;
 }
 
@@ -206,9 +206,11 @@ for (;;) {
     // stays that are already listed (a duplicate with its page, or a linked twin 40 m away) leave unfound.tsv: record them in found.tsv
     // the pages the searches harvested (up to 6 per search): opened in parallel within seconds, then mapped across to our stays,
     // and the stays that are already listed leave unfound.tsv (docs/booking-links/RULES.md)
-    const tail = (cmd, n, ms) => { try { return execSync(`${cmd} 2>&1`, { cwd: ROOT, timeout: ms, encoding: 'utf8' }).trim().split('\n').slice(-n).join(' | '); } catch (e) { return `failed: ${String(e.message).split('\n')[0]}`; } };
-    say('seen pages:', tail('node scripts/stays/verify_seen.mjs --limit 400', 1, 360000), '|', tail(`${PY} scripts/stays/map_seen_pages.py`, 2, 120000));
-    say('prune_unfound:', tail(`${PY} scripts/stays/prune_unfound.py`, 3, 120000));
+    // Python is looked up inside tail's try (cmd may be a function), so a missing Python fails only these two steps, not the supervisor
+    const py = (script) => () => `${pythonCommand().map((x) => (/\s/.test(x) ? `"${x}"` : x)).join(' ')} ${script}`;
+    const tail = (cmd, n, ms) => { try { return execSync(`${typeof cmd === 'function' ? cmd() : cmd} 2>&1`, { cwd: ROOT, timeout: ms, encoding: 'utf8', env: pythonEnv }).trim().split(/\r?\n/).slice(-n).join(' | '); } catch (e) { return `failed: ${String(e.message).split('\n')[0]}`; } };
+    say('seen pages:', tail('node scripts/stays/verify_seen.mjs --limit 400', 1, 360000), '|', tail(py('scripts/stays/map_seen_pages.py'), 2, 120000));
+    say('prune_unfound:', tail(py('scripts/stays/prune_unfound.py'), 3, 120000));
     say('status:', counts(), '|', WORKERS.map((w) => `${w.name} ${w.finished ? 'finished' : w.pid && alive(w.pid) ? `${w.plan[w.step].join(' ')}` : 'waiting'}`).join(', '), tight ? `| memory: ${tight}` : '');
   }
   await new Promise((r) => setTimeout(r, 60e3));

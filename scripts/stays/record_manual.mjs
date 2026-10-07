@@ -26,7 +26,7 @@ const SOURCE = "claude in chrome (owner's normal Chrome), checked by hand";
 
 function tsv(file) {
   if (!existsSync(file)) return [];
-  const [head, ...rows] = readFileSync(file, 'utf8').trim().split('\n').map((l) => l.split('\t'));
+  const [head, ...rows] = readFileSync(file, 'utf8').trim().split(/\r?\n/).map((l) => l.split('\t'));
   return rows.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
 }
 const cleanField = (v) => {
@@ -34,10 +34,12 @@ const cleanField = (v) => {
   if ((s.match(/"/g) || []).length % 2) s = s.replace(/"([^"]*)$/, '$1');
   return s;
 };
+// Windows refuses to replace a file another process has open (Python's open(), Defender, an editor): retry briefly. POSIX never throws these.
+const renameRetry = (a, b) => { for (let i = 0; ; i++) { try { return renameSync(a, b); } catch (e) { if (i >= 40 || !['EPERM', 'EBUSY', 'EACCES'].includes(e.code)) throw e; sleepSync(50); } } };
 const writeTsv = (file, cols, rows) => { // atomic: nobody ever reads a half-written list
   const tmp = `${file}.tmp-${process.pid}`;
   writeFileSync(tmp, [cols.join('\t'), ...rows.map((r) => cols.map((c) => cleanField(r[c])).join('\t'))].join('\n') + '\n');
-  renameSync(tmp, file);
+  renameRetry(tmp, file);
 };
 const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 function withLock(fn) {

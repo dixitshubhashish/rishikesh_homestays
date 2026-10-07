@@ -96,6 +96,8 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
   if (req.path !== '/' && !path.extname(req.path)) {
     const htmlPath = path.join(__dirname, req.path + '.html');
+    // A raw backslash is a separator on Windows, so '..\' could walk out of the repo.
+    if (!htmlPath.startsWith(__dirname + path.sep)) return next();
     fs.stat(htmlPath, (err, stats) => {
       if (!err && stats.isFile()) return res.sendFile(htmlPath);
       next();

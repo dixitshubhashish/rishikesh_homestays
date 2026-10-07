@@ -135,6 +135,6 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       for (const it of bad.slice(0, 20)) console.log(`   ${it.k}  ${it.en.slice(0, 70)}  →  ${tr[it.k].slice(0, 70)}`);
     }
   } else {
-    console.log(readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1, 25).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));
+    console.log(readFileSync(new URL(import.meta.url), "utf8").split(/\r?\n/).slice(1, 25).map((l) => l.replace(/^\/\/ ?/, "")).join("\n"));
   }
 }

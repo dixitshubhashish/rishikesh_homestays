@@ -78,7 +78,7 @@ const places = JSON.parse(readFileSync(join(HERE, '.cache/places/places.json'), 
 // same sitemap/browser matching as the directory (see README "Google Maps places")
 const placeLinks = {};
 const placeOta = join(HERE, '.cache/places/ota-links.tsv');
-if (existsSync(placeOta)) for (const line of readFileSync(placeOta, 'utf8').trim().split('\n')) {
+if (existsSync(placeOta)) for (const line of readFileSync(placeOta, 'utf8').trim().split(/\r?\n/)) {
   const [key, status, site, url] = line.split('\t');
   if (status === 'verified') placeLinks[key.slice(2)] = { site, url: url.split('?')[0] };
 }
@@ -87,7 +87,7 @@ if (existsSync(placeOta)) for (const line of readFileSync(placeOta, 'utf8').trim
 // internal and are never used as the site's booking link.
 const agodaExact = {};
 const agodaFile = join(HERE, '.cache/places/agoda-exact.tsv');
-if (existsSync(agodaFile)) for (const line of readFileSync(agodaFile, 'utf8').trim().split('\n')) {
+if (existsSync(agodaFile)) for (const line of readFileSync(agodaFile, 'utf8').trim().split(/\r?\n/)) {
   const [key, url] = line.split('\t');
   agodaExact[key] = url;
 }
@@ -99,7 +99,7 @@ const stays = [['rishikesh', join(HERE, '.cache/stays.json')],
   .flatMap(([city, f]) => JSON.parse(readFileSync(f, 'utf8')).map((s) => ({ ...s, cy: s.cy || city })))
   .filter((s) => s.ll && !s.gm); // Google-sourced stays (gm) are the places themselves, not directory matches
 const links = {};
-for (const line of readFileSync(join(HERE, 'ota-links.tsv'), 'utf8').trim().split('\n').slice(1)) {
+for (const line of readFileSync(join(HERE, 'ota-links.tsv'), 'utf8').trim().split(/\r?\n/).slice(1)) {
   const [key, status, site, url] = line.split('\t');
   if (status === 'verified') links[key] = { site, url: url.split('?')[0] };
 }
@@ -168,7 +168,7 @@ console.log(`  open places new to us or without a booking link (phone worth fetc
 if (DRY) process.exit(0);
 
 const credentials = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-  : JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS || join(HERE, '../../credentials/bigquery-service-account.json'), 'utf8'));
+  : JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS || join(HERE, '../../credentials/bigquery-service-account.json'), 'utf8').replace(/^\uFEFF/, ''));
 const bigquery = new BigQuery({ projectId: credentials.project_id, credentials });
 const file = join(mkdtempSync(join(tmpdir(), 'places-')), 'rows.ndjson');
 writeFileSync(file, rows.map((r) => JSON.stringify(r)).join('\n'));

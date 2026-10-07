@@ -9,10 +9,10 @@
 //   --shard i/N: take every N-th stay starting at i (1-based), so N runs can go at once.
 //   --out: where matches are appended (default .cache/slug-guesses.tsv); stays
 //   tried without a match go to <out>.tried, so a re-run skips them.
-// Then:  python3 scripts/stays/merge_ota.py <out> [...]
+// Then:  node scripts/py.mjs scripts/stays/merge_ota.py <out> [...]
 import { chromium } from 'playwright';
 import { readFileSync, appendFileSync, existsSync, readdirSync } from 'fs';
-import { words, bookingPageMatches } from './booking-match.mjs';
+import { words, bookingPageMatches, BROWSER_UA } from './booking-match.mjs';
 import { fileURLToPath } from 'url';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -46,18 +46,18 @@ const stays = [];
 const cityFiles = process.env.STAYS_FILE ? [process.env.STAYS_FILE] : [`${HERE}.cache/stays.json`, ...readdirSync(`${HERE}.cache`, { withFileTypes: true })
   .filter((e) => e.isDirectory()).map((e) => `${HERE}.cache/${e.name}/stays.json`).filter((f) => existsSync(f))];
 for (const f of cityFiles) for (const s of JSON.parse(readFileSync(f, 'utf8'))) stays.push({ ...s, cy: s.cy || 'rishikesh' });
-const verified = new Set(readFileSync(`${HERE}ota-links.tsv`, 'utf8').trim().split('\n').slice(1)
+const verified = new Set(readFileSync(`${HERE}ota-links.tsv`, 'utf8').trim().split(/\r?\n/).slice(1)
   .map((l) => l.split('\t')).filter((c) => c[1] === 'verified').map((c) => c[0]));
-const seen = (f) => new Set(existsSync(f) ? readFileSync(f, 'utf8').split('\n').filter(Boolean).map((l) => l.split('\t')[0]) : []);
+const seen = (f) => new Set(existsSync(f) ? readFileSync(f, 'utf8').split(/\r?\n/).filter(Boolean).map((l) => l.split('\t')[0]) : []);
 const tried = new Set([...seen(OUT), ...seen(TRIED)]);
 const todo = stays.filter((s) => !s.own && !verified.has(s.id))
-  .sort((a, b) => (b.q || 0) - (a.q || 0) || a.id.localeCompare(b.id)) // best first (q: quality score, if given)
+  .sort((a, b) => (b.q || 0) - (a.q || 0) || a.id.localeCompare(b.id, 'en')) // best first (q: quality score, if given)
   .filter((_, i) => i % SHARDS === SHARD - 1)
   .filter((s) => !tried.has(s.id))
   .slice(0, LIMIT);
 
 const browser = await chromium.launch();
-const ctx = await browser.newContext({ locale: 'en-GB', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36' });
+const ctx = await browser.newContext({ locale: 'en-GB', userAgent: BROWSER_UA });
 await ctx.route(/\.(png|jpe?g|webp|gif|svg|woff2?|mp4)(\?|$)/, (r) => r.abort()); // pages only, no media
 let done = 0, found = 0, blocked = 0;
 // Booking.com answers 429 when we go too fast. Never record "no match" while

@@ -11,6 +11,10 @@ Then: python3 scripts/stays/merge_ota.py <out.tsv>
 """
 import collections, glob, json, os, re, sys
 
+# Names can hold characters a Windows console code page can't encode (Rishīkesh, Devanagari).
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 DROP = set('hotel hotels the a an and of in at by with rishikesh haridwar hardwar tapovan'.split())
 
@@ -31,16 +35,16 @@ def main():
     # STAYS_FILE adds another list of stays (e.g. Google Maps places, keys g-<place_id>)
     extra = [os.environ['STAYS_FILE']] if os.environ.get('STAYS_FILE') else []
     for f in [os.path.join(HERE, '.cache', 'stays.json')] + glob.glob(os.path.join(HERE, '.cache', '*', 'stays.json')) + extra:
-        for s in json.load(open(f)):
+        for s in json.load(open(f, encoding='utf8')):
             names[s['id']] = (s['n'], s.get('cy') or 'rishikesh')
     rows = {}
     for f in inputs:
-        for line in open(f):
+        for line in open(f, encoding='utf8'):
             c = line.rstrip('\n').split('\t')
             if len(c) >= 5 and c[1] == 'verified' and c[0] in names and c[0] not in rows:
                 rows[c[0]] = c
     owners = collections.defaultdict(list)
-    for line in open(os.path.join(HERE, 'ota-links.tsv')).read().splitlines()[1:]:
+    for line in open(os.path.join(HERE, 'ota-links.tsv'), encoding='utf8').read().splitlines()[1:]:
         c = line.split('\t')
         if c[1] == 'verified':
             owners[c[3].split('?')[0].rstrip('/')].append(c[0])
@@ -61,7 +65,7 @@ def main():
         for k in keys:
             same = name_set(names[k][0]) == name_set(names[best][0]) and names[k][1] == names[best][1]
             (keep.append(rows[k]) if same else drop.append((k, f'page fits {best} better')))
-    open(out, 'w').write(''.join('\t'.join(c[:5]) + '\n' for c in keep))
+    open(out, 'w', encoding='utf8', newline='\n').write(''.join('\t'.join(c[:5]) + '\n' for c in keep))
     print(f'{len(rows)} matches: keep {len(keep)} '
           f'({dict(collections.Counter(names[c[0]][1] for c in keep))}), drop {len(drop)}')
     for k, why in drop:

@@ -24,15 +24,16 @@ today = datetime.date.today()
 
 def load_state():
     try:
-        return json.load(open(STATE))
+        return json.load(open(STATE, encoding='utf8'))
     except FileNotFoundError:
         return {'last_check': None, 'last_crawl': None, 'gap_days': MIN_DAYS}
 
 
 def save_state(st):
     st['next_due'] = (today + datetime.timedelta(days=st['gap_days'])).isoformat()
-    json.dump(st, open(STATE, 'w'), indent=2)
-    open(STATE, 'a').write('\n')
+    with open(STATE, 'w', encoding='utf8', newline='\n') as fh:
+        json.dump(st, fh, indent=2)
+        fh.write('\n')
 
 
 def listing_urls():
@@ -57,7 +58,7 @@ def main():
             print(f'Not due: next check {due} (gap {st["gap_days"]} days).')
             return
     current = listing_urls()
-    previous = open(URLS).read().split() if os.path.exists(URLS) else []
+    previous = open(URLS, encoding='utf8').read().split() if os.path.exists(URLS) else []
     added, removed = sorted(set(current) - set(previous)), sorted(set(previous) - set(current))
     st['last_check'] = today.isoformat()
     if previous and not added and not removed and not force:
@@ -74,12 +75,12 @@ def main():
     guesses = os.path.join(HERE, '.cache', 'slug-guesses.tsv')
     if os.path.exists(guesses):
         verified = os.path.join(HERE, '.cache', 'slug-guesses-verified.tsv')
-        open(verified, 'w').write(''.join(l for l in open(guesses) if '\tverified\t' in l))
+        open(verified, 'w', encoding='utf8', newline='\n').write(''.join(l for l in open(guesses, encoding='utf8') if '\tverified\t' in l))
         run('merge_ota.py', verified)
     run('build_pages.py')
     # Snapshot into BigQuery (market_properties); skips itself without credentials.
     subprocess.run(['node', os.path.join(HERE, 'push_bigquery.mjs')], check=False)
-    open(URLS, 'w').write('\n'.join(current) + '\n')
+    open(URLS, 'w', encoding='utf8', newline='\n').write('\n'.join(current) + '\n')
     st.update(last_crawl=today.isoformat(), gap_days=MIN_DAYS, last_added=len(added), last_removed=len(removed), total=len(current))
     save_state(st)
     print(f'Pages rebuilt. Next check in {MIN_DAYS} days.')

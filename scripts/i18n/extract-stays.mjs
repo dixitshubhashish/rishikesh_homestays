@@ -30,12 +30,13 @@ import { execFileSync } from "node:child_process";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { extractPage, extractAll, segId, norm } from "./extract.mjs";
+import { pythonCommand, pythonEnv } from "../py.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const HAND_MADE = new Set(["advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh.html"]);
 
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const tsv = (f) => readFileSync(join(ROOT, f), "utf8").split("\n").filter((l) => l && !l.startsWith("#"));
+const tsv = (f) => readFileSync(join(ROOT, f), "utf8").split(/\r?\n/).filter((l) => l && !l.startsWith("#"));
 
 // Names the generator puts into its sentences.
 export async function vocabulary() {
@@ -56,9 +57,11 @@ export async function vocabulary() {
   }
   // The short area descriptions build_pages.py strings together ("Tapovan is the busy cafe…;
   // Kankhal is an older…"): as terms they are translated once, not in every combination.
-  const notes = JSON.parse(execFileSync("python3", ["-c",
+  // scripts/py.mjs picks the interpreter this machine has (python3 on macOS, python or py -3 on Windows).
+  const [py, ...pre] = pythonCommand();
+  const notes = JSON.parse(execFileSync(py, [...pre, "-c",
     "import json,sys; sys.path.insert(0,'scripts/stays'); import build_pages as b; print(json.dumps(list(b.AREA_NOTES.values())))"],
-  { cwd: ROOT, encoding: "utf8" }));
+  { cwd: ROOT, encoding: "utf8", env: pythonEnv, windowsHide: true }));
   for (const n of notes) terms.add(n);
   for (const t of [...terms]) if (!t || t.length < 3 || !/\p{L}/u.test(t)) terms.delete(t);
   for (const n of [...names]) if (!n || n.length < 3 || terms.has(n)) names.delete(n);

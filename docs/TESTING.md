@@ -22,7 +22,7 @@ node --test tests/api/*.test.js tests/modules/*.test.js tests/integration/*.test
 
 `npm run test:coverage` passes `--coverage`, which this Node version ignores, so it prints no coverage report. Coverage is not measured.
 
-macOS has no `timeout` command. To cap a run: `perl -e 'alarm 300; exec @ARGV' node --test <file>`.
+Same commands on macOS and Windows. To cap a run, use Node's own timeout (macOS has no `timeout` command, and the perl `alarm` trick does not exist on Windows): `node --test --test-timeout=300000 <file>`. On Windows, npm runs scripts through cmd.exe, so write package.json scripts with `&&` and no `VAR=x` prefixes; `npm test`'s unquoted `tests/**/*.test.js` globs work in both (sh expands them, Node 21+ expands them itself under cmd.exe). Python steps go through `node scripts/py.mjs <script.py>`, never a bare `python3` (a Microsoft Store stub on Windows).
 
 Tests exit 0 on pass and non-zero on failure. In CI: `- run: npm test`.
 

@@ -20,7 +20,7 @@
 
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { PAGES } from "./extract.mjs";
 import { NAME_WORDS } from "../../assets/js/i18n-runtime.js";
 import { AREAS } from "../../assets/js/modules/data.js";
@@ -189,7 +189,7 @@ export function extractUi(rendered = []) {
     for (const lit of stringLiterals(src)) for (const t of pieces(lit)) if (looksLikeText(t)) add(t, where);
   }
   const out = {};
-  for (const t of [...found.keys()].sort((a, b) => a.localeCompare(b))) out[t] = t;
+  for (const t of [...found.keys()].sort((a, b) => a.localeCompare(b, "en"))) out[t] = t;
   for (const t of [...MONTHS, ...MONTHS_SHORT, ...DAYS, ...DAYS_SHORT]) out[t] = t;
   // the amenity labels of every stay page ("Garden furniture", "VIP check-in/ -out"): stay-page.js writes them from the data modules
   for (const f of FACILITIES) out[f] ??= f;
@@ -209,7 +209,7 @@ export function extractUi(rendered = []) {
   return out;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const { readEn } = await import("./catalog.mjs");
   process.stdout.write(JSON.stringify(extractUi(readEn().rendered), null, 2) + "\n");
 }

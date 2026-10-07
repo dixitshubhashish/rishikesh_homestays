@@ -27,7 +27,7 @@ function clientOptions() {
     return { projectId: credentials.project_id, credentials };
   }
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-    const credentials = JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
+    const credentials = JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8').replace(/^\uFEFF/, ''));
     return { projectId: credentials.project_id, keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS };
   }
   return null;
@@ -79,13 +79,13 @@ async function main() {
       .map((e) => [e.name, join(HERE, '.cache', e.name, 'stays.json')]).filter(([, f]) => existsSync(f))];
   const stays = cityFiles.flatMap(([city, f]) => JSON.parse(readFileSync(f, 'utf8')).map((s) => ({ ...s, cy: s.cy || city })));
   const links = {};
-  for (const line of readFileSync(join(HERE, 'ota-links.tsv'), 'utf8').trim().split('\n').slice(1)) {
+  for (const line of readFileSync(join(HERE, 'ota-links.tsv'), 'utf8').trim().split(/\r?\n/).slice(1)) {
     const [key, status, site, url] = line.split('\t');
     links[key] = { status, site: site === '-' ? null : site, url: url && url.startsWith('https://') ? url : null };
   }
   const agodaExact = {};
   const agodaFile = join(HERE, '.cache/places/agoda-exact.tsv');
-  if (existsSync(agodaFile)) for (const line of readFileSync(agodaFile, 'utf8').trim().split('\n')) {
+  if (existsSync(agodaFile)) for (const line of readFileSync(agodaFile, 'utf8').trim().split(/\r?\n/)) {
     const [key, url] = line.split('\t');
     agodaExact[key] = url;
   }

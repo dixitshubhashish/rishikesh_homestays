@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cities import cache_dir, CITIES
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-places = json.load(open(os.path.join(HERE, '.cache', 'places', 'new-with-link.json')))
+places = json.load(open(os.path.join(HERE, '.cache', 'places', 'new-with-link.json'), encoding='utf8'))
 # Google's primary type → the crawl's "type" field process.py understands
 GOOGLE_TYPE = {'hostel': 'Hostels', 'bed_and_breakfast': 'Bed and breakfasts', 'extended_stay_hotel': 'Apartments',
                'private_guest_room': 'Holiday rentals'}
@@ -37,7 +37,7 @@ taken = set()
 for city in CITIES:
     f = os.path.join(cache_dir(city), 'stays.json')
     if os.path.exists(f):
-        taken |= {s['id'] for s in json.load(open(f)) if not s.get('gm')}
+        taken |= {s['id'] for s in json.load(open(f, encoding='utf8')) if not s.get('gm')}
 ota_rows, per_city = [], {}
 for p in sorted(places, key=lambda p: p['place_id']):
     slug = slugify(p['name'])
@@ -53,9 +53,9 @@ for p in sorted(places, key=lambda p: p['place_id']):
     note = 'Google Maps place: owner\'s own booking page' if p['source'] == 'google_website' else 'Google Maps place, browser-confirmed match'
     ota_rows.append(f"{slug}\tverified\t{p['site']}\t{p['url']}\t{note}\n")
 for city in CITIES:
-    with open(os.path.join(cache_dir(city), 'google-extra.jsonl'), 'w') as fh:
+    with open(os.path.join(cache_dir(city), 'google-extra.jsonl'), 'w', encoding='utf8', newline='\n') as fh:
         fh.writelines(json.dumps(r, ensure_ascii=False) + '\n' for r in per_city.get(city, []))
 tsv = os.path.join(HERE, '.cache', 'places', 'google-stays-ota.tsv')
-open(tsv, 'w').writelines(ota_rows)
+open(tsv, 'w', encoding='utf8', newline='\n').writelines(ota_rows)
 subprocess.run([sys.executable, os.path.join(HERE, 'merge_ota.py'), tsv], check=True)
 print({c: len(v) for c, v in per_city.items()}, 'Google places prepared for process.py')

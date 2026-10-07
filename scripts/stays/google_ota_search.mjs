@@ -33,12 +33,13 @@
 // Other flags: --offset N, --engines google,bing,brave, --ddg, --gap 20-40,
 //   --wait-captcha SEC, --proxy URL, --dry, --sync (only rewrite the two trackers),
 //   --recheck FILE (re-open every 'verified' line of FILE and keep only those that still match).
-// Then:  python3 scripts/stays/postcheck_matches.py <out.tsv> docs/booking-links/found.tsv, merge_ota.py <out.tsv> (see docs/HANDOFF.md)
+// Then:  node scripts/py.mjs scripts/stays/postcheck_matches.py <out.tsv> docs/booking-links/found.tsv, merge_ota.py <out.tsv> (see docs/HANDOFF.md)
 import { chromium, firefox, webkit } from 'playwright';
 import { readFileSync, writeFileSync, appendFileSync, existsSync, mkdirSync, rmdirSync, statSync, renameSync } from 'fs';
 import { coreName, coreWords, matchReason, cleanUrl, platformOf, PLATFORMS } from './ota-match.mjs';
 import { judge, fuzzyName } from './ota-evidence.mjs';
 import { fileURLToPath } from 'url';
+import os from 'os';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const AG = `${ROOT}docs/booking-links/`;
@@ -76,8 +77,11 @@ const BROWSERS = [...Object.keys(ATTACH), ...arg('--browsers', '').split(',').fi
 if (!BROWSERS.length && !flag('--sync')) throw new Error('give --attach name=url and/or --browsers webkit,…');
 // browsers this script launches itself (--browsers brave|opera); the ones you attach to (--attach) are already open
 const WINDOWS = process.platform === 'win32';
-const BRAVE = WINDOWS ? 'C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe' : '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
-const OPERA = WINDOWS ? `${process.env.LOCALAPPDATA || ''}\\Programs\\Opera\\opera.exe` : '/Applications/Opera.app/Contents/MacOS/Opera';
+// Windows: the same places scripts/windows/start-browsers.ps1 looks (per-machine and per-user installs)
+const firstExisting = (...p) => p.find((x) => existsSync(x)) || p[0];
+const PF = process.env.ProgramFiles || 'C:\\Program Files', LAD = process.env.LOCALAPPDATA || '';
+const BRAVE = WINDOWS ? firstExisting(`${PF}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`, `${LAD}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`) : '/Applications/Brave Browser.app/Contents/MacOS/Brave Browser';
+const OPERA = WINDOWS ? firstExisting(`${LAD}\\Programs\\Opera\\opera.exe`, `${PF}\\Opera\\opera.exe`) : '/Applications/Opera.app/Contents/MacOS/Opera';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const jitter = (a, b) => sleep(a + Math.random() * (b - a));
@@ -104,7 +108,7 @@ const UNFOUND_COLS = ['key', 'name', 'city', 'area', 'search_log', 'status'];
 const QUEUE_COLS = ['key', 'name', 'city', 'area', 'type', 'rating', 'reviews', 'price_from_inr'];
 function tsv(file) {
   if (!existsSync(file)) return [];
-  const [head, ...rows] = readFileSync(file, 'utf8').trim().split('\n').map((l) => l.split('\t'));
+  const [head, ...rows] = readFileSync(file, 'utf8').trim().split(/\r?\n/).map((l) => l.split('\t'));
   return rows.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ''])));
 }
 // Atomic: written to a temp file, then renamed over the list, so an editor or another reader never sees a
@@ -116,12 +120,15 @@ const cleanField = (v) => {
   if ((s.match(/"/g) || []).length % 2) s = s.replace(/"([^"]*)$/, '$1');
   return s;
 };
+const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+// Windows refuses to replace a file another process has open (Python's open(), Defender, an editor): retry briefly.
+// POSIX rename never throws these, so the loop is not entered there.
+const renameRetry = (a, b) => { for (let i = 0; ; i++) { try { return renameSync(a, b); } catch (e) { if (i >= 40 || !['EPERM', 'EBUSY', 'EACCES'].includes(e.code)) throw e; sleepSync(50); } } };
 const writeTsv = (file, cols, rows) => {
   const tmp = `${file}.tmp-${process.pid}`;
   writeFileSync(tmp, [cols.join('\t'), ...rows.map((r) => cols.map((c) => cleanField(r[c])).join('\t'))].join('\n') + '\n');
-  renameSync(tmp, file);
+  renameRetry(tmp, file);
 };
-const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 function withLock(fn) {
   const dir = `${AG}.lists-lock`;
   for (;;) {
@@ -335,7 +342,7 @@ async function context(b) {
     const browser = await chromium.connectOverCDP(ATTACH[b], { timeout: 60000 });
     return (contexts[b] = browser.contexts()[0] || await browser.newContext());
   }
-  const dir = `${process.env.HOME}/.ota-search-profiles/${b}-w${SHARD}`; // cookies and solved challenges are kept
+  const dir = `${os.homedir()}/.ota-search-profiles/${b}-w${SHARD}`; // cookies and solved challenges are kept
   mkdirSync(dir, { recursive: true });
   const base = { headless: !flag('--headed'), viewport: { width: 1280, height: 800 }, ...(PROXY ? { proxy: { server: PROXY } } : {}) };
   const launch = {
@@ -936,7 +943,7 @@ async function processStay(stay) {
 // ---- --recheck: re-open saved 'verified' lines, keep only those that still match ----
 async function recheck(file) {
   const byKey = Object.fromEntries([...tsv(QUEUE), ...tsv(UNFOUND), ...tsv(FOUND)].map((s) => [s.key, s]));
-  const lines = readFileSync(file, 'utf8').split('\n').filter((l) => l.split('\t')[1] === 'verified');
+  const lines = readFileSync(file, 'utf8').split(/\r?\n/).filter((l) => l.split('\t')[1] === 'verified');
   const b = BROWSERS[0];
   let kept = 0;
   for (const l of lines) {

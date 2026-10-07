@@ -65,7 +65,7 @@ def city_pages(city):
     path = os.path.join(ROOT, 'assets', 'js', 'modules', module)
     if not os.path.exists(path):
         return [], []
-    meta = json.loads(re.search(r'export const STAYS_INDEX_META = (\{.*?\});\n', open(path).read()).group(1))
+    meta = json.loads(re.search(r'export const STAYS_INDEX_META = (\{.*?\});\n', open(path, encoding='utf8').read()).group(1))
     cats = [c for c in meta['categories'] if os.path.exists(os.path.join(ROOT, 'hotels', f'best-{c["slug"]}-in-{city}.html'))]
     order = [c for c in cats if c['filter'] == 'all']
     for key, _label in meta['groups']:
@@ -128,7 +128,7 @@ def grid_end(s):
 def write_footers():
     new, changed = block(), 0
     for path in sorted(glob.glob(os.path.join(ROOT, '*.html')) + glob.glob(os.path.join(ROOT, 'hotels', '*.html'))):
-        s = open(path).read()
+        s = open(path, encoding='utf8').read()
         if START in s and END in s:
             out = s[:s.index(START)] + new + s[s.index(END) + len(END):]
         else:
@@ -139,7 +139,7 @@ def write_footers():
                 continue
             out = s2[:at] + '\n    ' + new + s2[at:]
         if out != s:
-            open(path, 'w').write(out)
+            open(path, 'w', encoding='utf8', newline='\n').write(out)
             changed += 1
     print(f'footer stays links: {changed} page(s) updated')
 

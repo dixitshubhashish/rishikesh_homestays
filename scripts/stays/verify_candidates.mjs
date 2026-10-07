@@ -11,7 +11,7 @@
 //   ota-links.tsv, so several runs can go at once.
 import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, existsSync, readdirSync, appendFileSync } from 'fs';
-import { bookingPageMatches } from './booking-match.mjs';
+import { bookingPageMatches, BROWSER_UA } from './booking-match.mjs';
 import { fileURLToPath } from 'url';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -24,14 +24,14 @@ const cityFiles = process.env.STAYS_FILE ? [process.env.STAYS_FILE] : [`${HERE}.
   .filter((e) => e.isDirectory()).map((e) => `${HERE}.cache/${e.name}/stays.json`).filter((f) => existsSync(f))];
 const cityOf = {};
 for (const f of cityFiles) for (const s of JSON.parse(readFileSync(f, 'utf8'))) { names[s.id] = s.n; cityOf[s.id] = s.cy || 'rishikesh'; }
-const lines = readFileSync(LINKS, 'utf8').trim().split('\n');
+const lines = readFileSync(LINKS, 'utf8').trim().split(/\r?\n/);
 const header = lines[0];
 const rows = Object.fromEntries(lines.slice(1).map((l) => [l.split('\t')[0], l.split('\t')]));
 const OUT = process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : null;
 const candidates = [];
 if (!OUT) for (const r of Object.values(rows)) if (r[1] === 'doubtful' && r[2] === 'Booking.com' && r[3]?.startsWith('https://')) candidates.push(r);
 if (process.argv[2] && process.argv[2] !== '--out') {
-  for (const l of readFileSync(process.argv[2], 'utf8').trim().split('\n')) {
+  for (const l of readFileSync(process.argv[2], 'utf8').trim().split(/\r?\n/)) {
     const c = l.split('\t');
     if (c[3]?.startsWith('https://www.booking.com/') && rows[c[0]]?.[1] !== 'verified') candidates.push(c);
   }
@@ -44,7 +44,7 @@ const confirmedNow = new Set();
 async function check(c) {
   const [key, , , url] = c;
   if (confirmedNow.has(key)) return; // an earlier candidate already matched
-  const page = await browser.newPage({ locale: 'en-GB', userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36' });
+  const page = await browser.newPage({ locale: 'en-GB', userAgent: BROWSER_UA });
   try {
     // 429 = Booking asks us to slow down: back off and try again (twice)
     // rather than skip the stay; parallel sharded runs can hit it.
@@ -90,5 +90,5 @@ for (let i = 0; i < candidates.length; i += 2) {
   await new Promise((done) => setTimeout(done, 800));
 }
 await browser.close();
-if (!OUT) writeFileSync(LINKS, `${header}\n${Object.values(rows).sort((a, b) => a[0].localeCompare(b[0])).map((r) => r.join('\t')).join('\n')}\n`);
+if (!OUT) writeFileSync(LINKS, `${header}\n${Object.values(rows).sort((a, b) => a[0].localeCompare(b[0], 'en')).map((r) => r.join('\t')).join('\n')}\n`);
 console.log(`promoted ${promoted} to verified, ${failed} still unconfirmed`);

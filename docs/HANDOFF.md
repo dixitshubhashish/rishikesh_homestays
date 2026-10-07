@@ -46,7 +46,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 
 ## Booking links for stays without one
 
-**Windows laptop (owner, 2026-10-06):** the search can run on a Windows machine: scripts in `scripts/windows/`, browsers, approvals and the move-over steps in `docs/booking-links/RULES.md` section 5 (not yet run on real Windows: do its first-run check). One machine at a time.
+**Windows laptop and Mac (owner, 2026-10-06):** the search can run on either machine with the same `npm run search:browsers | search:start | search:status | search:stop` commands (`scripts/search-ctl.mjs` chooses paths and process handling from the OS). Browsers, approvals and the move-over steps are in `docs/booking-links/RULES.md` section 5 (the full start is not yet run on real Windows: do its first-run check). One machine at a time. Python runs through `node scripts/py.mjs` (npm scripts) or auto-detection (`merge_found.sh`), so no `PYTHON` export is needed.
 
 The search, its lists and its rules are in **`docs/booking-links/RULES.md`**. State on 2026-10-05: every stay has been searched at least once and `all.tsv` was deleted (never recreate it). `found.tsv` has 1,350 confirmed pages (one row per link), `unfound.tsv` 3,124 rows (`retry` 2,624, `review` 201, `none` 181, `duplicate` 85, `manual` 33), `review.tsv` the owner's checklist. Workers still run deep re-checks of `retry` rows under `search_supervisor.mjs`.
 

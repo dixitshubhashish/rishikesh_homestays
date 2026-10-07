@@ -30,8 +30,10 @@ function buildClientOptions() {
   return {};
 }
 
-const bigquery = new BigQuery(buildClientOptions());
+// Built on the first insert, not at import: a missing key file would otherwise stop server.js from starting at all.
+let bigquery;
 
 export async function insertEnquiry(row) {
+  bigquery ||= new BigQuery(buildClientOptions());
   await bigquery.dataset(DATASET_ID).table(TABLE_ID).insert([row]);
 }
