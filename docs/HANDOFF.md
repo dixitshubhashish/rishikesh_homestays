@@ -4,6 +4,14 @@ Read `CLAUDE.md` first (rules, where things live), then this file. Then, as need
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
 
+## Session 2026-10-08 (Mac): search restarted here
+
+- The booking-link search runs on the Mac again (supervisor + Opera `--review`, Brave and Edge `--deep`); the Windows laptop must stay stopped. Started from `3de3748`.
+- **Search browsers open in the background only** (owner's request): `search-ctl.mjs browsers` uses `open -g -j -n` on macOS and then hides each search browser's app (System Events, Cmd-H; the debugging port and tabs keep working), `Start-Process -WindowStyle Minimized` on Windows (untested there), `--start-minimized` elsewhere. Your own browser windows are never touched; `trim` still closes non-search browsers, so do not run it unasked on the Mac.
+- **`npm run setup`** (`scripts/setup.mjs`, shared browser detection in `scripts/lib/browser-specs.mjs`): checks Node, Python, Git, Opera, Brave, Edge, npm packages and Playwright Chromium on any OS and installs only what is missing (nothing is reinstalled). `scripts/windows/setup.ps1` and `scripts/mac/setup.sh` bootstrap Node and call it. Checked on this Mac (everything present, nothing installed); the Windows branch (winget) is untested.
+
+- **Ads and Booking.com mixed in on the stays lists** (owner's request; `assets/js/ads.js`, CSS appended to `styles.css`, `docs/ARCHITECTURE.md` ads section, `tests/modules/ads-mix.test.js`): a break after every ~15-20 stays alternating AdSense and a Booking.com CJ banner, sidebar and right rail mixed the same way, the Booking.com widget also on the rental pages and 404. Checked on localhost in preview mode (`?adpreview=1`) at 390/1440/1920; non-visual tests 477 pass, 0 fail; the visual overflow test was not run (search browsers busy). **Owner to check live after a push**: the real AdSense in-feed fills, the banner clicks through `kqzyfj.com` to Booking.com's city page, and the iframe widget (still 0 px tall in headless Chrome) in a real browser. Not committed.
+
 ## Session 2026-10-07 (Windows laptop): handoff to the Mac
 
 **State at the end:** the booking-link search is **stopped** on the Windows laptop (supervisor, workers and the search browsers closed; no lock file). Everything is pushed to `main` (last commit `1446aba`). The Mac may start the search now (one machine at a time).

@@ -18,6 +18,7 @@
     "i18n:rendered": "node --max-old-space-size=8000 scripts/i18n/extract-rendered.mjs && npm run --silent i18n:extract",
     "i18n:status": "node --max-old-space-size=8000 scripts/i18n/sync.mjs status",
     "i18n:check": "node --max-old-space-size=8000 scripts/i18n/sync.mjs check",
+    "setup": "node scripts/setup.mjs",
     "search:browsers": "node scripts/search-ctl.mjs browsers",
     "search:start": "node scripts/search-ctl.mjs start",
     "search:status": "node scripts/search-ctl.mjs status",

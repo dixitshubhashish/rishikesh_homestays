@@ -26,10 +26,14 @@
 //                the grid; side rails at ≥ 1580×900.
 //   stays lists  (category, search-phrase and landmark pages in hotels/) one in-article ad after the lists at
 //                the page's <div class="rh-ad-slot" data-ad="display"> (before the tips and FAQs); a sticky
-//                ad under the filters from 901px wide; one text in-feed between two groups of stays (never
-//                between rows, never right after the first group: from the third group on, two screens down)
-//                only when nothing sits beside the list (no sidebar ad, no rails); the grid;
-//                landmark pages (no sidebar) get the left rail only at ≥ 1580×900.
+//                block under the filters from 901px wide; a minor break after every ~15-20 stays (owner, 2026-10-08:
+//                "after 15 or 20 listings", across every category group) that alternates a text in-feed
+//                AdSense unit with a Booking.com banner (never beside a View property button: it sits between
+//                two rows or two groups, full width, with its own divider); the Booking.com search widget and
+//                the grid above the footer. The mix: a fair coin per page view (SIDEBAR_BOOKING) decides whether the
+//                sidebar holds AdSense and the breaks start with Booking.com, or the other way round. Wide windows (≥ 1860px, a
+//                300px margin each side) also get a right rail with the other kind than the sidebar's; landmark
+//                pages (no sidebar) get an AdSense left rail from ≥ 1580×900 and the Booking.com right rail from ≥ 1860.
 //   lead pages   at most one ad, well below the main action: /homestays' in-article anchor between the top-brand
 //                and the Nirmal Bagh lists (below the form on every screen); the rental pages' anchor before their FAQ.
 //   no ads       /hotels/stay and our own listing (no rival hotels under our booking buttons), contact,
@@ -51,6 +55,8 @@ const LEAD = {
   '/taxi-rental-in-rishikesh': 'article', '/taxi-rental-in-haridwar': 'article',
 };
 function pageType(path) {
+  // 404.html answers any unknown address (even /hotels/nothing): the Booking.com widget only, a dead end with nothing to book here, no AdSense
+  if (document.documentElement.dataset.i18nPage === '404') return 'widget';
   if (GUIDES.includes(path)) return 'guide';
   if (path === '') return 'home';
   if (path in LEAD) return 'lead';
@@ -64,7 +70,12 @@ const PLAN = {
   guide: ['feed', 'slots', 'sidebar', 'widget', 'grid', 'rails'],
   stays: ['side', 'slots', 'feed', 'widget', 'grid', 'rails'],
   lead: ['lead'],
+  widget: ['widget'],
 };
+// lead pages that also get the Booking.com widget above the footer (travellers renting a bike or car need a bed too);
+// /homestays, contact, thanks, list-your-homestay, report-a-bug, /hotels/stay and our own listing never do (owner, 2026-10-06:
+// no rival hotels where guests book or enquire with us)
+const LEAD_WIDGET = Object.keys(LEAD).filter((p) => /-rental-in-/.test(p));
 
 // The Booking.com search widget (owner, 2026-10-07: "place it like the ads"). Not an AdSense unit, but it is placed
 // by the same rules and in the same page types: below the first screen, never on lead pages, our own listing,
@@ -78,6 +89,36 @@ const BOOKING = {
   pixel: 'https://www.awltovhc.com/image-101895722-17323528',
   sdk: 'https://www.booking.com/affiliate/prelanding_sdk',
 };
+
+// The Booking.com banner (owner, 2026-10-08: mix Booking.com in with the ads): our own HTML, one CJ deep link (same CJ_PID / CJ_BOOKING_LINK_ID as assets/js/modules/affiliate-links.js: a test keeps them
+// equal), shown wherever an AdSense unit may go, labelled "Sponsored". Not an iframe: no sizing surprises, it follows the theme,
+// and any number of them can sit on a page (the iframe widget above is one instance per page).
+const CJ_DEEP = 'https://www.kqzyfj.com/click-101895722-17293139?url=';
+const PAGE_CITY = (document.getElementById('sx-root')?.dataset.city || (/haridwar/.test(window.location.pathname) ? 'haridwar' : 'rishikesh'));
+const CITY_NAME = PAGE_CITY === 'haridwar' ? 'Haridwar' : 'Rishikesh';
+// Where the banner's link lands (owner, 2026-10-08): our own property pages on Booking.com, through the CJ link, so the visitor
+// starts from our stay and searches the rest from there. Advaitam always; Yoga Retreat at the Ganges (Booking.com's listing is named
+// "Yoga Retreat at The Ganges in Rishikesh", confirmed ours by the owner) in every second banner on a page. Change the URLs here.
+const OWN_BOOKING = [
+  'https://www.booking.com/hotel/in/rishikesh-homestay-luxury-3-bhk-ganges-hill-view-by-the-ghats.en-gb.html',
+  'https://www.booking.com/hotel/in/yoga-retreat-at-the-ganges-in-rishikesh.html',
+];
+let bannerCount = 0;
+const bookingBanner = (tall = false) => {
+  const own = OWN_BOOKING[bannerCount++ % 2];
+  return `<a class="rh-bk${tall ? ' rh-bk-tall' : ''}" target="_blank" rel="sponsored noopener" href="${CJ_DEEP}${encodeURIComponent(own)}">`
+    + '<span class="rh-bk-name">Booking.com</span>'
+    + `<strong>Compare ${CITY_NAME} stays and live prices</strong>`
+    + '<span class="rh-bk-sub">Pick your dates on Booking.com to see what is open and what it costs.</span>'
+    + '<span class="rh-bk-go">Search Booking.com</span></a>';
+};
+// Which kind goes where (owner, 2026-10-08): a fair coin flipped once per page view, so on every visit and every refresh AdSense and
+// Booking.com have exactly equal chances of the sidebar / first slot and the other kind gets the next one. It uses the browser's own
+// random source (crypto.getRandomValues, one unbiased bit): no id, cookie, address or storage, nothing that sticks to a visitor.
+// The page's layout reads the result once, so one view never flips half way; the choice is written to <html data-ad-mix> for analytics.
+const coin = () => { try { return (crypto.getRandomValues(new Uint8Array(1))[0] & 1) === 1; } catch { return Math.random() < 0.5; } };
+const SIDEBAR_BOOKING = coin(); // true: Booking.com in the first slot (sidebar / left rail), the breaks start with AdSense; false: the reverse
+document.documentElement.dataset.adMix = SIDEBAR_BOOKING ? 'booking-first' : 'adsense-first';
 
 // AdSense units. Translating AdSense's AMP code: data-ad-slot → slot;
 // data-auto-format="mcrspv" (Multiplex/grid) → format 'autorelaxed';
@@ -98,6 +139,8 @@ const UNITS = {
 // URL asks for the preview with ?adpreview=1 (tests that check where the ads go).
 const PREVIEW = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
 const FORCE_PREVIEW = PREVIEW && /[?&]adpreview=1\b/.test(window.location.search);
+const MAX_BREAKS = 8; // stays lists: at most this many mid-list breaks on a page
+const MAX_BREAK_ADS = 6; // and at most this many AdSense requests for them in one page view (re-draws included)
 const FEED_AFTER = 4; // guide in-feed: lists of 5+ cards, never before the 4th card
 const CONTENT = 1180; // --max in styles.css
 
@@ -121,13 +164,15 @@ const ins = (u, style = u.layout === 'in-article' ? 'display:block;text-align:ce
   + `${u.format ? ` data-ad-format="${u.format}"` : ''}${u.layout ? ` data-ad-layout="${u.layout}"` : ''}`
   + `${u.layoutKey ? ` data-ad-layout-key="${u.layoutKey}"` : ''}${u.fullWidth ? ' data-full-width-responsive="true"' : ''}></ins>`);
 const push = () => { if (!PREVIEW) (window.adsbygoogle = window.adsbygoogle || []).push({}); };
-function block(name, html) {
+function block(name, html, label = 'Advertisement') {
   const wrap = document.createElement('section');
   wrap.className = `rh-ad rh-ad-${name}`;
-  wrap.setAttribute('aria-label', 'Advertisement');
-  wrap.innerHTML = `<p class="rh-ad-label">Advertisement</p>${html}`;
+  wrap.setAttribute('aria-label', label || 'Stay options');
+  wrap.innerHTML = `${label ? `<p class="rh-ad-label">${label}</p>` : ''}${html}`;
   return wrap;
 }
+// a Booking.com banner block: an affiliate link, so it says "Sponsored"
+const bookingBlock = (name, tall) => block(`${name} bookad`, bookingBanner(tall), 'Sponsored');
 
 const PLACE = {
   // HTML anchors: <div class="rh-ad-slot" data-ad="display|article|infeed" [data-min-width="N"]>;
@@ -166,15 +211,51 @@ const PLACE = {
     const second = Math.max(cols * 5, k + 6); // places-to-visit: a second card about 5 rows on
     if (n >= 12 && second < n) put(second);
   },
-  // stays: one text in-feed between two groups, only when nothing sits beside the list. Never right after
-  // the first group (on phones its first rows are all a reader sees before it), and at least two screens
-  // of stays above it.
+  // stays: a minor break after every ~15-20 stays, across every category group (owner, 2026-10-08), alternating a text in-feed
+  // AdSense unit with a Booking.com banner. It goes between two rows (a full-width <li>) or, at the end of a group, between
+  // two groups; never in a group's last rows, never within a screen of another in-content ad. How many stays make "15 or 20":
+  // enough rows to fill one screen height (rows are about 66px, so 15 on a laptop, up to 24 on a tall window), which is also
+  // what keeps two breaks from ever being on screen together. Placed again after the list is re-drawn (a filter, "View all"),
+  // with at most MAX_BREAK_ADS AdSense requests per page view; the banners are only links.
   sxfeed() {
-    if (document.querySelector('.rh-ad-side') || RAILS_OK()) return;
-    const g = [...document.querySelectorAll('#sx-out > .sx-group')].slice(2)
-      .find((s) => docTop(s) > window.innerHeight * 2 && spaced(docTop(s)));
-    if (!g) return; // pages with one or two groups (top-10, Haridwar homestays): none
-    g.before(block('sxfeed', ins(UNITS.infeedText))); push();
+    const out = document.getElementById('sx-out');
+    if (!out) return;
+    let busy = false, timer = 0, adRequests = 0;
+    const place = () => {
+      if (busy || out.querySelector('.sx-break, :scope > .rh-ad-sxfeed')) return;
+      busy = true;
+      try { PLACE.sxbreaks(() => ++adRequests <= MAX_BREAK_ADS); } finally { busy = false; }
+    };
+    place();
+    new MutationObserver(() => { clearTimeout(timer); timer = setTimeout(place, 800); }).observe(out, { childList: true });
+  },
+  sxbreaks(mayRequestAd) {
+    const groups = [...document.querySelectorAll('#sx-out > .sx-group')];
+    const first = document.querySelector('#sx-out .sx-item');
+    if (!first || !groups.length) return;
+    const rowH = Math.max(first.offsetHeight, 48);
+    const every = Math.min(24, Math.max(15, Math.ceil((window.innerHeight + 120) / rowH)));
+    let count = 0, n = 0;
+    const kind = () => ((n % 2 === 0) === SIDEBAR_BOOKING ? 'ad' : 'booking'); // the first break is the opposite of the first slot's kind
+    const make = () => (kind() === 'ad' && mayRequestAd() ? block('sxfeed', ins(UNITS.infeedText)) : bookingBlock('sxfeed'));
+    // between two rows (a full-width <li> after `anchor`) or before `anchor`, a whole group
+    const put = (anchor, betweenRows) => {
+      if (n >= MAX_BREAKS || !belowFold(anchor) || !spaced(docTop(anchor) + (betweenRows ? anchor.offsetHeight : 0))) return;
+      const b = make();
+      if (betweenRows) { const li = document.createElement('li'); li.className = 'sx-break'; li.append(b); anchor.after(li); } else anchor.before(b);
+      if (b.querySelector('ins.adsbygoogle')) push();
+      n++; count = 0;
+    };
+    groups.forEach((g, gi) => {
+      if (g.querySelector('.sx-scroll')) return; // the master page's scrolling list: leave it alone
+      const items = [...g.querySelectorAll('.sx-list > .sx-item')];
+      items.forEach((it, i) => {
+        count++;
+        if (count >= every && i >= 2 && items.length - 1 - i >= 4) put(it, true);
+      });
+      // enough stays have gone by and this group ends: the break goes between this group and the next
+      if (count >= every && groups[gi + 1]) put(groups[gi + 1], false);
+    });
   },
   // stays: sticky ad under the filters (≥ 901px, the two-column layout)
   side() {
@@ -189,6 +270,8 @@ const PLACE = {
     if (f.getBoundingClientRect().bottom + window.scrollY < window.innerHeight) return;
     if (main.offsetHeight < f.offsetHeight + h + 600) return;
     side.classList.add('has-ad');
+    // the mix: odd pages show the Booking.com banner here (it needs a column of at least 220px), even pages AdSense
+    if (SIDEBAR_BOOKING && w >= 220) { side.append(bookingBlock('side bookside', true)); return; }
     side.append(block('side', ins(UNITS.sidebar, `display:inline-block;width:${w}px;height:${h}px`))); push();
   },
   // guides at 1381–1579px: sticky 300×600 in the right column under .side-panel
@@ -238,8 +321,11 @@ const PLACE = {
   },
   // tall ads fixed in the empty side margins, wide and tall windows only
   rails() {
-    if (!RAILS_OK() || document.querySelector('.rh-ad-side, .rh-ad-sidebar')) return;
+    const hasSide = !!document.querySelector('.rh-ad-side, .rh-ad-sidebar');
     const type = pageType(PATH);
+    const wideMargins = window.innerWidth - CONTENT >= 680; // 300px rails: room for the Booking.com banner
+    // a sidebar means no rails, except stays pages on very wide windows: one right rail of the other kind than the sidebar's
+    if (!RAILS_OK() || (hasSide && !(type === 'stays' && wideMargins))) return;
     // homepage: only from "Plan beyond the room" (<section data-ad-start>); elsewhere past the first screen
     const start = type === 'home' ? document.querySelector('[data-ad-start]') : null;
     const grid = document.querySelector('.rh-ad-grid');
@@ -248,12 +334,18 @@ const PLACE = {
     if (type === 'home' && (!start
       || (grid && (docTop(grid) - window.innerHeight) - (docTop(start) - 100) < window.innerHeight * 0.5))) return;
     // stays pages: left only (the right margin is too close to the "View property" column)
-    const sides = type === 'stays' ? ['left'] : ['left', 'right'];
-    const width = window.innerWidth - CONTENT >= 680 ? 300 : 160;
+    // stays pages: the left rail (AdSense) and, on very wide windows, a right Booking.com rail; with a sidebar only the right
+    // rail, of the kind the sidebar is not. Guides keep two AdSense rails.
+    // first slot (the sidebar, else the left rail) takes the coin's kind, the right rail the other; a 160px rail cannot hold the banner
+    const firstBooking = hasSide ? !!document.querySelector('.rh-ad-side.bookside') : SIDEBAR_BOOKING && wideMargins;
+    const sides = type === 'stays' ? (hasSide ? ['right'] : wideMargins ? ['left', 'right'] : ['left']) : ['left', 'right'];
+    const width = wideMargins ? 300 : 160;
     const rails = sides.map((side) => {
-      const r = block(`rail rh-ad-rail-${side} rh-ad-rail-hidden`, ins(UNITS.rail, `display:inline-block;width:${width}px;height:600px`));
+      const booking = type === 'stays' && (side === 'right' ? !firstBooking : firstBooking);
+      const name = `rail rh-ad-rail-${side} rh-ad-rail-hidden`;
+      const r = booking ? bookingBlock(`${name} bookrail`, true) : block(name, ins(UNITS.rail, `display:inline-block;width:${width}px;height:600px`));
       r.style.setProperty('--rail-w', `${width}px`);
-      document.body.append(r); push();
+      document.body.append(r); if (!booking) push();
       return r;
     });
     // hidden while the Multiplex grid or the footer is on screen, while so many in-content ads are in view
@@ -268,7 +360,7 @@ const PLACE = {
       .map((h) => h.getBoundingClientRect()).filter((b) => b.width && b.height);
     const update = () => {
       const past = start ? start.getBoundingClientRect().top < 100 : window.scrollY > window.innerHeight * 0.8;
-      const show = past && !stopsInView.size && rails.length + adsInView.size <= 3
+      const show = past && !stopsInView.size && rails.length + adsInView.size + (hasSide ? 1 : 0) <= 3
         && !document.body.classList.contains('whatsapp-drawer-open');
       const bubbles = show ? hints() : [];
       rails.forEach((r) => {
@@ -317,6 +409,8 @@ const PLACE = {
   if (PREVIEW && navigator.webdriver && !FORCE_PREVIEW) return;
   if (!PREVIEW) {
     try { if (localStorage.getItem('rh-analytics-opt-out') === '1') return; } catch { /* storage blocked: still show ads */ }
+  }
+  if (!PREVIEW && type !== 'widget') {
     const s = document.createElement('script');
     s.async = true;
     s.crossOrigin = 'anonymous';
@@ -324,7 +418,8 @@ const PLACE = {
     document.head.appendChild(s);
   }
   // this script loads async from <head>: wait for the page before placing units
-  const place = () => PLAN[type].forEach((p) => PLACE[p]());
+  const plan = type === 'lead' && LEAD_WIDGET.includes(PATH) ? [...PLAN.lead, 'widget'] : PLAN[type];
+  const place = () => plan.forEach((p) => PLACE[p]());
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', place);
   else place();
 })();

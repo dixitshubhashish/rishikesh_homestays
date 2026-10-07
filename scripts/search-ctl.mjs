@@ -10,7 +10,7 @@
 // Only ONE machine may run the search at a time, and nobody edits docs/booking-links/*.tsv by hand while it runs.
 import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, openSync, closeSync, readSync, statSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
+import { browserSpecs, findExe } from './lib/browser-specs.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,44 +27,7 @@ const CACHE = ['stays.json', 'haridwar/stays.json', 'places/places.json', 'place
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rel = (p) => path.relative(ROOT, p).replace(/\\/g, '/');
 
-// ---- browsers: ports are the ones search_supervisor.mjs attaches to --------------------------------------------------
-
-function browserSpecs() {
-  const pf = process.env.ProgramFiles || 'C:\\Program Files';
-  const pf86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)';
-  const local = process.env.LOCALAPPDATA || path.join(homedir(), 'AppData', 'Local');
-  const mac = (app, bin) => [`/Applications/${app}.app/Contents/MacOS/${bin}`, path.join(homedir(), 'Applications', `${app}.app`, 'Contents', 'MacOS', bin)];
-  // Chrome 136 and later ignore a debugging port on the everyday profile, so each browser gets its own profile folder
-  const profiles = WIN ? path.join(local, 'rh-search')
-    : MAC ? path.join(homedir(), 'Library', 'Application Support', 'rh-search')
-      : path.join(process.env.XDG_DATA_HOME || path.join(homedir(), '.local', 'share'), 'rh-search');
-  const exe = {
-    chrome: WIN ? [`${pf}\\Google\\Chrome\\Application\\chrome.exe`, `${pf86}\\Google\\Chrome\\Application\\chrome.exe`, `${local}\\Google\\Chrome\\Application\\chrome.exe`]
-      : MAC ? mac('Google Chrome', 'Google Chrome') : ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser'],
-    opera: WIN ? [`${local}\\Programs\\Opera\\opera.exe`, `${pf}\\Opera\\opera.exe`]
-      : MAC ? mac('Opera', 'Opera') : ['opera'],
-    brave: WIN ? [`${pf}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`, `${local}\\BraveSoftware\\Brave-Browser\\Application\\brave.exe`]
-      : MAC ? mac('Brave Browser', 'Brave Browser') : ['brave-browser', 'brave'],
-    edge: WIN ? [`${pf86}\\Microsoft\\Edge\\Application\\msedge.exe`, `${pf}\\Microsoft\\Edge\\Application\\msedge.exe`]
-      : MAC ? mac('Microsoft Edge', 'Microsoft Edge') : ['microsoft-edge', 'microsoft-edge-stable'],
-  };
-  // Incognito/private windows run without extensions (owner, 2026-10-07: saves their memory); the profile folder only holds the debugging session.
-  // The supervisor runs workers on Opera, Edge and Brave; Chrome is a spare (opened only with --all): a fourth browser costs about 1 GB.
-  // Edge stays a normal window (extensions off): in an InPrivate window the workers never see the tabs they open (tested 2026-10-07).
-  const privateFlag = { chrome: '--incognito', brave: '--incognito', opera: '--private', edge: '' };
-  return [['chrome', 9222, false], ['opera', 9223, true], ['brave', 9224, true], ['edge', 9225, true]]
-    .map(([name, port, needed]) => ({ name, port, needed, exes: exe[name], profile: path.join(profiles, name), privateFlag: privateFlag[name] }));
-}
-
-// An absolute candidate must exist; a bare name (Linux) is looked up on PATH.
-function findExe(candidates) {
-  const dirs = (process.env.PATH || '').split(path.delimiter).filter(Boolean);
-  for (const c of candidates) {
-    if (path.isAbsolute(c)) { if (existsSync(c)) return c; continue; }
-    for (const d of dirs) { const p = path.join(d, c); if (existsSync(p)) return p; }
-  }
-  return '';
-}
+// ---- browsers: ports are the ones search_supervisor.mjs attaches to (scripts/lib/browser-specs.mjs) --------------------
 
 // Same host the workers' --attach URLs use (localhost), so "answers" means what the workers will see.
 async function listening(port) {
@@ -141,6 +104,41 @@ async function status() {
 
 // ---- browsers -------------------------------------------------------------------------------------------------------
 
+// Starts a browser without stealing focus, and so that it outlives this command:
+//   macOS    `open -g -j -n`: -g stays behind the app in use, -j launches it hidden, -n a new instance (our own profile folder)
+//   Windows  Start-Process -WindowStyle Minimized (minimized, never activated)
+//   Linux    detached, with --start-minimized
+function launchInBackground(exe, args) {
+  try {
+    if (MAC) {
+      const app = exe.slice(0, exe.indexOf('.app/') + 4);
+      spawn('open', ['-g', '-j', '-n', '-a', app, '--args', ...args], { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
+    } else if (WIN) {
+      const q = (x) => `'${String(x).replace(/'/g, "''")}'`;
+      spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-Command',
+        `Start-Process -FilePath ${q(exe)} -ArgumentList ${args.map(q).join(',')} -WindowStyle Minimized`],
+      { detached: true, stdio: 'ignore', windowsHide: true }).on('error', () => {}).unref();
+    } else {
+      spawn(exe, args, { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
+    }
+    return '';
+  } catch (e) { return e.message; }
+}
+
+// macOS: Chromium browsers ignore `open -g -j` and show themselves, so once they listen each search browser's app is hidden
+// (Cmd-H: the windows and their tabs keep running, the debugging port keeps answering) and focus goes back to what you were using.
+function hideMacBrowsers(specs) {
+  if (!MAC) return;
+  const out = execFileSync('ps', ['-axo', 'pid=,command='], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
+  for (const b of specs) {
+    const main = out.split('\n').map((l) => l.match(/^\s*(\d+)\s+(.*)$/)).filter(Boolean)
+      .find((m) => m[2].includes(`--remote-debugging-port=${b.port}`) && m[2].includes('rh-search') && !m[2].includes(' --type='));
+    if (!main) continue;
+    try { execFileSync('osascript', ['-e', `tell application "System Events" to set visible of (first process whose unix id is ${main[1]}) to false`], { stdio: 'ignore', timeout: 10000 }); }
+    catch { console.log(`${b.name}: could not hide its window (allow Terminal / your editor under System Settings > Privacy & Security > Automation > System Events)`); }
+  }
+}
+
 async function browsers() {
   const specs = browserSpecs().filter((b) => b.needed || process.argv.includes('--all'));
   for (const b of specs) {
@@ -148,14 +146,14 @@ async function browsers() {
     const exe = findExe(b.exes);
     if (!exe) { console.log(`${b.name}: NOT INSTALLED${WIN ? ' (run scripts\\windows\\setup.ps1)' : ''}`); continue; }
     mkdirSync(b.profile, { recursive: true });
-    // detached and unref'd: the browser must outlive this command. Node quotes an argument that holds spaces itself.
-    const child = spawn(exe, [`--remote-debugging-port=${b.port}`, `--user-data-dir=${b.profile}`, ...(b.privateFlag ? [b.privateFlag] : []), '--disable-extensions', '--no-first-run', '--no-default-browser-check', 'https://www.google.com/'],
-      { detached: true, stdio: 'ignore' });
-    child.on('error', (e) => console.log(`${b.name}: could not start (${e.message})`));
-    child.unref();
+    // background only (owner, 2026-10-08): the window never takes focus from what you are doing
+    const args = [`--remote-debugging-port=${b.port}`, `--user-data-dir=${b.profile}`, ...(b.privateFlag ? [b.privateFlag] : []), '--disable-extensions', '--no-first-run', '--no-default-browser-check', '--start-minimized', 'https://www.google.com/'];
+    const err = launchInBackground(exe, args);
+    if (err) { console.log(`${b.name}: could not start (${err})`); continue; }
     console.log(`${b.name}: started on port ${b.port}${b.privateFlag ? ', private window' : ''}, extensions off (profile ${b.profile})`);
   }
   await sleep(5000);
+  hideMacBrowsers(specs);
   let missing = 0;
   for (const b of specs) {
     const ok = await listening(b.port);
@@ -164,6 +162,19 @@ async function browsers() {
   }
   console.log('\nEach browser opens google.com: accept its cookie banner once (a private window forgets it when closed). Then: npm run search:start');
   return missing ? 1 : 0;
+}
+
+// A browser left with no window (search:stop closes the workers' tabs; Edge then keeps running with none) refuses the workers'
+// connection ("Browser context management is not supported"): give each such browser one blank tab before the search starts.
+async function ensureWindows(specs) {
+  for (const b of specs) {
+    try {
+      const list = await (await fetch(`http://localhost:${b.port}/json/list`, { signal: AbortSignal.timeout(3000) })).json();
+      if (list.some((t) => t.type === 'page')) continue;
+      await fetch(`http://localhost:${b.port}/json/new?https://www.google.com/`, { method: 'PUT', signal: AbortSignal.timeout(5000) });
+      console.log(`${b.name}: had no window, opened one`);
+    } catch { /* the port check below reports a browser that does not answer */ }
+  }
 }
 
 // ---- start ----------------------------------------------------------------------------------------------------------
@@ -182,7 +193,8 @@ async function start() {
   const empty = CACHE.slice(0, 2).filter((f) => { try { return JSON.parse(readFileSync(f, 'utf8')).length < 100; } catch { return true; } });
   if (empty.length) { console.error(`not starting: ${empty.map(rel).join(', ')} holds no stays yet (the crawl and process.py must finish: node scripts/py.mjs scripts/stays/crawl.py; process.py, then --city haridwar).`); return 1; }
   const down = [];
-  for (const b of browserSpecs().filter((x) => x.needed)) if (!await listening(b.port)) down.push(`${b.name} (${b.port})`);
+  for (const b of browserSpecs().filter((x) => x.needed || x.name === 'chrome')) if (!await listening(b.port)) { if (b.needed) down.push(`${b.name} (${b.port})`); }
+  await ensureWindows(browserSpecs().filter((x) => x.needed || x.name === 'chrome'));
   if (down.length) { console.error(`not starting: no browser answers on ${down.join(', ')}. Run: npm run search:browsers`); return 1; }
 
   mkdirSync(LOGS, { recursive: true });

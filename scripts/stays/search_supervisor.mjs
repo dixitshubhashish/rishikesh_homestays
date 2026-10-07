@@ -35,14 +35,15 @@ const WORKERS = [
   // 2026-10-07, Windows laptop (15.8 GB, 0.4 GB free with five workers): every engine rested or blocked and tabs did not answer, so three
   // workers (Opera, Edge, Brave; Chrome is attached but idle) share the deep re-check in thirds. The 159 review rows come first on Opera:
   // they re-open pages already stored, so no search engine is asked.
-  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['quick', '1/1', '--review', '--no-tidy'], ['deep', '1/3', '--no-tidy']] },
-  // Brave is open anyway and was idle (owner, 2026-10-05: up to 10 agents); disk is guarded by the pause below
-  { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['deep', '3/3']] },
-  // a fourth worker (Brave) pushed the disk under 3 GB twice (2026-10-05): three workers is this Mac's limit
-
+  // 2026-10-08 (Mac, owner: "finish unfound asap, more agents and browsers"): five workers share the deep re-check in fifths:
+  // Opera, Brave, Edge (two sessions: it is the least blocked) and the spare Chrome. The review rows were settled first on Opera.
+  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['deep', '1/5', '--no-tidy']] },
+  { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['deep', '2/5', '--no-tidy']] },
   // Edge is the least blocked browser (owner, 2026-10-06, from the logs: Bing never challenged it, 2 stalls in 707 stays,
-  // against Opera's 27 in 1,191): it takes Opera's second session. Two sessions share it, so each closes only its own tabs.
-  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '2/3', '--no-tidy']] },
+  // against Opera's 27 in 1,191). Two sessions share it, so each closes only its own tabs.
+  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '3/5', '--no-tidy']] },
+  { name: 'edge2', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '4/5', '--no-tidy']] },
+  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['deep', '5/5', '--no-tidy']] },
 ].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, crashes: [], finished: false, logOffset: 0 }));
 
 

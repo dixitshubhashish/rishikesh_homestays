@@ -627,12 +627,12 @@ main > section:last-child {
       equally — the same effect, extended to every dropdown row on the
       site rather than just the one it was first built for. */
 @media (hover: hover) and (pointer: fine) {
-  .field select,
+  .field:not(.search-grid .field) select,
   .whatsapp-field select,
   .phone-row select {
     transition: transform 150ms ease, box-shadow 150ms ease;
   }
-  .field select:hover,
+  .field:not(.search-grid .field) select:hover,
   .whatsapp-field select:hover,
   .phone-row select:hover {
     transform: scale(1.05);
@@ -641,19 +641,16 @@ main > section:last-child {
     z-index: 2;
   }
 
-  .search-grid .field,
   .filters .field {
     transition: transform 200ms ease, opacity 200ms ease;
   }
   /* :has(.field:hover), not a plain :hover on the whole container — the
      container also includes the submit button and the gaps between fields,
      and hovering those isn't "hovering a field", so it shouldn't dim them. */
-  .search-grid:has(.field:hover) .field:not(:hover),
   .filters:has(.field:hover) .field:not(:hover) {
     transform: scale(0.96);
     opacity: 0.75;
   }
-  .search-grid .field:hover,
   .filters .field:hover {
     transform: scale(1.06);
     opacity: 1;
@@ -4578,3 +4575,75 @@ html.site-search-open {
     flex: 1 1 100%;
   }
 }
+
+/* Mid-list breaks on the stays pages and the Booking.com banner (ads.js, owner 2026-10-08): a break sits between two rows
+   (an <li> that is no row) or two groups, full width with its own divider; the banner is a plain link, coloured by tokens only. */
+.sx-list > .sx-break {
+  display: block;
+  padding: 0;
+  border-bottom: 0;}
+.sx-break > .rh-ad,
+.sx-group + .rh-ad-sxfeed {
+  margin: 22px 0;
+  padding-right: 0;
+  padding-left: 0;}
+.rh-ad-sxfeed.bookad {
+  min-height: 0;}
+.rh-bk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 18px;
+  align-items: center;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  text-decoration: none;}
+.rh-bk:hover {
+  border-color: var(--river-2);}
+.rh-bk-name {
+  grid-column: 1 / -1;
+  color: var(--river);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;}
+.rh-bk strong {
+  grid-column: 1;
+  font-size: 1.02rem;}
+.rh-bk-sub {
+  grid-column: 1;
+  color: var(--muted);
+  font-size: 0.85rem;}
+.rh-bk-go {
+  grid-column: 2;
+  grid-row: 2 / span 2;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  background: var(--river-fill);
+  color: var(--on-fill);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;}
+.rh-bk:hover .rh-bk-go {
+  background: var(--river-fill-2);}
+@media (max-width: 520px) {
+  .rh-bk {
+    grid-template-columns: minmax(0, 1fr);}
+  .rh-bk-go {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: start;
+    margin-top: 8px;}}
+/* the tall form in a sidebar or a side rail: one column, button under the text */
+.rh-bk-tall {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  padding: 18px;}
+.rh-bk-tall .rh-bk-go {
+  grid-column: 1;
+  grid-row: auto;
+  justify-self: start;
+  margin-top: 8px;}
+.bookad:has(.rh-bk-tall) {
+  max-width: 300px;}
