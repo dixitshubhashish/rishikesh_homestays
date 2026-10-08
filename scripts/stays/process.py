@@ -95,6 +95,33 @@ AREAS=[  # Rishikesh (default) — specific first; names match the site's AREAS 
  ('Bypass Road',['bypass','by-pass','by pass']),
  ('Haridwar Road',['haridwar road']),
 ]
+AREAS_BY_CITY['dehradun']=[  # specific first; keywords from the directory's own addresses (Dehradun, 2026-10)
+ ('Sahastradhara Road',['sahastradhara','sahastra dhara','sahasradhara']),
+ ('Mussoorie Road & Malsi',['mussoorie road','mussoorie diversion','mussoorie rd','malsi','kishanpur','purkul','purukul','salan gaon','bhagwantpur','bhagwant pur','gangol','panditwari','gajiawala','gajiyawala','sinola','bisht gaon','birpur','ghanghora']),
+ ('Rajpur Road',['rajpur road','rajpur rd','rajpur','jakhan']),
+ ('Dalanwala & Survey Chowk',['dalanwala','dilaram','astley hall','hathibarkala','old survey','survey chowk','kalidas','municipal road','chander lok','chanderlok','cantonment','cantt']),
+ ('Clock Tower & Paltan Bazaar',['clock tower','ghanta ghar','paltan','dhamawala','tilak road','moti bazar']),
+ ('Railway Station & Tyagi Road',['railway station','station road','tyagi road','race course','dehradun junction']),
+ ('ISBT & Majra',['isbt','majra','shimla bypass','haridwar bypass','bus terminal']),
+ ('Saharanpur Road & Patel Nagar',['saharanpur','patel nagar']),
+ ('Haridwar Road & Rispana',['haridwar road','rispana','nehru colony','araghar','badripur','kargi','banjarawala','banjara wala','mothrowala','vidya vihar']),
+ ('Clement Town & Mindrolling',['clement town','mindrolling']),
+ ('FRI, Ballupur & Kaulagarh',['forest research','ballupur','new forest','kaulagarh','kolagarh','ongc']),
+ ('Vasant Vihar & Indira Nagar',['vasant vihar','vasantvihar','indira nagar','indiranagar']),
+ ('Chakrata Road & Premnagar',['chakrata road','chakrata rd','premnagar','prem nagar','nanda ki chowki','sudhowala','jhajra','selaqui','vikasnagar','vikas nagar']),
+ ('Raipur & Maldevta',['raipur','maldevta','ladpur','nagal','aamwala']),
+ ('Jolly Grant & Doiwala',['jolly grant','doiwala','bhaniyawala','thano','airport']),
+]
+AREAS_BY_CITY['mussoorie']=[  # west to east along the ridge, then the roads out; keywords from the directory's own addresses (2026-10)
+ ('Landour & Char Dukan',['landour','char dukan','chardukan','sisters bazaar','woodstock','jabarkhet','pari tibba','tehri road','tehri rd']),
+ ('Library Chowk & Charleville',['library','gandhi chowk','charleville','vincent hill']),
+ ('Camel\'s Back Road & Gun Hill',['camel','gun hill','gunhill']),
+ ('Mall Road & Kulri',['mall road','kulri','picture palace','clock tower','kalsia']),
+ ('Happy Valley & Hathipaon',['happy valley','george everest','hathipaon','hathi paon']),
+ ('Barlowganj & Jharipani',['barlow','jharipani','gharipani','dhobi']),
+ ('Kempty Road',['kempty','kyarkuli','suwakholi']),
+ ('Mussoorie Lake & Dehradun Road',['mussoorie lake','dehradun road','kolti']),
+]
 AREAS_BY_CITY['rishikesh']=AREAS
 AREAS=AREAS_BY_CITY[CITY]
 CENTER=CITIES[CITY]['center']
@@ -103,10 +130,16 @@ def km(a,b):
     dlat=p(b[0]-a[0]); dlng=p(b[1]-a[1])
     h=math.sin(dlat/2)**2+math.cos(p(a[0]))*math.cos(p(b[0]))*math.sin(dlng/2)**2
     return 2*R*math.asin(math.sqrt(h))
+# Dehradun and Mussoorie sit in big districts (Chakrata, Vikasnagar, Dhanaulti...): a stay far from the centre is "Outside",
+# whatever its address says (an address saying "Chakrata Road" 60 km away is not on Dehradun's Chakrata Road).
+HERE_CACHE=os.path.join(os.path.dirname(os.path.abspath(__file__)),'.cache')
+FAR_KM={'dehradun':30,'mussoorie':30}
+MAP_KM={'dehradun':2.0,'mussoorie':1.5}   # how far from an area's centre an address-less stay still counts as in it (default 1.2 km)
 for r in rows:
     r['clean']=clean(r.get('name') or r['listName'])
     hay=' '.join([r.get('name') or '',r['listName'],r.get('address') or '',r['url']]).lower().replace('-',' ')
-    r['area']=next((a for a,kws in AREAS if any(k.replace('-',' ') in hay for k in kws)),None)
+    far=CITY in FAR_KM and r.get('lat') and km((r['lat'],r['lng']),CENTER)>FAR_KM[CITY]
+    r['area']=None if far else next((a for a,kws in AREAS if any(k.replace('-',' ') in hay for k in kws)),None)
     r['how']='text' if r['area'] else None
 # area centres from properties whose text names the area
 cent={}
@@ -118,7 +151,7 @@ for r in rows:
     p=(r['lat'],r['lng'])
     if km(p,CENTER)>30: r['area']=f'Outside {CITY_NAME}'; r['how']='map'; continue
     best=min(cent.items(),key=lambda kv:km(p,kv[1]),default=None)
-    if best and km(p,best[1])<=1.2: r['area']=best[0]; r['how']='map'
+    if best and km(p,best[1])<=MAP_KM.get(CITY,1.2): r['area']=best[0]; r['how']='map'
 for r in rows:
     if not r['area']: r['area']=f'Elsewhere in {CITY_NAME}'
 TYPE_WORDS=[('Dharamshalas',['dharamshala','dharmshala','dharmashala','dharamsala','dharmsala','yatri niwas','yatri nivas']),('Camps & tents',['camp','tent','glamp','campsite']),('Hostels',['hostel','zostel','backpacker']),('Resorts',['resort']),('Homestays',['homestay','home stay']),
@@ -169,7 +202,7 @@ def tags(r):
     t=[]; n=r['clean'].lower(); f=[x.lower() for x in (r.get('facilities') or [])]
     price=int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None
     if 'pets allowed' in f: t.append('pet')
-    if re.search(r'ganga|ganges|river ?view|riverside|river side|ghat',n): t.append('ganga')
+    if CITY not in FAR_KM and re.search(r'ganga|ganges|river ?view|riverside|river side|ghat',n): t.append('ganga')   # Dehradun and Mussoorie are not on the Ganga
     if (r.get('stars') or 0)>=4 or (price and price>=8000): t.append('luxury')
     if price and price<=1500: t.append('budget')
     if any('pool' in x for x in f): t.append('pool')
@@ -202,7 +235,27 @@ def bedrooms(r):
     if len(found)!=1: return None
     v=found.pop()
     return 9 if v>8 else v
-data=[{'id':r['url'].split('//')[1].split('.')[0],'ad':r.get('address') or '','ll':[r['lat'],r['lng']] if r.get('lat') else None,'t':tags(r),'n':r['clean'],'u':r['url'],'s':int(r['stars'] or 0),'a':r['area'],'k':r['kind'],'ks':r['ks'],'g':r.get('guestRating'),'c':r.get('reviews'),'f':r.get('facilities') or [],'p':(int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None)} for r in out]
+# A property the directory lists in two cities (a Jolly Grant stay in both Rishikesh's and Dehradun's list) is listed once, in
+# the city that already has it; a different property with the same slug gets the city name added. Only for the cities
+# added after Rishikesh and Haridwar, whose data is already settled.
+if CITY in FAR_KM:
+    import json as _json
+    taken={}
+    for other in CITIES:
+        f=os.path.join(HERE_CACHE,'stays.json') if other==DEFAULT_CITY else os.path.join(HERE_CACHE,other,'stays.json')
+        if other!=CITY and os.path.exists(f):
+            for x in _json.load(open(f,encoding='utf8')): taken.setdefault(x['id'],(other,x.get('ll')))
+    keep=[]
+    for r in out:
+        slug=r['url'].split('//')[1].split('.')[0]
+        if slug in taken:
+            oc,oll=taken[slug]
+            if oll and r.get('lat') and km((r['lat'],r['lng']),tuple(oll))<1.0:
+                print('already listed in',oc,':',slug); continue
+            r['url_slug']=slug+'-'+CITY
+        keep.append(r)
+    out=keep
+data=[{'id':r.get('url_slug') or r['url'].split('//')[1].split('.')[0],'ad':r.get('address') or '','ll':[r['lat'],r['lng']] if r.get('lat') else None,'t':tags(r),'n':r['clean'],'u':r['url'],'s':int(r['stars'] or 0),'a':r['area'],'k':r['kind'],'ks':r['ks'],'g':r.get('guestRating'),'c':r.get('reviews'),'f':r.get('facilities') or [],'p':(int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None)} for r in out]
 assert len({x['id'] for x in data})==len(data), 'two stays share one id (a Google/registry slug clash would map them to one listing_id)'
 for x,r in zip(data,out):
     if r.get('gm'): x['gm']=r['gm']

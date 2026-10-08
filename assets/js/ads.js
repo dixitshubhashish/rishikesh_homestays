@@ -94,8 +94,12 @@ const BOOKING = {
 // equal), shown wherever an AdSense unit may go, labelled "Sponsored". Not an iframe: no sizing surprises, it follows the theme,
 // and any number of them can sit on a page (the iframe widget above is one instance per page).
 const CJ_DEEP = 'https://www.kqzyfj.com/click-101895722-17293139?url=';
-const PAGE_CITY = (document.getElementById('sx-root')?.dataset.city || (/haridwar/.test(window.location.pathname) ? 'haridwar' : 'rishikesh'));
-const CITY_NAME = PAGE_CITY === 'haridwar' ? 'Haridwar' : 'Rishikesh';
+const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar', dehradun: 'Dehradun', mussoorie: 'Mussoorie' };
+const PAGE_CITY = (() => {
+  const c = document.getElementById('sx-root')?.dataset.city || (window.location.pathname.match(/(rishikesh|haridwar|dehradun|mussoorie)/) || [])[1];
+  return CITY_NAMES[c] ? c : 'rishikesh';
+})();
+const CITY_NAME = CITY_NAMES[PAGE_CITY];
 // Where the banner's link lands (owner, 2026-10-08): our own property pages on Booking.com, through the CJ link, so the visitor
 // starts from our stay and searches the rest from there. Advaitam always; Yoga Retreat at the Ganges (Booking.com's listing is named
 // "Yoga Retreat at The Ganges in Rishikesh", confirmed ours by the owner) in every second banner on a page. Change the URLs here.

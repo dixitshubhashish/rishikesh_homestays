@@ -78,7 +78,10 @@ const dband = (k, radius) => dbands(radius).find(([top]) => top === null || k <=
 // In step with DIST_STOPS in build_pages.py. Past CROSS_CITY_KM the other city's stays join in.
 const DIST_STOPS = [0, 0.2, 0.3, 0.5, 0.75, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 35, 40, 45, 50];
 const DIST_MAX = 50, DIST_DEFAULT = 20, CROSS_CITY_KM = 8; // DIST_DEFAULT: owner, 2026-10-05
-const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar' };
+const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar', dehradun: 'Dehradun', mussoorie: 'Mussoorie' };
+// City centres (as in cities.py), to load only the neighbouring cities whose stays can fall inside a distance range.
+const CITY_CENTERS = { rishikesh: [30.103, 78.297], haridwar: [29.945, 78.164], dehradun: [30.3244, 78.0419], mussoorie: [30.4598, 78.0643] };
+const CITY_REACH_KM = 15; // a city's stays lie within about this far of its centre
 const fmtKm = (k) => (k < 1 ? `${Math.max(10, Math.round(k * 100) * 10)} m` : `${k < 10 ? k.toFixed(1) : Math.round(k)} km`);
 // distance note on a row once the visitor has used the distance range (DIST is set by setupStaysIndex)
 let DIST = null; // { touched, from, to } of the page's range
@@ -179,6 +182,9 @@ export function setupStaysIndex() {
           base = base.filter((d) => d.g && (d.c || 0) >= 5).sort((a, b) => b.g - a.g || (b.c || 0) - (a.c || 0) || a.n.localeCompare(b.n));
         }
         data = { base, meta: m.STAYS_INDEX_META, own: top10 ? [] : m.STAYS_OWN.map(at), here };
+        // /hotels/<city>-accommodation?area=<Area> (the homepage search): start narrowed to that area when it exists on this page
+        const wantArea = new URLSearchParams(window.location.search).get('area');
+        if (wantArea && !state.area && inRange(base).some((d) => d.a === wantArea)) state.area = wantArea;
         buildControls(inRange(base));
         root.classList.remove('sx-loading');
         return data;
@@ -187,13 +193,14 @@ export function setupStaysIndex() {
     return loading;
   }
 
-  // The other city's stays matching the page's rule, for a range reaching past CROSS_CITY_KM.
+  // The other cities' stays matching the page's rule, for a range reaching past CROSS_CITY_KM.
   function loadOther() {
     if (otherLoading || !data?.here) return otherLoading || Promise.resolve();
-    const other = city === 'rishikesh' ? 'haridwar' : 'rishikesh';
     const rest = terms.filter((t) => t !== nearTerm && t !== 'top10');
     const otherMatch = pageFilter.startsWith('q:') ? (d) => !rest.length || ruleMatches(d, rest.join(' & ')) : (d) => matchFilter(d, pageFilter);
-    otherLoading = import(other === 'rishikesh' ? './stays-index-data.js' : `./stays-index-data-${other}.js`).then((m) => {
+    // only the cities whose centre is near enough for their stays to fall inside the range
+    const others = Object.keys(CITY_NAMES).filter((c) => c !== city && km(CITY_CENTERS[c], data.here) <= DIST_MAX + CITY_REACH_KM);
+    otherLoading = Promise.all(others.map((other) => import(other === 'rishikesh' ? './stays-index-data.js' : `./stays-index-data-${other}.js`).then((m) => {
       const mine = META;
       META = m.STAYS_INDEX_META; // the rule's riverside areas and kinds are the other city's own
       const extra = m.STAYS_INDEX.filter((d) => d.ll && otherMatch(d))
@@ -201,7 +208,9 @@ export function setupStaysIndex() {
         .map((d) => ({ ...d, _km: km(d.ll, data.here), a: `${d.a}, ${CITY_NAMES[other]}`, cq: other === 'rishikesh' ? '' : `&c=${other}` }))
         .filter((d) => d._km <= DIST_MAX);
       META = mine;
-      data.base = [...data.base, ...extra];
+      return extra;
+    }))).then((lists) => {
+      data.base = [...data.base, ...lists.flat()];
       data.base.sort(top10 ? (a, b) => b.g - a.g || (b.c || 0) - (a.c || 0) || a.n.localeCompare(b.n) : (a, b) => a._km - b._km);
     });
     return otherLoading;
@@ -309,6 +318,9 @@ export function setupStaysIndex() {
     state.open.add(b.dataset.k);
     load().then(render);
   });
+
+  // arrived from the homepage search with ?area=: load now and show that area (the data loads on first touch otherwise)
+  if (new URLSearchParams(window.location.search).get('area')) load().then(render);
 
   function render() {
     const { base, meta, own } = data;

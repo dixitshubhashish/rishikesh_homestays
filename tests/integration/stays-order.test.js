@@ -7,6 +7,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { STAYS_INDEX as RISHIKESH } from '../../assets/js/modules/stays-index-data.js';
 import { STAYS_INDEX as HARIDWAR } from '../../assets/js/modules/stays-index-data-haridwar.js';
+import { STAYS_INDEX as DEHRADUN } from '../../assets/js/modules/stays-index-data-dehradun.js';
+import { STAYS_INDEX as MUSSOORIE } from '../../assets/js/modules/stays-index-data-mussoorie.js';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const py = readFileSync(join(ROOT, 'scripts/stays/build_pages.py'), 'utf8');
@@ -27,11 +29,12 @@ test('the bad-rating constants are the same in the build and in the browser', ()
   assert.strictEqual(num(js, /const BAD_MIN_REVIEWS = (\d+)/), BAD_MIN);
 });
 
-for (const [city, list] of [['Rishikesh', RISHIKESH], ['Haridwar', HARIDWAR]]) {
+for (const [city, list] of [['Rishikesh', RISHIKESH], ['Haridwar', HARIDWAR], ['Dehradun', DEHRADUN], ['Mussoorie', MUSSOORIE]]) {
   test(`${city}: linked stays first, then unlinked, then badly rated ones last`, () => {
     let last = 0;
     list.forEach((d, i) => { assert(tier(d) >= last, `${d.n} (#${i}) is out of order`); last = tier(d); });
-    assert(list.some((d) => tier(d) === 0), 'some linked stays');
+    assert(list.length > 100, 'the city has its stays');
+    // the cities added later start with no verified booking page; the order holds either way
   });
 
   test(`${city}: promising brands come first among the linked stays`, () => {
@@ -42,7 +45,8 @@ for (const [city, list] of [['Rishikesh', RISHIKESH], ['Haridwar', HARIDWAR]]) {
   });
 
   test(`${city}: not alphabetical: one of each first letter in turn`, () => {
-    const plain = list.filter((d) => tier(d) === 0 && !promising(d)).slice(0, 60);
+    const first = list.some((d) => tier(d) === 0) ? 0 : 1; // a city with no verified booking page yet: the unlinked stays are spread the same way
+    const plain = list.filter((d) => tier(d) === first && !promising(d)).slice(0, 60);
     assert(new Set(plain.slice(0, 20).map(letter)).size >= 8, 'the first 20 plain linked stays start with many different letters');
     const sortedPairs = plain.slice(1).filter((d, i) => d.n.toLowerCase() >= plain[i].n.toLowerCase()).length;
     assert(sortedPairs < plain.length * 0.8, 'the list reads like an alphabetical one');

@@ -24,3 +24,20 @@ sidcul-haridwar	SIDCUL Haridwar	haridwar	29.95000	78.08000		OSM Nominatim (Integ
 thdc-rishikesh	THDC India (Ganga Bhawan), Rishikesh	rishikesh	30.10939	78.28086		OSM Nominatim ("Ganga Bhawan", Rishikesh Bypass, THDC Colony)	Place	
 iit-roorkee	IIT Roorkee	haridwar	29.86617	77.89573		OSM Nominatim (amenity=university "Indian Institute of Technology Roorkee")	CollegeOrUniversity	30
 cbri-roorkee	CSIR-CBRI Roorkee	haridwar	29.86512	77.90246		OSM Nominatim (research_institute "Central Building Research Institute")	Place	30
+clock-tower-dehradun	Clock Tower (Ghanta Ghar), Dehradun	dehradun	30.32432	78.04187		OSM Nominatim (man_made tower "Ghanta Ghar", Paltan Bazar road)	TouristAttraction	
+dehradun-railway-station	Dehradun Railway Station	dehradun	30.3125	78.03354		OSM Nominatim (railway yard "Dehradun Railway Station", centre)	TrainStation	
+isbt-dehradun	Dehradun ISBT (bus terminal)	dehradun	30.28791	77.99803		OSM Nominatim (amenity bus_station "ISBT Dehradun", NH7)	BusStation	
+forest-research-institute-dehradun	Forest Research Institute (FRI), Dehradun	dehradun	30.344	77.9988		OSM Nominatim (building, Howard Road) + Wikipedia coordinates	CollegeOrUniversity	
+robbers-cave-dehradun	Robber's Cave (Gucchupani), Dehradun	dehradun	30.37874	78.06353		OSM Nominatim (path "Robber's Cave")	TouristAttraction	
+sahastradhara	Sahastradhara	dehradun	30.38531	78.12983		OSM Nominatim (place "Sahastradhara")	TouristAttraction	10
+mindrolling-monastery-dehradun	Mindrolling Monastery, Dehradun	dehradun	30.26182	77.99732		OSM Nominatim (place_of_worship "Mindrolling Monastery")	TouristAttraction	
+tapkeshwar-temple-dehradun	Tapkeshwar Temple, Dehradun	dehradun	30.35726	78.01622		OSM Nominatim (place_of_worship "Tapkeshwar Mandir")	TouristAttraction	
+doon-school-dehradun	The Doon School, Dehradun	dehradun	30.3338	78.03061		OSM Nominatim (amenity school "The Doon School", Mall Road)	CollegeOrUniversity	
+library-chowk-mussoorie	Library Chowk, Mussoorie	mussoorie	30.4598	78.0643		OSM Nominatim (amenity library "Mussoorie Library", Library Bazaar)	TouristAttraction	
+mall-road-mussoorie	Mall Road (Kulri), Mussoorie	mussoorie	30.45449	78.08467		OSM Nominatim (Mall Road at Picture Palace, Kulri)	TouristAttraction	
+gun-hill-mussoorie	Gun Hill, Mussoorie	mussoorie	30.45943	78.07479		OSM Nominatim (tourism attraction "Gun Hill Ropeway")	TouristAttraction	
+camels-back-road-mussoorie	Camel's Back Road, Mussoorie	mussoorie	30.46347	78.07482		OSM Nominatim (Camels Back Road, near Picture Palace)	TouristAttraction	
+kempty-falls	Kempty Falls	mussoorie	30.48732	78.03621		Wikipedia coordinates + OSM Nominatim (Kempty Fall, Tyuni-Chakrata-Mussoorie highway)	TouristAttraction	10
+landour-char-dukan	Landour (Char Dukan)	mussoorie	30.45684	78.10224		OSM Nominatim (Landour Bakehouse, Char Dukan) + Wikipedia Landour	TouristAttraction	
+mussoorie-lake	Mussoorie Lake	mussoorie	30.44639	78.078		OSM Nominatim (water "Mussoorie lake")	TouristAttraction	
+happy-valley-mussoorie	Happy Valley (Shedup Choephelling Temple), Mussoorie	mussoorie	30.47184	78.04992		OSM Nominatim (place_of_worship, Happy Valley)	TouristAttraction	

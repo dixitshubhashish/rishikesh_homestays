@@ -20,6 +20,27 @@ function regionDisplayName(iso2) {
   }
 }
 
+// Windows has no flag emoji (it draws the two letters, so "🇮🇳" shows as "IN"). Where a canvas test finds the flag is not
+// drawn in colour, the country selects get the class rh-flag-select, which puts the self-hosted Twemoji Country Flags font
+// (assets/vendor/flag-font/, styles.css) in front of their text; it only covers the flag code points. Elsewhere nothing loads.
+let flagsDrawn = null;
+function flagsSupported() {
+  if (flagsDrawn !== null) return flagsDrawn;
+  try {
+    const c = document.createElement('canvas');
+    c.width = c.height = 24;
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.textBaseline = 'top';
+    ctx.font = '20px sans-serif';
+    ctx.fillText(regionToFlagEmoji('IN'), 0, 0);
+    const px = ctx.getImageData(0, 0, 24, 24).data;
+    let colour = false;
+    for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 40 && (Math.abs(px[i] - px[i + 1]) > 30 || Math.abs(px[i + 1] - px[i + 2]) > 30)) { colour = true; break; }
+    flagsDrawn = colour;
+  } catch { flagsDrawn = true; } // cannot test: leave the browser's own flags
+  return flagsDrawn;
+}
+
 let cachedCountryList = null;
 
 // Returns [{ iso2, name, dialCode, flag }], sorted by country name.
@@ -51,6 +72,7 @@ export function populateCountrySelect(selectEl, defaultIso2 = FALLBACK_COUNTRY) 
     .join('');
 
   selectEl.value = countries.some((c) => c.iso2 === defaultIso2) ? defaultIso2 : FALLBACK_COUNTRY;
+  if (!flagsSupported()) selectEl.classList.add('rh-flag-select');
   return countries;
 }
 

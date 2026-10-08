@@ -9,7 +9,8 @@
 // City from ?c= (Rishikesh by default, so old /hotels/stay?s=<slug> links keep
 // working). Each city's data lives in its own module, loaded on demand.
 const CITY = (new URLSearchParams(location.search).get('c') || 'rishikesh').toLowerCase().replace(/[^a-z-]/g, '');
-const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar' };
+const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar', dehradun: 'Dehradun', mussoorie: 'Mussoorie' };
+const HILL_CITY = CITY === 'dehradun' || CITY === 'mussoorie'; // not on the Ganga: no rafting, aarti or Kumbh lines
 const CITY_NAME = CITY_NAMES[CITY] || CITY.charAt(0).toUpperCase() + CITY.slice(1);
 const CQ = CITY === 'rishikesh' ? '' : `&c=${CITY}`;
 let STAYS_INDEX = [];
@@ -211,7 +212,7 @@ function render(root, d, isOwn) {
     ${similar.length ? `<section class="sx-group" aria-labelledby="sp-sim-h"><h2 id="sp-sim-h">Similar stays in ${esc(d.a)}</h2>
       <ul class="sx-list">${similarWithOwn(similar, d.ks.includes('Hostels') || d.t.includes('backpacker'))}</ul>
       <div class="sx-actions"><a class="sx-open" href="/hotels/best-${cat.slug}-in-${CITY}">See all ${cat.filter === 'all' ? 'stays' : esc(lc(cat.title))}</a></div></section>` : ''}
-    <p class="sx-note">${CITY === 'haridwar' ? 'Haridwar moves with the festival calendar, and so do room rates. Prices and availability jump around the Kumbh, Kanwar Yatra and big snan days, so give the property a quick check before you pack.' : 'Rishikesh moves with the seasons, and so do room rates. Prices, availability and facilities can shift between rafting season and the monsoon, so give the property a quick check before you pack.'}</p>
+    <p class="sx-note">${CITY === 'haridwar' ? 'Haridwar moves with the festival calendar, and so do room rates. Prices and availability jump around the Kumbh, Kanwar Yatra and big snan days, so give the property a quick check before you pack.' : HILL_CITY ? 'Room rates move with the seasons, school holidays and long weekends. Prices and availability can shift quickly, so give the property a quick check before you pack.' : 'Rishikesh moves with the seasons, and so do room rates. Prices, availability and facilities can shift between rafting season and the monsoon, so give the property a quick check before you pack.'}</p>
     </div>
     <aside class="sp-side" aria-label="Book direct with Rishikesh Homestays">
       ${isOwn ? '' : `<section class="sx-own sp-side-card" aria-labelledby="sx-own-h">
@@ -224,7 +225,7 @@ function render(root, d, isOwn) {
         <ul>
           <li>A local who answers on WhatsApp, not a call centre</li>
           <li>Book direct and skip the booking-site commission</li>
-          <li>Help with dates, groups, long stays and ${CITY === 'haridwar' ? 'Kumbh and snan days' : 'rafting, yoga and Ganga Aarti plans'}</li>
+          <li>Help with dates, groups, long stays and ${CITY === 'haridwar' ? 'Kumbh and snan days' : HILL_CITY ? 'hill trips and weekend plans' : 'rafting, yoga and Ganga Aarti plans'}</li>
         </ul>
         <button type="button" class="btn btn-whatsapp" data-sp-wa-direct>${WA_ICON} Ask us on WhatsApp</button>
       </section>

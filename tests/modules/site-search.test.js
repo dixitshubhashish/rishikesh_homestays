@@ -174,14 +174,14 @@ test('site-search: assets/search/index.json', async (t) => {
     assert.ok(best.length > 50);
     for (const f of best) assert.ok(urls.has(`/hotels/${f.replace(/\.html$/, '')}`), `hotels/${f} missing: run npm run build:search`);
   });
-  await t.test('has every stay of both cities, our own stays first', async () => {
+  await t.test('has every stay of every city, our own stays first', async () => {
     const rk = await import('../../assets/js/modules/stays-index-data.js');
-    const hw = await import('../../assets/js/modules/stays-index-data-haridwar.js');
+    const others = await Promise.all(['haridwar', 'dehradun', 'mussoorie'].map((c) => import(`../../assets/js/modules/stays-index-data-${c}.js`)));
     const own = rk.STAYS_OWN.map((o) => o.id);
     assert.deepStrictEqual(raw.s.slice(0, own.length).map((s) => s.id), own);
     assert.ok(raw.s.slice(0, own.length).every((s) => s.o === 1 && s.u));
-    assert.strictEqual(raw.s.length, own.length + rk.STAYS_INDEX.length + hw.STAYS_INDEX.length);
-    assert.ok(raw.s.slice(own.length).every((s) => !s.o && s.n && s.id && (s.c === 'rishikesh' || s.c === 'haridwar')));
+    assert.strictEqual(raw.s.length, own.length + rk.STAYS_INDEX.length + others.reduce((n, m) => n + m.STAYS_INDEX.length, 0));
+    assert.ok(raw.s.slice(own.length).every((s) => !s.o && s.n && s.id && ['rishikesh', 'haridwar', 'dehradun', 'mussoorie'].includes(s.c)));
   });
   await t.test('the real index answers the typo examples', () => {
     const docs = prepareIndex(raw);

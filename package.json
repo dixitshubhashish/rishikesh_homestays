@@ -9,7 +9,7 @@
     "test": "node --test tests/**/*.test.js",
     "test:watch": "node --test --watch tests/**/*.test.js",
     "test:coverage": "node --test tests/**/*.test.js --coverage",
-    "build:stays": "node scripts/py.mjs scripts/stays/build_pages.py --city haridwar && node scripts/py.mjs scripts/stays/build_pages.py && npm run --silent build:search && npm run --silent build:i18n",
+    "build:stays": "node scripts/py.mjs scripts/stays/build_pages.py --city dehradun && node scripts/py.mjs scripts/stays/build_pages.py --city mussoorie && node scripts/py.mjs scripts/stays/build_pages.py --city haridwar && node scripts/py.mjs scripts/stays/build_pages.py && npm run --silent build:search && npm run --silent build:i18n",
     "build:search": "node scripts/search/build-index.mjs",
     "check:stays": "node --test tests/integration/stays-content.test.js",
     "indexnow": "node scripts/indexnow.mjs",

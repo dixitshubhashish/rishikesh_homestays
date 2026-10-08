@@ -239,6 +239,26 @@ CITY_COPY = {
         'area_tip': 'For the evening aarti and the main snans, stay near Har Ki Pauri or the Upper Road; for a calmer base, Kankhal, Bhupatwala or Shantikunj; for driving in and out, the Delhi Road or Rishikesh Road.',
         'note': 'Our area lines are drawn with a local\'s pencil, not a surveyor\'s, so a stay near the border might sit one neighbourhood over. Rates jump around the Kumbh, Kanwar Yatra, Ganga Dussehra and big snan days, so give the property a quick check before you pack.',
         'kumbh': True,
+        'kinds': 'hotels, dharamshalas, homestays, guest houses and apartments',
+        'explore': '<p>Planning a pilgrimage? Read our <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027 guide</a> and the <a href="/triveni-ghat">Ganga Aarti guide</a>, compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a> (25 km upriver), or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>',
+    },
+    'dehradun': {
+        'master_intro': 'Every hotel, homestay, villa, apartment and guest house we found listed in Dehradun, from simple rooms by the station to Rajpur Road boutique stays and villas in the Mussoorie foothills, grouped by category.',
+        'intro': '{title} across Dehradun, from the Clock Tower and the Rajpur Road to Sahastradhara, the Mussoorie Road foothills and the airport side.',
+        'guide': 'Dehradun spreads out along a few main roads. The Clock Tower and Paltan Bazaar are the busy old centre; the railway station and the ISBT bus terminal sit to the south-west; the Rajpur Road runs north-east towards Rajpur and the road up to Mussoorie, with many of the cafes, restaurants and boutique stays. Sahastradhara Road and the Mussoorie Road foothills are greener and quieter, with villas, resorts and homestays; the Chakrata Road and the Haridwar Road are practical bases for the highway, and Jolly Grant airport is on the Rishikesh side. For a short trip, stay near the Rajpur Road or the Clock Tower; for a quiet one, go towards Sahastradhara or Malsi.',
+        'area_tip': 'For cafes, restaurants and an evening walk, stay on the Rajpur Road or around the Clock Tower; for trains and buses, near the railway station or the ISBT; for quiet nights and green views, towards Sahastradhara Road, Malsi or the Mussoorie Road foothills.',
+        'note': 'Our area lines are drawn with a local\'s pencil, not a surveyor\'s, so a stay near the border might sit one neighbourhood over. Rates rise on weekends, long weekends, school holidays and the summer rush to the hills, so give the property a quick check before you pack.',
+        'kinds': 'hotels, villas, apartments, homestays and guest houses',
+        'explore': '<p>Heading up the hill? Compare <a href="/hotels/best-hotels-in-mussoorie">stays in Mussoorie</a> (about 35 km up the hill road), see <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a> (about 45 km away by road), look at <a href="/homestays">our own handpicked homestays</a>, or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>',
+    },
+    'mussoorie': {
+        'master_intro': 'Every hotel, resort, cottage, homestay and apartment we found listed in Mussoorie, from Mall Road hotels to quiet Landour cottages and Kempty Road resorts, grouped by category.',
+        'intro': '{title} across Mussoorie, from the Mall Road and Library Chowk to Landour, Camel\'s Back Road and the Kempty Road.',
+        'guide': 'Mussoorie is a long ridge town, so where you sleep decides how you spend the day. The Mall Road between Library Chowk and Kulri is the lively centre, with shops, cafes and the evening walk; Library Chowk and Charleville, at the western end, are older and a little calmer; Camel\'s Back Road and Gun Hill are for slow evening strolls; Landour and Char Dukan, to the east, are quieter, with old cottages and bakeries; Barlowganj and Jharipani sit on the slopes below; and the Kempty Road runs out towards Kempty Falls, with many of the resorts and views. On busy weekends and holidays the Mall Road area gets crowded, so ask your stay how far a car can go and how much of the way is on foot.',
+        'area_tip': 'For the Mall Road, cafes and evening walks, stay around Library Chowk or Kulri; for quiet, try Landour or Camel\'s Back Road; for views and the falls, the Kempty Road.',
+        'note': 'Our area lines are drawn with a local\'s pencil, not a surveyor\'s, so a stay near the border might sit one neighbourhood over. Rates jump on weekends, long weekends, school holidays and the summer rush, so give the property a quick check before you pack.',
+        'kinds': 'hotels, resorts, cottages, homestays and apartments',
+        'explore': '<p>Coming up from the plains? Compare <a href="/hotels/best-hotels-in-dehradun">stays in Dehradun</a> (about 35 km down the hill road), see <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a> (about 80 km away by road, through Dehradun), look at <a href="/homestays">our own handpicked homestays</a>, or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>',
     },
 }
 AREA_TIP_RISHIKESH = 'For the evening aarti and ashrams, stay near Swarg Ashram, Muni Ki Reti or Triveni Ghat; for rafting, stay towards Shivpuri.'
@@ -298,6 +318,29 @@ AREA_NOTES = {
     'Shivpuri & rafting belt': 'upstream on the Badrinath road where most rafting starts, with riverside camps',
     'AIIMS Rishikesh': 'near the AIIMS hospital on the Haridwar side, practical for hospital visits',
     'Veerbhadra Temple': 'a residential area south of the centre, quieter but a ride from the ghats',
+    'Sahastradhara Road': 'the road out towards the Sahastradhara sulphur-spring falls, greener and quieter, with resorts, villas and homestays; you will want a vehicle',
+    'Mussoorie Road & Malsi': 'the foothills on the way up to Mussoorie, around Malsi, with villas and hillside homestays',
+    'Rajpur Road': 'the long, cafe-lined road from the Clock Tower towards Rajpur, popular for restaurants, shops and boutique stays',
+    'Dalanwala & Survey Chowk': 'a central, mostly residential pocket near the lower Rajpur Road and the cantonment, handy for the market',
+    'Clock Tower & Paltan Bazaar': 'the old heart of Dehradun around the Clock Tower and Paltan Bazaar; busy, walkable and close to the shops',
+    'Railway Station & Tyagi Road': 'around the railway station and the Tyagi Road, handy for trains and an early start',
+    'ISBT & Majra': 'near the ISBT bus terminal and the Haridwar bypass, handy for buses and the road to Haridwar and Rishikesh',
+    'Saharanpur Road & Patel Nagar': 'the western side towards the Saharanpur Road, practical with easy road links towards Delhi',
+    'Haridwar Road & Rispana': 'south of the centre on the Haridwar Road, with practical hotels and easy access to the highway',
+    'Clement Town & Mindrolling': 'the quieter south-western side around Clement Town and the Mindrolling Monastery',
+    'FRI, Ballupur & Kaulagarh': 'the greener west side near the Forest Research Institute, Ballupur and Kaulagarh',
+    'Vasant Vihar & Indira Nagar': 'a residential area on the west side, towards the Chakrata Road',
+    'Chakrata Road & Premnagar': 'the western edge on the Chakrata Road, around Premnagar and the Indian Military Academy side',
+    'Raipur & Maldevta': 'the eastern side towards Raipur and Maldevta, greener and quieter, with a drive into the centre',
+    'Jolly Grant & Doiwala': 'on the Rishikesh side near Jolly Grant airport and Doiwala, handy for flights',
+    'Landour & Char Dukan': 'the quieter, older side to the east, with old cottages, bakeries and walks',
+    'Library Chowk & Charleville': 'the western end of the Mall Road, a little calmer than Kulri, with the old library and shops',
+    "Camel's Back Road & Gun Hill": 'the quiet walking road above the Mall Road and the Gun Hill ropeway side',
+    'Mall Road & Kulri': 'the lively centre, with the Mall Road, Kulri bazaar, cafes and the evening walk',
+    'Happy Valley & Hathipaon': 'the western slopes around Happy Valley and the George Everest road, calmer and greener',
+    'Barlowganj & Jharipani': 'the slopes below the town towards Barlowganj and Jharipani, quieter and a climb back up',
+    'Kempty Road': 'the road out towards Kempty Falls, with resorts and views; you will want a vehicle',
+    'Mussoorie Lake & Dehradun Road': 'the Dehradun side of town, around Mussoorie Lake, the first stretch on the way up from Dehradun',
     'Haridwar Road': 'on the road towards Haridwar, handy for road trips',
     'Raiwala & Shyampur': 'on the Haridwar side of Rishikesh, convenient for Haridwar and the highway',
 }
@@ -527,9 +570,27 @@ def prepared_stays(city, ota):
 
 
 # Words kept as written when a phrase is used in running text.
-KEEP_CASE = {'OYO', 'Airbnb', 'Ganga', 'Ganges', 'AIIMS', 'BHK', 'ISBT', 'BHEL', 'SIDCUL'}
+KEEP_CASE = {'OYO', 'Airbnb', 'Ganga', 'Ganges', 'AIIMS', 'BHK', 'ISBT', 'BHEL', 'SIDCUL', 'FRI', 'IMA'}
 # Where the other city is, seen from a page of this one (for the "nearest in ..." lists).
-CITY_AWAY = {'rishikesh': 'about 25 km upriver', 'haridwar': 'about 25 km downriver'}
+# (road distances are the usual rounded figures; Rishikesh and Haridwar sit on the same river)
+AWAY = {('rishikesh', 'haridwar'): 'about 25 km downriver', ('haridwar', 'rishikesh'): 'about 25 km upriver',
+        ('rishikesh', 'dehradun'): 'about 45 km by road', ('dehradun', 'rishikesh'): 'about 45 km by road',
+        ('haridwar', 'dehradun'): 'about 55 km by road', ('dehradun', 'haridwar'): 'about 55 km by road',
+        ('dehradun', 'mussoorie'): 'about 35 km by road, uphill', ('mussoorie', 'dehradun'): 'about 35 km by road, downhill',
+        ('rishikesh', 'mussoorie'): 'about 80 km by road', ('mussoorie', 'rishikesh'): 'about 80 km by road',
+        ('haridwar', 'mussoorie'): 'about 90 km by road', ('mussoorie', 'haridwar'): 'about 90 km by road'}
+# Where to look first when a city has too few stays for a page: the nearest cities, in order.
+NEAREST = {'rishikesh': ['haridwar', 'dehradun', 'mussoorie'], 'haridwar': ['rishikesh', 'dehradun', 'mussoorie'],
+           'dehradun': ['rishikesh', 'mussoorie', 'haridwar'], 'mussoorie': ['dehradun', 'rishikesh', 'haridwar']}
+
+
+def away(frm, to):
+    return AWAY[(frm, to)]
+
+
+def home_away(city=None):
+    """How far our own homestays (in Rishikesh) are from a city's pages."""
+    return away(city or CITY, DEFAULT_CITY)
 # A thin category page's "similar stays here" list: the closest category that has stays
 # (None: the city's best-reviewed stays).
 CATEGORY_FALLBACK = {'camps': 'resorts', 'studio-and-1-bhk-stays': 'apartments', '2-bhk-stays': 'apartments',
@@ -624,7 +685,10 @@ def insights(title, plural, st, boxed=False):
         lines.append(f'The typical listed starting price is about ₹{round_price(st["median"])} a night; the middle half of {plural} start between ₹{round_price(st["p25"])} and ₹{round_price(st["p75"])} (based on {st["priced"]} listings with a price).')
     if st['starred']:
         lines.append(f'{st["starred"]} have a star rating, including {st["five"]} five-star and {st["four"]} four-star.')
-    lines.append(f'{st["pet"]} ({pct(st["pet"], st["n"])}) allow pets and {st["ganga"]} ({pct(st["ganga"], st["n"])}) are on or facing the Ganga.')
+    if CITY in ('rishikesh', 'haridwar'):
+        lines.append(f'{st["pet"]} ({pct(st["pet"], st["n"])}) allow pets and {st["ganga"]} ({pct(st["ganga"], st["n"])}) are on or facing the Ganga.')
+    else:
+        lines.append(f'{st["pet"]} ({pct(st["pet"], st["n"])}) allow pets.')
     if st['rated'] and not boxed:
         lines.append(f'Of the {st["rated"]} with at least five guest reviews, {st["well_rated"]} score 9/10 or higher.')
     return lines
@@ -634,7 +698,7 @@ def insights(title, plural, st, boxed=False):
 NTES_LINK = ('<p class="sx-source">Train times and platforms change, so check them on '
              '<a href="https://enquiry.indianrail.gov.in/ntes/" target="_blank" rel="noopener">Indian Railways\' train enquiry (NTES)</a> '
              'before you leave for the station.</p>')
-STATION_SLUGS = {'rishikesh-railway-station', 'haridwar-railway-station'}
+STATION_SLUGS = {'rishikesh-railway-station', 'haridwar-railway-station', 'dehradun-railway-station'}
 
 
 # ---------- Quick facts: short, self-contained lines near the top of every stays page ----------
@@ -664,19 +728,22 @@ def price_fact(prices, what, where):
 
 def own_fact(own, place_name=None, place_ll=None):
     """Where our own homestays are, from a place: straight-line distance and a rough drive in Rishikesh,
-    the town (25 km upriver) from Haridwar."""
+    the town (25 km upriver from Haridwar, further from the others) from another city."""
     home = CITIES[DEFAULT_CITY]['name']
     with_ll = [o for o in own if o.get('ll')]
     if not with_ll:
         return None
     area = re.sub(r'^.* · ', '', with_ll[0]['a'])
     if CITY != DEFAULT_CITY and not place_ll:
-        return f'Our own Ganga-side homestays are in {area}, {home}, about 25 km upriver from {CN}, and are booked direct with us.'
+        return f'Our own Ganga-side homestays are in {area}, {home}, {home_away()} from {CN}, and are booked direct with us.'
     if not place_ll:
         return None
     k, o = min(((km_between(place_ll, o['ll']), o) for o in with_ll), key=lambda t: t[0])
     if k < 0.05:
         return None
+    if CITY not in (DEFAULT_CITY, 'haridwar'):   # hill-side cities: no drive time promised from a straight line
+        return (f'Our own homestays in {area}, {home} are about {dist_label(k)} from {place_name} in a straight line '
+                f'({home_away()} from {CN}), and are booked direct with us.')
     return (f'Our own homestays in {area}, {home} are about {dist_label(k)} from {place_name} in a straight line, '
             f'roughly {drive_minutes(k)} minutes by car, and are booked direct with us.')
 
@@ -792,8 +859,13 @@ LANDMARK_TIPS = {
 }
 
 
+HILL_SIGHT_TIP = 'Visiting on a busy weekend or holiday? Expect crowds and slow roads around the sights, plan to walk the last stretch, and book ahead.'
+
+
 def landmark_tips(lm, name, near, radius):
-    tips = [t for t in (LANDMARK_NOTES.get(lm['slug']), LANDMARK_TIPS.get(lm.get('schema') or 'TouristAttraction')) if t]
+    schema = lm.get('schema') or 'TouristAttraction'
+    tip = HILL_SIGHT_TIP if CITY in ('dehradun', 'mussoorie') and schema == 'TouristAttraction' else LANDMARK_TIPS.get(schema)
+    tips = [t for t in (LANDMARK_NOTES.get(lm['slug']), tip) if t]
     priced = sorted(s['p'] for _, s in near if s.get('p'))
     linked = sum('o' in s for _, s in near)
     kinds = {}
@@ -851,10 +923,14 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
                 base_line = (f"Prefer quiet nights over walking distance? Our Ganga-view homestays in {home_city}'s Nirmal Bagh are about {ok:.0f} km away, "
                              f'roughly {drive_minutes(ok)} minutes by car or auto.'
                              + (f' Come in for {name} and go home to the river.' if (lm.get('schema') or 'TouristAttraction') == 'TouristAttraction' else ''))
-            else:
+            elif CITY == 'haridwar':
                 base_line = (f'Coming for {name} but want calm nights? Base yourself at our homestays in {home_city}, about {ok:.0f} km upriver '
                              f'(roughly {drive_minutes(ok)} minutes by car), and skip the crowds after dark.')
-            own_rows = ''.join(with_dist(own_html(o), f'{dist_label(k)} from {esc(name)} · ~{drive_minutes(k)} min drive') for k, o in own_d)
+            else:
+                # the hill-side cities: a straight line says little about a mountain road, so no drive time is promised
+                base_line = (f'Our own homestays are in {home_city}, {home_away()} from {CN}, about {ok:.0f} km from {name} in a straight line. '
+                             'They suit a longer trip that also takes in the river, not a quick stop here.')
+            own_rows = ''.join(with_dist(own_html(o), f'{dist_label(k)} from {esc(name)}' + (f' · ~{drive_minutes(k)} min drive' if CITY in ('rishikesh', 'haridwar') else ' in a straight line')) for k, o in own_d)
             own_block = ('<section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">A calmer base <span>Book direct with us</span></h2>' + OWN_PERKS +
                          f'<p class="sx-base">{esc(base_line)}</p><ul class="sx-list">{own_rows}</ul></section>')
         # Quick facts: counts, closest, prices, bookable, the town centre and our homestays, all from this page's data
@@ -883,7 +959,9 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             faq.append((f'What does a stay near {name} cost?',
                         f'Listed starting prices within 1 km run from about ₹{round_price(prices[0])} to ₹{round_price(prices[-1])} a night, with a typical stay around ₹{round_price(statistics.median(prices))}. Expect more on weekends and festival days.'))
         faq.append((f'Is it better to stay right next to {name}?',
-                    'Only if you want to walk there early and late: walking distance is handy for early mornings and evening aartis, but the busiest lanes are noisy and hard to drive into on festival days. '
+                    ('Only if you want to walk there early and late: walking distance is handy for early mornings and evening walks, but the busiest lanes are noisy and hard to drive into on busy weekends. '
+                     if CITY in ('dehradun', 'mussoorie') else
+                     'Only if you want to walk there early and late: walking distance is handy for early mornings and evening aartis, but the busiest lanes are noisy and hard to drive into on festival days. ')
                     + (base_line or 'A stay 1–2 km away is often quieter and easier to reach by car.')))
         if slug == 'har-ki-pauri':
             faq.insert(1, KUMBH_FAQ)
@@ -1201,7 +1279,7 @@ def main(data_path, crawled):
                   f'Best Hotels in {CN}' if is_master else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")}')
             page_title = (f'Best Hotels in {CN} | All {n:,} Stays by Area & Category' if is_master
                           else f'Best {title} in {CN}{TITLE_SUFFIX.get(slug, "")} | {n:,} Compared by Area & Price')
-        kinds_txt = 'hotels, dharamshalas, homestays, guest houses and apartments' if CITY == 'haridwar' else 'hotels, homestays, resorts, camps and hostels'
+        kinds_txt = CITY_COPY.get(CITY, {}).get('kinds', 'hotels, homestays, resorts, camps and hostels')
         desc = (clip_desc(intro if 'top10' in search['rule'] else f'{n:,} to compare. {intro}') if search else
                 (f'{n:,} {CN} stays compared: {kinds_txt} by area, price and facilities, '
                  f'with local tips on where to stay.') if is_master else (
@@ -1223,18 +1301,21 @@ def main(data_path, crawled):
         thin = not is_master and n_here < (10 if top10 else MIN_PAGE)
         alts = []   # [(h2, note, stays, city, href or None, ranked)]
         if thin:
-            other = next(k for k in CITIES if k != CITY)
+            def stays_there(k):
+                if search:
+                    o_rule = search['rule_t'].replace('{city}', k)
+                    found = [x for x in pools[k] if rule_matches(x, o_rule, k, lm_all)]
+                    return select(found, o_rule) if top10 else found
+                return [x for x in pools[k] if matches(x, flt)]
+            # the nearest city that has stays for this page (else the nearest city: the page still points there)
+            other = next((k for k in NEAREST[CITY] if len(stays_there(k)) >= (MIN_PAGE if not top10 else 1)), None) or next(
+                (k for k in NEAREST[CITY] if stays_there(k)), NEAREST[CITY][0])
             ON = CITIES[other]['name']
-            if search:
-                o_rule = search['rule_t'].replace('{city}', other)
-                there = [x for x in pools[other] if rule_matches(x, o_rule, other, lm_all)]
-                there = select(there, o_rule) if top10 else there
-            else:
-                there = [x for x in pools[other] if matches(x, flt)]
+            there = stays_there(other)
             twin_stem = other_city(other)
             twin_h1 = (twin_of(search['phrase'], ON) if search else f'Best {title} in {ON}')
             if there:
-                alts.append((twin_h1, CITY_AWAY[other], there[:SHOW_MIN], other, f'/hotels/{twin_stem}', top10))
+                alts.append((twin_h1, away(CITY, other), there[:SHOW_MIN], other, f'/hotels/{twin_stem}', top10))
             # similar stays in this city: the search minus its first condition (usually the kind), or
             # the closest category; failing both, this city's best-reviewed stays
             sim_h2, sim = None, []
@@ -1258,7 +1339,7 @@ def main(data_path, crawled):
             if sim:
                 alts.insert(1 if n_here == 0 and alts else 0,
                             (sim_h2, '', sim[:SHOW_MIN], CITY, sim_href, False))
-            there_txt = f' The nearest are in {ON}, {CITY_AWAY[other]}.' if there else ''
+            there_txt = f' The nearest are in {ON}, {away(CITY, other)}.' if there else ''
             what = re.sub(r'^top 10 ', '', plural)   # "No villas in Haridwar have enough reviews", not "No top 10 villas"
             if top10:
                 thin_note = (f'Only {n_here} {what} in {CN} {"has" if n_here == 1 else "have"} the {TOP_MIN_REVIEWS}+ guest reviews we need to rank them, so this list is shorter than ten.'
@@ -1391,10 +1472,9 @@ def main(data_path, crawled):
                     qf.append(f'{w1:,} of these {n_here:,} stays are within 1 km of {q_name}; the closest, {dk[0][1]["n"]}, is '
                               + ('right next to it.' if dk[0][0] < 0.05 else f'about {dist_label(dk[0][0])} away in a straight line.'))
         if thin:
-            other_q = next(k for k in CITIES if k != CITY)
-            there_q = next((lst for _h, _n, lst, c, *_ in alts if c == other_q), None)
-            if there_q:
-                qf.append(f'The nearest {what_q} are in {CITIES[other_q]["name"]}, {CITY_AWAY[other_q]} from {CN}.')
+            other_q = next((c for _h, _n, lst, c, *_ in alts if c != CITY and lst), None)
+            if other_q:
+                qf.append(f'The nearest {what_q} are in {CITIES[other_q]["name"]}, {away(CITY, other_q)} from {CN}.')
         qf.append(own_fact(own, q_name if near_q else q_name or CN, q_ll if (near_q or CITY == DEFAULT_CITY) else None))
         qf = [x for x in qf if x]
         ld_breadcrumb = {'@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [
@@ -1464,7 +1544,7 @@ def main(data_path, crawled):
             <p><a href="/haridwar-kumbh-2027">Read our Haridwar Kumbh 2027 guide</a> for reported dates and planning, see <a href="/hotels/best-dharamshalas-in-haridwar">dharamshalas</a> and <a href="/hotels/best-hotels-in-haridwar">all Haridwar stays</a>, or compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a>.</p>
           </section>''' if CITY_COPY.get(CITY, {}).get('kumbh') else '')
         explore_more = ('<p>Want a hand choosing? <a href="/homestays">See our handpicked homestays</a>, read <a href="/about-rishikesh">about Rishikesh\'s areas</a>, <a href="/places-to-visit">places to visit</a> and <a href="/things-to-do-in-rishikesh">things to do</a>, plan for the <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027</a>, or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>'
-                        if CITY == DEFAULT_CITY else
+                        if CITY == DEFAULT_CITY else CITY_COPY[CITY]['explore'] if CITY in ('dehradun', 'mussoorie') else
                         '<p>Planning a pilgrimage? Read our <a href="/haridwar-kumbh-2027">Haridwar Kumbh 2027 guide</a> and the <a href="/triveni-ghat">Ganga Aarti guide</a>, compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a> (25 km upriver), or <a href="/contact">send us your dates</a> and we\'ll suggest a stay.</p>')
         updated = (f'{n:,} {esc(plural)} to compare' if not thin else
                    f'{n_here:,} {esc(plural)} in {esc(CN)}, plus the nearest options' if n_here else
@@ -1498,7 +1578,7 @@ def main(data_path, crawled):
           </section>
           {kumbh_html}
           <section class="sx-own" aria-labelledby="sx-own-h">
-            <h2 id="sx-own-h">Our homestays <span>{'Book direct with us' if CITY == DEFAULT_CITY else 'Book direct · in Rishikesh, about 25 km upriver'}</span></h2>
+            <h2 id="sx-own-h">Our homestays <span>{'Book direct with us' if CITY == DEFAULT_CITY else 'Book direct · in Rishikesh, ' + home_away()}</span></h2>
             {OWN_PERKS}
             <ul class="sx-list" id="sx-own">{"".join(own_html(o) for o in own)}</ul>
           </section>

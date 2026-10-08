@@ -41,9 +41,11 @@ const tsv = (f) => readFileSync(join(ROOT, f), "utf8").split(/\r?\n/).filter((l)
 // Names the generator puts into its sentences.
 export async function vocabulary() {
   const terms = new Set(), names = new Set();
-  const cities = ["Rishikesh", "Haridwar"];
+  // every city that has a built stays data module (stays-index-data.js = Rishikesh, stays-index-data-<city>.js)
+  const files = readdirSync(join(ROOT, "assets/js/modules")).filter((f) => /^stays-index-data(-[a-z]+)?\.js$/.test(f)).sort();
+  const cities = files.map((f) => { const m = /-([a-z]+)\.js$/.exec(f); return m ? m[1][0].toUpperCase() + m[1].slice(1) : "Rishikesh"; });
   cities.forEach((c) => terms.add(c));
-  for (const f of ["stays-index-data.js", "stays-index-data-haridwar.js"]) {
+  for (const f of files) {
     const m = await import(pathToFileURL(join(ROOT, "assets/js/modules", f)).href);
     for (const c of m.STAYS_INDEX_META.categories) { terms.add(c.title); terms.add(c.title.toLowerCase()); }
     for (const s of m.STAYS_INDEX) { if (s.a) terms.add(s.a); if (s.k) terms.add(s.k); for (const k of s.ks || []) terms.add(k); if (s.n) names.add(s.n); }

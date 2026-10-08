@@ -5,8 +5,8 @@ import { join } from 'path';
 
 // Content check for the generated stays pages (scripts/stays/build_pages.py):
 // category, search-phrase and landmark pages must read as guides, not bare
-// lists (owner, 2026-10-05), every page must exist in both cities behind the
-// Rishikesh / Haridwar switch, and every page must be in the sitemap.
+// lists (owner, 2026-10-05), every page must exist in every city behind the
+// city switch (Rishikesh, Haridwar, Dehradun, Mussoorie), and every page must be in the sitemap.
 // Run on its own with: npm run check:stays (also part of npm test).
 const root = process.cwd();
 const hotels = join(root, 'hotels');
@@ -67,25 +67,42 @@ test('every stays page has one in-content ad slot, after the lists and before th
   }
 });
 
-test('the Rishikesh / Haridwar switch is on every page and lands on a page that exists', () => {
+// The registered cities and the phrase rows, read from the pipeline's own config (cities.py, search-pages.tsv), so a new
+// city needs no edit here.
+const CITIES = [...readFileSync(join(root, 'scripts/stays/cities.py'), 'utf-8').matchAll(/^\s+'(\w+)': \{'name': '([^']+)'/gm)]
+  .map((m) => ({ key: m[1], name: m[2] }));
+const slugOf = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const phraseRows = readFileSync(join(root, 'scripts/stays/search-pages.tsv'), 'utf-8').split('\n')
+  .filter((l) => l && !l.startsWith('#') && !l.startsWith('phrase\t')).map((l) => l.split('\t'))
+  .map(([phrase, , , cities]) => ({ phrase, cities: cities === 'both' ? CITIES.map((c) => c.key) : cities.split(',') }));
+const phraseStems = new Set(phraseRows.flatMap((r) => r.cities.map((k) => slugOf(r.phrase.replace('{City}', CITIES.find((c) => c.key === k).name)))));
+
+test('there are four cities, and the city switch is on every page and lands on a page that exists', () => {
+  assert(CITIES.length >= 4, `cities.py should register the cities, found ${CITIES.map((c) => c.key)}`);
   for (const p of pages) {
     const nav = (p.html.match(/<nav class="sx-city-switch"[\s\S]*?<\/nav>/) || [])[0];
     assert(nav, `${p.file}: no city switch`);
     const hrefs = [...nav.matchAll(/href="\/hotels\/([^"]+)"/g)].map((m) => m[1]);
-    assert.strictEqual(hrefs.length, 2, `${p.file}: the switch should link both cities`);
+    assert.strictEqual(hrefs.length, CITIES.length, `${p.file}: the switch should link every city`);
     for (const h of hrefs) assert(existsSync(join(hotels, `${h}.html`)), `${p.file}: switch links to missing /hotels/${h}`);
     assert(hrefs.includes(p.file.replace(/\.html$/, '')), `${p.file}: the switch should mark this page as the current city`);
   }
 });
 
-test('every category and search page of one city has its twin in the other', () => {
-  const names = new Set(pages.map((p) => p.file));
-  for (const p of pages) {
-    if (landmark(p) || !/-(rishikesh|haridwar)\.html$/.test(p.file) || !p.html.includes('data-filter=')) continue;
-    // one-city phrases (a landmark in the name) switch to their nearest equivalent instead
-    if (/-near-(?!ganga|river|railway-station)|tapovan|aiims|patanjali|shantikunj|gurukul|bhel|sidcul|jolly-grant|neelkanth|isbt/.test(p.file)) continue;
-    const twin = p.file.includes('rishikesh') ? p.file.replace(/rishikesh/g, 'haridwar') : p.file.replace(/haridwar/g, 'rishikesh');
-    assert(names.has(twin), `${p.file} has no twin page ${twin}`);
+test('every category page and every search phrase has its twin in every city it is for', () => {
+  const names = new Set(pages.map((p) => p.file.replace(/\.html$/, '')));
+  // categories: best-<slug>-in-<city>; made in every city once any city has enough stays
+  const slugs = new Set();
+  for (const f of names) {
+    const m = f.match(/^best-(.+)-in-([a-z]+)$/);
+    if (m && CITIES.some((c) => c.key === m[2]) && !phraseStems.has(f)) slugs.add(m[1]);
+  }
+  assert(slugs.size > 10, 'expected the category pages');
+  for (const slug of slugs) for (const c of CITIES) assert(names.has(`best-${slug}-in-${c.key}`), `category ${slug} has no page in ${c.name}`);
+  // phrases: a page in each city listed for the phrase once any of them has one
+  for (const r of phraseRows.filter((x) => x.phrase.includes('{City}'))) {
+    const stems = r.cities.map((k) => slugOf(r.phrase.replace('{City}', CITIES.find((c) => c.key === k).name)));
+    if (stems.some((x) => names.has(x))) for (const x of stems) assert(names.has(x), `phrase "${r.phrase}": ${x} is missing`);
   }
 });
 

@@ -22,7 +22,7 @@ export const OWN_BOOST = 0.15;
 export const INDEX_URL = '/assets/search/index.json';
 const TYPE_RANK = { page: 0, heading: 1, stay: 2 };
 const STOP = new Set(['a', 'an', 'the', 'in', 'of', 'to', 'and', 'for', 'at', 'on', 'with', 'by', 'is', 'or']);
-const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar' };
+const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar', dehradun: 'Dehradun', mussoorie: 'Mussoorie' };
 
 // ---------------------------------------------------------------------------
 // Pure functions (unit-tested in tests/modules/site-search.test.js)

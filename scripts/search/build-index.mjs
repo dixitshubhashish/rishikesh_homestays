@@ -26,6 +26,8 @@ const SITE_SUFFIX = 'Rishikesh Homestays';
 const CITY_DATA = [
   ['rishikesh', 'assets/js/modules/stays-index-data.js'],
   ['haridwar', 'assets/js/modules/stays-index-data-haridwar.js'],
+  ['dehradun', 'assets/js/modules/stays-index-data-dehradun.js'],
+  ['mussoorie', 'assets/js/modules/stays-index-data-mussoorie.js'],
 ];
 
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();

@@ -1,7 +1,7 @@
 # Stays pages pipeline
 
 Builds the generated stays pages in `hotels/` (category, landmark and
-search-phrase pages for Rishikesh and Haridwar, plus the property page
+search-phrase pages for Rishikesh, Haridwar, Dehradun and Mussoorie, plus the property page
 `stay.html`) and the per-city data modules from the public listings on
 uttarakhand-hotels.com, plus Google Maps places with a confirmed booking link.
 Live counts are in `docs/HANDOFF.md`; the booking-link search is in
@@ -18,13 +18,29 @@ cache at `.cache/`; other cities use `.cache/<city>/`. Current cities:
 |---|---|---|---|
 | Rishikesh (default) | `rishikesh-hotels-32481` | `stays-index-data.js` | 33 |
 | Haridwar | `haridwar-hotels-32456` | `stays-index-data-haridwar.js` | 33 |
+| Dehradun | `dehradun-hotels-14775` | `stays-index-data-dehradun.js` | 32 |
+| Mussoorie | `mussoorie-hotels-13000` | `stays-index-data-mussoorie.js` | 32 |
 
 Add a city: add it to `CITIES` (directory id and map centre), add its areas
 to `AREAS_BY_CITY` in `process.py` and its copy and area notes to
 `CITY_COPY` / `AREA_NOTES` in `build_pages.py`, then run
 `crawl.py --city X`, `process.py --city X`, `build_pages.py --city X`, then
 `build_pages.py` (Rishikesh last, so its city switcher links to the new city),
-then `push_bigquery.mjs` (it loads every city at once).
+then `push_bigquery.mjs` (it loads every city at once). Also: the landmarks
+(`landmarks.tsv`, `city` column), the city's phrase rows (`search-pages.tsv`), its
+`NEAREST` / `AWAY` entries and copy in `build_pages.py`, `CITY_NOTES` in
+`search_pages.py`, and the city's name in `stays-index.js`, `stay-page.js`,
+`site-search.js` and `scripts/search/build-index.mjs` (`CITY_DATA`). Use the
+`all-accommodations` listing, not `all-hotels`: for Dehradun and Mussoorie
+`all-hotels` lists only the star-rated hotels (357 and 381) and is a subset of
+`all-accommodations` (1,330 and 1,011 properties). Dehradun and Mussoorie are in
+big districts: `FAR_KM` in `process.py` marks a stay more than 30 km from the
+centre "Outside <city>" whatever its address says, and `MAP_KM` sets how far an
+address-less stay may be from an area's centre. A property the directory lists
+in two cities is listed once, in the city that already has it. Dehradun and
+Mussoorie are not on the Ganga: no river or Ganga phrase rows for them, and our
+own homestays (in Rishikesh) are labelled with their road distance
+(`AWAY` in `build_pages.py`), never a drive time promised from a straight line.
 
 Pages are written to `hotels/` (`/hotels/best-<category>-in-<city>`, property
 page `/hotels/stay?s=<slug>&c=<city>`). Haridwar pages add a Kumbh 2027
@@ -36,7 +52,7 @@ section and FAQ, and the Kumbh guide links back to them.
 |---|---|---|
 | 1. Crawl | `python3 scripts/stays/crawl.py [--fresh]` | `.cache/props.jsonl` (raw, one record per property, not committed) |
 | 2. Clean | `python3 scripts/stays/process.py [--names]` | `.cache/stays.json` |
-| 3. Build | `python3 scripts/stays/build_pages.py` (both cities: `npm run build:stays`, Haridwar then Rishikesh) | `hotels/best-*-in-<city>.html`, landmark and search-phrase pages, `hotels/stay.html`, the city's data module, footers (`footer_links.py`), `sitemap.xml`, `llms.txt`, `llms-full.txt` |
+| 3. Build | `python3 scripts/stays/build_pages.py` (all cities: `npm run build:stays`, Dehradun, Mussoorie, Haridwar, then Rishikesh) | `hotels/best-*-in-<city>.html`, landmark and search-phrase pages, `hotels/stay.html`, the city's data module, footers (`footer_links.py`), `sitemap.xml`, `llms.txt`, `llms-full.txt` |
 | 3b. Match (older) | `node scripts/stays/guess_booking_slugs.mjs [--shard i/N] [--workers n] [--limit n] [--out file]` | tries likely booking.com/hotel/in/<slug>.html pages (built from the stay's slug, name and city) for every stay without a verified link, in all cities, in a real browser (no web searches). Matches go to `.cache/slug-guesses.tsv` (or `--out`) and are merged into `ota-links.tsv`; stays tried without a match go to `<out>.tried` so re-runs skip them. `--shard i/N` splits the stays so N runs can go at once. Matching rule shared with `verify_candidates.mjs` in `booking-match.mjs` |
 | 4. Snapshot | `node scripts/stays/push_bigquery.mjs` | one row per stay into BigQuery `rishikesh_homestays.market_properties` (partitioned by `snapshot_date`; re-running the same day replaces that day) |
 | Auto | `python3 scripts/stays/refresh.py [--force]` | runs 1–4 only when due and the listing changed |
@@ -46,7 +62,7 @@ the result with `npm run check:stays`.
 
 The crawl is resumable (re-run to continue) and polite: 4 workers with a pause
 after each page; the source's robots.txt allows crawling. A full Rishikesh
-crawl (~1,650 properties) takes about 15 minutes; Haridwar has ~830.
+crawl (~1,650 properties) takes about 15 minutes; Haridwar has ~830, Dehradun 1,330 and Mussoorie 1,011 (about 35 and 25 minutes; the crawl keeps its pace of 4 workers and a pause per page). Two Mussoorie listings (Kempty Oasis) have host names over the 63-character DNS limit and cannot be fetched; they are skipped.
 
 ## What each record gets
 
@@ -71,9 +87,9 @@ crawl (~1,650 properties) takes about 15 minutes; Haridwar has ~830.
 ## Pages
 
 `CATEGORIES` in `build_pages.py` is the single list of pages. Each entry gives
-one `best-<slug>-in-<city>.html`. **Every page exists in both cities** (owner,
-2026-10-05) so the Rishikesh / Haridwar switch at the top of every page always
-lands on the same page: a category gets a page in each city once *either* city
+one `best-<slug>-in-<city>.html`. **Every page exists in every city** (owner,
+2026-10-05, extended to four cities 2026-10-08) so the city switch at the top of every page always
+lands on the same page: a category gets a page in each city once *any* city
 has 5 stays for it (both builds decide from the same data, `prepared_stays()`).
 Where a city has fewer (Haridwar has no camps), the page says so honestly, lists
 what there is, then the same page's stays in the other city ("about 25 km
@@ -81,8 +97,7 @@ upriver") and similar stays in this city (`CATEGORY_FALLBACK`, or the
 best-reviewed). A category no city has 5 stays for gets no page, and its old
 page file is deleted. All pages share one header/footer
 (copied from `thanks.html` at build time; the footer of every site page lists
-every category page of both cities, "Stays in Rishikesh" then "Stays in
-Haridwar", one wrapped line of links each, between `<!-- footer-stays -->`
+every category page of every city, "Stays in Rishikesh", then Haridwar, Dehradun, Mussoorie, one wrapped line of links each, between `<!-- footer-stays -->`
 markers written by `footer_links.py`; on phones each city's search-phrase
 links fold behind "More <city> searches", a CSS-only toggle with the links
 still in the HTML), one script
@@ -98,7 +113,7 @@ one section per category, with 20 rows visible per section before "Show all"
 - **phrase**: the page's address and `<h1>`, in the searcher's own words (never reworded); `{City}` = the city name.
 - **rule**, joined with ` & `: `home | hotel | resort | resortcamp | entire | camp`, `price<N`, `price<=N`, `priced`, `river`, `gangaview`, `family`, `kitchen`, `pool`, `luxury`, `wedding`, `oyo`, `linked`, `stars=N`, `stars>=N`, `area:<Area>`, `near:<landmark>:<km>` (a slug from `landmarks.tsv`), `kind:<Kind>` (a kind with ` & ` in its name needs an alias, e.g. `camp`), `top10`.
 - **group**: blank one list, `a` area, `s` stars, `k` type, `pb` price band, `d` distance from the rule's landmark, `c` like the main page.
-- **cities**: `both`, `rishikesh` or `haridwar`. A `both` phrase gets a page in both cities once either city has `MIN_PAGE` stays (Top 10: 10 with 5+ reviews), with the same thin-page fallback as categories.
+- **cities**: `both` (every city), one key, or several keys joined with a comma (`rishikesh,haridwar`: the river and Ganga phrases; `rishikesh,haridwar,dehradun`: "near railway station", as Mussoorie has no station). A `both` phrase gets a page in every city once any city has `MIN_PAGE` stays (Top 10: 10 with 5+ reviews), with the same thin-page fallback as categories.
 - **intro**: the one-line lede.
 - **twin** (one-city phrases only): the other city's phrase its city switch goes to, e.g. `Rooms near AIIMS Rishikesh` ↔ `Rooms near Patanjali Haridwar`; blank = that city's main list.
 
@@ -110,7 +125,7 @@ one section per category, with 20 rows visible per section before "Show all"
 
 **Sitemap and AI assistants**: every build rewrites its city's section of `sitemap.xml` and `llms.txt` (between the `stays-pages` markers for Rishikesh, `stays-pages-<city>` for other cities; one line per page in `llms.txt`) and `llms-full.txt` (`write_llms_full()`: per page the summary, typical prices, main areas, facts, best-reviewed bookable picks with links to their `/hotels/stay` pages, nearest alternatives on thin pages, tips, FAQs and a prefilled WhatsApp link to 80500 91290, plus how to book our own homestays direct; the intro, own homestays and key pages come from `llms.txt`; about 1.2 MB). Thin pages are described honestly, never as "0 stays".
 
-Add a phrase or place: add a row, then `npm run build:stays` (both cities, footers, sitemap, llms.txt) and `npm run check:stays`: every stays page must have 450+ words of guide text outside the lists (landmark pages 300+), its own title, `<h1>`, lede and description, 2+ FAQs, one in-content ad slot after the lists, a working city switch and a sitemap entry.
+Add a phrase or place: add a row, then `npm run build:stays` (every city, footers, sitemap, llms.txt) and `npm run check:stays`: every stays page must have 450+ words of guide text outside the lists (landmark pages 300+), its own title, `<h1>`, lede and description, 2+ FAQs, one in-content ad slot after the lists, a working city switch and a sitemap entry.
 
 ## Ordering and our own stays
 

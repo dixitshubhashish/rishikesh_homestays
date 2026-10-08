@@ -9,7 +9,8 @@ A page is one row of search-pages.tsv: the phrase ({City} = the city name), what
 it lists (a small rule language, mirrored in assets/js/modules/stays-index.js so
 the page's own filters keep working), how the list is grouped, and a one-line
 intro. build_pages.py renders them with the category-page template. A phrase
-for both cities gets a page in both as soon as either city has MIN_PAGE stays
+for several cities (cities column: both = every city, or keys joined with a comma)
+gets a page in each as soon as any of them has MIN_PAGE stays
 for it (owner, 2026-10-05: the city switch always lands on the same page); a
 city with fewer lists what it has plus the nearest alternatives. page_content()
 adds the page's own guidance, facts and FAQs. Add a phrase: add a row, rebuild.
@@ -36,13 +37,16 @@ RIVER_AREAS = {
     'rishikesh': ['Tapovan', 'Laxman Jhula', 'Ram Jhula', 'Swarg Ashram', 'Muni Ki Reti', 'Triveni Ghat',
                   'Nirmal Bagh near Ganges', 'Shivpuri & rafting belt'],
     'haridwar': ['Har Ki Pauri', 'Bhupatwala', 'Kharkhari', 'Shantikunj & Saptrishi', 'Upper Road & Mayapur', 'Kankhal'],
+    'dehradun': [],   # not on the Ganga: the river phrases are not made for the hill-side cities
+    'mussoorie': [],
 }
 OYO = re.compile(r'\b(oyo|townhouse|capital o|collection o|spot on|flagship|silverkey|hotel o)\b', re.I)
 PRICE_BANDS = [(1000, 'Under ₹1,000'), (2000, '₹1,000 to ₹2,000'), (3000, '₹2,000 to ₹3,000'), (5000, '₹3,000 to ₹5,000'), (None, '₹5,000 and up')]
 
 # The phrases live in search-pages.tsv (one row each: phrase, rule, group, cities, intro), so adding a
 # search is adding a row. {City} is the city's name; a phrase naming a Rishikesh landmark is Rishikesh-only.
-R, H, BOTH = ('rishikesh',), ('haridwar',), ('rishikesh', 'haridwar')
+from cities import CITIES  # noqa: E402
+ALL_CITIES = tuple(CITIES)   # the 'both' value of the cities column means every registered city
 TOP_MIN_REVIEWS = 5  # "Top 10": ranked by real guest score among stays with at least this many reviews
 _TSV = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'search-pages.tsv')
 
@@ -54,7 +58,10 @@ def load_pages(path=_TSV):
         if line.startswith('#') or line.startswith('phrase\t') or not line.strip():
             continue
         phrase, rule, group, cities, intro, twin = (line.rstrip('\n').split('\t') + [''] * 6)[:6]
-        rows.append((phrase, rule, group, intro, BOTH if cities == 'both' else (cities,)))
+        # cities: 'both' (every city), one key, or several keys joined with a comma (e.g. rishikesh,haridwar)
+        rows.append((phrase, rule, group, intro, ALL_CITIES if cities == 'both' else tuple(c for c in cities.split(',') if c)))
+        for c in rows[-1][4]:
+            assert c in CITIES, f'search-pages.tsv: unknown city {c!r} in row {phrase!r}'
         if twin:
             twins[phrase] = twin
     return rows, twins
@@ -181,6 +188,22 @@ CITY_NOTES = {
         'busy': 'Festival days, the Kanwar Yatra and big snan days fill the town first',
         'transport': 'Haridwar railway station and the bus stand next to it',
     },
+    'dehradun': {
+        'ghat': 'the Clock Tower', 'aarti': 'the evening walk on the Rajpur Road', 'river': 'none: Dehradun is not on the Ganga',
+        'busy': 'Weekends, long weekends and the summer rush to the hills fill Dehradun first',
+        'transport': 'the railway station and the ISBT bus terminal',
+        'resort': 'Resorts mostly sit outside the walkable centre, towards Sahastradhara Road, the Mussoorie Road foothills and the Chakrata Road, so budget for a car or cab. Ask whether meals are included and how far it is to the Rajpur Road for dinners out.',
+        'camp': 'Camps are few around Dehradun and sit on the outskirts. Ask whether meals and a bonfire are included, whether tents have attached bathrooms, and how the access road is after rain.',
+        'own_away': 'about 45 km by road',
+    },
+    'mussoorie': {
+        'ghat': 'the Mall Road', 'aarti': 'the evening walk on the Mall Road', 'river': 'none: Mussoorie is not on the Ganga',
+        'busy': 'Weekends, long weekends, school holidays and the summer rush fill Mussoorie first',
+        'transport': 'the bus and taxi stands in town',
+        'resort': 'Resorts mostly sit away from the Mall Road bustle, on the Kempty Road, the Dhanaulti side or the slopes below, so budget for a cab or your own car on hill roads. Ask whether meals are included and how far it is to the Mall Road.',
+        'camp': 'Camps near Mussoorie are on the outskirts, along the Kempty Road and the forest side. Many close in the monsoon, so ask about meals, a bonfire and attached bathrooms.',
+        'own_away': 'about 80 km by road',
+    },
 }
 LANDMARK_NOTES = {
     'laxman-jhula': 'The bridge itself is for walkers and two-wheelers only, so a cab drops you at the nearest road and you walk the last bit.',
@@ -244,13 +267,13 @@ def page_content(rule, city, members, landmarks, lm_names, area_notes, singular,
     if 'entire' in conds:
         paras.append('Whole homes suit groups and longer stays. Check how the keys are handed over, whether a caretaker lives on site, and the house rules on visitors and noise.')
     if 'resort' in conds or 'resortcamp' in conds:
-        paras.append('Resorts mostly sit outside the walkable centre, on the Neelkanth and Badrinath roads or by the river upstream, so budget for taxis or a car. Ask whether meals are included and how far it is to the ghats for the evening aarti.')
+        paras.append(note.get('resort') or 'Resorts mostly sit outside the walkable centre, on the Neelkanth and Badrinath roads or by the river upstream, so budget for taxis or a car. Ask whether meals are included and how far it is to the ghats for the evening aarti.')
     if 'camp' in conds or 'resortcamp' in conds:
-        paras.append('Camps cluster upstream around Shivpuri, where most rafting trips start. Many close in the monsoon. Ask whether rafting, meals and a bonfire are included and whether tents have attached bathrooms.')
+        paras.append(note.get('camp') or 'Camps cluster upstream around Shivpuri, where most rafting trips start. Many close in the monsoon. Ask whether rafting, meals and a bonfire are included and whether tents have attached bathrooms.')
     if 'linked' in conds:
         paras.append('Every stay here has a booking page we have checked. Press View property, leave your name and number, and we send you straight on to book; or WhatsApp us and we will suggest one of our own homestays at a direct price.')
     paras.append('Prefer to book direct? Our own homestays by the Ganges in Rishikesh are pinned near the top of this page'
-                 + ('' if city == 'rishikesh' else ', about 25 km upriver')
+                 + ('' if city == 'rishikesh' else ', ' + note.get('own_away', 'about 25 km upriver'))
                  + '. Send us your dates and group size and we will help you choose, wherever you end up staying.')
 
     linked = sum('o' in d for d in members)
