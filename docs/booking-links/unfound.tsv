@@ -2166,7 +2166,6 @@ ba-stays	B&A Stays	dehradun	Sahastradhara Road		retry
 bhome	B@Home Dehradun	dehradun	Clock Tower & Paltan Bazaar		retry
 backpackers-homestay-in-the-valley	Backpackers Homestay in the Valley	dehradun	Sahastradhara Road		retry
 house-badri-kedar	Badri Kedar Guest House & Hotel	dehradun	Haridwar Road & Rispana		retry
-badri-kedar-stay	Badri Kedar Stay	dehradun	Haridwar Road & Rispana		retry
 bageecha-dehradun-inn	Bageecha Inn	dehradun	Jolly Grant & Doiwala		retry
 baithak-residency	Baithak Residency Hotel	dehradun	Haridwar Road & Rispana		retry
 hotel-dehradun-233	Balaji Comfort Home	dehradun	Haridwar Road & Rispana		retry
@@ -2218,7 +2217,6 @@ bzoie-heritage-dehradun	Bzoie Heritage	dehradun	Rajpur Road		retry
 cabana-affair	Cabana Affair Hotel	dehradun	Sahastradhara Road		retry
 villa-cabin-in-the-hills	Cabin in the Hills	dehradun	Elsewhere in Dehradun		retry
 cafe-delight-stays	Cafe Delight & Stays	dehradun	Raipur & Maldevta		retry
-cap10-cafe	Cap10 Cafe Hotel	dehradun	FRI, Ballupur & Kaulagarh		retry
 capital-o-1641-radiance-paradise	Capital O 1641 Hotel Radiance Paradise	dehradun	Mussoorie Road & Malsi		retry
 capital-o-37423-golden-leaf	Capital O 37423 Golden Leaf Hotel	dehradun	Chakrata Road & Premnagar		retry
 capital-o-5938-jungle-view-retreat	Capital O 5938 Hotel Jungle View Retreat	dehradun	Mussoorie Road & Malsi		retry
@@ -2230,7 +2228,6 @@ carbery-acres-jungle-retreat-adventure-park	Carbery Acres Jungle Retreat & Adven
 casa-azul-balcony-mountain-view	Casa Azul Balcony Mountain View Apartment	dehradun	Mussoorie Road & Malsi		retry
 bnb-casa-bianca	Casa Bianca Bed & Breakfast	dehradun	Vasant Vihar & Indira Nagar		retry
 casa-garden-low-aqi-hill-view-stay-for-peace-aamwala	Casa Garden Homestay – Low Aqi Hill View Stay for Peace – Aamwala	dehradun	Raipur & Maldevta		retry
-casa-mama	Casa Mama Apartment	dehradun	Mussoorie Road & Malsi		retry
 casa-nova-stays	Casa Nova Stays	dehradun	Sahastradhara Road		retry
 apt-casa-the-vacation	Casa the Vacation Apartment	dehradun	Mussoorie Road & Malsi		retry
 apt-casaav	Casaav Apartment	dehradun	Sahastradhara Road		retry
@@ -2361,7 +2358,6 @@ super-o-isbt	Fabhotel Clement	dehradun	ISBT & Majra		retry
 fabhotel-cp-palace-race-course	Fabhotel Cp Palace Race Course	dehradun	Railway Station & Tyagi Road		retry
 fabhotel-crestwood-inn	Fabhotel Crestwood Inn	dehradun	Rajpur Road		retry
 fabhotel-crown-star	Fabhotel Crown Star	dehradun	Mussoorie Road & Malsi		retry
-fabhotel-ice-berg	Fabhotel Ice Berg	dehradun	Sahastradhara Road		retry
 hotel-dehradun-215	Fabhotel Jms Residency	dehradun	Vasant Vihar & Indira Nagar		retry
 fabhotel-kenil-star	Fabhotel Kenil Star	dehradun	Haridwar Road & Rispana		retry
 o-khalsa-homestay	Fabhotel Khalsa Homestay	dehradun	Rajpur Road		retry
@@ -2565,7 +2561,6 @@ kamla-palace	Hotel Kamla Palace	dehradun	Saharanpur Road & Patel Nagar		retry
 kanchan-dehradun-248001	Hotel Kanchan	dehradun	Railway Station & Tyagi Road		retry
 kanel-star	Hotel Kenil Star	dehradun	Haridwar Road & Rispana		retry
 hotel-dehradun-183	Hotel Kenil Star	dehradun	Haridwar Road & Rispana		retry
-fabhotel-krb-paradise	Hotel Krb Paradise	dehradun	Saharanpur Road & Patel Nagar		retry
 krb-paradise-isbt	Hotel Krb Paradise Isbt	dehradun	ISBT & Majra		retry
 lalit-palace	Hotel Lalit Palace	dehradun	FRI, Ballupur & Kaulagarh		retry
 laxmi-palace-248171	Hotel Laxmi Palace	dehradun	ISBT & Majra		retry
@@ -2662,7 +2657,6 @@ ps-residency	Hotel Ps Residency	dehradun	Saharanpur Road & Patel Nagar		retry
 queens-pearl-dehradun-248001	Hotel Queens Pearl Inn	dehradun	Clement Town & Mindrolling		retry
 rabbit-hut	Hotel Rabbit Hut	dehradun	Rajpur Road		retry
 house-rajpal	Hotel Rajpal Guest House	dehradun	Raipur & Maldevta		retry
-rajpur-heights	Hotel Rajpur Heights	dehradun	Mussoorie Road & Malsi		retry
 ratan	Hotel Ratan	dehradun	Elsewhere in Dehradun		retry
 riverbend	Hotel Riverbend	dehradun	Sahastradhara Road		retry
 rk-residency-dehradun	Hotel Rk Residency	dehradun	Haridwar Road & Rispana		retry
@@ -2728,7 +2722,6 @@ independent-homestay-2	Independent Homestay	dehradun	FRI, Ballupur & Kaulagarh		
 doon-homestay	Independent Homestay Ddn	dehradun	Vasant Vihar & Indira Nagar		retry
 independent-studio	Independent Studio	dehradun	Haridwar Road & Rispana		retry
 apt-independent-studio	Independent Studio Apartment	dehradun	Sahastradhara Road		retry
-inderlok	Inderlok Hotel	dehradun	Rajpur Road		retry
 isbt-dhomage-luxury-homestay	Isbt Dehradun Hotel Dhomage	dehradun	ISBT & Majra		retry
 paradise-isbt	Isbt Dehradun Hotel Rb Paradise	dehradun	ISBT & Majra		retry
 isbt-mode-residency	Isbt Dehradun Mode Residency Hotel	dehradun	ISBT & Majra		retry
@@ -2740,14 +2733,12 @@ resort-jandri-cafe-and	Jandri Cafe and Resort	dehradun	Mussoorie Road & Malsi		r
 jindals	Jindal's Hotel	dehradun	Dalanwala & Survey Chowk		retry
 hotel-dehradun-231	Joshi Homestay	dehradun	Chakrata Road & Premnagar		retry
 resort-joyland-waterpark-and	Joyland Waterpark and Resort	dehradun	Sahastradhara Road		retry
-jsrcozystays	Jsrcozystays Dehradun	dehradun	Sahastradhara Road		retry
 kafal-dehradun	Kafal Dehradun	dehradun	Raipur & Maldevta		retry
 villa-kaksh	Kaksh Villa	dehradun	Elsewhere in Dehradun		retry
 apt-kamalkunj	Kamalkunj Apartment	dehradun	Chakrata Road & Premnagar		retry
 kamlam-homes-aura	Kamlam Homes – Aura	dehradun	Haridwar Road & Rispana		retry
 hotel-dehradun-244	Kamlam Homes – Kalagaon Retreat	dehradun	Sahastradhara Road		retry
 kanchan-248001	Kanchan Hotel	dehradun	Railway Station & Tyagi Road		retry
-kedarkuteer	Kedarkuteer Apartment	dehradun	Sahastradhara Road		retry
 keshavam-solitaire-homestay	Keshavam Solitaire केशवं Homestay	dehradun	Raipur & Maldevta		retry
 king-queen-home-dehradun	King Queen Home	dehradun	Rajpur Road		retry
 villa-kings-77-home-stay	Kings Villa 77 Home Stay	dehradun	Mussoorie Road & Malsi		retry
@@ -2835,7 +2826,6 @@ villa-mystic-dehradun	Mystic Villa	dehradun	Elsewhere in Dehradun		retry
 nandini-homestay	Nandini Homestay	dehradun	Jolly Grant & Doiwala		retry
 nandora-attic-1rk-for-visitors	Nandora Attic 1Rk For Visitors Apartment	dehradun	Elsewhere in Dehradun		retry
 nanis-place	Nani's Place	dehradun	Elsewhere in Dehradun		retry
-naprer-homes	Naprer Homes	dehradun	Dalanwala & Survey Chowk		retry
 nature-view-homestay-dehradun-248001	Nature View Homestay	dehradun	Rajpur Road		retry
 natures-den-lodge	Nature's Den Lodge	dehradun	Mussoorie Road & Malsi		retry
 natures-nexus-studio	Nature's Nexus Studio	dehradun	Mussoorie Road & Malsi		retry
@@ -2885,7 +2875,6 @@ oyo-6001-city-palace	OYO 6001 Hotel City Palace	dehradun	FRI, Ballupur & Kaulaga
 oyo-6438-valley-plaza	OYO 6438 Hotel Valley Plaza	dehradun	Rajpur Road		retry
 oyo-8232-krb-paradise	OYO 8232 Hotel Krb Paradise	dehradun	Saharanpur Road & Patel Nagar		retry
 oyo-8983-royal-inn	OYO 8983 Royal Inn	dehradun	Vasant Vihar & Indira Nagar		retry
-oyo-937-sand-stone	OYO 937 Sand Stone Hotel	dehradun	ISBT & Majra		retry
 oyo-9809-shree-residency	OYO 9809 Hotel Shree Residency	dehradun	Raipur & Maldevta		retry
 oyo-9905-doon-star	OYO 9905 Hotel Doon Star	dehradun	Clock Tower & Paltan Bazaar		retry
 oyo-flagship-17085-bhagat-residency	OYO Flagship 17085 Bhagat Residency Hotel	dehradun	Clock Tower & Paltan Bazaar		retry
@@ -2916,13 +2905,11 @@ pluto-homes	Pluto Homes	dehradun	Sahastradhara Road		retry
 villa-prantara	Prantara Villa	dehradun	Dalanwala & Survey Chowk		retry
 president-park-2bhk-stay-in-by-homeyhuts	President Park 2BHK Stay in Dehradun by Homeyhuts	dehradun	Rajpur Road		retry
 pride-premier-solitaire	Pride Premier Solitaire	dehradun	Haridwar Road & Rispana		retry
-prince-home-stay-dehradun	Prince Home Stay	dehradun	ISBT & Majra		retry
 prism-and-pine-2bhk-projector-near-it-park	Prism and Pine 2BHK Projector near It Park Apartment	dehradun	Rajpur Road		retry
 prithvi-forest-homestay	Prithvi Forest Homestay	dehradun	Elsewhere in Dehradun		retry
 private-2bhk-enjoy-mountains-views-and-comfort	Private 2BHK Enjoy Mountains Views and Comfort	dehradun	Mussoorie Road & Malsi		retry
 private-room-with-a-view	Private Room with A View	dehradun	Vasant Vihar & Indira Nagar		retry
 hotel-dehradun-225	Property 1	dehradun	Railway Station & Tyagi Road		retry
-ps4-pro-1bhk-2-king-beds-kitchen-bathroom	Ps4 Pro, 1BHK, 2 King Beds, Kitchen Bathroom	dehradun	Rajpur Road		retry
 resort-punarnava-spa	Punarnava Resort & Spa	dehradun	Elsewhere in Dehradun		retry
 puntush-by-the-staycationer	Puntush by the Staycationer	dehradun	Raipur & Maldevta		retry
 hotel-dehradun-248122	Pure Oxy	dehradun	Elsewhere in Dehradun		retry
@@ -2962,7 +2949,6 @@ beach-room-modern-stay-in-with-balcony	Romantic Room in Dehradun with Balcony	de
 room-in-flat-in	Room in Dehradun – Flat in Dehradun	dehradun	Elsewhere in Dehradun		retry
 hotel-dehradun-58	Roopali by Nature Stay	dehradun	Elsewhere in Dehradun		retry
 hostel-rootz	Rootz Hostel	dehradun	Raipur & Maldevta		retry
-rose-manor-suites	Rose Manor Suites	dehradun	Mussoorie Road & Malsi		retry
 roseadobe-homez	Roseadobe Homez	dehradun	Sahastradhara Road		retry
 rosewood-kailash-palms	Rosewood Kailash Palms	dehradun	Vasant Vihar & Indira Nagar		retry
 roxys-cozy-1bhk-dalanwala-pet-friendly	Roxys Cozy 1BHK Dalanwala Pet Friendly Apartment	dehradun	Dalanwala & Survey Chowk		retry
@@ -3012,7 +2998,6 @@ resort-shaheen-bagh-a-luxury-boutique-and-spa	Shaheen Bagh – A Luxury Boutique
 resort-shaheen-bagh-a-luxury-spa	Shaheen Bagh – A Luxury Resort & Spa	dehradun	Mussoorie Road & Malsi		retry
 bnb-sheelas-dream	Sheela's Dream Bed & Breakfast	dehradun	Dalanwala & Survey Chowk		retry
 apt-shelbys-abode	Shelbys Abode Apartment	dehradun	Sahastradhara Road		retry
-apt-shine-by-oasis	Shine by Oasis Apartment	dehradun	Sahastradhara Road		retry
 hotel-dehradun-234	Shiva Continental Dehradun A Unit of the Chacha Shri Group Hotel	dehradun	Clement Town & Mindrolling		retry
 apt-shiva-house	Shiva House Apartment	dehradun	Railway Station & Tyagi Road		retry
 house-shivalik-view	Shivalik View Guest House	dehradun	Elsewhere in Dehradun		retry
@@ -3137,7 +3122,6 @@ thano-retreat	Thano Retreat	dehradun	Jolly Grant & Doiwala		retry
 apt-the-911-retreat-studio	The 911 Retreat Studio Apartment	dehradun	Sahastradhara Road		retry
 the-aaina-house	The Aaina House Villa	dehradun	Sahastradhara Road		retry
 the-amar-vilas	The Amar Vilas	dehradun	Mussoorie Road & Malsi		retry
-the-aralia	The Aralia Hotel	dehradun	Mussoorie Road & Malsi		retry
 apt-the-aurelia-retreat	The Aurelia Retreat Apartment	dehradun	Rajpur Road		retry
 the-barrum-boho-2-bhk-boho-living	The Barrum Boho – 2BHK Boho Living	dehradun	Elsewhere in Dehradun		retry
 apt-the-barrum-boulevard-luxury-1bhk-in-kuthal-gate	The Barrum Boulevard – Luxury 1BHK Apartment in Kuthal Gate	dehradun	Elsewhere in Dehradun		retry
@@ -3361,7 +3345,6 @@ aaroham-retreat	Aaroham Retreat Hotel	mussoorie	Kempty Road		retry
 aasmaani-cottage	Aasmaani Cottage – 2BHK Family Cottage	mussoorie	Landour & Char Dukan		retry
 abs-abode-a-boutique	Ab's Abode – A Boutique Hotel	mussoorie	Library Chowk & Charleville		retry
 abuzz-oxfordcaps-imperial-heights-premium	Abuzz Oxfordcaps Imperial Heights Premium Hotel	mussoorie	Elsewhere in Mussoorie		retry
-accord	Accord Hotel	mussoorie	Mall Road & Kulri		retry
 after-dun-delight	After Dun Delight Apartment	mussoorie	Happy Valley & Hathipaon		retry
 villa-after-dun-delight	After Dun Delight Villa	mussoorie	Mall Road & Kulri		retry
 hotel-mussoorie-19	Ahr Radha Residency – A Valley View Resort	mussoorie	Library Chowk & Charleville		retry
@@ -3388,11 +3371,9 @@ villa-stayvista-at-arncliff-5-mins-from-mall-road	Arncliff Villa by Veo, Stayvis
 around-stays-oslo-mussoorie-mall-road	Around Stays – Oslo Mussoorie, Mall Road	mussoorie	Mall Road & Kulri		retry
 arvelia-colonial-george-everest-luxe-by-da-alohas	Arvelia Colonial George Everest Luxe by Da Alohas	mussoorie	Library Chowk & Charleville		retry
 villa-arvelia-colonial-manor-luxe-by-da-alohas	Arvelia Colonial Manor – Luxe by Da Alohas Villa	mussoorie	Happy Valley & Hathipaon		retry
-as-castle	As Castle Hotel	mussoorie	Mussoorie Lake & Dehradun Road		retry
 ashirwad-and-spa	Ashirwad Hotel and Spa	mussoorie	Landour & Char Dukan		retry
 aurum-resorts	Aurum Resorts	mussoorie	Kempty Road		retry
 avalon-resorts	Avalon Resorts	mussoorie	Mall Road & Kulri		retry
-apt-b-for-bunk	B for Bunk, Mussoorie Apartment	mussoorie	Mall Road & Kulri		retry
 resort-baris	Baris Resort	mussoorie	Barlowganj & Jharipani		retry
 basant-cottage-mall-road	Basant Cottage, Mall Road	mussoorie	Mall Road & Kulri		retry
 basant-watika	Basant Watika Hotel	mussoorie	Mall Road & Kulri		retry
@@ -3412,7 +3393,6 @@ bindras-grace-homestay-mussoorie	Bindra's Grace Homestay	mussoorie	Mall Road & K
 blisbook-dwaper-near-library-mall-road	Blisbook Dwaper Hotel near Library Mall Road	mussoorie	Library Chowk & Charleville		retry
 bliss-company-by-hnh	Bliss & Company by Hnh Hotel	mussoorie	Mall Road & Kulri		retry
 blisscomanor	Bliss&Comanor Hotel	mussoorie	Barlowganj & Jharipani		retry
-resort-blue-steem	Blue Steem Resort	mussoorie	Library Chowk & Charleville		retry
 boutique-with-parking-in-mussoorie-by-guesthouser-51060	Boutique with Parking in Mussoorie, By Guesthouser 51060	mussoorie	Mall Road & Kulri		retry
 breeze-2bhk-by-wabi-sabi-stays-mall-road-5-mins-walk	Breeze 2BHK By Wabi Sabi Stays Mall Road 5 Mins Walk	mussoorie	Mall Road & Kulri		retry
 hotel-mussoorie-3	Bulaakh Resort	mussoorie	Mall Road & Kulri		retry
@@ -3561,7 +3541,6 @@ hotel-mussoorie-64	Happytel by Madhu Cottage	mussoorie	Library Chowk & Charlevil
 hare-krishna-home-stay-restaurant	Hare Krishna Home Stay & Restaurant	mussoorie	Mussoorie Lake & Dehradun Road		retry
 hariyana-family-restaurant	Haryana Family Hotel & Restaurant	mussoorie	Mall Road & Kulri		retry
 hawen-of-tree	Hawen of Tree Hotel	mussoorie	Kempty Road		retry
-hazy-hill	Hazy Hill Hotel	mussoorie	Elsewhere in Mussoorie		retry
 heavenly-heritage-homestay	Heavenly Heritage Homestay	mussoorie	Camel's Back Road & Gun Hill		retry
 hostel-help	Help Hostel	mussoorie	Camel's Back Road & Gun Hill		retry
 resort-highland	Highland Resort	mussoorie	Barlowganj & Jharipani		retry
@@ -3739,7 +3718,6 @@ sunrise	Hotel Sunrise	mussoorie	Library Chowk & Charleville		retry
 super	Hotel Super	mussoorie	Mall Road & Kulri		retry
 super-mall-road	Hotel Super @Mall Road	mussoorie	Mall Road & Kulri		retry
 super-mall-residency	Hotel Super Mall Residency	mussoorie	Mall Road & Kulri		retry
-surya-kiran	Hotel Surya Kiran	mussoorie	Library Chowk & Charleville		retry
 resort-kalvya-near-the-mall-road	Hotel the Abhi – Nandan Resort & Restrurant near the Mall Road – A Luxury Hotel in Mussoorie	mussoorie	Mall Road & Kulri		retry
 the-amar-grand-mussoorie	Hotel the Amar Grand	mussoorie	Mall Road & Kulri		retry
 the-grand-mall	Hotel the Grand Mall	mussoorie	Mall Road & Kulri		retry
@@ -3811,7 +3789,6 @@ house-krishna-1	Krishna Guest House	mussoorie	Kempty Road		retry
 kriva-luxury-stays	Kriva Luxury Stays	mussoorie	Elsewhere in Mussoorie		retry
 kusum-kunj-hill-cottage	Kusum Kunj Hill Cottage	mussoorie	Happy Valley & Hathipaon		retry
 villa-la-bethany	La Villa Bethany	mussoorie	Landour & Char Dukan		retry
-apt-landour-beauty-and-charm	Landour Apartment Beauty and Charm	mussoorie	Landour & Char Dukan		retry
 apt-landour-beauty-and-charm-kothri-vintage-vibes	Landour Apartment Beauty and Charm Kothri – Vintage Vibes	mussoorie	Landour & Char Dukan		retry
 landour-blick	Landour Blick Bed & Breakfast	mussoorie	Landour & Char Dukan		retry
 landour-chalet-cozy-and-aesthetic-kothri-homestays	Landour Chalet Mussoorie Cozy and Aesthetic Kothri Homestays	mussoorie	Landour & Char Dukan		retry
@@ -3893,7 +3870,6 @@ apt-nirvana-holiday-by-nature-nests	Nirvana Holiday Apartment by Nature Nests	mu
 nirvana-lodge-lounge-a-boutique	Nirvana Lodge & Lounge A Boutique Hotel	mussoorie	Mall Road & Kulri		retry
 nirvana-lodge-and-lounge	Nirvana Lodge and Lounge	mussoorie	Mussoorie Lake & Dehradun Road		retry
 nirvana-mussoorie	Nirvana Mussoorie	mussoorie	Barlowganj & Jharipani		retry
-nona-shona-chill-point-homestay-and-cafe	Nona Shona Chill Point Homestay and Cafe	mussoorie	Barlowganj & Jharipani		retry
 xyst-notting-hill-the-mall	Notting Hill the Mall	mussoorie	Library Chowk & Charleville		retry
 nova-mayfield-at-mall-road	Nova Mayfield Hotel at Mall Road	mussoorie	Mall Road & Kulri		retry
 hotel-mussoorie-103	Nri Hotel	mussoorie	Mall Road & Kulri		retry
@@ -3950,14 +3926,12 @@ panoramic-jacuzzi-suite-with-huge-balcony-swing	Panoramic Jacuzzi Suite with Hug
 hotel-mussoorie-120	Paprika Cottage Landour	mussoorie	Landour & Char Dukan		retry
 paradise-by-wonderland-stayz	Paradise by Wonderland Stayz	mussoorie	Barlowganj & Jharipani		retry
 paradise-mansion-crestmont	Paradise Mansion Crestmont	mussoorie	Mall Road & Kulri		retry
-hotel-mussoorie-27	Pari Guest House & Restaurant	mussoorie	Kempty Road		retry
 park-woods-at-mall-road	Park Woods at Mall Road	mussoorie	Mall Road & Kulri		retry
 parvatiya-homestay	Parvatiya Homestay	mussoorie	Kempty Road		retry
 pax-opis-luxury-boutique-stays	Pax & Opis Luxury Boutique Stays	mussoorie	Barlowganj & Jharipani		retry
 pennington-cottage	Pennington Cottage	mussoorie	Landour & Char Dukan		retry
 perfectplus	Perfectplus Mussoorie	mussoorie	Mussoorie Lake & Dehradun Road		retry
 snowmist-stay	Perfectstayz Luxe Mall Road	mussoorie	Mall Road & Kulri		retry
-perfectstayz-homes-120-meters-uphill	Perfectstayz Luxe Mall Road – Free Parking	mussoorie	Library Chowk & Charleville		retry
 perfectstayz-paradise-near-bhatta-falls	Perfectstayz Paradise near Bhatta Falls	mussoorie	Barlowganj & Jharipani		retry
 perfectstayz-premium-at-mall-road	Perfectstayz Premium at Mall Road	mussoorie	Mall Road & Kulri		retry
 seven-oaks	Perfectstayz Premium Seven Oaks near Mall Road	mussoorie	Camel's Back Road & Gun Hill		retry
@@ -4106,7 +4080,6 @@ storm-valley	Storm Valley Hotel	mussoorie	Kempty Road		retry
 streem-view-mussoorie	Streem View Hotel	mussoorie	Kempty Road		retry
 studioz-paradise-hills	Studioz Paradise Hills	mussoorie	Mussoorie Lake & Dehradun Road		retry
 stunning-3bhk-villa	Stunning 3BHK Villa	mussoorie	Barlowganj & Jharipani		retry
-subham-da	Subham Da Hotel	mussoorie	Kempty Road		retry
 suhani-rooms-restaurent	Suhani Rooms & Restaurent	mussoorie	Kempty Road		retry
 sukoon-by-the-valley	Sukoon by the Valley	mussoorie	Mussoorie Lake & Dehradun Road		retry
 sukoon-luxury-apartments-1	Sukoon Luxury Apartments	mussoorie	Mall Road & Kulri		retry
@@ -4285,7 +4258,6 @@ resort-yog-wellness-spa-by-amritara	Yog Wellness Resort & Spa by Amritara	mussoo
 villa-zenroofs-cloud-haven-2bhk	Zenroofs – Cloud Haven 2BHK Villa	mussoorie	Barlowganj & Jharipani		retry
 villa-zenroofs-cloud-haven-3bhk	Zenroofs – Cloud Haven 3BHK Villa	mussoorie	Mussoorie Lake & Dehradun Road		retry
 villa-zenroofs-cloud-haven-5bhk	Zenroofs – Cloud Haven 5BHK Villa	mussoorie	Mussoorie Lake & Dehradun Road		retry
-zone-connect-by-the-park	Zone Connect by the Park Mussoorie Hotel	mussoorie	Mall Road & Kulri		retry
 hotel-mussoorie-39	Zostel Homes Mussoorie, Mall Road	mussoorie	Mall Road & Kulri		retry
 hostel-zostel-mussoorie	Zostel Mussoorie, Mall Road	mussoorie	Mall Road & Kulri		retry
 zostel-plus-mussoorie-kempty	Zostel Plus Mussoorie, Kempty	mussoorie	Kempty Road		retry
@@ -4360,3 +4332,30 @@ stayvista-at-twilight-perch-with-bbq-bonfire-lawn	Stayvista's Twilight Perch –
 resort-saraiville-a-boutique-riverside	Saraiville – A Boutique Riverside Stay	dehradun	Elsewhere in Dehradun	in review.tsv for the owner: similar name in every word (shared [saraiville]) but no map pin or address on the page to confirm it	review
 wildwood-peaks-grahil	Wildwood Peaks Grahil Hotel	mussoorie	Kempty Road	deep pass: 6 search(es); pages would not load: MakeMyTrip, Goibibo	retry
 krishna-palace-248001	Hotel Krishna Palace	dehradun	Haridwar Road & Rispana	deep pass: 6 search(es); pages would not load: MakeMyTrip, Goibibo	retry
+perfectstayz-homes-120-meters-uphill	Perfectstayz Luxe Mall Road – Free Parking	mussoorie	Library Chowk & Charleville	deep pass: 6 search(es); pages would not load: MakeMyTrip, Goibibo	retry
+fabhotel-ice-berg	Fabhotel Ice Berg	dehradun	Sahastradhara Road	in review.tsv for the owner: similar name in every word (shared [ice,berg]) but no map pin or address on the page to confirm it	review
+surya-kiran	Hotel Surya Kiran	mussoorie	Library Chowk & Charleville	deep pass: 6 search(es); pages would not load: Goibibo	retry
+cap10-cafe	Cap10 Cafe Hotel	dehradun	FRI, Ballupur & Kaulagarh	deep pass: 6 search(es) (ddg), no booking-site link that looks like this stay	none
+accord	Accord Hotel	mussoorie	Mall Road & Kulri	deep pass: 6 search(es) (ddg), no booking-site link that looks like this stay	none
+fabhotel-krb-paradise	Hotel Krb Paradise	dehradun	Saharanpur Road & Patel Nagar	in review.tsv for the owner: similar name in every word (shared [krb,paradise]) but no map pin or address on the page to confirm it	review
+subham-da	Subham Da Hotel	mussoorie	Kempty Road	deep pass: 6 search(es); pages would not load: Goibibo	retry
+zone-connect-by-the-park	Zone Connect by the Park Mussoorie Hotel	mussoorie	Mall Road & Kulri	in review.tsv for the owner: similar name in every word (shared [zone,connect,park,mussoorie]) but no map pin or address on the page to confirm it	review
+oyo-937-sand-stone	OYO 937 Sand Stone Hotel	dehradun	ISBT & Majra	in review.tsv for the owner: similar name in every word (shared [sand,stone]) but no map pin or address on the page to confirm it	review
+apt-landour-beauty-and-charm	Landour Apartment Beauty and Charm	mussoorie	Landour & Char Dukan	deep pass: 6 search(es); pages would not load: Goibibo	retry
+hazy-hill	Hazy Hill Hotel	mussoorie	Elsewhere in Mussoorie	deep pass: 6 search(es); pages would not load: Goibibo	retry
+inderlok	Inderlok Hotel	dehradun	Rajpur Road	in review.tsv for the owner: similar name in every word (shared [inderlok]) but no map pin or address on the page to confirm it	review
+badri-kedar-stay	Badri Kedar Stay	dehradun	Haridwar Road & Rispana	in review.tsv for the owner: similar name in every word (shared [badri,kedar]) but no map pin or address on the page to confirm it	review
+hotel-mussoorie-27	Pari Guest House & Restaurant	mussoorie	Kempty Road	deep pass: 6 search(es); pages would not load: Goibibo	retry
+apt-b-for-bunk	B for Bunk, Mussoorie Apartment	mussoorie	Mall Road & Kulri	deep pass: 6 search(es); pages would not load: Goibibo	retry
+jsrcozystays	Jsrcozystays Dehradun	dehradun	Sahastradhara Road	in review.tsv for the owner: similar name in every word (shared [jsrcozystays]) but no map pin or address on the page to confirm it	review
+as-castle	As Castle Hotel	mussoorie	Mussoorie Lake & Dehradun Road	in review.tsv for the owner: similar name in every word (shared [as,castle]) but no map pin or address on the page to confirm it	review
+resort-blue-steem	Blue Steem Resort	mussoorie	Library Chowk & Charleville	deep pass: 6 search(es); pages would not load: Goibibo	retry
+rose-manor-suites	Rose Manor Suites	dehradun	Mussoorie Road & Malsi	in review.tsv for the owner: similar name in every word (shared [rose,manor]) but no map pin or address on the page to confirm it	review
+naprer-homes	Naprer Homes	dehradun	Dalanwala & Survey Chowk	in review.tsv for the owner: similar name in every word (shared [naprer,homes]) but no map pin or address on the page to confirm it	review
+casa-mama	Casa Mama Apartment	dehradun	Mussoorie Road & Malsi	in review.tsv for the owner: similar name in every word (shared [casa,mama]) but no map pin or address on the page to confirm it	review
+apt-shine-by-oasis	Shine by Oasis Apartment	dehradun	Sahastradhara Road	deep pass: 6 search(es); pages would not load: Goibibo	retry
+kedarkuteer	Kedarkuteer Apartment	dehradun	Sahastradhara Road	in review.tsv for the owner: similar name in every word (shared [kedarkuteer]) but no map pin or address on the page to confirm it	review
+rajpur-heights	Hotel Rajpur Heights	dehradun	Mussoorie Road & Malsi	in review.tsv for the owner: similar name in every word (shared [rajpur,heights]) but no map pin or address on the page to confirm it	review
+ps4-pro-1bhk-2-king-beds-kitchen-bathroom	Ps4 Pro, 1BHK, 2 King Beds, Kitchen Bathroom	dehradun	Rajpur Road	in review.tsv for the owner: similar name in every word (shared [ps4,pro,2,king,bathroom]) but no map pin or address on the page to confirm it	review
+prince-home-stay-dehradun	Prince Home Stay	dehradun	ISBT & Majra	in review.tsv for the owner: similar name in every word (shared [prince]) but no map pin or address on the page to confirm it	review
+the-aralia	The Aralia Hotel	dehradun	Mussoorie Road & Malsi	in review.tsv for the owner: similar name in every word (shared [aralia]) but no map pin or address on the page to confirm it	review
