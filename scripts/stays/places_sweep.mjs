@@ -14,12 +14,19 @@
 // 3. --phase phones --ids <file>: phone + website, only for the place ids in
 //    the file (e.g. stays not in our directory). These are "Enterprise" calls
 //    (≈1,000 free a month, then ≈$20 per 1,000), so always --dry-run first.
+// 4. --phase contact: name + phone + pin only, one call per id, for stays whose
+//    other fields (price, amenities, photos) come from Booking.com instead
+//    (owner, 2026-10-08). A phone number is an Enterprise-tier field, and
+//    Google bills a call at the highest tier any field in its mask belongs to
+//    — so asking for name+phone+pin together is ONE Enterprise call (≈1,000
+//    free a month, then ≈$20 per 1,000), cheaper than the details+phones
+//    combination above (≈$37/1,000) when phone is the only field that matters.
 //
-// Usage: node scripts/stays/places_sweep.mjs --phase ids|details|phones [--ids file] [--dry-run] [--max-calls N]
+// Usage: node scripts/stays/places_sweep.mjs --phase ids|details|phones|contact [--ids file] [--dry-run] [--max-calls N]
 // Uses the BigQuery service account (OAuth), billed to its project. Phones are
 // for our own outreach only: they go to BigQuery (push_places.mjs), never the
-// site. Google's terms let us keep place ids for good; re-run details within
-// 30 days rather than keeping the other fields longer.
+// site. Google's terms let us keep place ids for good; re-run details/contact
+// within 30 days rather than keeping the other fields longer.
 import { GoogleAuth } from 'google-auth-library';
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -29,8 +36,8 @@ const DIR = `${HERE}.cache/places`;
 const arg = (n, d) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : d);
 const PHASE = arg('--phase');
 const DRY = process.argv.includes('--dry-run');
-const MAX_CALLS = Number(arg('--max-calls', { ids: 8000, details: 5000, phones: 1000 }[PHASE]));
-if (!['ids', 'details', 'phones'].includes(PHASE)) throw new Error('--phase ids|details|phones is required');
+const MAX_CALLS = Number(arg('--max-calls', { ids: 8000, details: 5000, phones: 1000, contact: 1000 }[PHASE]));
+if (!['ids', 'details', 'phones', 'contact'].includes(PHASE)) throw new Error('--phase ids|details|phones|contact is required');
 // owner, 2026-10-08: extended to Dehradun, Mussoorie and Roorkee. Coordinates match cities.py for the
 // stays cities; Roorkee is not a stays city (no category pages), its centre is the IIT Roorkee landmark
 // (landmarks.tsv, OSM Nominatim) — it is swept only so its Google Maps places are in places_lodging for
@@ -47,6 +54,7 @@ const TILE = 0.018; // ≈ 2 km
 const QUERIES = ['hotel', 'homestay', 'guest house', 'hostel', 'resort', 'dharamshala', 'ashram', 'camp', 'apartment', 'cottage'];
 const DETAIL_FIELDS = 'id,displayName,formattedAddress,location,primaryType,types,businessStatus,googleMapsUri'; // Pro
 const PHONE_FIELDS = 'id,nationalPhoneNumber,internationalPhoneNumber,websiteUri'; // Enterprise
+const CONTACT_FIELDS = 'id,displayName,location,nationalPhoneNumber,internationalPhoneNumber'; // Enterprise (phone forces this tier)
 
 const km = ([a, b], [c, d]) => {
   const r = Math.PI / 180, x = Math.sin(((c - a) * r) / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin(((d - b) * r) / 2) ** 2;
@@ -66,6 +74,11 @@ function tiles() {
   return out;
 }
 
+// owner, 2026-10-08: "if its get decline from google end then pause" — a genuine decline (quota
+// exhausted, billing problem, permission denied) is different from the normal 429 per-minute
+// throttle above (already retried with back-off): it will not clear up by retrying, so stop and
+// save rather than keep spending calls against a blocked key, or crash with a raw stack trace.
+class DeclineError extends Error {}
 let calls = 0, headers;
 async function api(url, init) {
   if (calls >= MAX_CALLS) throw new Error(`max calls (${MAX_CALLS}) reached`);
@@ -77,7 +90,13 @@ async function api(url, init) {
     if (res.status !== 429 || attempt === 6) break;
     await new Promise((r) => setTimeout(r, 65000));
   }
-  if (!res.ok) throw new Error(`Places API ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 500);
+    if (res.status === 403 || res.status === 429 || /RESOURCE_EXHAUSTED|PERMISSION_DENIED|BILLING|QUOTA/i.test(body)) {
+      throw new DeclineError(`Google declined: ${res.status} ${body}`);
+    }
+    throw new Error(`Places API ${res.status}: ${body}`);
+  }
   return res.json();
 }
 async function auth() {
@@ -107,70 +126,110 @@ async function searchTile(tile, query, ids, depth = 0) {
 }
 
 mkdirSync(DIR, { recursive: true });
-if (PHASE === 'ids') {
-  const all = tiles();
-  console.log(`${all.length} tiles of ~2 km cover ${RADIUS_KM} km around ${Object.keys(CENTRES).join(' and ')}, × up to ${QUERIES.length} searches`);
-  console.log(`estimate: ${all.length * 2} calls if every tile were empty, ~${all.length * QUERIES.length} if every tile had stays (cap ${MAX_CALLS})`);
-  if (DRY) process.exit(0);
-  await auth();
-  const ids = new Set(load(`${DIR}/ids.json`, []));
-  const done = new Set(load(`${DIR}/tiles-done.json`, []));
-  try {
-    for (const t of all) {
-      const key = t.map((v) => v.toFixed(3)).join(',');
-      if (done.has(key)) continue; // resumable
-      // nothing for "hotel" or "homestay" means fields or forest: skip the rest
-      const first = (await searchTile(t, QUERIES[0], ids)) + (await searchTile(t, QUERIES[1], ids));
-      if (first) for (const q of QUERIES.slice(2)) await searchTile(t, q, ids);
-      done.add(key);
-    }
-  } finally {
-    writeFileSync(`${DIR}/ids.json`, JSON.stringify([...ids]));
-    writeFileSync(`${DIR}/tiles-done.json`, JSON.stringify([...done]));
-    console.log(`${ids.size} place ids from ${done.size}/${all.length} tiles (${calls} calls)`);
-  }
-} else if (PHASE === 'details') {
-  const have = load(`${DIR}/places.json`, []);
-  const seen = new Set(have.map((p) => p.id));
-  const todo = load(`${DIR}/ids.json`, []).filter((id) => !seen.has(id));
-  console.log(`details: ${todo.length} Place Details (Pro) calls to make (cap ${MAX_CALLS})`);
-  if (DRY) process.exit(0);
-  await auth();
-  // 6 calls at a time (well inside the API's per-minute quota)
-  const pool = async (items, fn) => { const q = [...items]; await Promise.all(Array.from({ length: 6 }, async () => { while (q.length) await fn(q.shift()); })); };
-  try {
-    await pool(todo, async (id) => {
-      const p = await api(`https://places.googleapis.com/v1/places/${id}`, { method: 'GET', headers: { 'X-Goog-FieldMask': DETAIL_FIELDS } });
-      const ll = [p.location?.latitude, p.location?.longitude];
-      have.push({ id: p.id, city: nearestCity(ll), km: Math.round(km(ll, CENTRES[nearestCity(ll)]) * 10) / 10,
-        name: p.displayName?.text, address: p.formattedAddress, lat: ll[0], lng: ll[1],
-        type: p.primaryType, types: p.types, status: p.businessStatus, maps: p.googleMapsUri,
-        fetched: new Date().toISOString().slice(0, 10) });
-    });
-  } finally {
-    writeFileSync(`${DIR}/places.json`, JSON.stringify(have, null, 1));
-    console.log(`details saved for ${have.length} places (${calls} calls)`);
-  }
-} else {
-  const want = load(arg('--ids'), null);
-  if (!want) throw new Error('--ids <file with a JSON array of place ids> is required');
-  const phones = load(`${DIR}/phones.json`, {});
-  const todo = want.filter((id) => !(id in phones));
-  console.log(`phones: ${todo.length} Place Details (Enterprise) calls to make (cap ${MAX_CALLS})`);
-  if (DRY) process.exit(0);
-  await auth();
-  const q = [...todo];
-  try {
-    // 4 at a time; the per-minute quota is handled by api()'s 429 back-off
-    await Promise.all(Array.from({ length: 4 }, async () => {
-      while (q.length) {
-        const id = q.shift();
-        const p = await api(`https://places.googleapis.com/v1/places/${id}`, { method: 'GET', headers: { 'X-Goog-FieldMask': PHONE_FIELDS } });
-        phones[id] = { phone: p.internationalPhoneNumber || p.nationalPhoneNumber || null, website: p.websiteUri || null };
+try {
+  if (PHASE === 'ids') {
+    const all = tiles();
+    console.log(`${all.length} tiles of ~2 km cover ${RADIUS_KM} km around ${Object.keys(CENTRES).join(' and ')}, × up to ${QUERIES.length} searches`);
+    console.log(`estimate: ${all.length * 2} calls if every tile were empty, ~${all.length * QUERIES.length} if every tile had stays (cap ${MAX_CALLS})`);
+    if (DRY) process.exit(0);
+    await auth();
+    const ids = new Set(load(`${DIR}/ids.json`, []));
+    const done = new Set(load(`${DIR}/tiles-done.json`, []));
+    try {
+      for (const t of all) {
+        const key = t.map((v) => v.toFixed(3)).join(',');
+        if (done.has(key)) continue; // resumable
+        // nothing for "hotel" or "homestay" means fields or forest: skip the rest
+        const first = (await searchTile(t, QUERIES[0], ids)) + (await searchTile(t, QUERIES[1], ids));
+        if (first) for (const q of QUERIES.slice(2)) await searchTile(t, q, ids);
+        done.add(key);
       }
-    }));
-  } finally {
-    writeFileSync(`${DIR}/phones.json`, JSON.stringify(phones, null, 1));
-    console.log(`phones saved for ${Object.keys(phones).length} places (${calls} calls)`);
+    } finally {
+      writeFileSync(`${DIR}/ids.json`, JSON.stringify([...ids]));
+      writeFileSync(`${DIR}/tiles-done.json`, JSON.stringify([...done]));
+      console.log(`${ids.size} place ids from ${done.size}/${all.length} tiles (${calls} calls)`);
+    }
+  } else if (PHASE === 'details') {
+    const have = load(`${DIR}/places.json`, []);
+    const seen = new Set(have.map((p) => p.id));
+    const todo = load(`${DIR}/ids.json`, []).filter((id) => !seen.has(id));
+    console.log(`details: ${todo.length} Place Details (Pro) calls to make (cap ${MAX_CALLS})`);
+    if (DRY) process.exit(0);
+    await auth();
+    // 6 calls at a time (well inside the API's per-minute quota)
+    const pool = async (items, fn) => { const q = [...items]; await Promise.all(Array.from({ length: 6 }, async () => { while (q.length) await fn(q.shift()); })); };
+    try {
+      await pool(todo, async (id) => {
+        const p = await api(`https://places.googleapis.com/v1/places/${id}`, { method: 'GET', headers: { 'X-Goog-FieldMask': DETAIL_FIELDS } });
+        const ll = [p.location?.latitude, p.location?.longitude];
+        have.push({ id: p.id, city: nearestCity(ll), km: Math.round(km(ll, CENTRES[nearestCity(ll)]) * 10) / 10,
+          name: p.displayName?.text, address: p.formattedAddress, lat: ll[0], lng: ll[1],
+          type: p.primaryType, types: p.types, status: p.businessStatus, maps: p.googleMapsUri,
+          fetched: new Date().toISOString().slice(0, 10) });
+      });
+    } finally {
+      writeFileSync(`${DIR}/places.json`, JSON.stringify(have, null, 1));
+      console.log(`details saved for ${have.length} places (${calls} calls)`);
+    }
+  } else if (PHASE === 'phones') {
+    const want = load(arg('--ids'), null);
+    if (!want) throw new Error('--ids <file with a JSON array of place ids> is required');
+    const phones = load(`${DIR}/phones.json`, {});
+    const todo = want.filter((id) => !(id in phones));
+    console.log(`phones: ${todo.length} Place Details (Enterprise) calls to make (cap ${MAX_CALLS})`);
+    if (DRY) process.exit(0);
+    await auth();
+    const q = [...todo];
+    try {
+      // 4 at a time; the per-minute quota is handled by api()'s 429 back-off
+      await Promise.all(Array.from({ length: 4 }, async () => {
+        while (q.length) {
+          const id = q.shift();
+          const p = await api(`https://places.googleapis.com/v1/places/${id}`, { method: 'GET', headers: { 'X-Goog-FieldMask': PHONE_FIELDS } });
+          phones[id] = { phone: p.internationalPhoneNumber || p.nationalPhoneNumber || null, website: p.websiteUri || null };
+        }
+      }));
+    } finally {
+      writeFileSync(`${DIR}/phones.json`, JSON.stringify(phones, null, 1));
+      console.log(`phones saved for ${Object.keys(phones).length} places (${calls} calls)`);
+    }
+  } else {
+    // --phase contact: name + phone + pin only (owner, 2026-10-08), one Enterprise call per id
+    // instead of the details+phones combination above. --ids defaults to every id the ids phase
+    // found; pass --ids <file> to scope it to fewer places.
+    const idsFile = arg('--ids', `${DIR}/ids.json`);
+    const todoIds = load(idsFile, []);
+    const contacts = load(`${DIR}/contacts.json`, {});
+    const todo = todoIds.filter((id) => !(id in contacts));
+    console.log(`contact: ${todo.length} Place Details (Enterprise, name+phone+pin only) calls to make (cap ${MAX_CALLS})`);
+    if (DRY) process.exit(0);
+    await auth();
+    const q = [...todo];
+    try {
+      await Promise.all(Array.from({ length: 4 }, async () => {
+        while (q.length) {
+          const id = q.shift();
+          const p = await api(`https://places.googleapis.com/v1/places/${id}`, { method: 'GET', headers: { 'X-Goog-FieldMask': CONTACT_FIELDS } });
+          const ll = [p.location?.latitude, p.location?.longitude];
+          contacts[id] = { name: p.displayName?.text || null, phone: p.internationalPhoneNumber || p.nationalPhoneNumber || null,
+            lat: ll[0] ?? null, lng: ll[1] ?? null, city: ll[0] ? nearestCity(ll) : null,
+            fetched: new Date().toISOString().slice(0, 10) };
+        }
+      }));
+    } finally {
+      writeFileSync(`${DIR}/contacts.json`, JSON.stringify(contacts, null, 1));
+      console.log(`contact saved for ${Object.keys(contacts).length} places (${calls} calls)`);
+    }
   }
+
+} catch (e) {
+  // each phase's own `finally` above already saved its progress (ids.json/tiles-done.json,
+  // places.json, phones.json or contacts.json) before this runs
+  if (e instanceof DeclineError) {
+    console.log(`paused: ${e.message}`);
+    console.log('Google declined the request (quota, billing or permission) -- this will not clear up by retrying.');
+    console.log('Check the Cloud Console (quota/billing), then re-run the same command to resume from where it stopped.');
+    process.exit(0);
+  }
+  throw e;
 }

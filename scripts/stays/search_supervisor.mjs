@@ -148,6 +148,11 @@ function counts() {
 // Same list as isBookingTab in google_ota_search.mjs: keep both in step.
 const BOOKING_HOST = /(^|\.)(?:booking\.com|goibibo\.com|makemytrip\.[a-z.]+|agoda\.com|easemytrip\.com|trip\.com|trivago\.[a-z.]+|airbnb\.[a-z.]+|oyorooms\.com|hostelworld\.com|expedia\.[a-z.]+|hotels\.com|cleartrip\.com)$/;
 const PORTS = [...new Set(WORKERS.flatMap((w) => w.how.filter((a) => a.includes('http://')).map((a) => a.split('=')[1])))];
+// Hard ceiling per browser (owner, 2026-10-08: "dont open bloody this much 5-6 property max at a
+// time", after plain google.com/search result tabs — matched neither rule in the loop below, since
+// they are neither a booking page nor blank — piled up without limit: 41 on one port, a real
+// contributor to the disk/memory pressure the search kept hitting all session).
+const MAX_TABS_PER_PORT = 6;
 let seenBooking = new Map(); // tab id -> url, from the previous sweep
 let lastSweep = 0;
 async function sweepLeftovers() {
@@ -156,6 +161,7 @@ async function sweepLeftovers() {
   for (const base of PORTS) {
     let pages;
     try { pages = (await (await fetch(`${base}/json/list`, { signal: AbortSignal.timeout(8000) })).json()).filter((t) => t.type === 'page'); } catch { continue; }
+    const closedIds = new Set();
     let open = pages.length;
     for (const t of pages) {
       // a booking page, or a tab doing nothing (blank, a browser start page, google.com's home page) that sat unchanged for two sweeps
@@ -167,8 +173,18 @@ async function sweepLeftovers() {
       if (!BOOKING_HOST.test(host) && !idleTab) continue;
       if (seenBooking.get(t.id) === t.url && open > 1) { // never the browser's last tab
         await fetch(`${base}/json/close/${t.id}`, { signal: AbortSignal.timeout(8000) }).catch(() => {});
-        closed++; open--;
+        closed++; open--; closedIds.add(t.id);
       } else next.set(t.id, t.url);
+    }
+    // still over the cap after the idle/booking pass above: close the oldest survivors regardless
+    // (CDP lists a port's tabs oldest-opened first), always leaving MAX_TABS_PER_PORT open so each
+    // worker sharing this port keeps at least one live tab.
+    if (open > MAX_TABS_PER_PORT) {
+      const survivors = pages.filter((t) => !closedIds.has(t.id));
+      for (const t of survivors.slice(0, open - MAX_TABS_PER_PORT)) {
+        await fetch(`${base}/json/close/${t.id}`, { signal: AbortSignal.timeout(8000) }).catch(() => {});
+        closed++; open--; next.delete(t.id);
+      }
     }
   }
   seenBooking = next;
