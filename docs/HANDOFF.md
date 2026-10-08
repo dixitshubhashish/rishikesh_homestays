@@ -19,12 +19,12 @@ This file is the one home for live numbers and owner to-dos. Other docs point he
 Local, **not pushed** (pushed so far: `6a4b2f3`, ads/banner/hover/setup): Dehradun and Mussoorie cities (built pages, data modules, landmarks, phrase rows, tests made data-driven), the homepage **City dropdown** (`search-form.js`, `city-areas.js`, `?area=` in `stays-index.js`), the **Windows flag font** (`assets/vendor/flag-font/`), `extract-stays.mjs` now finds every city (it was hard-coded to two), the `ensureWindows` fix in `search-ctl.mjs`, `ads.js` city names for four cities, and 22 per-language **translation QA passes** merged into `i18n/<lang>.json` (terms, leftover English, shortened nav labels; ~200-960 texts each).
 
 **CURRENT STATE (2026-10-08 with Haiku):**
-- **Translation batch wave 1 running**: 6 agents translating Hindi, Tamil, Telugu, Bengali, Marathi, Kannada (job files prepped at `/private/tmp/claude-502/…/scratchpad/new/<lang>/<lang>-*.json`, ~2,160 texts each). Agents translate → `.out.json`, merge `--dry`, fix rejects, merge without `--dry`. **Wait for them to finish, then:** 
-- **Remaining 16 languages** (ja, ko, es, pt, de, fr, it, id, ms, si, zh, vi, ru, he, tr, ne) in a follow-up wave.
+- **Translation batch wave 1 running**: 6 agents translating Hindi, Tamil, Telugu, Bengali, Marathi, Kannada (job files at `/private/tmp/…/scratchpad/new/`, ~2,163 texts each). **BUT: 1,960 of those are stays-page variants (same template, 4 cities × city name)**. Only **203 site texts are actually new**. Agents will finish; **when merging, accept site texts only**, skip stays (the pages render with templated content + city terms).
+- **Remaining 16 languages** (ja, ko, es, pt, de, fr, it, id, ms, si, zh, vi, ru, he, tr, ne): run another wave translating only the **203 site texts** (use `--only <langs>` and make job files with `--size 100000` to fit all 203 in one file per language).
 - **Footer optimization**: stays footer has grown (footer-stays block + four cities × 33 categories = ~132 category links). Move to a scrollable `<div>` if too wide or split into rows by city. CSS: `.footer-stays` is already grid-based; check layout at 1920 px. Plan: short footer on every page, modal or full-width stay categories on pages that need them.
 
 Finish in this order (nothing is safe to push before step 3, because `npm test` fails while any language lacks a text):
-1. **Complete translation**: Wait for wave 1 agents → launch wave 2 (16 languages) → wait for completion.
+1. **Complete translation smartly**: Wait for wave 1 → merge **site texts only** (203) → launch wave 2 for 16 languages (site texts only, no stays duplication).
 2. `node scripts/i18n/build-runtime.mjs`, then `node scripts/stays/city_areas.mjs` (the homepage City list shows only cities with built data modules).
 3. `npm run i18n:check`, `node --test $(ls tests/*/*.test.js | grep -v '^tests/visual')`, then `npm test` when no search browsers are busy.
 4. **Footer check**: Re-measure at 1920 px (stay category rows in footer); optimize if spilling. Check stays lists, category pages, landmark pages for horizontal overflow.
