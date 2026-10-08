@@ -98,7 +98,7 @@
     },
     {
       "source": "/stays",
-      "destination": "/hotels/best-hotels-in-rishikesh",
+      "destination": "/hotels",
       "permanent": true
     },
     {

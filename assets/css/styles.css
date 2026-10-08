@@ -2074,6 +2074,61 @@ a.homestay-photo:hover {
     padding-left:6px;
 }
 
+/* Footer "Stays" teaser (footer_links.py): city name + its top categories, then a
+   highlighted button to the /hotels hub (every category, every city, filterable). */
+.rhs-footer-stays-teaser{
+    display:flex;
+    flex-wrap:wrap;
+    column-gap:28px;
+    row-gap:10px;
+    list-style:none;
+    margin:0 0 18px;
+    padding:0;
+}
+.rhs-footer-stays-teaser li{
+    margin:0;
+    color:#9ba8a4;
+    line-height:1.7;
+}
+.rhs-footer-stays-teaser li strong{
+    color:#e7ece9;
+    margin-right:4px;
+}
+/* Specificity note: these links sit inside .rhs-footer-stays (the whole block's wrapper div),
+   whose own ".rhs-footer-stays a{ color:#cbd5e1 }" rule (further down this file) has the same
+   0,1,1 specificity and would win on source order alone if these stayed at 0,1,1 too — that bug
+   shipped once (pale, barely-readable button text). Scoped to .rhs-footer-stays here so they win
+   regardless of where either rule sits in the file. */
+.rhs-footer-stays .rhs-footer-stays-teaser a{
+    display:inline;
+    margin:0;
+    color:#cbd5e1;
+    text-decoration:none;
+}
+.rhs-footer-stays .rhs-footer-stays-teaser a:hover{
+    color:#6ee7b7;
+}
+.rhs-footer-stays-all{
+    margin:0;
+}
+.rhs-footer-stays .rhs-footer-stays-all a{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 20px;
+    border-radius:999px;
+    background:#6ee7b7;
+    color:#0b1a16;
+    font-weight:700;
+    text-decoration:none;
+    transition:.2s;
+}
+.rhs-footer-stays .rhs-footer-stays-all a:hover{
+    background:#8ff0c7;
+    color:#0b1a16;
+    transform:translateY(-1px);
+}
+
 /* Contact Icons */
 
 .rhs-icon{
@@ -4064,6 +4119,69 @@ html:lang(he) :is(body, h1, h2, h3, h4) {
   color: var(--ok);}
 [data-form-status].is-err {
   color: var(--err);}
+
+/* /stays hub (scripts/stays/build_stays_hub.py): filter bar + per-city category sections. */
+.stays-hub-intro {
+  color: var(--muted);
+  max-width: 62ch;}
+.stays-hub-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 28px;}
+.stays-hub-tab {
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;}
+.stays-hub-tab:hover {
+  border-color: rgba(var(--accent-rgb), 0.3);}
+.stays-hub-tab.is-active {
+  background: var(--river);
+  border-color: var(--river);
+  color: var(--on-fill);}
+.stays-hub-city {
+  padding: 22px 0;
+  border-top: 1px solid var(--line);}
+.stays-hub-city h2 {
+  margin: 0 0 4px;}
+.stays-hub-city h2 a {
+  color: inherit;}
+.stays-hub-count {
+  font-weight: 400;
+  font-size: 0.85em;
+  color: var(--muted);}
+.stays-hub-group {
+  margin-top: 16px;}
+.stays-hub-group h3 {
+  margin: 0 0 8px;
+  font-size: 0.95em;
+  color: var(--ink-label);}
+.stays-hub-group ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;}
+.stays-hub-group li a {
+  display: inline-block;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--alt);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.92em;}
+.stays-hub-group li a:hover {
+  border-color: rgba(var(--accent-rgb), 0.3);
+  background: var(--sky);}
+.stays-hub-n {
+  color: var(--muted);
+  font-size: 0.88em;}
 
 /* ============================================================
    Dark/light theme. The head snippet on every page sets

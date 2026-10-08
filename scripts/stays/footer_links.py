@@ -1,16 +1,17 @@
-"""Footer "Stays in Rishikesh" / "Stays in Haridwar" links on every page.
-
-One wrapped line of links per city (like a travel site's "Hotels in ..." block):
-every best-<category>-in-<city> page that exists, as "Best <title> in <City>",
-in the order of the category filters (all stays first, then each group by size),
-then the search-phrase pages (search_pages.py) in the searcher's own words.
-Then one section per generated page family (FAMILIES below: rentals, driving guides), found on disk by file
-name: a new page of a known family (a new city, a new vehicle) shows in every footer by itself; a new kind of
-family is one more FAMILIES entry. A section longer than FOLD_AFTER links folds its tail behind a "More" toggle
-(the same CSS-only toggle as the stays searches, so phones stay short and crawlers still see every link). The block sits between <!-- footer-stays --> markers in every root and hotels/
-page; the first run replaces the old short "Stays in <city>" footer columns.
-build_pages.py runs this after every build, so a new category shows up in every
-footer. Usage: python3 scripts/stays/footer_links.py
+"""Footer "Stays" block on every page: a short teaser (owner, 2026-10-08 — the
+old footer dumped every best-<category>-in-<city> link on every page, four
+cities deep, and made the footer enormous even on desktop). Now: one line per
+city with its top few categories by listing count, plus "Browse all hotels ->"
+to /hotels (scripts/stays/build_hotels_hub.py), which has the full depth with a
+city filter. Then one section per generated page family (FAMILIES below:
+rentals, driving guides), found on disk by file name: a new page of a known
+family (a new city, a new vehicle) shows in every footer by itself; a new kind
+of family is one more FAMILIES entry. A section longer than FOLD_AFTER links
+folds its tail behind a "More" toggle (CSS-only, so phones stay short and
+crawlers still see every link). The block sits between <!-- footer-stays -->
+markers in every root and hotels/ page.
+build_pages.py runs this after every build, so a new category shows up in
+every footer and in /hotels. Usage: python3 scripts/stays/footer_links.py
 """
 import glob
 import html
@@ -21,6 +22,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cities import CITIES, DEFAULT_CITY  # noqa: E402
+import build_hotels_hub  # noqa: E402
+
+TOP_N = 20  # categories shown inline per city in the footer teaser
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 START, END = '<!-- footer-stays -->', '<!-- /footer-stays -->'
@@ -59,42 +63,24 @@ def family_sections(fam):
     return out
 
 
-def city_pages(city):
-    """([(href, text)] category pages in filter order, [(href, text)] search-phrase pages)."""
-    module = 'stays-index-data.js' if city == DEFAULT_CITY else f'stays-index-data-{city}.js'
-    path = os.path.join(ROOT, 'assets', 'js', 'modules', module)
-    if not os.path.exists(path):
-        return [], []
-    meta = json.loads(re.search(r'export const STAYS_INDEX_META = (\{.*?\});\n', open(path, encoding='utf8').read()).group(1))
-    cats = [c for c in meta['categories'] if os.path.exists(os.path.join(ROOT, 'hotels', f'best-{c["slug"]}-in-{city}.html'))]
-    order = [c for c in cats if c['filter'] == 'all']
-    for key, _label in meta['groups']:
-        order += sorted((c for c in cats if c['group'] == key and c['filter'] != 'all'), key=lambda c: (-c['count'], c['title']))
-    order += [c for c in cats if c not in order]
-    name = CITIES[city]['name']
-    links = [(f'/hotels/best-{c["slug"]}-in-{city}', f'Best {"Hotels" if c["filter"] == "all" else c["title"]} in {name}') for c in order]
-    # then the pages for phrases people search (search_pages.py), in the searcher's own words
-    searches = [(f'/hotels/{x["stem"]}', x['h1']) for x in meta.get('searches', [])
-                if os.path.exists(os.path.join(ROOT, 'hotels', f'{x["stem"]}.html'))]
-    return links, searches
-
-
 def block():
     parts = [START, '    <div class="rhs-footer-stays">']
     lis = lambda links: ''.join(f'<li><a href="{h}">{html.escape(t)}</a></li>' for h, t in links)
+    # a short teaser: city name + its top categories by listing count, one line each, then one link to /hotels
+    # for the full depth (every category, every city, filterable) instead of the old all-category dump here
+    teaser_lines = []
     for city in CITIES:
-        links, searches = city_pages(city)
-        if not links:
+        top = build_hotels_hub.top_categories(city, TOP_N)
+        if not top:
             continue
         name = html.escape(CITIES[city]['name'])
-        parts.append(f'      <div class="rhs-footer-city-links">\n      <h3>Stays in {name}</h3>')
-        parts.append(f'      <ul>{lis(links)}</ul>')
-        if searches:
-            # phones: the search-phrase pages fold behind "More ... searches" (a CSS-only toggle, so the
-            # links stay in the HTML for crawlers); wider screens always show them
-            parts.append(f'      <input type="checkbox" id="rhs-more-{city}" class="rhs-more-toggle">'
-                         f'<label for="rhs-more-{city}" class="rhs-more-label">More {name} searches ({len(searches)})</label>')
-            parts.append(f'      <ul class="rhs-more">{lis(searches)}</ul>')
+        hub_url = '/homestays' if city == DEFAULT_CITY else f'/hotels/{city}-accommodation'
+        cats = ', '.join(f'<a href="/hotels/best-{slug}-in-{city}">Best {html.escape(title)} in {name}</a>' for slug, title in top)
+        teaser_lines.append(f'<li><a href="{hub_url}"><strong>{name}</strong></a>: {cats}</li>')
+    if teaser_lines:
+        parts.append('      <div class="rhs-footer-city-links">\n      <h3>Stays</h3>')
+        parts.append(f'      <ul class="rhs-footer-stays-teaser">{"".join(teaser_lines)}</ul>')
+        parts.append('      <p class="rhs-footer-stays-all"><a href="/hotels">Browse all hotels by category and city &rarr;</a></p>')
         parts.append('      </div>')
     # then every page family found on disk (rentals, driving guides): one section per group
     for fam in FAMILIES:
@@ -142,6 +128,7 @@ def write_footers():
             open(path, 'w', encoding='utf8', newline='\n').write(out)
             changed += 1
     print(f'footer stays links: {changed} page(s) updated')
+    build_hotels_hub.write_hub()
 
 
 if __name__ == '__main__':

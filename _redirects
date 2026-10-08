@@ -52,6 +52,7 @@
 /contact /contact.html 200
 /haridwar-kumbh-2027 /haridwar-kumbh-2027.html 200
 /homestays /homestays.html 200
+/hotels /hotels.html 200
 /kedarnath-yatra /kedarnath-yatra.html 200
 /list-your-homestay /list-your-homestay.html 200
 /places-to-visit /places-to-visit.html 200
@@ -67,5 +68,5 @@
 # Stays pages moved into the hotels/ folder (query strings are kept).
 /best-*  /hotels/best-:splat  301
 /stay  /hotels/stay  301
-/stays  /hotels/best-hotels-in-rishikesh  301
+/stays  /hotels  301
 /stays/best-*  /hotels/best-:splat  301
