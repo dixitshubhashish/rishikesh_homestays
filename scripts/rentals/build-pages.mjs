@@ -25,7 +25,7 @@ const HUB = "bike-and-taxi-rental-in-rishikesh";
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const jsonText = (s) => s.replace(/&amp;/g, "&");
 
-export const CITIES = { rishikesh: "Rishikesh", haridwar: "Haridwar" };
+export const CITIES = { rishikesh: "Rishikesh", haridwar: "Haridwar", dehradun: "Dehradun", mussoorie: "Mussoorie" };
 export const KINDS = { bike: "Bike", car: "Car", taxi: "Taxi" };
 export const slugOf = (kind, city) => `${kind}-rental-in-${city}`;
 
@@ -44,6 +44,37 @@ const HARIDWAR = {
               <article class="info-card"><h3>Rishikesh transfers</h3><p>One-way or return trips to Rishikesh, Laxman Jhula and Tapovan.</p></article>
               <article class="info-card"><h3>Outstation</h3><p>Kedarnath, Badrinath and the Char Dham, Mussoorie, Dehradun and Delhi. Planning the yatra? Start with our <a href="/kedarnath-yatra">Kedarnath Yatra guide</a>.</p></article>`,
 };
+
+const DEHRADUN = {
+  bikeIntro: `<h2>Bike &amp; scooty rental in Dehradun</h2>
+            <p>Dehradun is spread out, Clock Tower, Rajpur Road, the Forest Research Institute and Sahastradhara all sit a fair ride apart, and the hill road up to Mussoorie starts right at the edge of town. Tell us the days you need a scooty or a bike and we arrange it with trusted local partners; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
+  traffic: `<li><strong>Traffic:</strong> Rajpur Road, Clock Tower and the Araghar stretch jam up at office hours and on weekends when the hill crowd heads up to Mussoorie. Ride slow through the bazaar lanes and park where the shopkeepers point you to, not on the road itself.</li>`,
+  ridesHead: `<h2>Ride ideas from Dehradun</h2>`,
+  rides: `<article class="info-card"><h3>Forest Research Institute</h3><p>The grand colonial building and museum, a short ride from the Clock Tower.</p></article>
+              <article class="info-card"><h3>Robber's Cave &amp; Sahastradhara</h3><p>A cave stream and a sulphur spring, both short rides out of town and easy on a scooty.</p></article>
+              <article class="info-card"><h3>Mussoorie</h3><p>About 35 km up Mussoorie Road. Check the Mall Road's evening vehicle restriction before you plan the last stretch.</p></article>
+              <article class="info-card"><h3>Rishikesh</h3><p>About 45 km down the valley. An easy run for Laxman Jhula, Tapovan and the ghats.</p></article>`,
+  cabCards: `<article class="info-card"><h3>Local sightseeing</h3><p>FRI, Robber's Cave, Sahastradhara and the Clock Tower bazaar in one day, with a driver who waits while you explore.</p></article>
+              <article class="info-card"><h3>Airport &amp; station pickups</h3><p>Jolly Grant airport and Dehradun railway station, timed to your flight or train.</p></article>
+              <article class="info-card"><h3>Mussoorie &amp; Rishikesh transfers</h3><p>One-way or return trips up to Mussoorie or down to Rishikesh and the ghats.</p></article>
+              <article class="info-card"><h3>Outstation</h3><p>Kedarnath, Badrinath and the Char Dham, Haridwar and Delhi. Planning the yatra? Start with our <a href="/kedarnath-yatra">Kedarnath Yatra guide</a>.</p></article>`,
+};
+
+const MUSSOORIE = {
+  bikeIntro: `<h2>Bike &amp; scooty rental in Mussoorie</h2>
+            <p>Mussoorie's own Mall Road closes to vehicles every evening (4 pm to 11:30 pm), so a bike mostly earns its keep on the day trips out, Kempty Falls, Lal Tibba, Dhanaulti, and on the climb back up from Dehradun. Tell us the days you need a scooty or a bike and we arrange it with trusted local partners; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
+  traffic: `<li><strong>Traffic:</strong> the Mall Road is shut to vehicles from 4 pm to 11:30 pm daily, and taxis are barred from it round the clock, so plan to park at Library Chowk or Picture Palace and walk in. The hill road up from Dehradun is narrow and busy on weekends; ride slow on the bends and check for fog or landslide closures in the monsoon before you leave.</li>`,
+  ridesHead: `<h2>Ride ideas from Mussoorie</h2>`,
+  rides: `<article class="info-card"><h3>Kempty Falls</h3><p>About 15 km out on the Yamunotri road, a popular waterfall stop.</p></article>
+              <article class="info-card"><h3>Gun Hill &amp; Lal Tibba</h3><p>The town's viewpoints, Gun Hill by cable car or a short climb, Lal Tibba a ride further into Landour.</p></article>
+              <article class="info-card"><h3>Dehradun</h3><p>About 35 km down Mussoorie Road, for the Forest Research Institute and the valley sights.</p></article>
+              <article class="info-card"><h3>Rishikesh</h3><p>About 80 km down the hill and along the valley road, via Dehradun.</p></article>`,
+  cabCards: `<article class="info-card"><h3>Local sightseeing</h3><p>Kempty Falls, Gun Hill, Lal Tibba and Landour in one day, with a driver who waits while you explore, and knows where the Mall Road's vehicle hours matter.</p></article>
+              <article class="info-card"><h3>Airport &amp; station pickups</h3><p>Dehradun railway station and Jolly Grant airport, timed to your train or flight, with the hill road's last stretch included.</p></article>
+              <article class="info-card"><h3>Dehradun &amp; Rishikesh transfers</h3><p>One-way or return trips down to Dehradun or on to Rishikesh and the ghats.</p></article>
+              <article class="info-card"><h3>Outstation</h3><p>Kedarnath, Badrinath and the Char Dham, Chakrata, Dhanaulti and Delhi. Planning the yatra? Start with our <a href="/kedarnath-yatra">Kedarnath Yatra guide</a>.</p></article>`,
+};
+const CITY_TEXT = { haridwar: HARIDWAR, dehradun: DEHRADUN, mussoorie: MUSSOORIE };
 
 // ---- the six pages ---------------------------------------------------------------------------------------------
 const PAGE = {
@@ -111,6 +142,72 @@ const PAGE = {
     lead: "A cab with a driver who knows the town gets you from the railway station to Har Ki Pauri and on to the hills without a wrong turn.",
     pickup: "Har Ki Pauri, station, hotel...",
   },
+  "bike/dehradun": {
+    title: "Bike Rental in Dehradun | Scooty and Bikes",
+    description: "Rent a scooty or a bike in Dehradun for FRI, Robber's Cave, Sahastradhara and the run up to Mussoorie. Tell us your days and we arrange it with trusted local partners.",
+    ogDescription: "Scooty and bike rentals in Dehradun, arranged with trusted local partners. Tell us your days and we quote.",
+    eyebrow: "Bikes &amp; scooties",
+    h1: "Bike rental in Dehradun, sorted over one chai.",
+    hero: "Rent a scooty or a bike for FRI, Robber's Cave, Sahastradhara and the climb up to Mussoorie. Tell us the days you need it and we arrange it with trusted local partners.",
+    leadH2: "Wheels for Dehradun, minus the guesswork",
+    lead: "Dehradun is spread out and the hills start right at its edge. Two wheels get you between the city sights and up towards Mussoorie on your own clock.",
+    pickup: "Clock Tower, station, hotel...",
+  },
+  "bike/mussoorie": {
+    title: "Bike Rental in Mussoorie | Scooty and Bikes",
+    description: "Rent a scooty or a bike in Mussoorie for Kempty Falls, Lal Tibba and day trips down to Dehradun. Tell us your days and we arrange it with trusted local partners.",
+    ogDescription: "Scooty and bike rentals in Mussoorie, arranged with trusted local partners. Tell us your days and we quote.",
+    eyebrow: "Bikes &amp; scooties",
+    h1: "Bike rental in Mussoorie, sorted over one chai.",
+    hero: "Rent a scooty or a bike for Kempty Falls, Lal Tibba and the day trips down to Dehradun. Tell us the days you need it and we arrange it with trusted local partners.",
+    leadH2: "Wheels for Mussoorie, minus the guesswork",
+    lead: "Mussoorie's Mall Road shuts to vehicles every evening, so a bike earns its keep on the day trips out, Kempty Falls to Dhanaulti, on your own clock.",
+    pickup: "Library Chowk, Picture Palace, hotel...",
+  },
+  "car/dehradun": {
+    title: "Car Rental in Dehradun | Self-Drive Cars",
+    description: "Rent a self-drive car in Dehradun for Mussoorie, the valley sights and day trips. Tell us your dates and the car you want and we arrange it with trusted local partners and quote.",
+    ogDescription: "Self-drive car rental in Dehradun, arranged with trusted local partners.",
+    eyebrow: "Self-drive cars",
+    h1: "Car rental in Dehradun, keys in your hand.",
+    hero: "Rent a self-drive car for Mussoorie, the valley sights and day trips. Tell us the dates and the car you want and we arrange it with trusted local partners.",
+    leadH2: "A car for Dehradun, minus the guesswork",
+    lead: "A self-drive car lets you stop wherever the view does, from the Forest Research Institute to the climb up to Mussoorie.",
+    pickup: "Clock Tower, station, hotel...",
+  },
+  "car/mussoorie": {
+    title: "Car Rental in Mussoorie | Self-Drive Cars",
+    description: "Rent a self-drive car in Mussoorie for Kempty Falls, Dhanaulti and day trips down to Dehradun. Tell us your dates and the car you want and we arrange it with trusted local partners and quote.",
+    ogDescription: "Self-drive car rental in Mussoorie, arranged with trusted local partners.",
+    eyebrow: "Self-drive cars",
+    h1: "Car rental in Mussoorie, keys in your hand.",
+    hero: "Rent a self-drive car for Kempty Falls, Dhanaulti and the run down to Dehradun. Tell us the dates and the car you want and we arrange it with trusted local partners.",
+    leadH2: "A car for Mussoorie, minus the guesswork",
+    lead: "A self-drive car lets you stop wherever the view does, mind the Mall Road's evening vehicle hours when you plan your return.",
+    pickup: "Library Chowk, Picture Palace, hotel...",
+  },
+  "taxi/dehradun": {
+    title: "Taxi Rental in Dehradun | Local, Airport and Outstation Cabs",
+    description: "Book a taxi in Dehradun for local sightseeing, Jolly Grant airport and railway pickups, Mussoorie and Kedarnath. Drivers who know the hill roads. Tell us your plan and we quote.",
+    ogDescription: "Local, airport and outstation taxis in Dehradun, arranged with trusted local partners.",
+    eyebrow: "Taxis &amp; cabs",
+    h1: "Taxi rental in Dehradun, from the airport to the hills.",
+    hero: "Local sightseeing, airport and railway pickups, Mussoorie transfers and outstation trips with drivers who know the hill roads. Tell us your plan and we quote.",
+    leadH2: "A cab for Dehradun, minus the guesswork",
+    lead: "A cab with a driver who knows the hill roads gets you from Jolly Grant to your hotel without a wrong turn, and up to Mussoorie when you are ready.",
+    pickup: "Clock Tower, station, hotel...",
+  },
+  "taxi/mussoorie": {
+    title: "Taxi Rental in Mussoorie | Local, Station and Outstation Cabs",
+    description: "Book a taxi in Mussoorie for local sightseeing, Dehradun railway station and Jolly Grant airport pickups, Rishikesh and Kedarnath. Drivers who know the hill roads. Tell us your plan and we quote.",
+    ogDescription: "Local, station and outstation taxis in Mussoorie, arranged with trusted local partners.",
+    eyebrow: "Taxis &amp; cabs",
+    h1: "Taxi rental in Mussoorie, from the station to the hills.",
+    hero: "Local sightseeing, Dehradun railway station and airport pickups, Rishikesh transfers and outstation trips with drivers who know the hill roads. Tell us your plan and we quote.",
+    leadH2: "A cab for Mussoorie, minus the guesswork",
+    lead: "A cab with a driver who knows the hill roads gets you from the railway station up to Mussoorie and back down to the valley without a wrong turn.",
+    pickup: "Library Chowk, Picture Palace, hotel...",
+  },
 };
 
 export const RENTALS = Object.entries(PAGE).map(([key, cfg]) => {
@@ -142,13 +239,19 @@ const carSection = (city) => `<h2>Self-drive car rental in ${city}</h2>
             <p>Would rather have someone else drive? See our <a href="/taxi-rental-in-${city.toLowerCase()}">taxi rental in ${city}</a>.</p>`;
 
 // ---- FAQ (a page's questions: the kinds a question applies to; Rishikesh keeps the hub's wording) ---------------
+// The nearest railway station/airport pickup points, per city (used in the taxi FAQ).
+const STATIONS = {
+  haridwar: "Haridwar railway station and Jolly Grant airport (Dehradun)",
+  dehradun: "Dehradun railway station and Jolly Grant airport",
+  mussoorie: "Dehradun railway station and Jolly Grant airport, both down the hill",
+};
 const faqFor = ({ kind, city }) => {
   const R = city === "rishikesh";
   const list = [];
   if (kind === "bike") {
     list.push(R
       ? ["How much does a bike or scooty rental cost in Rishikesh?", "Bike and scooty rentals are starting ₹700 onwards per day. The final price depends on the bike, the season and how many days you keep it, and we confirm it with you before anything is booked."]
-      : ["How does bike or scooty rental work in Haridwar?", "Tell us the dates and the kind of bike. We check with trusted local partners and send you the options and a price on WhatsApp or a call, and nothing is booked until you confirm."]);
+      : [`How does bike or scooty rental work in ${CITIES[city]}?`, "Tell us the dates and the kind of bike. We check with trusted local partners and send you the options and a price on WhatsApp or a call, and nothing is booked until you confirm."]);
     list.push(["What do I need to rent a bike or scooty?", "A valid two-wheeler driving licence and an original photo ID. Visitors from outside India should carry an International Driving Permit along with their home licence. Most partners also take a refundable security deposit, which varies by bike. Helmets are a must for rider and pillion, so ask for two."]);
   } else if (kind === "car") {
     list.push([`Can I rent a self-drive car in ${CITIES[city]}?`, "Self-drive cars are available on request, depending on dates. You will need a valid car driving licence and ID, and there is usually a security deposit. Tell us the dates and the kind of car you want."]);
@@ -156,7 +259,7 @@ const faqFor = ({ kind, city }) => {
   } else {
     list.push(R
       ? ["Can you arrange a pickup from Jolly Grant airport or the railway station?", "Yes. We arrange cabs from Jolly Grant airport (Dehradun), Yog Nagari Rishikesh and Haridwar railway stations, and the Rishikesh ISBT. Send your flight or train details, the number of people and bags, and we will quote."]
-      : ["Can you arrange a pickup from Haridwar railway station or Jolly Grant airport?", "Yes. We arrange cabs from Haridwar railway station and Jolly Grant airport (Dehradun). Send your train or flight details, the number of people and bags, and we will quote."]);
+      : [`Can you arrange a pickup from ${STATIONS[city]}?`, `Yes. We arrange cabs from ${STATIONS[city]}. Send your train or flight details, the number of people and bags, and we will quote.`]);
     list.push(["Do you arrange taxis for Kedarnath and the Char Dham?", "Yes, outstation cabs with drivers who know the hill roads, for Kedarnath, Badrinath, the full Char Dham circuit, Mussoorie, Delhi and more. Tell us your route, dates and group size and we will put together a quote."]);
   }
   const thing = { bike: "bike", car: "car", taxi: "cab" }[kind];
@@ -253,13 +356,14 @@ export function buildPage(hub, r) {
   h = setRegion(h, "options", OPTIONS[r.kind].map(([v, l], i) => `<option value="${v}"${i === 0 ? " selected" : ""}>${l}</option>`).join("\n                "));
 
   // which sections this kind shows, and the city's own text where the hub's is Rishikesh's
+  const cityText = CITY_TEXT[r.city];
   if (r.kind === "bike") {
     h = dropRegion(h, "cab");
     if (!R) {
-      h = setRegion(h, "bike-intro", HARIDWAR.bikeIntro);
-      h = setRegion(h, "traffic", HARIDWAR.traffic);
-      h = setRegion(h, "rides-head", HARIDWAR.ridesHead);
-      h = setRegion(h, "rides", HARIDWAR.rides);
+      h = setRegion(h, "bike-intro", cityText.bikeIntro);
+      h = setRegion(h, "traffic", cityText.traffic);
+      h = setRegion(h, "rides-head", cityText.ridesHead);
+      h = setRegion(h, "rides", cityText.rides);
     }
   } else if (r.kind === "car") {
     h = dropRegion(h, "bike");
@@ -267,7 +371,7 @@ export function buildPage(hub, r) {
   } else {
     h = dropRegion(h, "bike");
     h = setRegion(h, "cab-intro", "<p>Hand the wheel to someone who knows the roads. We book cars with drivers through trusted local partners, from small hatchbacks for a couple to SUVs and tempo travellers for families and groups.</p>");
-    if (!R) h = setRegion(h, "cab-cards", HARIDWAR.cabCards);
+    if (!R) h = setRegion(h, "cab-cards", cityText.cabCards);
     h = dropRegion(h, "selfdrive");
     h = h.replace("<h2>Taxi &amp; cab bookings</h2>", `<h2>Taxi &amp; cab bookings in ${city}</h2>`);
   }

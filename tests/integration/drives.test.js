@@ -6,13 +6,15 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { PAGES, CITIES, DESTS, buildPage, pageUrl } from '../../scripts/drives/build-pages.mjs';
 
+const DEST_INDEX = Object.fromEntries(Object.keys(DESTS).map((d, i) => [d, i]));
+
 const ROOT = join(import.meta.dirname, '..', '..');
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 const master = read('driving-from-delhi-to-rishikesh.html');
 
 test('every NCR city has a page to Rishikesh and to Haridwar (Delhi to Rishikesh is the master guide)', () => {
   assert.strictEqual(Object.keys(CITIES).length, 8);
-  assert.strictEqual(PAGES.length, 8 * 2 - 1);
+  assert.strictEqual(PAGES.length, 8 * Object.keys(DESTS).length - 1);
   for (const city of Object.keys(CITIES)) for (const dest of Object.keys(DESTS)) {
     const file = pageUrl(city, dest).slice(1) + '.html';
     assert(existsSync(join(ROOT, file)), file);
@@ -30,7 +32,7 @@ test('each page: its own title, h1, canonical, distance, one FAQ, no master text
     titles.add(html.match(/<title>([^<]*)<\/title>/)[1]);
     assert(html.includes(`<link rel="canonical" href="https://rishikeshhomestays.com/${slug}">`), slug);
     assert(html.includes(`<h1>Driving from ${CITIES[city].name} to ${DESTS[dest]}.</h1>`), slug);
-    assert(new RegExp(`is about ${CITIES[city].km[dest === 'rishikesh' ? 0 : 1]} km by road`).test(html), slug);
+    assert(new RegExp(`is about ${CITIES[city].km[DEST_INDEX[dest]]} km by road`).test(html), slug);
     assert.strictEqual((html.match(/"@type": "FAQPage"/g) || []).length, 1, slug);
     assert.strictEqual((html.match(/"@type": "Article"/g) || []).length, 1, slug);
     assert(!html.includes('Kumbh 2027 brings Haridwar'), `${slug} copied the master body`);

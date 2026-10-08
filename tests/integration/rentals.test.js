@@ -12,8 +12,8 @@ const read = (f) => readFileSync(join(ROOT, f), 'utf8');
 const hub = read('bike-and-taxi-rental-in-rishikesh.html');
 const options = (html) => [...html.match(/<select id="rental_service"[^]*?<\/select>/)[0].matchAll(/<option value="([a-z_]+)"/g)].map((m) => m[1]);
 
-test('six pages: bike, car, taxi for Rishikesh and Haridwar, each a real file', () => {
-  assert.strictEqual(RENTALS.length, 6);
+test('pages: bike, car, taxi for every city, each a real file', () => {
+  assert.strictEqual(RENTALS.length, Object.keys(KINDS).length * Object.keys(CITIES).length);
   for (const kind of Object.keys(KINDS)) for (const city of Object.keys(CITIES)) assert(existsSync(join(ROOT, `${slugOf(kind, city)}.html`)), `${kind} ${city}`);
 });
 
@@ -61,7 +61,7 @@ test('each page has its own title, h1, canonical and one FAQ block', () => {
     assert.strictEqual((html.match(/"@type": "FAQPage"/g) || []).length, 1, r.slug);
     assert(html.includes(CITIES[r.city]), r.slug);
   }
-  assert.strictEqual(titles.size, 6);
+  assert.strictEqual(titles.size, RENTALS.length);
 });
 
 test('the footer, the sitemap and the ad plan know the pages', () => {

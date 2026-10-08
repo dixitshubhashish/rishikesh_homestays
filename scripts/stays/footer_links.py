@@ -25,6 +25,11 @@ from cities import CITIES, DEFAULT_CITY  # noqa: E402
 import build_hotels_hub  # noqa: E402
 
 TOP_N = 20  # categories shown inline per city in the footer teaser
+# Single source of truth for the "Made with..." footer line (owner, 2026-10-08: stop hand-editing
+# this across 538 files for one line of text — change it here, then re-run this script, same as
+# every other footer piece). Swept into every root and hotels/ page's existing
+# <div class="rhs-footer-made">...</div>, hand-made pages included.
+FOOTER_MADE = 'Made with ❤️ (and a little chai) in India, from the \U0001f9d8 yoga capital of the world \U0001f30d'
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 START, END = '<!-- footer-stays -->', '<!-- /footer-stays -->'
@@ -111,9 +116,14 @@ def grid_end(s):
     return -1
 
 
+MADE_RE = re.compile(r'(<div class="rhs-footer-made">)(.*?)(</div>)', re.S)
+FOOTER_RE = re.compile(r'(\s*)<footer class="rhs-footer">.*?</footer>', re.S)
+
+
 def write_footers():
-    new, changed = block(), 0
-    for path in sorted(glob.glob(os.path.join(ROOT, '*.html')) + glob.glob(os.path.join(ROOT, 'hotels', '*.html'))):
+    new, changed, made_changed = block(), 0, 0
+    pages = sorted(glob.glob(os.path.join(ROOT, '*.html')) + glob.glob(os.path.join(ROOT, 'hotels', '*.html')))
+    for path in pages:
         s = open(path, encoding='utf8').read()
         if START in s and END in s:
             out = s[:s.index(START)] + new + s[s.index(END) + len(END):]
@@ -124,10 +134,31 @@ def write_footers():
             if at < 0:
                 continue
             out = s2[:at] + '\n    ' + new + s2[at:]
+        out2 = MADE_RE.sub(lambda m: f'{m.group(1)}\n                {html.escape(FOOTER_MADE)}\n            {m.group(3)}', out)
+        if out2 != out:
+            made_changed += 1
+        out = out2
         if out != s:
             open(path, 'w', encoding='utf8', newline='\n').write(out)
             changed += 1
-    print(f'footer stays links: {changed} page(s) updated')
+    # The whole <footer>...</footer> is one canonical block from here on (owner, 2026-10-08:
+    # "import footer and it have all necessary info always" — stop hand-editing footer HTML on
+    # any page; change this file, or thanks.html's footer, then re-run this script). thanks.html's
+    # footer (now carrying the up-to-date stays block and "made with" line from the pass above) is
+    # the single source; every other root and hotels/ page's footer is swept to match it exactly.
+    m = FOOTER_RE.search(open(os.path.join(ROOT, 'thanks.html'), encoding='utf8').read())
+    footer_changed = 0
+    if m:
+        canon = m.group(0).lstrip('\n')
+        for path in pages:
+            if path.endswith(f'{os.sep}thanks.html') or path.endswith('/thanks.html'):
+                continue
+            s = open(path, encoding='utf8').read()
+            out = FOOTER_RE.sub(lambda mm: mm.group(1) + canon, s, count=1)
+            if out != s:
+                open(path, 'w', encoding='utf8', newline='\n').write(out)
+                footer_changed += 1
+    print(f'footer stays links: {changed} page(s) updated, "made with" line updated on {made_changed}, whole footer synced on {footer_changed}')
     build_hotels_hub.write_hub()
 
 

@@ -27,53 +27,61 @@ const SITE = "https://rishikeshhomestays.com";
 const MASTER = "driving-from-delhi-to-rishikesh";
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export const DESTS = { rishikesh: "Rishikesh", haridwar: "Haridwar" };
-// km: [to Rishikesh, to Haridwar], rounded. start/leave: the city's own text.
+export const DESTS = { rishikesh: "Rishikesh", haridwar: "Haridwar", dehradun: "Dehradun", mussoorie: "Mussoorie" };
+// km: [to Rishikesh, to Haridwar, to Dehradun, to Mussoorie], rounded to 10 km from several routing sources
+// (Google Maps typical distance, cross-checked against a second source; they differ by 10-30 km depending on
+// where in the city you start, hence "about"). Rishikesh, Dehradun and Mussoorie all go up the Delhi-Dehradun
+// Expressway (fully open since 14 April 2026), so Dehradun is Rishikesh minus the last Doiwala/Jolly Grant
+// stretch (about 20 km), and Mussoorie is Dehradun plus the Mussoorie Road climb (about 35 km, confirmed:
+// Dehradun-Mussoorie is 33-35 km by road per trivenicabs/savaari). Haridwar is not on the expressway, so it
+// keeps its own, separately-sourced figure. start/leave: the city's own text.
 export const CITIES = {
   delhi: {
-    name: "Delhi", km: [240, 215],
+    name: "Delhi", km: [240, 215, 220, 260],
     start: "Delhi is big enough that your starting point matters: from east Delhi, Akshardham, where the Delhi–Dehradun Expressway begins, is a short hop, while from west and south Delhi the first hour goes on crossing the city.",
     startH: "Delhi is big enough that your starting point matters: for Haridwar you leave on the Delhi–Meerut Expressway, which is quickest from east Delhi, while west and south Delhi spend the first hour crossing the city.",
-    leave: "Leave Delhi before 6 am: you clear the city before it wakes up and reach the river for a late breakfast.",
+    // destination-agnostic (owner, 2026-10-08): this text is shared across all 4 destinations now, not just
+    // the river towns, so it no longer names "the river" specifically
+    leave: "Leave Delhi before 6 am: you clear the city before it wakes up and have the morning free once you arrive.",
   },
   gurugram: {
-    name: "Gurugram", km: [270, 245],
+    name: "Gurugram", km: [270, 245, 250, 290],
     start: "Gurugram is on the far side of Delhi from the road north, so a good part of the first hour goes on crossing the city to Akshardham. The Eastern Peripheral Expressway lets you go around Delhi and meets the Delhi–Dehradun Expressway at Khekra near Baghpat; let live traffic decide which is quicker on the day.",
     startH: "Gurugram is on the far side of Delhi from the road to Haridwar, so expect the first hour to go on crossing the city towards the Delhi–Meerut Expressway in east Delhi. Let live traffic decide whether going around Delhi on the Eastern Peripheral Expressway is quicker on the day.",
     leave: "Leave Gurugram before 5:30 am if you can: the Delhi side of the drive is where the time disappears, and the roads out of the city fill up early.",
   },
   noida: {
-    name: "Noida", km: [240, 215],
+    name: "Noida", km: [240, 215, 220, 260],
     start: "Noida is the closest big city to Akshardham, where the Delhi–Dehradun Expressway begins, so the expressway is the natural way out for Rishikesh.",
     startH: "From Noida, head for Ghaziabad and the Delhi–Meerut road; the old highway to Haridwar starts beyond Meerut.",
     leave: "Leave Noida before 6 am: the roads towards Delhi's eastern edge fill up with office traffic soon after.",
   },
   "greater-noida": {
-    name: "Greater Noida", km: [255, 230],
+    name: "Greater Noida", km: [255, 230, 240, 280],
     start: "Greater Noida is a little further from the expressway than Noida: head up through Noida to Akshardham, where the Delhi–Dehradun Expressway begins, and allow extra time for the Noida stretch.",
     startH: "From Greater Noida, head up through Noida towards Ghaziabad and the Delhi–Meerut road; the old highway to Haridwar starts beyond Meerut.",
     leave: "Leave Greater Noida before 6 am so you are through Noida before the morning traffic builds.",
   },
   ghaziabad: {
-    name: "Ghaziabad", km: [215, 190],
+    name: "Ghaziabad", km: [215, 190, 200, 240],
     start: "Ghaziabad is already on the Delhi–Meerut road, so the old highway to Haridwar starts close to home. For Rishikesh you can follow that road and the old highway, or go back to Akshardham for the expressway.",
     startH: "Ghaziabad is already on the Delhi–Meerut road, so the old highway to Haridwar starts close to home.",
     leave: "Leave Ghaziabad before 6 am: the Meerut road and the Delhi border both clog early on weekdays and on Friday evenings.",
   },
   faridabad: {
-    name: "Faridabad", km: [255, 230],
+    name: "Faridabad", km: [255, 230, 240, 280],
     start: "Faridabad is south of Delhi, so going north means crossing the city or going around it on the Eastern Peripheral Expressway, which meets the Delhi–Dehradun Expressway at Khekra near Baghpat. Check live traffic before you choose.",
     startH: "Faridabad is south of Delhi, so going north means crossing the city or going around it on the Eastern Peripheral Expressway. Check live traffic before you choose, then head for the Delhi–Meerut road and the old highway beyond Meerut.",
     leave: "Leave Faridabad before 5:30 am: the first stretch, whichever way you go around Delhi, is where early starts pay off.",
   },
   sonipat: {
-    name: "Sonipat", km: [245, 220],
+    name: "Sonipat", km: [245, 220, 230, 270],
     start: "Sonipat is north-west of Delhi, so you can skip the city: the Eastern Peripheral Expressway starts at Kundli, in Sonipat district, and meets the Delhi–Dehradun Expressway at Khekra near Baghpat. Check live traffic before you choose.",
     startH: "Sonipat is north-west of Delhi, so you can skip the city: the Eastern Peripheral Expressway starts at Kundli, in Sonipat district. Check live traffic before you choose, then head for the Meerut road and the old highway beyond it.",
     leave: "Leave Sonipat before 6 am, ahead of the Delhi-bound morning traffic around Kundli.",
   },
   meerut: {
-    name: "Meerut", km: [165, 140], oldOnly: true,
+    name: "Meerut", km: [165, 140, 190, 230], oldOnly: true,
     start: "Meerut is on the old highway itself: from here it is straight up NH-334, still called NH-58 by everyone, through Muzaffarnagar and Roorkee to Haridwar.",
     leave: "Leave Meerut before 7 am: the old highway through Muzaffarnagar and Roorkee is slow once the day's traffic is out.",
   },
@@ -101,16 +109,25 @@ export function switchHtml(city, dest) {
   return `<nav class="rental-switch drive-switch" aria-label="Destination and starting city">${row("Planning to:", destTabs)}${row("From city:", cityTabs)}</nav>`;
 }
 
+const DEST_INDEX = { rishikesh: 0, haridwar: 1, dehradun: 2, mussoorie: 3 };
+
 function page(city, dest) {
   const c = CITIES[city], C = c.name, D = DESTS[dest];
-  const R = dest === "rishikesh", km = c.km[R ? 0 : 1];
-  const start = R || !c.startH ? c.start : c.startH;
-  const exp = R && !c.oldOnly;
+  const R = dest === "rishikesh", H = dest === "haridwar", M = dest === "mussoorie";
+  const km = c.km[DEST_INDEX[dest]];
+  // Rishikesh, Dehradun and Mussoorie all leave the city the same way (the expressway route); only
+  // Haridwar (not on the expressway) gets its own startH text, where a city has one.
+  const start = !H || !c.startH ? c.start : c.startH;
+  const exp = !H && !c.oldOnly;
   const time = hours(km, exp);
   const route = R
     ? (exp ? "Take the Delhi–Dehradun Expressway to the Dehradun end, then Doiwala and Jolly Grant down to Rishikesh."
       : "Take the old highway (NH-334) through Muzaffarnagar, Roorkee and Haridwar, then the 25 km run up the river to Rishikesh.")
-    : "Take the old highway (NH-334, still called NH-58) through Meerut, Muzaffarnagar and Roorkee.";
+    : H
+    ? "Take the old highway (NH-334, still called NH-58) through Meerut, Muzaffarnagar and Roorkee."
+    : dest === "dehradun"
+    ? (exp ? "Take the Delhi–Dehradun Expressway all the way to Dehradun." : "Take the old highway (NH-334) through Muzaffarnagar and Roorkee, then the Haridwar–Dehradun road (NH-72) on to Dehradun.")
+    : (exp ? "Take the Delhi–Dehradun Expressway to Dehradun, then climb Mussoorie Road, about 35 km, up to Mussoorie." : "Take the old highway (NH-334) through Muzaffarnagar and Roorkee, then the Haridwar–Dehradun road (NH-72) to Dehradun, then Mussoorie Road up the last 35 km.");
   const title = `Driving from ${C} to ${D} | Route, Time and Tips`;
   const desc = `Driving from ${C} to ${D}: about ${km} km by road, about ${time} on a clear run, the best route, when to leave and where to stay. Part of our Delhi NCR road-trip guides.`;
   const url = `${SITE}/driving-from-${city}-to-${dest}`;
@@ -118,9 +135,7 @@ function page(city, dest) {
   const faq = [
     [`How far is ${D} from ${C} by road?`, `It is about ${km} km by road, roughly ${time} depending on traffic and the route.`],
     [`Which route should I take from ${C} to ${D}?`, `${route} ${start.split(". ")[0].replace(/\.$/, "")}.`],
-    R
-      ? ["When is the best time to leave for Rishikesh?", "Before 6 am, and never on a Friday evening if you can help it. Avoid the last week of the Kanwar Yatra in the month of Sawan, roughly July to August, and the main Kumbh 2027 bathing days."]
-      : ["When is the best time to leave for Haridwar?", "Before 6 am, and never on a Friday evening if you can help it. Avoid the last week of the Kanwar Yatra in the month of Sawan, roughly July to August, and the main Kumbh 2027 bathing days."],
+    [`When is the best time to leave for ${D}?`, "Before 6 am, and never on a Friday evening if you can help it. Avoid the last week of the Kanwar Yatra in the month of Sawan, roughly July to August, and the main Kumbh 2027 bathing days."],
   ];
 
   const ld = (o) => `<script type="application/ld+json">\n    ${JSON.stringify(o, null, 2).replace(/\n/g, "\n    ")}\n    </script>`;
@@ -142,15 +157,18 @@ function page(city, dest) {
   const stay = R
     ? `<h2>A calmer base you can actually drive to</h2>
             <p>Our own <a href="/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh">Advaitam Ganga &amp; Hill View homestay</a> is in Nirmal Bagh, a quieter pocket by the river, away from the Tapovan and Laxman Jhula lanes. You roll in, park right at the homestay and walk about 50 m to the ghat for the evening aarti. Send us your arrival time on <a href="https://wa.me/918050091290" target="_blank" rel="noopener">WhatsApp</a> and we will share the pin and where to park. Want something else? Compare <a href="/hotels/best-hotels-in-rishikesh">stays in Rishikesh</a>.</p>`
+    : H
+    ? `<h2>Where to stay</h2>
+            <p>Compare <a href="/hotels/best-hotels-in-haridwar">stays in Haridwar</a>, or base yourself 25 km up the river in Rishikesh, which is calmer, especially around the big Kumbh days: our own <a href="/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh">Advaitam Ganga &amp; Hill View homestay</a> has easy parking and a short walk to the ghat. <a href="/contact">Tell us your dates</a> and we will suggest a few.</p>`
     : `<h2>Where to stay</h2>
-            <p>Compare <a href="/hotels/best-hotels-in-haridwar">stays in Haridwar</a>, or base yourself 25 km up the river in Rishikesh, which is calmer, especially around the big Kumbh days: our own <a href="/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh">Advaitam Ganga &amp; Hill View homestay</a> has easy parking and a short walk to the ghat. <a href="/contact">Tell us your dates</a> and we will suggest a few.</p>`;
+            <p>Compare <a href="/hotels/best-hotels-in-${dest}">stays in ${D}</a>, or come down to Rishikesh by the river, about ${M ? "80" : "45"} km away: our own <a href="/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh">Advaitam Ganga &amp; Hill View homestay</a> has easy parking and a short walk to the ghat. <a href="/contact">Tell us your dates</a> and we will suggest a few.</p>`;
 
   const main = `<main>
       <section class="page-hero delhi-drive">
         <div class="page-hero-inner">
           <p class="eyebrow">Road trip guide</p>
           <h1>Driving from ${C} to ${D}.</h1>
-          <p>${R ? `The road from ${C} to Rishikesh, in plain words: how far, which way, when to leave and where to park when you arrive.` : `The road from ${C} to Haridwar, in plain words: how far, which way, when to leave and where to stay when you arrive.`}</p>
+          <p>${R ? `The road from ${C} to Rishikesh, in plain words: how far, which way, when to leave and where to park when you arrive.` : `The road from ${C} to ${D}, in plain words: how far, which way, when to leave and where to stay when you arrive.`}</p>
         </div>
       </section>
 
@@ -166,7 +184,8 @@ function page(city, dest) {
                 <li>Plan on about ${time} on a clear run; traffic and the way out of ${C} decide the rest.</li>
                 <li>${route}</li>
                 <li>${c.leave}</li>${R ? `
-                <li>Haridwar to Rishikesh is a 25 km drive up the river.</li>` : ""}
+                <li>Haridwar to Rishikesh is a 25 km drive up the river.</li>` : M ? `
+                <li>Dehradun to Mussoorie is about 35 km up Mussoorie Road, roughly an hour.</li>` : ""}
               </ul>
             </section>
 
@@ -174,7 +193,7 @@ function page(city, dest) {
             <p>${start}</p>
 
             <h2>The route</h2>
-            <p>${route}${R && !c.oldOnly ? " Navigation apps sometimes send you towards Roorkee and Haridwar instead; let live traffic decide on the day." : ""}${!R ? " A new link from the expressway to Haridwar's ring road is being built, so check whether it has opened before you plan around it." : ""}</p>
+            <p>${route}${R && !c.oldOnly ? " Navigation apps sometimes send you towards Roorkee and Haridwar instead; let live traffic decide on the day." : ""}${H ? " A new link from the expressway to Haridwar's ring road is being built, so check whether it has opened before you plan around it." : ""}</p>
             <p>Tolls and FASTag, food stops, the Kanwar Yatra and Kumbh rush, and parking: all in our <a href="/${MASTER}">Delhi to Rishikesh and Haridwar driving guide</a>.</p>
 
             ${stay}

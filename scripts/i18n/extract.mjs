@@ -45,7 +45,16 @@ export const PAGES = [
   "driving-from-delhi-to-rishikesh", "bike-and-taxi-rental-in-rishikesh",
   "bike-rental-in-rishikesh", "bike-rental-in-haridwar", "car-rental-in-rishikesh", "car-rental-in-haridwar",
   "taxi-rental-in-rishikesh", "taxi-rental-in-haridwar",
+  "bike-rental-in-dehradun", "bike-rental-in-mussoorie", "car-rental-in-dehradun", "car-rental-in-mussoorie", "taxi-rental-in-dehradun", "taxi-rental-in-mussoorie",
   "driving-from-delhi-to-haridwar", "driving-from-gurugram-to-rishikesh", "driving-from-gurugram-to-haridwar", "driving-from-noida-to-rishikesh", "driving-from-noida-to-haridwar", "driving-from-greater-noida-to-rishikesh", "driving-from-greater-noida-to-haridwar", "driving-from-ghaziabad-to-rishikesh", "driving-from-ghaziabad-to-haridwar", "driving-from-faridabad-to-rishikesh", "driving-from-faridabad-to-haridwar", "driving-from-sonipat-to-rishikesh", "driving-from-sonipat-to-haridwar", "driving-from-meerut-to-rishikesh", "driving-from-meerut-to-haridwar",
+  "driving-from-delhi-to-dehradun", "driving-from-delhi-to-mussoorie",
+  "driving-from-gurugram-to-dehradun", "driving-from-gurugram-to-mussoorie",
+  "driving-from-noida-to-dehradun", "driving-from-noida-to-mussoorie",
+  "driving-from-greater-noida-to-dehradun", "driving-from-greater-noida-to-mussoorie",
+  "driving-from-ghaziabad-to-dehradun", "driving-from-ghaziabad-to-mussoorie",
+  "driving-from-faridabad-to-dehradun", "driving-from-faridabad-to-mussoorie",
+  "driving-from-sonipat-to-dehradun", "driving-from-sonipat-to-mussoorie",
+  "driving-from-meerut-to-dehradun", "driving-from-meerut-to-mussoorie",
   "hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh",
 ];
 

@@ -44,7 +44,8 @@
 // and (right rail) wherever it would cover the WhatsApp hint bubble.
 const ADSENSE_CLIENT = 'ca-pub-7016219170450293';
 const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027', '/driving-from-delhi-to-rishikesh',
-  '/driving-from-delhi-to-haridwar', '/driving-from-gurugram-to-rishikesh', '/driving-from-gurugram-to-haridwar', '/driving-from-noida-to-rishikesh', '/driving-from-noida-to-haridwar', '/driving-from-greater-noida-to-rishikesh', '/driving-from-greater-noida-to-haridwar', '/driving-from-ghaziabad-to-rishikesh', '/driving-from-ghaziabad-to-haridwar', '/driving-from-faridabad-to-rishikesh', '/driving-from-faridabad-to-haridwar', '/driving-from-sonipat-to-rishikesh', '/driving-from-sonipat-to-haridwar', '/driving-from-meerut-to-rishikesh', '/driving-from-meerut-to-haridwar'];
+  '/driving-from-delhi-to-haridwar', '/driving-from-gurugram-to-rishikesh', '/driving-from-gurugram-to-haridwar', '/driving-from-noida-to-rishikesh', '/driving-from-noida-to-haridwar', '/driving-from-greater-noida-to-rishikesh', '/driving-from-greater-noida-to-haridwar', '/driving-from-ghaziabad-to-rishikesh', '/driving-from-ghaziabad-to-haridwar', '/driving-from-faridabad-to-rishikesh', '/driving-from-faridabad-to-haridwar', '/driving-from-sonipat-to-rishikesh', '/driving-from-sonipat-to-haridwar', '/driving-from-meerut-to-rishikesh', '/driving-from-meerut-to-haridwar',
+  '/driving-from-delhi-to-dehradun', '/driving-from-delhi-to-mussoorie', '/driving-from-gurugram-to-dehradun', '/driving-from-gurugram-to-mussoorie', '/driving-from-noida-to-dehradun', '/driving-from-noida-to-mussoorie', '/driving-from-greater-noida-to-dehradun', '/driving-from-greater-noida-to-mussoorie', '/driving-from-ghaziabad-to-dehradun', '/driving-from-ghaziabad-to-mussoorie', '/driving-from-faridabad-to-dehradun', '/driving-from-faridabad-to-mussoorie', '/driving-from-sonipat-to-dehradun', '/driving-from-sonipat-to-mussoorie', '/driving-from-meerut-to-dehradun', '/driving-from-meerut-to-mussoorie'];
 // lead pages and the one unit each may get; contact, list-your-homestay, report-a-bug, thanks and 404 are deliberately absent
 // /hotels/stay and our own listing get none (owner, 2026-10-06: no rival hotels under our booking buttons)
 const LEAD = {
@@ -53,6 +54,9 @@ const LEAD = {
   '/bike-rental-in-rishikesh': 'article', '/bike-rental-in-haridwar': 'article',
   '/car-rental-in-rishikesh': 'article', '/car-rental-in-haridwar': 'article',
   '/taxi-rental-in-rishikesh': 'article', '/taxi-rental-in-haridwar': 'article',
+  '/bike-rental-in-dehradun': 'article', '/bike-rental-in-mussoorie': 'article',
+  '/car-rental-in-dehradun': 'article', '/car-rental-in-mussoorie': 'article',
+  '/taxi-rental-in-dehradun': 'article', '/taxi-rental-in-mussoorie': 'article',
 };
 function pageType(path) {
   // 404.html answers any unknown address (even /hotels/nothing): the Booking.com widget only, a dead end with nothing to book here, no AdSense

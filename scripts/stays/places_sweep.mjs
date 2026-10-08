@@ -31,7 +31,17 @@ const PHASE = arg('--phase');
 const DRY = process.argv.includes('--dry-run');
 const MAX_CALLS = Number(arg('--max-calls', { ids: 8000, details: 5000, phones: 1000 }[PHASE]));
 if (!['ids', 'details', 'phones'].includes(PHASE)) throw new Error('--phase ids|details|phones is required');
-const CENTRES = { rishikesh: [30.103, 78.297], haridwar: [29.945, 78.164] }; // same as cities.py
+// owner, 2026-10-08: extended to Dehradun, Mussoorie and Roorkee. Coordinates match cities.py for the
+// stays cities; Roorkee is not a stays city (no category pages), its centre is the IIT Roorkee landmark
+// (landmarks.tsv, OSM Nominatim) — it is swept only so its Google Maps places are in places_lodging for
+// internal reference, same union-of-20km-circles coverage as the rest (tiles() below already merges
+// overlapping circles into one continuous area, which is what covers the ground between these towns
+// without a separate true polygon).
+const CENTRES = {
+  rishikesh: [30.103, 78.297], haridwar: [29.945, 78.164], // same as cities.py
+  dehradun: [30.3244, 78.0419], mussoorie: [30.4598, 78.0643], // same as cities.py
+  roorkee: [29.86617, 77.89573], // IIT Roorkee, landmarks.tsv
+};
 const RADIUS_KM = 20;
 const TILE = 0.018; // ≈ 2 km
 const QUERIES = ['hotel', 'homestay', 'guest house', 'hostel', 'resort', 'dharamshala', 'ashram', 'camp', 'apartment', 'cottage'];

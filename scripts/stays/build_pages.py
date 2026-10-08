@@ -742,9 +742,9 @@ def own_fact(own, place_name=None, place_ll=None):
     if k < 0.05:
         return None
     if CITY not in (DEFAULT_CITY, 'haridwar'):   # hill-side cities: no drive time promised from a straight line
-        return (f'Our own homestays in {area}, {home} are about {dist_label(k)} from {place_name} in a straight line '
+        return (f'Our own homestays in {area}, {home} are about {dist_label(road_km(k))} from {place_name} by road '
                 f'({home_away()} from {CN}), and are booked direct with us.')
-    return (f'Our own homestays in {area}, {home} are about {dist_label(k)} from {place_name} in a straight line, '
+    return (f'Our own homestays in {area}, {home} are about {dist_label(road_km(k))} from {place_name} by road, '
             f'roughly {drive_minutes(k)} minutes by car, and are booked direct with us.')
 
 
@@ -793,6 +793,21 @@ def dist_label(k):
     if k < 0.05:
         return 'right next to it'
     return f'{int(round(k * 1000 / 50.0) * 50)} m' if k < 1 else f'{k:.1f} km'
+
+
+# Terrain correction for the reader-facing "about X km from <landmark>" figures (owner, 2026-10-08):
+# straight-line (km_between) undercounts real road distance, more so where roads switchback, as in
+# the hill terrain around Mussoorie and parts of Dehradun. A paid routing API call per stay-landmark
+# pair (thousands of pairs per city) is out of scope, so this is a flat correction factor instead —
+# still an estimate, not exact routing, and the display text says so. Only applied where a figure is
+# shown to a reader (the two `road_km()` call sites below); never changes km_between's own output, so
+# the "nearby stays" radius filters and sort order these pages already tune around are untouched, and
+# drive_minutes() (which has its own, separately calibrated x1.35 factor) is never double-corrected.
+TERRAIN_FACTOR = {'mussoorie': 1.35, 'dehradun': 1.25, 'rishikesh': 1.15, 'haridwar': 1.1}
+
+
+def road_km(k):
+    return k * TERRAIN_FACTOR.get(CITY, 1.15)
 
 
 def drive_minutes(k):
@@ -880,7 +895,7 @@ def landmark_tips(lm, name, near, radius):
 
 
 def build_landmark_pages(stays, own, landmarks, top, bottom, today):
-    """One page per landmark in this city: stays by real distance in bands,
+    """One page per landmark in this city: stays by distance in bands,
     plus our own homestays pitched as the calmer base with an honest distance
     and rough drive time (they also appear in the bands when genuinely close,
     e.g. near AIIMS)."""
@@ -909,7 +924,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             grp = [(k, s) for k, s in rows if lo < k <= hi]
             if not grp:
                 continue
-            items = ''.join(with_dist(own_html(s) if id(s) in own_ids else item_html(s), (dist_label(k) if k < 0.05 else f'{dist_label(k)} away')) for k, s in grp)
+            items = ''.join(with_dist(own_html(s) if id(s) in own_ids else item_html(s), (dist_label(road_km(k)) if k < 0.05 else f'{dist_label(road_km(k))} away')) for k, s in grp)
             band_html += f'<section class="sx-group"><h2>{esc(label)} <span>{len(grp):,}</span></h2><ul class="sx-list">{items}</ul></section>'
         within1 = sum(1 for k, _ in near if k <= 1)
         prices = sorted(s['p'] for k, s in near if k <= 1 and s.get('p'))
@@ -918,7 +933,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
         if own_d:
             ok, oo = own_d[0]
             if ok <= radius:
-                base_line = f'Our own homestays are genuinely close: {oo["n"]} is about {dist_label(ok)} away, roughly {drive_minutes(ok)} minutes by car or auto.'
+                base_line = f'Our own homestays are genuinely close: {oo["n"]} is about {dist_label(road_km(ok))} away, roughly {drive_minutes(ok)} minutes by car or auto.'
             elif CITY == DEFAULT_CITY:
                 base_line = (f"Prefer quiet nights over walking distance? Our Ganga-view homestays in {home_city}'s Nirmal Bagh are about {ok:.0f} km away, "
                              f'roughly {drive_minutes(ok)} minutes by car or auto.'
@@ -927,15 +942,16 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
                 base_line = (f'Coming for {name} but want calm nights? Base yourself at our homestays in {home_city}, about {ok:.0f} km upriver '
                              f'(roughly {drive_minutes(ok)} minutes by car), and skip the crowds after dark.')
             else:
-                # the hill-side cities: a straight line says little about a mountain road, so no drive time is promised
-                base_line = (f'Our own homestays are in {home_city}, {home_away()} from {CN}, about {ok:.0f} km from {name} in a straight line. '
+                # the hill-side cities: no drive time is promised, but the road-corrected km (road_km) is still a
+                # closer estimate than a straight line would be
+                base_line = (f'Our own homestays are in {home_city}, {home_away()} from {CN}, about {road_km(ok):.0f} km from {name} by road. '
                              'They suit a longer trip that also takes in the river, not a quick stop here.')
-            own_rows = ''.join(with_dist(own_html(o), f'{dist_label(k)} from {esc(name)}' + (f' · ~{drive_minutes(k)} min drive' if CITY in ('rishikesh', 'haridwar') else ' in a straight line')) for k, o in own_d)
+            own_rows = ''.join(with_dist(own_html(o), f'{dist_label(road_km(k))} from {esc(name)}' + (f' · ~{drive_minutes(k)} min drive' if CITY in ('rishikesh', 'haridwar') else '')) for k, o in own_d)
             own_block = ('<section class="sx-own" aria-labelledby="sx-own-h"><h2 id="sx-own-h">A calmer base <span>Book direct with us</span></h2>' + OWN_PERKS +
                          f'<p class="sx-base">{esc(base_line)}</p><ul class="sx-list">{own_rows}</ul></section>')
         # Quick facts: counts, closest, prices, bookable, the town centre and our homestays, all from this page's data
         qf = [f'{within1:,} stays are within 1 km of {name} and {len(near):,} within {radius:g} km, as the crow flies.',
-              f'The closest stay to {name} is {closest["n"]}, ' + ('right next to it.' if closest_k < 0.05 else f'about {dist_label(closest_k)} away.')]
+              f'The closest stay to {name} is {closest["n"]}, ' + ('right next to it.' if closest_k < 0.05 else f'about {dist_label(road_km(closest_k))} away.')]
         qf.append(price_fact(prices, f'stays within 1 km of {name}', '') if len(prices) > 1 else
                   price_fact([s['p'] for _, s in near if s.get('p')], f'stays within {radius:g} km of {name}', ''))
         linked_n = sum('o' in s for _, s in near)
@@ -945,16 +961,16 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
         c_lm = next((l for l in landmarks if l['slug'] == c_slug), None)
         if c_lm and c_slug != slug:
             ck = km_between(here, (float(c_lm['lat']), float(c_lm['lng'])))
-            qf.append(f'{name} is about {dist_label(ck)} from {c_lm["name"]} in a straight line.')
+            qf.append(f'{name} is about {dist_label(road_km(ck))} from {c_lm["name"]} by road.')
         qf.append(own_fact(own, name, here))
         qf = [x for x in qf if x]
         url = f'{SITE}/hotels/best-stays-near-{slug}'
         h1 = f'Best Stays near {name}'
         title = f'Stays near {name}, {CN} | {within1:,} within 1 km, by Distance'
-        closest_txt = (', one right next to it' if closest_k < 0.05 else f', the closest {dist_label(closest_k)} away') if closest_k < 1 else ''
-        desc = f'{len(near):,} stays within {radius:g} km of {name} in {CN}, sorted by real distance: {within1:,} within 1 km{closest_txt}. Map, prices and tips.'
+        closest_txt = (', one right next to it' if closest_k < 0.05 else f', the closest {dist_label(road_km(closest_k))} away') if closest_k < 1 else ''
+        desc = f'{len(near):,} stays within {radius:g} km of {name} in {CN}, sorted by distance: {within1:,} within 1 km{closest_txt}. Map, prices and tips.'
         faq = [(f'How many stays are near {name}?',
-                f'We count {within1:,} stays within 1 km of {name} and {len(near):,} within {radius:g} km. The closest, {closest["n"]}, is {"right next to it" if closest_k < 0.05 else f"about {dist_label(closest_k)} away"}.')]
+                f'We count {within1:,} stays within 1 km of {name} and {len(near):,} within {radius:g} km. The closest, {closest["n"]}, is {"right next to it" if closest_k < 0.05 else f"about {dist_label(road_km(closest_k))} away"}.')]
         if prices:
             faq.append((f'What does a stay near {name} cost?',
                         f'Listed starting prices within 1 km run from about ₹{round_price(prices[0])} to ₹{round_price(prices[-1])} a night, with a typical stay around ₹{round_price(statistics.median(prices))}. Expect more on weekends and festival days.'))
@@ -967,7 +983,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             faq.insert(1, KUMBH_FAQ)
         guide = f'<a href="{lm["guide"]}">Read our {esc(name)} guide</a> · ' if lm.get('guide') else ''
         mapdata = {'center': here, 'name': name, 'cq': city_qs(),
-                   'stays': [[s['ll'][0], s['ll'][1], s['n'], s['id'], dist_label(k)] for k, s in near[:120]],
+                   'stays': [[s['ll'][0], s['ll'][1], s['n'], s['id'], dist_label(road_km(k))] for k, s in near[:120]],
                    'own': [[o['ll'][0], o['ll'][1], o['n'], o['u']] for o in own if o.get('ll')]}
         ld = [
             {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': h1, 'url': url, 'description': desc, 'dateModified': LASTMOD_TOKEN,
@@ -998,7 +1014,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
                     .replace('  </head>', '    ' + '\n    '.join(jsonld(o) for o in ld) + '\n  </head>', 1))
         others_near = ', '.join(f'<a href="/hotels/best-stays-near-{l["slug"]}">{esc(l["name"])}</a>' for l in others_all if l['slug'] != slug)
         faq_html = ''.join(f'<details class="sx-faq-item"><summary>{esc(q)}</summary><p>{esc(a)}</p></details>' for q, a in faq)
-        lede_closest = ('; one is right next to it' if closest_k < 0.05 else f'; the closest is {dist_label(closest_k)} away') if closest_k < 1 else ''
+        lede_closest = ('; one is right next to it' if closest_k < 0.05 else f'; the closest is {dist_label(road_km(closest_k))} away') if closest_k < 1 else ''
         mapjson = json.dumps(mapdata, ensure_ascii=False).replace('</', '<\\/')
         note = esc(CITY_COPY.get(CITY, {}).get('note', NOTE_RISHIKESH))
         main_html = (
@@ -1012,7 +1028,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             '          </div>\n'
             f'          <p class="eyebrow">Where to stay · {esc(CN)}</p>\n'
             f'          <h1 class="sx-title">{esc(h1)}</h1>\n'
-            f'          <p class="sx-lede">Every stay within {radius:g} km of {esc(name)}, sorted by real distance. {within1:,} are within 1 km{lede_closest}.</p>\n'
+            f'          <p class="sx-lede">Every stay within {radius:g} km of {esc(name)}, sorted by distance. {within1:,} are within 1 km{lede_closest}.</p>\n'
             f'          <p class="sx-cities">{guide}<a href="/hotels/best-hotels-in-{CITY}">All stays in {CN}</a></p>\n'
             f'          {facts_html(qf, f"Stays near {name}")}\n'
             f'          {own_block}\n'
@@ -1040,7 +1056,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
         write_dated(f'best-stays-near-{slug}', page_top, main_html, page_bottom)
         made.append({'slug': slug, 'name': name, 'near': len(near), 'radius': radius, 'h1': h1, 'url': url, 'desc': desc,
                      'tips': landmark_tips(lm, name, near, radius), 'faq': faq, 'facts': qf,
-                     'picks': [pick_line(s, CITY, f'{dist_label(k)} away') for k, s in near[:10]]})
+                     'picks': [pick_line(s, CITY, f'{dist_label(road_km(k))} away') for k, s in near[:10]]})
     print('landmark pages:', ', '.join(f"{m['slug']} ({m['near']})" for m in made) or 'none')
     return made
 
@@ -1470,7 +1486,7 @@ def main(data_path, crawled):
                 if dk:
                     w1 = sum(1 for k, _ in dk if k <= 1)
                     qf.append(f'{w1:,} of these {n_here:,} stays are within 1 km of {q_name}; the closest, {dk[0][1]["n"]}, is '
-                              + ('right next to it.' if dk[0][0] < 0.05 else f'about {dist_label(dk[0][0])} away in a straight line.'))
+                              + ('right next to it.' if dk[0][0] < 0.05 else f'about {dist_label(road_km(dk[0][0]))} away by road.'))
         if thin:
             other_q = next((c for _h, _n, lst, c, *_ in alts if c != CITY and lst), None)
             if other_q:
@@ -1668,7 +1684,7 @@ def main(data_path, crawled):
         + (thin_notes.get(f'best-{c[0]}-in-{CITY}') or
            f'{counts[c[0]]:,} {"stays of every type, grouped by category" if c[3] == "all" else plural_of(c[0], c[1])}. {city_copy(c[0], c[1], c[4], c[5])[0]}')
         for c in live) + ''.join(
-        f"\n- [Best stays near {np['name']}]({SITE}/hotels/best-stays-near-{np['slug']}): {np['near']} stays within {np['radius']:g} km of {np['name']}, sorted by real distance, with a map."
+        f"\n- [Best stays near {np['name']}]({SITE}/hotels/best-stays-near-{np['slug']}): {np['near']} stays within {np['radius']:g} km of {np['name']}, sorted by distance, with a map."
         for np in near_pages) + ''.join(
         f"\n- [{sp['h1']}]({SITE}/hotels/{sp['stem']}): " + (thin_notes.get(sp['stem']) or f"{sp['count']:,} stays. {sp['intro']}")
         for sp in searches) + '\n\n'
