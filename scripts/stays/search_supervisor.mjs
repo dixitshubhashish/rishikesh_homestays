@@ -44,7 +44,7 @@ const WORKERS = [
   { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '3/5', '--no-tidy']] },
   { name: 'edge2', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '4/5', '--no-tidy']] },
   { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['deep', '5/5', '--no-tidy']] },
-].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, crashes: [], finished: false, logOffset: 0 }));
+].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, diskWait: 0, crashes: [], finished: false, logOffset: 0 }));
 
 
 // Works on macOS and Windows (owner, 2026-10-06: the search moves to a Windows laptop; docs/booking-links/RULES.md §5).
@@ -92,8 +92,16 @@ function stop(w, why) { // under the lists lock, so a list write is never cut sh
   say(`stopped ${w.name}: ${why}`);
 }
 
-// Disk nearly full (swap lives on it): every worker stops until there is room again.
-function diskCritical() {
+// Disk nearly full (swap lives on it). Two floors (owner, 2026-10-08: "it should never stop unless
+// done" — the old single 3 GB floor fully halted every worker and, because this check reruns every
+// tick, kept re-arming its own "5 min pause" forever while disk stayed low, so it never actually
+// resumed on its own): under 1.5 GB is an emergency (every worker stops, same as before); 1.5-3 GB
+// is tight, not an emergency, so one worker keeps running (cuts disk/memory pressure from three or
+// four browser profiles down to one, without going fully idle while disk recovers).
+function diskEmergency() {
+  return diskFreeGb() < 1.5;
+}
+function diskTight() {
   return diskFreeGb() < 3;
 }
 
@@ -174,11 +182,12 @@ for (;;) {
     lastTrim = now;
     try { say('memory rule:', execSync('node scripts/search-ctl.mjs trim', { cwd: ROOT, encoding: 'utf8', timeout: 120000, windowsHide: true }).trim()); } catch (e) { say('memory rule: trim failed:', String(e.message).split(/\r?\n/)[0]); }
   }
-  if (diskCritical()) {
-    for (const w of WORKERS) if (w.pid && alive(w.pid)) { stop(w, 'disk almost full (under 3 GB): paused 5 min'); w.notBefore = now + 5 * 60e3; w.pid = 0; }
+  if (diskEmergency()) {
+    for (const w of WORKERS) if (w.pid && alive(w.pid)) { stop(w, 'disk almost full (under 1.5 GB): paused 2 min'); w.notBefore = now + 2 * 60e3; w.pid = 0; }
     await new Promise((r) => setTimeout(r, 60e3));
     continue;
   }
+  const diskLow = diskTight(); // 1.5-3 GB: degrade to one worker, keep going, never go fully idle
   for (const w of WORKERS) {
     if (w.finished) continue;
     if (w.pid && alive(w.pid)) {
@@ -186,9 +195,16 @@ for (;;) {
       try { if (now - statSync(logFile(w)).mtimeMs > 15 * 60e3) { stop(w, 'log silent for 15 min'); w.notBefore = now + 60e3; } } catch { /* no log yet */ }
       // owner, 2026-10-05: a short pause, 5 to 10 min at random, not 30
       if (w.heavy && tight) { const mins = 5 + Math.round(Math.random() * 5); stop(w, `memory tight (${tight}), paused ${mins} min`); held = now + mins * 60e3; w.notBefore = held; }
+      // disk tight, not an emergency: let this one keep running (the next check below stops it
+      // being replaced once it ends, and blocks any other worker from starting) rather than killing
+      // work in progress
       continue;
     }
     if (now < w.notBefore || (w.heavy && (tight || now < held))) continue;
+    if (diskLow && WORKERS.some((o) => o !== w && o.pid && alive(o.pid))) {
+      if (!w.diskWait || now - w.diskWait > 10 * 60e3) { w.diskWait = now; say(`${w.name}: disk under 3 GB, one worker already running; waiting`); }
+      continue;
+    }
     if (w.pid) { // it ended: why?
       const log = since(w);
       const done = log.match(/ done (\{.*\})\s*$/m);

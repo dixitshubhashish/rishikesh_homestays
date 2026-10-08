@@ -2470,7 +2470,6 @@ high-rise-gorgeous-3bhk-viewtopia	High Rise Gorgeous 3BHK Viewtopia	dehradun	Sah
 apt-highrise-haven-305	Highrise Haven 305 Apartment	dehradun	Sahastradhara Road		retry
 apt-highrise-haven	Highrise Haven Apartment	dehradun	Sahastradhara Road		retry
 hill-heritage-homes	Hill Heritage Homes	dehradun	Sahastradhara Road		retry
-hill-nest-studio-apartments	Hill Nest Studio Apartments	dehradun	Elsewhere in Dehradun		retry
 hill-nest-with-a-serene-view	Hill Nest with A Serene View	dehradun	Mussoorie Road & Malsi		retry
 hotel-dehradun-181	Hill Queen Hotel	dehradun	Outside Dehradun		retry
 hills-heli-stays	Hills & Heli Stays	dehradun	Sahastradhara Road		retry
@@ -4367,3 +4366,4 @@ hotel-mussoorie-39	Zostel Homes Mussoorie, Mall Road	mussoorie	Mall Road & Kulri
 hostel-zostel-mussoorie	Zostel Mussoorie, Mall Road	mussoorie	Mall Road & Kulri		retry
 zostel-plus-mussoorie-kempty	Zostel Plus Mussoorie, Kempty	mussoorie	Kempty Road		retry
 zox	Zox Mussoorie Hotel	mussoorie	Mall Road & Kulri		retry
+hill-nest-studio-apartments	Hill Nest Studio Apartments	dehradun	Elsewhere in Dehradun	in review.tsv for the owner: similar name in every word (shared [hill,nest]) but no map pin or address on the page to confirm it	review
