@@ -52,7 +52,7 @@ export const CITIES = {
   },
   noida: {
     name: "Noida", km: [240, 215, 220, 260],
-    start: "Noida is the closest big city to Akshardham, where the Delhi–Dehradun Expressway begins, so the expressway is the natural way out for Rishikesh.",
+    start: "Noida is the closest big city to Akshardham, where the Delhi–Dehradun Expressway begins, so the expressway is the natural way out.",
     startH: "From Noida, head for Ghaziabad and the Delhi–Meerut road; the old highway to Haridwar starts beyond Meerut.",
     leave: "Leave Noida before 6 am: the roads towards Delhi's eastern edge fill up with office traffic soon after.",
   },
@@ -64,7 +64,7 @@ export const CITIES = {
   },
   ghaziabad: {
     name: "Ghaziabad", km: [215, 190, 200, 240],
-    start: "Ghaziabad is already on the Delhi–Meerut road, so the old highway to Haridwar starts close to home. For Rishikesh you can follow that road and the old highway, or go back to Akshardham for the expressway.",
+    start: "Ghaziabad is already on the Delhi–Meerut road, so the old highway starts close to home. You can follow that road the whole way, or go back to Akshardham for the expressway.",
     startH: "Ghaziabad is already on the Delhi–Meerut road, so the old highway to Haridwar starts close to home.",
     leave: "Leave Ghaziabad before 6 am: the Meerut road and the Delhi border both clog early on weekdays and on Friday evenings.",
   },
@@ -82,7 +82,7 @@ export const CITIES = {
   },
   meerut: {
     name: "Meerut", km: [165, 140, 190, 230], oldOnly: true,
-    start: "Meerut is on the old highway itself: from here it is straight up NH-334, still called NH-58 by everyone, through Muzaffarnagar and Roorkee to Haridwar.",
+    start: "Meerut is on the old highway itself: from here it is straight up NH-334, still called NH-58 by everyone, through Muzaffarnagar and Roorkee.",
     leave: "Leave Meerut before 7 am: the old highway through Muzaffarnagar and Roorkee is slow once the day's traffic is out.",
   },
 };
