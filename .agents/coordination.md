@@ -4,9 +4,10 @@ This file is the shared handoff point for Codex, Claude, and any other coding ag
 
 ## Current Session
 
-- Updated: 2026-10-06
+- Updated: 2026-10-09
 - Shared goal: Keep the Rishikesh Homestays site healthy while completing the remaining content and verification work.
 - Active agents: Claude only. The owner released every Codex and other-agent claim on 2026-10-05; see Active Claims.
+- Operational note: the Mac-side booking-link search was resumed with the repo supervisor, stopped before the latest commit/push, then restarted after the push to continue the deep `retry` pass. All generated list files under `docs/booking-links/` are considered part of the search state and are committed together with the worktree state.
 
 ## Active Claims
 
