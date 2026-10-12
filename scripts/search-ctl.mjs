@@ -27,6 +27,19 @@ const CACHE = ['stays.json', 'haridwar/stays.json', 'places/places.json', 'place
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rel = (p) => path.relative(ROOT, p).replace(/\\/g, '/');
 
+// --exclude opera2,brave2 (also accepts --exclude=opera2,brave2, repeated): names to leave out of
+// `browsers`/`start`'s required set and to pass through to search_supervisor.mjs, which has its own
+// copy of this same parsing (scripts/stays/search_supervisor.mjs EXCLUDED) — keep both in sync.
+function excludedBrowsers() {
+  const names = process.argv.flatMap((arg, i) => arg === '--exclude' ? [process.argv[i + 1] || '']
+    : arg.startsWith('--exclude=') ? [arg.slice('--exclude='.length)] : [])
+    .flatMap((v) => v.split(',')).map((n) => n.trim().toLowerCase()).filter(Boolean);
+  const known = new Set(browserSpecs().map((b) => b.name).concat(['firefox', 'firefox2']));
+  const unknown = names.filter((n) => !known.has(n));
+  if (unknown.length) throw new Error(`unknown browser(s) in --exclude: ${unknown.join(', ')}`);
+  return new Set(names);
+}
+
 // ---- browsers: ports are the ones search_supervisor.mjs attaches to (scripts/lib/browser-specs.mjs) --------------------
 
 // Same host the workers' --attach URLs use (localhost), so "answers" means what the workers will see.
@@ -141,7 +154,8 @@ function hideMacBrowsers(specs) {
 }
 
 async function browsers() {
-  const specs = browserSpecs().filter((b) => b.needed || process.argv.includes('--all'));
+  const excluded = excludedBrowsers();
+  const specs = browserSpecs().filter((b) => !excluded.has(b.name) && (b.needed || process.argv.includes('--all')));
   for (const b of specs) {
     if (await listening(b.port)) { console.log(`${b.name}: already listening on ${b.port}`); continue; }
     const exe = findExe(b.exes);
@@ -193,9 +207,11 @@ async function start() {
   // without the directory stays the pins, names and duplicate checks silently run on Google places alone
   const empty = CACHE.slice(0, 2).filter((f) => { try { return JSON.parse(readFileSync(f, 'utf8')).length < 100; } catch { return true; } });
   if (empty.length) { console.error(`not starting: ${empty.map(rel).join(', ')} holds no stays yet (the crawl and process.py must finish: node scripts/py.mjs scripts/stays/crawl.py; process.py, then --city haridwar).`); return 1; }
+  const excluded = excludedBrowsers();
+  const required = browserSpecs().filter((x) => !excluded.has(x.name) && (x.needed || x.name === 'chrome'));
   const down = [];
-  for (const b of browserSpecs().filter((x) => x.needed || x.name === 'chrome')) if (!await listening(b.port)) { if (b.needed) down.push(`${b.name} (${b.port})`); }
-  await ensureWindows(browserSpecs().filter((x) => x.needed || x.name === 'chrome'));
+  for (const b of required) if (!await listening(b.port)) { if (b.needed) down.push(`${b.name} (${b.port})`); }
+  await ensureWindows(required);
   if (down.length) { console.error(`not starting: no browser answers on ${down.join(', ')}. Run: npm run search:browsers`); return 1; }
 
   mkdirSync(LOGS, { recursive: true });
@@ -203,8 +219,9 @@ async function start() {
   // keep the machine awake while it runs: Windows with the charger in (no sleep, the screen may switch off), macOS for as long as the supervisor lives (-i also on battery, -s on the charger)
   if (WIN) spawnSync('powercfg', ['/change', 'standby-timeout-ac', '0'], { windowsHide: true, stdio: 'ignore' });
   const fd = openSync(logFile, 'a');
+  const excludeArgs = excluded.size ? ['--exclude', [...excluded].join(',')] : [];
   // relative path + cwd, like the workers: ps then shows `node scripts/stays/search_supervisor.mjs` whatever the checkout path (spaces included)
-  const child = spawn(process.execPath, ['scripts/stays/search_supervisor.mjs'], { cwd: ROOT, detached: true, windowsHide: true, stdio: ['ignore', fd, fd] });
+  const child = spawn(process.execPath, ['scripts/stays/search_supervisor.mjs', ...excludeArgs], { cwd: ROOT, detached: true, windowsHide: true, stdio: ['ignore', fd, fd] });
   child.unref();
   closeSync(fd);
   if (MAC) spawn('caffeinate', ['-i', '-s', '-w', String(child.pid)], { detached: true, stdio: 'ignore' }).on('error', () => {}).unref();
