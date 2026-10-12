@@ -630,7 +630,7 @@ async function openPick(b, host, id) {
 async function check(b, stay, cand) {
   let page, finalUrl = '';
   try {
-    const host = await searchTab(b, 'google', ENGINES.google.search('google', `${stay.name} ${stay.city}`)); // Google's click-only results live in its tab
+    const host = await searchTab(b, 'google', ENGINES.google.search(ENGINES.google.regions[0], `${stay.name} ${stay.city}`)); // Google's click-only results live in its tab
     page = cand.pick ? await openPick(b, host, cand.pick) : await openBackground(b, cand.url);
     const resp = await page.waitForLoadState('domcontentloaded', { timeout: 25000 }).then(() => null);
     // Airbnb and Agoda fill in the real title late (lessons from the hand checks, 2026-10-05): wait for it
@@ -724,7 +724,14 @@ async function check(b, stay, cand) {
 // Google Maps place page: the hotel panel lists booking partners ("Booking.com ₹2,300", "Agoda …") with
 // Google's redirect links; each one is followed by check() like any candidate (owner, 2026-10-05).
 async function mapsPartners(b, mapsUrl) {
-  const page = await openBackground(b, mapsUrl);
+  const key = tabKey(b, 'maps');
+  let page = tabs[key];
+  if (!page || page.isClosed()) {
+    page = await openBackground(b, mapsUrl);
+    tabs[key] = page;
+  } else {
+    await page.goto(mapsUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+  }
   try {
     await page.waitForLoadState('domcontentloaded', { timeout: 25000 }).catch(() => {});
     await jitter(2500, 3500);
@@ -736,7 +743,10 @@ async function mapsPartners(b, mapsUrl) {
       if (p && !/\/maps\//.test(href) && !out.some((o) => o.p.name === p.name)) out.push({ p, url: href, fromMaps: true, label: text.slice(0, 80) });
     }
     return out;
-  } finally { await page.close().catch(() => {}); }
+  } catch (e) {
+    log(`   google maps page failed: ${e.message.split('\n')[0]}`);
+    return [];
+  }
 }
 
 // ---- one stay ---------------------------------------------------------------
