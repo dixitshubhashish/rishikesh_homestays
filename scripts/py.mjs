@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Runs a Python script with the interpreter this machine has, the same way on macOS, Linux and Windows.
 //   node scripts/py.mjs scripts/stays/build_pages.py --city haridwar
-// macOS/Linux ship `python3`; Windows (python.org installer) has `python` and the `py -3` launcher, and its `python3` is a
-// Microsoft Store stub that prints "Python was not found" instead of running anything.
-// There is no override: the interpreter comes only from the OS this runs on, so every machine behaves the same way.
+// The stays pipeline requires Python 3.12+ (also pinned by the GitHub refresh workflow).
+// Windows uses `python` and the `py -3` launcher; its `python3` may be a Microsoft Store stub.
+// There is no override: candidates come from the OS and PATH, and only a compatible interpreter is selected.
 // It also forces UTF-8 for Python's file and console I/O: Windows Python 3.12 defaults to cp1252, which garbles or crashes on
 // the Hindi and other non-ASCII text in the stays data (macOS already defaults to UTF-8, so nothing changes there).
 import { spawnSync } from 'node:child_process';
@@ -14,16 +14,16 @@ const WIN = process.platform === 'win32';
 const UTF8 = { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' };
 
 function candidates() {
-  return WIN ? [['python'], ['py', '-3'], ['python3']] : [['python3'], ['python']];
+  return WIN ? [['python'], ['py', '-3'], ['python3']] : [['python3.12'], ['python3'], ['python']];
 }
 
-// The first candidate that really is Python 3 (the Windows Store stub and a Python 2 `python` are skipped).
+// The first candidate that is Python 3.12+ (the Windows Store stub and older Python installs are skipped).
 export function pythonCommand() {
   for (const c of candidates()) {
-    const r = spawnSync(c[0], [...c.slice(1), '-c', 'import sys; sys.exit(0 if sys.version_info[0] == 3 else 1)'], { env: UTF8, stdio: 'ignore', windowsHide: true });
+    const r = spawnSync(c[0], [...c.slice(1), '-c', 'import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)'], { env: UTF8, stdio: 'ignore', windowsHide: true });
     if (r.status === 0) return c;
   }
-  throw new Error(`Python 3 not found (tried ${candidates().map((c) => c.join(' ')).join(', ')}). ${WIN ? 'Install it with: winget install Python.Python.3.12' : 'Install python3.'}`);
+  throw new Error(`Python 3.12+ not found (tried ${candidates().map((c) => c.join(' ')).join(', ')}). ${WIN ? 'Install it with: winget install Python.Python.3.12' : 'Install Python 3.12 or newer.'}`);
 }
 
 // Environment for a Python child process started from other code (execFileSync etc.).

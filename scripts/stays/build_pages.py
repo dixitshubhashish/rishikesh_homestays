@@ -1160,7 +1160,7 @@ def replace_between(path, start, end, body):
     open(path, 'w', encoding='utf8', newline='\n').write(s)
 
 
-def main(data_path, crawled):
+def main(data_path):
     DATES.update(page_dates.load())
     today = datetime.date.today()
     date = f"{today.day} {today.strftime('%B %Y')}"  # not %-d: Windows' C runtime rejects it
@@ -1500,7 +1500,7 @@ def main(data_path, crawled):
         ld_list = {'@context': 'https://schema.org', '@type': 'ItemList', 'name': h1, 'numberOfItems': n,
                    'itemListElement': [{'@type': 'ListItem', 'position': i + 1, 'item': {
                        '@type': 'LodgingBusiness', 'name': d['n'],
-                       **({'url': SITE + d['u']} if d['u'].startswith('/') else {}),
+                       **({'url': SITE + d['u']} if d.get('u', '').startswith('/') else {}),
                        'address': {'@type': 'PostalAddress', 'addressLocality': f'{d["a"]}, {CITIES[d.get("cy", CITY)]["name"]}', 'addressRegion': 'Uttarakhand', 'addressCountry': 'IN'}}}
                        for i, d in enumerate(own_here + list_items + [x for _h, _n, lst, *_ in alts for x in lst])]}
         ld_faq = {'@context': 'https://schema.org', '@type': 'FAQPage', 'mainEntity': [
@@ -1728,5 +1728,4 @@ if __name__ == '__main__':
     CITY = city_from_argv()   # --city <key>; default rishikesh
     CN = CITIES[CITY]['name']
     cache = cache_dir(CITY)
-    crawled = sum(1 for _ in open(f'{cache}/props.jsonl', encoding='utf8'))
-    main(f'{cache}/stays.json', crawled)
+    main(f'{cache}/stays.json')
