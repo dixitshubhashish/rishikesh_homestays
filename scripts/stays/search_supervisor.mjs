@@ -28,21 +28,40 @@ const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '4-8', '--limit',
 const ROUNDS = 4;
 // Keep every available search browser on a disjoint shard. Playwright Firefox is a headless worker
 // on macOS; its managed runtime is not a debugging-port browser.
-const SHARDS = process.platform === 'darwin' ? 6 : 4;
-const edgePlan = [
-  ['deep', `3/${SHARDS}`, '--no-tidy'],
-  ['review', `3/${SHARDS}`, '--review', '--no-tidy'],
-  ...(process.platform === 'darwin' ? [['deep', `6/${SHARDS}`, '--no-tidy'], ['review', `6/${SHARDS}`, '--review', '--no-tidy']] : []),
+//
+// Second instances (owner, 2026-10-12: double automation capacity): chrome2/opera2/brave2/edge2
+// (and a second headless Firefox on macOS) run alongside the originals. SHARDS is doubled and split
+// in half — shards 1..OLD_SHARDS for the original engines (unchanged numbering), OLD_SHARDS+1..SHARDS
+// for their "2" twins — so the extra workers cover previously-unsearched rows instead of redoing the
+// same shard, even while one engine's first instance (e.g. brave on port 9224) is down.
+const OLD_SHARDS = process.platform === 'darwin' ? 6 : 4;
+const SHARDS = OLD_SHARDS * 2;
+const OFFSET = OLD_SHARDS;
+const edgePlan = (lo, hi) => [
+  ['deep', `${lo}/${SHARDS}`, '--no-tidy'],
+  ['review', `${lo}/${SHARDS}`, '--review', '--no-tidy'],
+  ...(hi ? [['deep', `${hi}/${SHARDS}`, '--no-tidy'], ['review', `${hi}/${SHARDS}`, '--review', '--no-tidy']] : []),
 ];
+const EXCLUDED = new Set(process.argv.flatMap((arg, i) => arg === '--exclude' ? [process.argv[i + 1] || '']
+  : arg.startsWith('--exclude=') ? [arg.slice('--exclude='.length)] : [])
+  .flatMap((value) => value.split(',')).map((name) => name.trim().toLowerCase()).filter(Boolean));
 const WORKERS = [
   { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['review', `1/${SHARDS}`, '--review', '--no-tidy']] },
   { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['review', `2/${SHARDS}`, '--review', '--no-tidy']] },
-  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: edgePlan },
+  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: edgePlan(3, process.platform === 'darwin' ? 6 : 0) },
   { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['review', `4/${SHARDS}`, '--review', '--no-tidy'], ['deep', `4/${SHARDS}`, '--no-tidy']] },
   ...(process.platform === 'darwin'
     ? [{ name: 'firefox', how: ['--browsers', 'firefox'], plan: [['deep', `5/${SHARDS}`, '--no-tidy'], ['review', `5/${SHARDS}`, '--review', '--no-tidy']] }]
     : []),
-].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, diskWait: 0, crashes: [], finished: false, logOffset: 0 }));
+  { name: 'opera2', how: ['--attach', 'opera2=http://localhost:9227'], plan: [['review', `${1 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'brave2', how: ['--attach', 'brave2=http://localhost:9228'], plan: [['review', `${2 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'edge2', how: ['--attach', 'edge2=http://localhost:9229'], plan: edgePlan(3 + OFFSET, process.platform === 'darwin' ? 6 + OFFSET : 0) },
+  { name: 'chrome2', how: ['--attach', 'chrome2=http://localhost:9226'], plan: [['review', `${4 + OFFSET}/${SHARDS}`, '--review', '--no-tidy'], ['deep', `${4 + OFFSET}/${SHARDS}`, '--no-tidy']] },
+  ...(process.platform === 'darwin'
+    ? [{ name: 'firefox2', how: ['--browsers', 'firefox'], plan: [['deep', `${5 + OFFSET}/${SHARDS}`, '--no-tidy'], ['review', `${5 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] }]
+    : []),
+].filter((w) => !EXCLUDED.has(w.name))
+  .map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, diskWait: 0, crashes: [], finished: false, logOffset: 0 }));
 
 
 // Works on macOS and Windows (owner, 2026-10-06: the search moves to a Windows laptop; docs/booking-links/RULES.md §5).

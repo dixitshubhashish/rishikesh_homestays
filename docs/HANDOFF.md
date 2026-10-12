@@ -1,8 +1,22 @@
-# Handoff: start here (state on 2026-10-06)
+# Handoff: start here (state on 2026-10-12)
 
 Read `CLAUDE.md` first (rules, where things live), then this file. Then, as needed: `docs/ARCHITECTURE.md` (modules, API), `scripts/stays/README.md` (stays pipeline), `docs/booking-links/RULES.md` (booking-link search), `docs/TESTING.md`. `PROGRESS.md` is the dated log; `.agents/coordination.md` is the multi-agent ledger (Codex also works here: claim files before editing).
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
+
+## Session 2026-10-12 (Mac): doubled booking-search automation capacity
+
+Owner request: run a second, independent automated instance of each engine alongside the existing four. `scripts/lib/browser-specs.mjs` now lists `chrome2`/`opera2`/`brave2`/`edge2` on ports 9226/9227/9228/9229, each its own `rh-search/<name>` profile folder, same installed app as its "1" twin. `scripts/stays/search_supervisor.mjs` doubles its shard count (12 on macOS with two Firefox workers, 8 elsewhere) and splits it in half: shards 1..N for the original five workers (unchanged numbering), N+1..2N for their "2" twins, so the new workers search previously-uncovered rows instead of redoing the same shard. Each "2" instance is fully independent of its "1" counterpart — verified live: Brave's original port (9224) stayed down the whole time while Brave2 (9228) came up and ran its own worker. `scripts/search-ctl.mjs`'s generic loops (`browsers`/`status`/`stop`/`trim`) needed no changes; they iterate `browserSpecs()` and picked the four new entries up automatically. Tested: `search:browsers --exclude brave` brought up opera2/brave2/edge2 (opera/edge were already up; chrome2 was skipped, matching the existing "needed only" rule — Chrome2 is optional like Chrome, add `--all` to include it); `search:start --exclude brave` started all nine workers (opera, edge, chrome, firefox, opera2, brave2, edge2, chrome2, firefox2) on the expected disjoint shards; `search:status` confirmed them; `search:stop` stopped everything cleanly with none left running. The three new browser instances opened only for this test were then closed by PID (not `trim`, to avoid touching anything else); the pre-existing chrome/opera/edge/brave(down) were left untouched. Docs updated: `docs/booking-links/RULES.md` §5 (port/profile table, worker count, first-run-check line). See `.agents/coordination.md` for the claim and commit.
+
+## Session 2026-10-12 (Mac): handoff to Claude Code
+
+**Current state:** booking search is stopped. `npm run search:status` confirmed no supervisor or workers. Do not start it on another machine; Claude Code takes over from this stopped state. Last observed counts: `found.tsv` 3,062 rows, `unfound.tsv` 3,713, `review.tsv` 1,431. Workers own these files; do not hand-edit them.
+
+- Local, uncommitted changes: `scripts/search-ctl.mjs` adds `--exclude <browser>` to browser launch and supervisor startup, and memory trim always protects Brave and its child processes, including `--all`. `scripts/stays/search_supervisor.mjs` omits excluded workers. `scripts/stays/google_ota_search.mjs` reuses one Google Maps tab per worker for successive cached place URLs; OTA candidate pages remain temporary background tabs. `docs/booking-links/RULES.md` documents the options and no-API behavior. No Google Maps API, API key, paid call, or owner credentials were used.
+- Start the non-Brave pool with `npm run search:browsers -- --all --exclude brave`, then `npm run search:start -- --exclude brave`. Playwright Firefox and Chromium runtimes are installed locally.
+- **Background-window issue remains to verify:** after worker attachment, Chrome/Opera became visible behind the active app (neither was frontmost). They were hidden again before stopping; after stop, Chrome, Edge, and Opera all verified `visible: false` and `frontmost: false`. The post-start hide in `search-ctl.mjs` did not reliably keep them hidden during active work. Claude Code should fix and verify this before resuming, without touching the personal Brave app or foregrounding managed windows.
+- The earlier unprotected trim logged `closed 43 browser processes`; the owner's personal Brave was likely among them and its debugging port is not answering. Do not launch Brave; let the owner restore their personal app if needed.
+- Scoped `git diff --check` and `node --check` passed for the edited search scripts and docs. Full `npm test` was not run. A repo-wide whitespace check found trailing whitespace in worker-owned `docs/booking-links/found-by-property.tsv`; it was left untouched.
 
 ## Session 2026-10-08 (Mac): search restarted here
 
@@ -124,6 +138,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 
 ## Owner to do (blocked on them)
 
+0. **AdSense rejected** (2026-10-12, owner-pasted): "Low-value content" — Google wants "substantial unique value", "ongoing curation and structural maintenance", "genuine user interest", pointing at the content/UX and thin-content spam policies. Likely read as thin because of the large volume of near-identical generated `hotels/*.html` pages (category/phrase/landmark pages built from templates). Needs a content-quality pass before resubmitting — not actioned yet, needs owner direction on scope (which pages to enrich, whether to prune/noindex the thinnest phrase pages, add more unique text per page).
 1. CJ: **Booking.com approved us on 2026-10-07**; the site now uses link 17293139 (`kqzyfj.com`) and shows the Booking.com search widget (link 17323528) from `assets/js/ads.js`: home below the homestay sections, guides and stays lists above the footer. Check in CJ that clicks and the first bookings appear.
 2. AdSense: site verified (ads.txt) and review requested on 2026-10-04, status "Getting ready"; approval takes days to ~2 weeks. After approval, create a **vertical display unit** and put its slot in `UNITS.rail` in `assets/js/ads.js`.
 3. **Google Search Console**: verify the domain (DNS TXT), submit `https://rishikeshhomestays.com/sitemap.xml`, check the Pages report weekly ("Discovered/Crawled, currently not indexed"), and Request indexing for top pages (~10 a day). Then **Bing Webmaster Tools**: import from Search Console, submit the same sitemap (Bing also gets IndexNow pings after every push). **Google Business Profile** for Advaitam if not claimed.
@@ -145,6 +160,7 @@ Lessons from the runs (2026-10-04):
 
 ## Ideas not started
 
+- **Local DB for the booking-link search** (owner, 2026-10-12, long-term): replace the TSV files (`found.tsv`, `unfound.tsv`, `seen-pages.tsv`, `review.tsv`) with a small local database deployed alongside the app, so the search state isn't flat-file-based. OTA logos would be hosted separately (owner's own image hosting) rather than committed. Not scoped yet — pick the engine (SQLite is the natural fit: single file, no server, works identically on Windows/macOS per the cross-platform rule) and a migration path that doesn't interrupt the search mid-run. Logged here only; no schema or code yet.
 - **Bigger sitemap** (owner, 2026-10-04): every stay with its own indexable URL (today `hotels/stay.html?s=<slug>&c=<city>` is `noindex`), and the sitemap covering every part of the site. Needs a decision on per-stay URLs first.
 - Elysium and Yoga Retreat pages (need owner details and photos).
 - Haridwar size pages (too few stays state a size).

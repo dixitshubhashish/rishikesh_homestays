@@ -33,8 +33,18 @@ export function browserSpecs() {
   // The supervisor runs workers on Opera, Edge, Brave and Chrome; Chrome is opened only with --all. On macOS, Firefox runs headless under Playwright.
   // Edge stays a normal window (extensions off): in an InPrivate window the workers never see the tabs they open (tested 2026-10-07).
   const privateFlag = { chrome: '--incognito', brave: '--incognito', opera: '--private', edge: '' };
-  return [['chrome', 9222, false], ['opera', 9223, true], ['brave', 9224, true], ['edge', 9225, true]]
-    .map(([name, port, needed]) => ({ name, port, needed, exes: exe[name], profile: path.join(profiles, name), privateFlag: privateFlag[name] }));
+  // Second independent instance of each engine (owner, 2026-10-12: double automation capacity). Same installed app,
+  // a second launch with its own --user-data-dir and --remote-debugging-port; Chrome-family browsers run two such
+  // instances fine side by side. Each gets its own profile folder so it never touches the first instance's cookies
+  // or challenge state, and its own fixed port so it comes up (or stays down) independently — in particular brave2
+  // must never depend on brave1 (port 9224) being up. These are still dedicated rh-search automation profiles, never
+  // the owner's personal everyday browser windows.
+  const base = [['chrome', 9222, false], ['opera', 9223, true], ['brave', 9224, true], ['edge', 9225, true]];
+  const second = [['chrome2', 9226, false], ['opera2', 9227, true], ['brave2', 9228, true], ['edge2', 9229, true]];
+  return [...base, ...second].map(([name, port, needed]) => {
+    const engine = name.replace(/2$/, '');
+    return { name, port, needed, exes: exe[engine], profile: path.join(profiles, name), privateFlag: privateFlag[engine] };
+  });
 }
 
 // An absolute candidate must exist; a bare name (Linux) is looked up on PATH.
