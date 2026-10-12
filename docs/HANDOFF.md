@@ -168,6 +168,7 @@ rishikeshhomestays.com is a Rishikesh/Haridwar travel guide whose job is to **se
 1. CJ: **Booking.com approved us on 2026-10-07**; the site now uses link 17293139 (`kqzyfj.com`) and shows the Booking.com search widget (link 17323528) from `assets/js/ads.js`: home below the homestay sections, guides and stays lists above the footer. Check in CJ that clicks and the first bookings appear.
 2. AdSense: site verified (ads.txt) and review requested on 2026-10-04, status "Getting ready"; approval takes days to ~2 weeks. After approval, create a **vertical display unit** and put its slot in `UNITS.rail` in `assets/js/ads.js`.
 3. **Google Search Console**: verify the domain (DNS TXT), submit `https://rishikeshhomestays.com/sitemap.xml`, check the Pages report weekly ("Discovered/Crawled, currently not indexed"), and Request indexing for top pages (~10 a day). Then **Bing Webmaster Tools**: import from Search Console, submit the same sitemap (Bing also gets IndexNow pings after every push). **Google Business Profile** for Advaitam if not claimed.
+3b. **Disk space low** (2026-10-13 overnight watchdog, Mac): ~2.5 GB free of 460 GB (83% used), already throttling the booking search's `edge` worker to 2 shards via its own existing disk-safety cap (`maxWorkersForDisk()` — not new, not a crash risk tonight, just slower). Clear space when convenient; not touched automatically since it's the owner's call what's safe to remove.
 4. Review `docs/booking-links/review.tsv` (218 doubtful booking pages only the owner can settle).
 
 ## Booking links for stays without one
