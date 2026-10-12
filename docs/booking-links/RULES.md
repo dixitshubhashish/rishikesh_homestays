@@ -52,22 +52,31 @@ same village and PIN on the page: the same place.
 
 ## 3. How the search runs
 
-- **Workers**: `scripts/stays/search_supervisor.mjs` keeps them running (one per browser, two in Edge, the least blocked: 2026-10-06 logs show 2 all-engine stalls in 707 stays against Opera's 27 in 1,191; Opera runs one), restarts
-  crashed or stalled ones, pauses all when the disk is under 3 GB (5 minutes at a time). Never more than three browsers on this
-  Mac: a fourth filled the disk twice. Logs: `scripts/stays/.cache/booking-search-*/`.
+- **Workers**: `scripts/stays/search_supervisor.mjs` runs deep retry searches on disjoint shards across Edge, Chrome,
+  Opera, Brave, and (on macOS) headless Playwright Firefox. Idle browsers process separate, non-overlapping review shards
+  while searches continue; productive workers restart or advance through their plan, and concurrency is capped as disk
+  space falls. Opera was previously the steadiest browser; the supervisor uses available search results to change engines
+  when one is blocked or unproductive. Logs:
+  `scripts/stays/.cache/booking-search-*/`.
 - **Order**: never-searched stays first (`all.tsv`, split between workers), likeliest first (guest reviews and a price);
   then the deep re-check of `retry` rows; review rows are re-opened and settled with the current rules (`--review`).
-- **Per stay**: a Google Maps place first reads its booking partners. Then searches: the name with its area, `site:booking.com`,
-  one OR search for MakeMyTrip, Goibibo, Agoda, Trip.com and EaseMyTrip, then one site at a time (Agoda, Airbnb, Hostelworld for
-  hostels, OYO for OYO names, Trip.com, EaseMyTrip, Goibibo, MakeMyTrip, Expedia, Hotels.com, Cleartrip). Every result is read
+- **Per stay**: a Google Maps place first reads its booking partners. Then searches the name with its area, `site:booking.com`
+  (the preferred OTA), the MakeMyTrip/EaseMyTrip/Trip.com OR query, then one site at a time (Agoda, Airbnb, Hostelworld for
+  hostels, OYO for OYO names, Goibibo, Expedia, Cleartrip). Every result is read
   with its title and snippet; the page is scrolled, then "More results" / the next page read, only when nothing near the top fits.
-  A search with nothing like the stay is repeated on up to two other engines (DuckDuckGo finds the most, then Bing, Google,
-  Brave Search).
+  **Stop for this stay as soon as an opened OTA page is verified as its property page**; do not search another OTA or engine
+  for another link to the same stay. A suggested link that is unrelated or does not verify is not a match: continue checking
+  relevant candidates and searches as usual. Other OTA property links from results are still harvested to `seen-pages.tsv`
+  and handled by the separate seen-page flow below. A search with nothing like the stay is repeated on up to two other engines
+  (DuckDuckGo finds the most, then Bing, Google, Brave Search).
 - **Pages**: late titles are waited for; closed listings do not use up link slots (at most 3 per stay); a site is skipped for a
   stay only after two unreadable pages. MakeMyTrip and Goibibo often refuse automated browsers: never forced.
-- **Pace and manners**: 6–12 s between searches, up to 1.5x slower after a captcha, faster after clean pages. A captcha is never
-  solved and a block never worked around (no proxies, VPNs or Tor). One tab per engine, reused through its search box; booking
-  pages are closed as soon as they are read; leftover and empty tabs are closed (never the owner's own tabs or windows).
+- **Pace and manners**: 4–8 s between searches initially; after 15 clean result pages, the worker adapts down to half that
+  gap. It slows after a challenge. A captcha is never solved or bypassed, and a block is never worked around (no proxies, VPNs
+  or Tor); the affected engine rests, or waits for a person when explicitly configured. One tab per engine, opened directly
+  at its first search URL and reused through its search box; booking pages are closed as soon as they are read. Blank tabs
+  are closed immediately (replacing a browser's sole blank tab with a Google home page first); search pages are kept while in
+  use.
 - **By hand**: stays the workers cannot settle are checked in the owner's Chrome (Claude in Chrome, at most two agents per
   browser), recorded only through `record_manual.mjs` under the same rules; a second agent re-opens every link accepted.
   Directory and comparison sites (uttarakhand-hotels.com, tiket.com, Traveloka, Kayak, …) are skipped: they are not booking pages.
@@ -119,11 +128,11 @@ The search can move between the Mac and a Windows laptop (owner, 2026-10-06). **
 
 `scripts/windows/setup.ps1` (one-time installs) is Windows-only; `scripts\windows\start-browsers.ps1` and `start-search.ps1 [-Status|-Stop]` are thin wrappers that run the same commands. **First-run checks on Windows done 2026-10-07** (status, port check and stop against the four open browsers); the full start has not yet run on real Windows: do the first-run check at the end of this section and report what differs.
 
-**Memory rule and one-click files (owner, 2026-10-07: "I don't need any browser for myself, manage them yourself").** The laptop in use has 16 GB; five browsers with their extensions left about 0.4 GB free, tabs stopped answering, every search engine "rested" and the workers found a handful of links in three hours. So:
-1. **Three workers, three browsers** (Opera, Brave, Edge; the supervisor's `WORKERS` list). Chrome is a spare. A fourth browser costs about 1 GB.
-2. **Private window, no extensions** for the search browsers (`--private` Opera, `--incognito` Brave, `--disable-extensions` all three): extensions are the biggest idle memory. Edge stays a normal window (its InPrivate window hides the tabs the workers open: tested 2026-10-07). A private window forgets cookies on close, so accept each browser's cookie banner once after `search:browsers`.
-3. **Every other browser is closed when memory is tight**: the supervisor runs `node scripts/search-ctl.mjs trim` (at most every 10 minutes) when free memory is under 0.8 GB on Windows (1.5 GB on Linux; macOS: pressure level or swap), and `scripts\windows\search-start.bat` runs it first. It kills browser processes (chrome, brave, opera, msedge, firefox) that are not in the process tree of a search browser (started with `--remote-debugging-port` and the `rh-search` profile), the owner's own windows included. Claude Desktop, VS Code and Edge WebView2 are never matched. A few processes may refuse to close (access denied): they are left.
-4. **Idle tabs are closed** (owner, 2026-10-07: "close tabs that are not in use"): a booking page is closed the moment a worker has read it, and every 5 minutes the supervisor also closes a blank tab, a browser start page or google.com's home page that sat unchanged for two sweeps (never a browser's last tab, never a worker's results page). `search-stop.bat` closes the search browsers altogether.
+**Memory rule and one-click files (owner, 2026-10-07: "I don't need any browser for myself, manage them yourself").** Five headed browsers previously left about 0.4 GB free on the 16 GB laptop, tabs stopped answering, and search engines rested. Per the owner's later request, the pool now includes the four installed Chromium browsers plus headless Firefox on macOS; free disk still caps worker concurrency (under 1 GB pauses all workers).
+1. **Four attached browser workers plus Firefox on macOS** (Opera, Brave, Edge, Chrome, Firefox; the supervisor's `WORKERS` list). Windows/Linux run the four debugging-port browsers. Chrome opens with `--all`; Firefox uses Playwright's separately installed runtime and is not a normal Firefox.app window.
+2. **Private window, no extensions** for the attached search browsers (`--private` Opera, `--incognito` Brave, `--disable-extensions`): extensions are the biggest idle memory. Edge stays a normal window (its InPrivate window hides the tabs the workers open: tested 2026-10-07). A private window forgets cookies on close, so accept each browser's cookie banner once after `search:browsers`.
+3. **Every other browser is closed when memory is tight**: the supervisor runs `node scripts/search-ctl.mjs trim` (at most every 10 minutes) when free memory is under 0.8 GB on Windows (1.5 GB on Linux; macOS: pressure level or swap), and `scripts\windows\search-start.bat` runs it first. It kills browser processes (chrome, brave, opera, msedge, firefox) that are not in the process tree of a search browser (started with `--remote-debugging-port` and the `rh-search` profile) or a managed Firefox search worker, the owner's own windows included. Claude Desktop, VS Code and Edge WebView2 are never matched. A few processes may refuse to close (access denied): they are left.
+4. **Idle tabs are closed** (owner, 2026-10-07: "close tabs that are not in use"): workers open search tabs directly at a search URL, never as blank placeholders. A blank tab is closed on the next supervisor sweep (every 5 minutes), immediately if another tab exists; if it is the only tab, a Google home page is opened before it is closed. A booking page is closed as soon as it is read. Browser start pages and google.com's home page are closed after sitting unchanged for two sweeps. Worker results pages are kept. `search-stop.bat` closes the search browsers altogether.
 5. **No extra load next to the workers**: no parallel hand-check agents or second scripts driving the same browsers while the workers run (2026-10-07: four agents on the same browsers got nothing done).
 6. **Do not try ReadyBoost** (a USB drive as cache): Windows turns it off on an SSD, and a flash drive is slower than the laptop's disk anyway. The cure for short memory is fewer processes (this rule), not a faster pagefile. More RAM (a 32 GB laptop) would be the real fix.
 
@@ -145,7 +154,7 @@ Also installed: Node.js LTS, Python 3, Git, the repo's npm packages and Playwrig
 **Move it over**
 1. On the machine that runs it now: `npm run search:stop` (supervisor first, then the workers, then it checks nothing is left), then commit and push the lists: `git add docs/booking-links scripts/stays/ota-links.tsv scripts/stays/booking-stays.tsv`, commit, push. Also pack the search's cache (gitignored, 5 files, about 5 MB): `tar -czf rh-search-cache.tgz -C scripts/stays .cache/stays.json .cache/haridwar/stays.json .cache/places/places.json .cache/places/all-stays.json .cache/places/ota-links.tsv`, and copy the archive over (AirDrop, USB, cloud drive).
 2. On Windows: install Git, `git clone` the repo (or `git pull`), then in PowerShell from the repo folder: `powershell -ExecutionPolicy Bypass -File scripts\windows\setup.ps1`. Unpack the cache: `tar -xzf rh-search-cache.tgz -C scripts\stays`.
-3. `npm run search:browsers` (opens the four browsers on ports 9222-9225, prints which answer), then `npm run search:start`. `npm run search:status` shows counts and workers.
+3. `npm run search:browsers -- --all` (opens the four attached browsers on ports 9222-9225, prints which answer), then `npm run search:start`. On macOS install the Playwright Firefox runtime once with `npx playwright install firefox`. `npm run search:status` shows counts and workers.
 4. Back to the other machine later: `npm run search:stop`, commit and push the lists, `git pull` there. `merge_found.sh` (the step that puts links on the site) runs on either machine: `scripts/stays/merge_found.sh` on the Mac, `bash scripts/stays/merge_found.sh` from Git Bash on Windows (use Git Bash, not a bare `bash` from PowerShell, which can be WSL). It finds Python itself through `scripts/py.mjs` (`python3` on macOS, `python` or `py -3` on Windows; there is no override), so no export is needed. BigQuery stays off unless asked.
 
 **What Windows will ask you to approve (once each)**

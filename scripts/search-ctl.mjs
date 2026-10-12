@@ -2,7 +2,7 @@
 // Starts, checks and stops the booking-link search, the same way on macOS, Windows and Linux
 // (docs/booking-links/RULES.md section 5). The npm scripts are the one way to run it:
 //   npm run search:browsers   open the search browsers with their debugging ports, in incognito/private mode with extensions off
-//                             (Opera 9223 and Brave 9224 private, Edge 9225 normal window with extensions off; Chrome 9222 only with --all: the supervisor runs three workers)
+//                             (Opera 9223 and Brave 9224 private, Edge 9225 normal window with extensions off; Chrome 9222 only with --all)
 //   npm run search:start      start the supervisor (it starts and watches one worker per browser) and keep the machine awake
 //   npm run search:status     supervisor and worker pids, ports, found/unfound/review counts, the last supervisor lines
 //   npm run search:stop       stop the supervisor FIRST, then every worker, then verify nothing is left (--close-browsers also closes the search browsers)
@@ -89,9 +89,10 @@ async function status() {
   console.log('supervisor:', sup.length ? sup.map((p) => p.pid).join(', ') : 'not running');
   const workers = procs.filter((p) => p.kind === 'worker');
   for (const p of workers) {
-    const shard = /--shard (\S+)/.exec(p.cmd)?.[1], attach = /--attach (\w+)=/.exec(p.cmd)?.[1];
+    const shard = /--shard (\S+)/.exec(p.cmd)?.[1];
+    const browser = /--attach (\w+)=/.exec(p.cmd)?.[1] || /--browsers\s+(\S+)/.exec(p.cmd)?.[1] || '?';
     const flags = ['--deep', '--reverse', '--review'].filter((f) => p.cmd.includes(f)).join(' ');
-    console.log(`  worker ${p.pid}: ${attach || '?'} shard ${shard || '?'} ${flags}`.trimEnd());
+    console.log(`  worker ${p.pid}: ${browser} shard ${shard || '?'} ${flags}`.trimEnd());
   }
   if (!workers.length) console.log('  no workers');
   const ports = await Promise.all(browserSpecs().map(async (b) => { const up = await listening(b.port); return up || b.needed ? `${b.name} ${b.port} ${up ? 'ready' : 'NOT answering'}` : ''; }));
@@ -244,7 +245,8 @@ async function stop() {
 // Owner, 2026-10-07: "I don't need any browser for myself", so when memory is short every browser that is not a search
 // browser is closed (the owner's own windows included); --all closes the search browsers as well (search:stop
 // --close-browsers); --dry only lists. A search browser = a browser started with a debugging port and our rh-search profile,
-// plus everything below it in the process tree. Claude Desktop, VS Code and Edge WebView2 are never matched.
+// plus everything below it in the process tree, and the Playwright Firefox process below its search worker. Claude Desktop,
+// VS Code and Edge WebView2 are never matched.
 function allProcesses() {
   if (WIN) {
     const out = execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
@@ -267,6 +269,7 @@ async function trim(args = process.argv.slice(3)) {
   const keep = new Set();
   const protect = (pid) => { if (keep.has(pid)) return; keep.add(pid); for (const c of children.get(pid) || []) protect(c); };
   if (!all) for (const p of procs) if (isBrowser(p) && /--remote-debugging-port=/.test(p.cmd) && /rh-search/.test(p.cmd)) protect(p.pid);
+  if (!all) for (const p of procs) if (/google_ota_search\.mjs/.test(p.cmd) && SEARCH_CMD.test(p.cmd)) protect(p.pid);
   const victims = procs.filter((p) => !keep.has(p.pid) && isBrowser(p));
   if (!victims.length) { console.log('trim: no browser to close'); return 0; }
   let closed = 0, denied = 0;

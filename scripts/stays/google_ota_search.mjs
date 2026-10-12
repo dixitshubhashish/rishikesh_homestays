@@ -376,15 +376,19 @@ async function tidyTabs(b, keepUrls = []) {
   try {
     const pages = (await (await fetch(`${base}/json/list`, { signal: AbortSignal.timeout(8000) })).json()).filter((t) => t.type === 'page');
     const keep = new Set(keepUrls.filter((u) => !isEmptyTab(u)));
-    // empty tabs (blank / new-tab pages) go too (owner, 2026-10-05), except as many as our own engine
-    // tabs that are still blank, and never the last tab of the browser (a window is never closed)
-    let blanksToKeep = keepUrls.filter(isEmptyTab).length;
+    // empty tabs go too; replace a browser's only blank tab with a useful page before closing it.
     let closed = 0;
     for (const t of pages) {
       const empty = isEmptyTab(t.url);
-      if (empty && blanksToKeep > 0) { blanksToKeep--; continue; }
+      let replacement = false;
+      if (empty && pages.length - closed <= 1) {
+        replacement = await fetch(`${base}/json/new?https://www.google.com/`, {
+          method: 'PUT', signal: AbortSignal.timeout(5000),
+        }).then((r) => r.ok).catch(() => false);
+        if (!replacement) continue;
+      }
       if (keep.has(t.url) || !(empty || isBookingTab(t.url) || isSearchTab(t.url))) continue;
-      if (pages.length - closed <= 1) break;
+      if (pages.length - closed <= 1 && !replacement) continue;
       await fetch(`${base}/json/close/${t.id}`, { signal: AbortSignal.timeout(8000) }).catch(() => {}); closed++;
     }
     return closed;
@@ -392,9 +396,9 @@ async function tidyTabs(b, keepUrls = []) {
 }
 
 // Chrome/Brave freeze tabs that sat in the background while no worker ran; a frozen tab never answers,
-// and Playwright then waits forever to attach. Before attaching: every frozen tab of ours (search,
-// booking-site, blank or new-tab page) is replaced by one fresh background tab (so the window and your
-// logged-in session stay); a frozen tab that is not ours is left alone and named in the log.
+// and Playwright then waits forever to attach. Before attaching, frozen tabs of ours are closed; the
+// worker opens its next tab directly at the requested search URL. Frozen tabs that are not ours are
+// left alone and named in the log.
 async function replaceFrozen(b) {
   if (!ATTACH[b]) return;
   const base = ATTACH[b].replace(/\/+$/, '');
@@ -421,24 +425,25 @@ async function replaceFrozen(b) {
     }
     const mine = frozen.filter((t) => ours(t.url)), theirs = frozen.filter((t) => !ours(t.url));
     if (mine.length) {
-      await send('Target.createTarget', { url: 'about:blank', background: true });
       for (const t of mine) await send('Target.closeTarget', { targetId: t.targetId });
-      log(`   ${b}: replaced ${mine.length} frozen tab(s) of ours with a fresh background tab`);
+      log(`   ${b}: closed ${mine.length} frozen tab(s) of ours`);
     }
     if (theirs.length) log(`   ${b}: ${theirs.length} of your tabs is frozen (${theirs.map((t) => t.url.slice(0, 50)).join(', ')}); click it once if attaching hangs`);
   } catch (e) { log(`   ${b}: could not check for frozen tabs (${String(e?.message || e).slice(0, 80)})`); }
   finally { try { ws?.close(); } catch {} }
 }
 
-// One search tab per browser and engine (owner, 2026-10-05): kept while the engine answers and reused
-// through the engine's own search box; closed when the engine is rested or blocked, and when the worker stops.
+// One search tab per browser and engine (owner, 2026-10-05): opened at its first search URL, kept while
+// the engine answers and reused through the engine's own search box; closed when rested or blocked.
 const tabKey = (b, e) => `${b}:${e}`;
 const ourTabs = (b) => Object.entries(tabs).filter(([k, t]) => k.startsWith(`${b}:`) && t && !t.isClosed());
-async function searchTab(b, e = 'google') {
+async function searchTab(b, e, initialUrl) {
   const key = tabKey(b, e);
   if (tabs[key] && !tabs[key].isClosed()) return tabs[key];
   const ctx = await context(b);
-  const t = ATTACH[b] ? await openBackground(b, 'about:blank') : await ctx.newPage();
+  const t = ATTACH[b] ? await openBackground(b, initialUrl) : await ctx.newPage();
+  if (!ATTACH[b]) await t.goto(initialUrl, { waitUntil: 'commit', timeout: 25000 });
+  t.__ota_initialSearchUrl = initialUrl;
   t.__ota_browser = b;
   t.on('popup', (p) => p.close().catch(() => {})); // candidates open in background tabs of our own; any popup is unwanted
   return (tabs[key] = t);
@@ -528,25 +533,29 @@ async function googlePicks(page) {
 // -> { state: 'ok'|'blocked'|'error', links }
 async function search(combo, query, stay) {
   const eng = ENGINES[combo.e];
-  const page = await searchTab(combo.b, combo.e);
+  const searchUrl = eng.search(combo.r, query);
+  const page = await searchTab(combo.b, combo.e, searchUrl);
   if (FRONT) await page.bringToFront().catch(() => {});
   try {
     // same session, same tab: on this engine's results page already, put the query into the page's own
     // search box and submit its form (what Enter does; no typing or focus, so it works in a background
     // tab); otherwise open the search address in this tab (what the address bar does)
+    const initialSearch = page.__ota_initialSearchUrl === searchUrl;
+    delete page.__ota_initialSearchUrl;
     const before = page.url();
     const here = (() => { try { return eng.host.test(new URL(before).hostname); } catch { return false; } })();
-    const submitted = here && await page.evaluate(([sel, q]) => {
+    if (initialSearch) await page.waitForLoadState('domcontentloaded', { timeout: 35000 });
+    const submitted = !initialSearch && here && await page.evaluate(([sel, q]) => {
       const box = document.querySelector(sel);
       if (!box || !box.form) return false;
       box.value = q;
       if (box.form.requestSubmit) box.form.requestSubmit(); else box.form.submit();
       return true;
     }, [eng.box, query]).catch(() => false);
-    if (!submitted) await page.goto(eng.search(combo.r, query), { waitUntil: 'domcontentloaded', timeout: 35000 });
+    if (!initialSearch && !submitted) await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 35000 });
     await dismissConsent(page);
-    await page.waitForURL((u) => u.href !== before && (eng.resultsUrl.test(u.href) || /sorry|captcha|turing|anomaly|challenge/i.test(u.href)), { timeout: 20000 }).catch(() => {});
-    if (page.url() === before) return { state: 'error', links: [], picks: [] };
+    if (!initialSearch) await page.waitForURL((u) => u.href !== before && (eng.resultsUrl.test(u.href) || /sorry|captcha|turing|anomaly|challenge/i.test(u.href)), { timeout: 20000 }).catch(() => {});
+    if (!initialSearch && page.url() === before) return { state: 'error', links: [], picks: [] };
     if (await eng.blocked(page) && !(await waitForPerson(page, eng.blocked, 'results-page'))) return { state: 'blocked', links: [], picks: [] };
     if (!eng.resultsUrl.test(page.url())) return { state: 'error', links: [], picks: [] };
     await page.locator(eng.results).first().waitFor({ timeout: 15000 }).catch(() => {});
@@ -621,7 +630,7 @@ async function openPick(b, host, id) {
 async function check(b, stay, cand) {
   let page, finalUrl = '';
   try {
-    const host = await searchTab(b, 'google'); // Google's click-only results live in its tab
+    const host = await searchTab(b, 'google', ENGINES.google.search('google', `${stay.name} ${stay.city}`)); // Google's click-only results live in its tab
     page = cand.pick ? await openPick(b, host, cand.pick) : await openBackground(b, cand.url);
     const resp = await page.waitForLoadState('domcontentloaded', { timeout: 25000 }).then(() => null);
     // Airbnb and Agoda fill in the real title late (lessons from the hand checks, 2026-10-05): wait for it
@@ -741,14 +750,10 @@ function queries(stay) {
   const q = (x) => (x.startsWith('site:') ? `${x} ${n} ${c}` : `${n} ${c} ${x}`);
   // quick pass: the name with its area, then Booking.com
   if (!DEEP) return [withArea, `site:booking.com ${n} ${c}`].slice(0, SEARCHES_PER_STAY);
-  // deep pass, by what found pages so far (log count, 2026-10-05: of ~700 matches 611 came from the first search, then
-  // Agoda 27, Airbnb 10, site:booking.com 9, Goibibo 7, the OR search 4, MakeMyTrip 3, EaseMyTrip 3; Trip.com,
-  // Expedia, Hotels.com and Cleartrip none): those that never paid off only fill a slot a hostel/OYO search leaves free
-  // Re-ordered 2026-10-06 from the retry re-check's own finds (80 in 90 min): MakeMyTrip 21, Agoda 18, Trip.com 13,
-  // Booking.com 8, OYO/Airbnb 5 each, Goibibo 3 (496 searches), Expedia 0 (189): the OR search moves up, Goibibo,
-  // Expedia and Cleartrip go last
-  return [withArea, `${n} ${c} makemytrip OR easemytrip OR trip.com`, q('site:agoda.com'), ...(hostel ? [q('site:hostelworld.com')] : []),
-    ...(oyo ? [q('site:oyorooms.com')] : []), q('airbnb'), `site:booking.com ${n} ${c}`, q('site:goibibo.com'),
+  // Booking.com is the preferred OTA (owner, 2026-10-10): search it before other OTA-specific queries.
+  // If its property page verifies, processStay returns immediately; other candidate OTAs remain fallbacks.
+  return [withArea, `site:booking.com ${n} ${c}`, `${n} ${c} makemytrip OR easemytrip OR trip.com`, q('site:agoda.com'),
+    ...(hostel ? [q('site:hostelworld.com')] : []), ...(oyo ? [q('site:oyorooms.com')] : []), q('airbnb'), q('site:goibibo.com'),
     q('site:expedia.co.in'), q('site:cleartrip.com')].slice(0, SEARCHES_PER_STAY);
 }
 // How much a link looks like this stay: core-name words in its address slug or Google result

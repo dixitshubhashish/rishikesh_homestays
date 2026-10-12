@@ -30,7 +30,7 @@ export function browserSpecs() {
       : MAC ? mac('Microsoft Edge', 'Microsoft Edge') : ['microsoft-edge', 'microsoft-edge-stable'],
   };
   // Incognito/private windows run without extensions (owner, 2026-10-07: saves their memory); the profile folder only holds the debugging session.
-  // The supervisor runs workers on Opera, Edge and Brave; Chrome is a spare (opened only with --all): a fourth browser costs about 1 GB.
+  // The supervisor runs workers on Opera, Edge, Brave and Chrome; Chrome is opened only with --all. On macOS, Firefox runs headless under Playwright.
   // Edge stays a normal window (extensions off): in an InPrivate window the workers never see the tabs they open (tested 2026-10-07).
   const privateFlag = { chrome: '--incognito', brave: '--incognito', opera: '--private', edge: '' };
   return [['chrome', 9222, false], ['opera', 9223, true], ['brave', 9224, true], ['edge', 9225, true]]
@@ -46,4 +46,3 @@ export function findExe(candidates) {
   }
   return '';
 }
-

@@ -25,25 +25,19 @@ import { pythonCommand, pythonEnv } from '../py.mjs';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
 const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '5-10', '--limit', '4000'];
+const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '4-8', '--limit', '4000'];
 const ROUNDS = 4;
-// Three browsers at a time: with four or five open the Mac ran out of memory (owner's laptop: 18 GB swap,
-// 4 GB disk free). Brave and Firefox are left out; the others take their shares when they finish.
-// owner, 2026-10-05: the never-searched list (all.tsv) first, split three ways, then the re-checks
+// Keep every available search browser on a disjoint shard. Playwright Firefox is a headless worker
+// on macOS; its managed runtime is not a debugging-port browser.
+const SHARDS = process.platform === 'darwin' ? 5 : 4;
 const WORKERS = [
-  // Opera is the steadiest browser (1,028 stays, no blocked spells): two sessions share it, each closing only its own tabs
-  // 2026-10-07, Windows laptop (15.8 GB, 0.4 GB free with five workers): every engine rested or blocked and tabs did not answer, so three
-  // workers (Opera, Edge, Brave; Chrome is attached but idle) share the deep re-check in thirds. The 159 review rows come first on Opera:
-  // they re-open pages already stored, so no search engine is asked.
-  // 2026-10-08 (Mac, owner: "finish unfound asap, more agents and browsers"): five workers share the deep re-check in fifths:
-  // Opera, Brave, Edge (two sessions: it is the least blocked) and the spare Chrome. The review rows were settled first on Opera.
-  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['deep', '1/5', '--no-tidy']] },
-  { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['deep', '2/5', '--no-tidy']] },
-  // Edge is the least blocked browser (owner, 2026-10-06, from the logs: Bing never challenged it, 2 stalls in 707 stays,
-  // against Opera's 27 in 1,191). Two sessions share it, so each closes only its own tabs.
-  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '3/5', '--no-tidy']] },
-  { name: 'edge2', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', '4/5', '--no-tidy']] },
-  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['deep', '5/5', '--no-tidy']] },
+  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['review', `1/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['review', `2/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', `3/${SHARDS}`, '--no-tidy'], ['review', `3/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['review', `4/${SHARDS}`, '--review', '--no-tidy'], ['deep', `4/${SHARDS}`, '--no-tidy']] },
+  ...(process.platform === 'darwin'
+    ? [{ name: 'firefox', how: ['--browsers', 'firefox'], plan: [['deep', `5/${SHARDS}`, '--no-tidy'], ['review', `5/${SHARDS}`, '--review', '--no-tidy']] }]
+    : []),
 ].map((w) => ({ ...w, step: 0, rounds: 0, pid: 0, notBefore: 0, diskWait: 0, crashes: [], finished: false, logOffset: 0 }));
 
 
@@ -164,10 +158,24 @@ async function sweepLeftovers() {
     const closedIds = new Set();
     let open = pages.length;
     for (const t of pages) {
-      // a booking page, or a tab doing nothing (blank, a browser start page, google.com's home page) that sat unchanged for two sweeps
+      // a booking page, or a tab doing nothing (blank, a browser start page, google.com's home page)
       // (owner, 2026-10-07: "close tabs that are not in use"): a worker's own tab is always on a results page or on its way to one
       let host = '';
       try { host = new URL(t.url).hostname; } catch { /* about:blank and the like */ }
+      if (t.url === 'about:blank' && open === 1) {
+        const replacement = await fetch(`${base}/json/new?https://www.google.com/`, {
+          method: 'PUT', signal: AbortSignal.timeout(5000),
+        }).then((r) => r.ok).catch(() => false);
+        if (replacement) open++;
+        else say(`could not replace the last blank tab on ${base}`);
+      }
+      if (t.url === 'about:blank') {
+        if (open > 1) {
+          await fetch(`${base}/json/close/${t.id}`, { signal: AbortSignal.timeout(8000) }).catch(() => {});
+          closed++; open--; closedIds.add(t.id);
+        } else next.set(t.id, t.url);
+        continue;
+      }
       const idleTab = /^(?:about:blank|(?:chrome|edge|opera|brave):\/\/(?:newtab|new-tab-page|startpage|welcome|easy-setup)\/?)$/.test(t.url)
         || (/^www\.google\.[a-z.]+$/.test(host) && new URL(t.url).pathname === '/' && !new URL(t.url).search);
       if (!BOOKING_HOST.test(host) && !idleTab) continue;
