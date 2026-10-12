@@ -1,11 +1,10 @@
 // Keeps the booking-link search running across browsers without anyone watching (owner, 2026-10-05:
 // "keep doing without asking me, speed up and down based on rate limits").
 //
-// One worker per browser (google_ota_search.mjs): Opera takes the never-searched stays (quick pass,
-// all.tsv) and then turns to the deep re-check; Chrome and Edge re-check the
-// 'retry' rows of unfound.tsv (deep pass: the name on its own, then one booking site at a time, each
-// on up to three engines). Each worker paces itself on challenges; this supervisor:
-//   - restarts a worker that crashed (after a minute) or whose engines all gave up (after 30 min),
+// One worker per browser (google_ota_search.mjs): workers split deep and review work across stable
+// key shards. Edge handles two shards because it has been the most productive browser. Each worker
+// paces itself on challenges; this supervisor:
+//   - restarts a worker that crashed (after a minute) or whose engines all gave up (after 3 min),
 //   - restarts a deep worker that finished its list (new 'retry' rows keep arriving), up to ROUNDS times,
 //   - stops a worker whose log has not moved for 15 min, and restarts it,
 //   - pauses every worker when the disk is almost full (swap lives on it),
@@ -29,11 +28,16 @@ const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '4-8', '--limit',
 const ROUNDS = 4;
 // Keep every available search browser on a disjoint shard. Playwright Firefox is a headless worker
 // on macOS; its managed runtime is not a debugging-port browser.
-const SHARDS = process.platform === 'darwin' ? 5 : 4;
+const SHARDS = process.platform === 'darwin' ? 6 : 4;
+const edgePlan = [
+  ['deep', `3/${SHARDS}`, '--no-tidy'],
+  ['review', `3/${SHARDS}`, '--review', '--no-tidy'],
+  ...(process.platform === 'darwin' ? [['deep', `6/${SHARDS}`, '--no-tidy'], ['review', `6/${SHARDS}`, '--review', '--no-tidy']] : []),
+];
 const WORKERS = [
   { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['review', `1/${SHARDS}`, '--review', '--no-tidy']] },
   { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['review', `2/${SHARDS}`, '--review', '--no-tidy']] },
-  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: [['deep', `3/${SHARDS}`, '--no-tidy'], ['review', `3/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: edgePlan },
   { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['review', `4/${SHARDS}`, '--review', '--no-tidy'], ['deep', `4/${SHARDS}`, '--no-tidy']] },
   ...(process.platform === 'darwin'
     ? [{ name: 'firefox', how: ['--browsers', 'firefox'], plan: [['deep', `5/${SHARDS}`, '--no-tidy'], ['review', `5/${SHARDS}`, '--review', '--no-tidy']] }]
@@ -248,7 +252,7 @@ for (;;) {
       const worked = Object.values(t).reduce((a, b) => a + b, 0) - (t.unresolved || 0) - (t.skipped || 0);
       say(`${w.name} done: ${done[1]}`);
       w.pid = 0;
-      if (t.unresolved && t.unresolved >= worked) { w.notBefore = now + 10 * 60e3; say(`${w.name}: its engines were all resting or blocked; again in 10 min`); continue; }
+      if (t.unresolved && t.unresolved >= worked) { w.notBefore = now + 3 * 60e3; say(`${w.name}: its engines were all resting or blocked; again in 3 min`); continue; }
       const [mode] = w.plan[w.step];
       if (mode === 'quick' || worked === 0 || ++w.rounds >= ROUNDS) {
         if (w.step + 1 < w.plan.length) { w.step++; w.rounds = 0; say(`${w.name}: on to ${w.plan[w.step].join(' ')}`); }

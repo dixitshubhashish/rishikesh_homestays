@@ -53,7 +53,8 @@ same village and PIN on the page: the same place.
 ## 3. How the search runs
 
 - **Workers**: `scripts/stays/search_supervisor.mjs` runs deep retry searches on disjoint shards across Edge, Chrome,
-  Opera, Brave, and (on macOS) headless Playwright Firefox. Idle browsers process separate, non-overlapping review shards
+  Opera, Brave, and (on macOS) headless Playwright Firefox. On macOS, Edge gets two of six shards because it has been the
+  most productive browser; the others get one each. This gives Edge more of the queue, not a faster request pace. Idle browsers process separate, non-overlapping review shards
   while searches continue; productive workers restart or advance through their plan, and concurrency is capped as disk
   space falls. Opera was previously the steadiest browser; the supervisor uses available search results to change engines
   when one is blocked or unproductive. Logs:
@@ -73,7 +74,8 @@ same village and PIN on the page: the same place.
   stay only after two unreadable pages. MakeMyTrip and Goibibo often refuse automated browsers: never forced.
 - **Pace and manners**: 4–8 s between searches initially; after 15 clean result pages, the worker adapts down to half that
   gap. It slows after a challenge. A captcha is never solved or bypassed, and a block is never worked around (no proxies, VPNs
-  or Tor); the affected engine rests, or waits for a person when explicitly configured. One tab per engine, opened directly
+  or Tor); the affected engine rests, or waits for a person when explicitly configured. If all engines for a worker are resting
+  or blocked, it retries after 3 minutes. One tab per engine, opened directly
   at its first search URL and reused through its search box; booking pages are closed as soon as they are read. Blank tabs
   are closed immediately (replacing a browser's sole blank tab with a Google home page first); search pages are kept while in
   use.
