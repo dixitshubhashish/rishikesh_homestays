@@ -47,6 +47,11 @@ $PY $S/import_new_stays.py --dry
 
 $PY $S/merge_ota.py "$W/dir-ok.tsv"
 tr -d '\r' < "$W/places-ok.tsv" >> $S/.cache/places/ota-links.tsv
+# one booking link <-> one property (owner, 2026-10-12): postcheck_matches.py only guards the rows this merge
+# adds; dedupe_links.py re-audits the whole of found.tsv, ota-links.tsv and the places ota-links.tsv for a page
+# already shared by two different stays (the "one page, five stays" failure mode), demoting conflicting rows
+# (status -> doubtful, never deleted) and moving unresolved found.tsv rows to review.tsv.
+$PY $S/dedupe_links.py
 # --dry-run still writes the local files import_google_stays.py reads (new-with-link.json) and stops before BigQuery
 if [ "$BQ" = 1 ]; then node $S/push_places.mjs; else node $S/push_places.mjs --dry-run; fi
 # new stays from booking pages (registry + ota-links.tsv); before the Google import so its slugs never clash with theirs

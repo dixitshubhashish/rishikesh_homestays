@@ -608,7 +608,7 @@ devoy-1	verified	Agoda	https://www.agoda.com/hotel-devoy-inn/hotel/rishikesh-in.
 devoy-249192	verified	Agoda	https://www.agoda.com/hotel-devoy-inn/hotel/rishikesh-in.html	page title as shown: "Best Price on Hotel Devoy Inn in Rishikesh + Reviews!"; name fits	2026-10-06
 devoy-by-namastexplorer-tapovan	verified	EaseMyTrip	https://www.easemytrip.com/hotels/hotel-devoy-inn-by-namastexplorer-tapovan-1044875/	browser-confirmed: page title "Hotel Devoy Inn By Namastexplorer Tapovan Rishikesh"	2026-10-03
 devoy-rishikesh-inn	verified	Trip.com	https://www.trip.com/hotels/rishikesh-hotel-detail-3720676/hotel-devoy-inn/	page title as shown: "Hotel Devoy Inn (Rishikesh) - 2026 Prices, Reviews & Deals | Trip.com"; name fits	2026-10-06
-dewa-retreat-a-himalayan-boutique-hotel	verified	Booking.com	https://www.booking.com/hotel/in/dewa-retreat.html	Exact title match, Tapovan	2026-10-02
+dewa-retreat-a-himalayan-boutique-hotel	doubtful	Booking.com	https://www.booking.com/hotel/in/dewa-retreat.html	duplicate page: kept for comfort-dewa-retreat (Comfort Hotel Dewa Retreat); demoted by dedupe_links.py (Exact title match, Tapovan)	2026-10-02
 dhakad-gold-tapovan	verified	Goibibo	https://www.goibibo.com/hotels/dhakad-gold-hotel-in-rishikesh-1900437202307200997/	page title as shown: "Sitara Premium Dhakad Gold near Lakshman jhula Hotel Rishikesh - Reviews, Photos & Offer"; name fits	2026-10-06
 dhara-retreat	verified	Booking.com	https://www.booking.com/hotel/in/dhara-retreat.html	page title as shown: "Dhara Retreat, Rishīkesh (updated prices 2027)"; name fits, map pin 0 m from this stay	2026-10-06
 dharm-yatri-niwas-rishikesh	verified	MakeMyTrip	https://www.makemytrip.com/hotels/dharm_yatri_niwas-details-rishikesh.html	page title as shown: "Dharm Yatri Niwas 𝗕𝗢𝗢𝗞 Rishikesh Aashram"	2026-10-04
@@ -1140,7 +1140,7 @@ hostel-unplan	verified	MakeMyTrip	https://www.makemytrip.com/hotels/unplan_hoste
 hostel-unplan-by-tatsat	verified	Goibibo	https://www.goibibo.com/hotels/unplan-by-tatsat-hotel-in-rishikesh-5639415825532255314/	page title as shown: "Unplan by Tatsat Hostel Rishikesh - Reviews, Photos & Offer"	2026-10-04
 hostel-urban-loft	verified	Booking.com	https://www.booking.com/hotel/in/urban-loft-hostel.html	Urban Loft Hostel, Tapovan	2026-10-03
 hostel-vedartha-trails	verified	Agoda	https://www.agoda.com/vedartha-trails/hotel/rishikesh-in.html	page title as shown: "Best Price on Vedartha Trails in Rishikesh + Reviews!"	2026-10-04
-hostel-vimal-ganga-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/travoha-by-yatram-rishikesh.html	browser-confirmed: page title "Travoha By Yatram"	2026-10-03
+hostel-vimal-ganga-rishikesh	doubtful	Booking.com	https://www.booking.com/hotel/in/travoha-by-yatram-rishikesh.html	duplicate page: kept for hostel-travoha-by-yatram (Travoha by Yatram Hostel); demoted by dedupe_links.py (browser-confirmed: page title "Travoha By Yatram")	2026-10-03
 hostel-yatram	verified	Booking.com	https://www.booking.com/hotel/in/yatram-hostel.html	slug guess, browser-confirmed: "Yatram Hostel"	2026-10-03
 hostel-zostel-rishikesh-laxman-jhula	verified	Booking.com	https://www.booking.com/hotel/in/ljr.html	exact title	2026-10-03
 hotal-badri-palace	verified	Booking.com	https://www.booking.com/hotel/in/badri-palace-rishikesh6.html	page shows "Hotel Badri Palace", address "Gali Number 1 Hotel Badri Palace, 249202 Rishikesh, India"; same name words [hotal,badri,palace], map pin 4 m from this stay	2026-10-06
@@ -1435,7 +1435,7 @@ hotel-rishikesh-87	verified	Trivago	https://www.trivago.in/en-IN/oar/hotel-the-c
 hotel-rishikesh-94	verified	Goibibo	https://www.goibibo.com/hotels/vansara-hotels-and-resorts-hotel-in-rishikesh-2864971662208753343/	page title as shown: "VANSARA HOTELS AND RESORTS Rishikesh - Reviews, Photos & Offer"; name matches in every word [vansara] and the page names its area (Tapovan)	2026-10-06
 hotel-rishikesh-95	verified	Booking.com	https://www.booking.com/hotel/in/aam-bagh-guest-house.html	slug guess, browser-confirmed: "Aam Bagh Guest House"	2026-10-03
 hotel-rishikesh-99	verified	MakeMyTrip	https://www.makemytrip.com/hotels/hotel_narayan_inn_units_of_jethuri_hotels-details-rishikesh.html	page title as shown: "Hotel Narayan Inn (units of Jethuri Hotels) 𝗕𝗢𝗢𝗞 Rishikesh Hotel"	2026-10-04
-hotel-rishikesh-inn	verified	MakeMyTrip	https://www.makemytrip.com/hotels/tapovan_inn_by_riversun_hotels-details-rishikesh.html	page title as shown: "Tapovan Inn By Riversun Hotels 𝗕𝗢𝗢𝗞 Rishikesh Homestay"; name matches in every word [rishikesh] and the page names its area (Tapovan)	2026-10-06
+hotel-rishikesh-inn	doubtful	MakeMyTrip	https://www.makemytrip.com/hotels/tapovan_inn_by_riversun_hotels-details-rishikesh.html	duplicate page: kept for tapovan-inn (Tapovan Inn); demoted by dedupe_links.py (page title as shown: "Tapovan Inn By Riversun Hotels 𝗕𝗢𝗢𝗞 Rishikesh Homestay"; name matches in every word [rishikesh] and the page names its area (Tapovan))	2026-10-06
 hotel-rk-inn	verified	OYO	https://www.oyorooms.com/233394/	Google Maps place, browser-confirmed match	2026-10-08
 hotel-royal-inn	verified	MakeMyTrip	https://www.makemytrip.com/hotels/hotel_royal_inn_haridwar-details-haridwar.html	Google Maps place, browser-confirmed match	2026-10-08
 hotel-royal-plaza	verified	MakeMyTrip	https://www.makemytrip.com/hotels/hotel_royal_plaza-details-rishikesh.html	Google Maps place, browser-confirmed match	2026-10-08
@@ -1837,7 +1837,7 @@ luxury-3-bedroom-s-apartment-nbu8e	verified	Hotels.com	https://www.hotels.com/Ho
 luxury-3-bhk-flat-in-near-highway-nh58	verified	Booking.com	https://www.booking.com/hotel/in/luxury-3-bhk-flat-in-rishikesh-near-highway-nh58.html	page title as shown: "Devbhoomi Residency - In lapse of Himalayas - On NH58, Rishīkesh (updated prices 2027)"	2026-10-04
 luxury-4-bedroom-s-apartment	verified	Hotels.com	https://www.hotels.com/Hotel.h114483381.Hotel-Information?mdpcid=HCOM.META.HPA.WEB-ORGANIC.VR	Google Maps place: owner's own booking page	2026-10-08
 luxury-4-bedroom-s-apartment-5dqj8	verified	Expedia	https://www.expedia.com/Hotel.h114483381.Hotel-Information?mdpcid=META.HPA.WEB-ORGANIC.VR	Google Maps place: owner's own booking page	2026-10-08
-luxury-aloha-apartments-1	verified	Booking.com	https://www.booking.com/hotel/in/aloha-by-ganges.html	browser-confirmed: page title "Aloha - Luxury Apartments by blissful Ganges"	2026-10-03
+luxury-aloha-apartments-1	doubtful	Booking.com	https://www.booking.com/hotel/in/aloha-by-ganges.html	duplicate page: kept for aloha-apartments-by-blissful-ganges (Aloha – Luxury Apartments by Blissful Ganges); demoted by dedupe_links.py (browser-confirmed: page title "Aloha - Luxury Apartments by blissful Ganges")	2026-10-03
 luxury-aloha-apartments-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/luxury-aloha-apartments-rishikesh.html	browser-confirmed: page title "Luxury Aloha Apartments"	2026-10-03
 luxury-aloha-majestic-apartments	verified	Trivago	https://www.trivago.in/en-IN/oar/entire-house-apartment-luxury-aloha-majestic-apartments-rishikesh?search=100-41372376	page title as shown: "Luxury Aloha Majestic Apartments, Rishikesh, India - www.trivago.in"; name fits	2026-10-06
 luxury-beatles-resort	verified	MakeMyTrip	https://www.makemytrip.com/hotels/rishikesh_1968_beatles_inspired-details-rishikesh.html	Google Maps place, browser-confirmed match	2026-10-08
@@ -1872,7 +1872,7 @@ madhuban-rishikesh	verified	Goibibo	https://www.goibibo.com/hotels/madhuban-inn-
 madhuban-stays	verified	MakeMyTrip	https://www.makemytrip.com/hotels/madhuban_stays-details-rishikesh.html	page title as shown: "Madhuban Stays 𝗕𝗢𝗢𝗞 Rishikesh Apartment"; name fits	2026-10-06
 madhvm-by-the-ganges	verified	Booking.com	https://www.booking.com/hotel/in/madhvm-by-the-ganges-rishikesh.html	Google Maps place, browser-confirmed match	2026-10-08
 magic-stone-resort	verified	Booking.com	https://www.booking.com/hotel/in/magic-stone-resort.html	Google Maps place, browser-confirmed match	2026-10-08
-mahadev-1	verified	Booking.com	https://www.booking.com/hotel/in/mahadev-rishikesh.html	browser-confirmed: page title "Hotel Mahadev Rishikesh"	2026-10-03
+mahadev-1	doubtful	Booking.com	https://www.booking.com/hotel/in/mahadev-rishikesh.html	duplicate page: kept for mahadev-rishikesh (Hotel Mahadev); demoted by dedupe_links.py (browser-confirmed: page title "Hotel Mahadev Rishikesh")	2026-10-03
 mahadev-homestay-one-bedroom-apartment	verified	MakeMyTrip	https://www.makemytrip.com/hotels/mahadev_homestay_tapovan-details-rishikesh.html	Google Maps place, browser-confirmed match	2026-10-08
 mahadev-palace	verified	MakeMyTrip	https://www.makemytrip.com/hotels/hotel_mahadev_palace-details-haridwar.html	page title as shown: "Hotel Mahadev Palace 𝗕𝗢𝗢𝗞 Haridwar Hotel"	2026-10-04
 mahadev-rishikesh	verified	Booking.com	https://www.booking.com/hotel/in/mahadev-rishikesh.html	Hotel Mahadev Rishikesh	2026-10-03
@@ -2565,7 +2565,7 @@ resort-taj-spa-uttarakhand-rishikesh	verified	Booking.com	https://www.booking.co
 resort-the-ayali-riverside	verified	EaseMyTrip	https://www.easemytrip.com/hotels/the-ayali-riverside-resort-1895860/	page title as shown: "Ayali Riverside Resort By Alivaa- Rishikesh Hotel: Reviews, Price, Photos, Address"	2026-10-04
 resort-the-family-and-friends	verified	Booking.com	https://www.booking.com/hotel/in/the-family-amp-friends-resort-rishikesh.html	page title as shown: "The Family and Friends Resort Rishikesh, Rishīkesh (updated prices 2027)"; name fits, map pin 0 m from this stay	2026-10-06
 resort-the-fresco-haridwar-uttarakhand	verified	Booking.com	https://www.booking.com/hotel/in/the-fresco-resort-haridwar-uttarakhand.html	browser-confirmed: page title "The Fresco Resort - Haridwar"	2026-10-03
-resort-the-grand-shiva-and-spa	verified	Booking.com	https://www.booking.com/hotel/in/the-grand-shiva-resort-and-spa.html	Shivpuri, exact name	2026-10-02
+resort-the-grand-shiva-and-spa	doubtful	Booking.com	https://www.booking.com/hotel/in/the-grand-shiva-resort-and-spa.html	duplicate page: kept for resort-cygnett-grand-shiva-shivpuri (Cygnett Resort Grand Shiva); demoted by dedupe_links.py (Shivpuri, exact name)	2026-10-02
 resort-the-hill-mount-shivpuri	verified	Booking.com	https://www.booking.com/hotel/in/the-hill-mount.html	Exact name The Hill Mount Resort Shivpuri	2026-10-02
 resort-the-himayas	verified	MakeMyTrip	https://www.makemytrip.com/hotels/the_himaya_s-details-rishikesh.html	page title or heading as shown: "The Himaya's 𝗕𝗢𝗢𝗞 Rishikesh Resort"	2026-10-06
 resort-the-jungle-mist	verified	Booking.com	https://www.booking.com/hotel/in/the-jungle-mist-resort.html	page title as shown: "The Jungle Mist Resorts & Retreat, Rishīkesh (updated prices 2027)"	2026-10-04
