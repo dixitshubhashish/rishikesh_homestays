@@ -2764,6 +2764,41 @@ a.homestay-photo:hover {
   gap: 14px;}
 .ota-gate-submit {
   width: 100%;}
+/* Post-submit choice screen (stay-page.js showChoices()): a verified
+   booking link per OTA when a stay has more than one, shown in the same
+   modal after the lead form is hidden. */
+.ota-gate-choices p {
+  margin: 0 0 12px;}
+.ota-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;}
+.ota-choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--sky);
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;}
+.ota-choice-btn:hover,
+.ota-choice-btn:focus-visible {
+  background: var(--panel);
+  border-color: var(--river);}
+.ota-choice-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex: 0 0 auto;}
+.ota-choice-name {
+  flex: 1 1 auto;}
+.ota-gate-choices-done {
+  width: 100%;}
 
 /* Shared busy-state spinner for every "-ing" button (see button-loading.js) —
    one consistent rotating indicator across the whole site instead of plain

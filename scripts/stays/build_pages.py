@@ -535,9 +535,11 @@ def write_homestays_picks(stays):
 
 
 def load_ota_links():
-    """ota-links.tsv: one booking-site page per stay, found by web search and
-    checked on name + area. Only 'verified' rows are used; doubtful/none are
-    kept for the record so they aren't searched again."""
+    """ota-links.tsv: every verified booking-site page per stay (one row per OTA:
+    Booking.com, Agoda, MakeMyTrip... found by web search and checked on name +
+    area). A stay can have several (one per platform); doubtful/none rows are
+    kept for the record so they aren't searched again but never used here.
+    Returns {stay_id: [{'n': platform, 'u': url}, ...]}, in file order."""
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ota-links.tsv')
     links = {}
     if os.path.exists(path):
@@ -547,7 +549,7 @@ def load_ota_links():
                 url = cols[3]
                 if cols[2] == 'Booking.com':
                     url = booking_affiliate(url)
-                links[cols[0]] = {'n': cols[2], 'u': url}
+                links.setdefault(cols[0], []).append({'n': cols[2], 'u': url})
     return links
 
 

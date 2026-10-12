@@ -1,10 +1,14 @@
 // Single-stay info page (/hotels/stay?s=<id>), shared by every listing on the
 // best-*-in-${CITY} pages. Renders the stay from stays-index-data.js, then
 // "Book this stay" opens a lead popup (name, email, phone) with two choices:
-//   - Submit: the lead is emailed to us via /api/contact (awaited), then the
-//     guest goes to the stay's one verified booking page (Booking.com, MMT,
-//     Agoda or Airbnb, from scripts/stays/ota-links.tsv). Stays without a
-//     verified page go to /thanks.
+//   - Submit: the lead is emailed to us via /api/contact (awaited). A stay can
+//     have several verified booking pages (one per OTA: Booking.com, Agoda,
+//     MakeMyTrip, Airbnb... from scripts/stays/ota-links.tsv, d.o is an array).
+//     With exactly one link, the guest goes straight there (unchanged
+//     behaviour: no point showing a one-button choice screen). With more than
+//     one, a choice screen (logo + name per OTA, from ota-logos.js) replaces
+//     the old single redirect so the guest picks where to book; lead capture
+//     still happens first either way. No verified link: goes to /thanks.
 //   - Chat on WhatsApp: opens a chat with the stay prefilled.
 // City from ?c= (Rishikesh by default, so old /hotels/stay?s=<slug> links keep
 // working). Each city's data lives in its own module, loaded on demand.
@@ -22,6 +26,7 @@ import { setButtonLoading, clearButtonLoading } from './button-loading.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
 import { postEnquiry, SOURCES, stayRedirectSource } from './enquiry.js';
 import { CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE } from './captcha.js';
+import { otaLogo } from './ota-logos.js';
 
 const WHATSAPP_PHONE = '918050091290';
 // Same icon as the site's other "WhatsApp" buttons (index.html etc.).
@@ -144,6 +149,11 @@ const MODAL_HTML = `
         <button type="button" class="btn btn-whatsapp sp-gate-wa" data-sp-wa>${WA_ICON} Chat on WhatsApp</button>
       </div>
     </form>
+    <div class="ota-gate-choices" data-sp-choices hidden>
+      <p>Thanks! Pick where you'd like to book <span data-sp-choices-name></span>:</p>
+      <div class="ota-choice-list" data-sp-choice-list></div>
+      <button type="button" class="btn btn-secondary ota-gate-choices-done" data-sp-choices-done>Done</button>
+    </div>
   </div>`;
 
 // "Similar stays": our own stays mixed in after the 2nd and 4th rows; next to
@@ -176,7 +186,7 @@ function factRows(d) {
 function render(root, d, isOwn) {
   const cat = categoryFor(d);
   const similar = STAYS_INDEX.filter((x) => x.id !== d.id && x.a === d.a && x.ks.some((k) => d.ks.includes(k))).slice(0, 6);
-  const ota = d.o;
+  const links = d.o || [];
   document.title = `${d.n} | ${d.a}, ${CITY_NAME} | Rishikesh Homestays`;
   root.innerHTML = `
     <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span>
@@ -191,10 +201,11 @@ function render(root, d, isOwn) {
       </section>
       <section class="sp-card sp-book" aria-labelledby="sp-book-h">
         <h2 id="sp-book-h">Book this stay</h2>
-        <p>${ota ? `Leave your details and we'll take you straight to this stay's page on <b>${esc(ota.n)}</b>. We can also help with dates, groups and long-stay discounts.`
+        <p>${links.length > 1 ? `Leave your details and we'll show you every verified booking site for this stay (${links.map((l) => esc(l.n)).join(', ')}) so you can pick. We can also help with dates, groups and long-stay discounts.`
+          : links.length === 1 ? `Leave your details and we'll take you straight to this stay's page on <b>${esc(links[0].n)}</b>. We can also help with dates, groups and long-stay discounts.`
           : `Leave your details and we'll check availability and prices for you, or chat with us on WhatsApp.`}</p>
         <div class="sp-gate-actions">
-          <button type="button" class="btn btn-primary" data-sp-open>${ota ? `Book on ${esc(ota.n)}` : 'Check availability'}</button>
+          <button type="button" class="btn btn-primary" data-sp-open>${links.length > 1 ? 'Book this stay' : links.length === 1 ? `Book on ${esc(links[0].n)}` : 'Check availability'}</button>
           <button type="button" class="btn btn-whatsapp" data-sp-wa-direct>${WA_ICON} Chat on WhatsApp</button>
         </div>
       </section>
@@ -260,17 +271,21 @@ function setupGate(root, d) {
     guestsIn.value = String(Math.min(40, Math.max(1, guests() + Number(b.dataset.step))));
   }));
   const submitBtn = $m('[data-sp-submit]');
-  const ota = d.o;
+  const links = d.o || [];
   $m('[data-sp-name]').textContent = d.n;
-  $m('[data-sp-lead]').textContent = ota
-    ? `Leave your details and we'll take you straight to ${d.n} on ${ota.n}.`
-    : `Leave your details and we'll check availability and the best price for ${d.n}.`;
-  submitBtn.textContent = ota ? `Submit & continue to ${ota.n}` : 'Send enquiry';
+  $m('[data-sp-lead]').textContent = links.length > 1
+    ? `Leave your details and we'll show you every verified booking site for ${d.n}, so you can pick.`
+    : links.length === 1
+      ? `Leave your details and we'll take you straight to ${d.n} on ${links[0].n}.`
+      : `Leave your details and we'll check availability and the best price for ${d.n}.`;
+  submitBtn.textContent = links.length > 1 ? 'Submit & choose where to book' : links.length === 1 ? `Submit & continue to ${links[0].n}` : 'Send enquiry';
 
   let countryReady = false;
   const err = (key, input, msg) => { const el = $m(`[data-err-${key}]`); el.textContent = msg || ''; el.hidden = !msg; input.classList.toggle('whatsapp-input-invalid', Boolean(msg)); };
 
   function open() {
+    form.hidden = false;
+    $m('[data-sp-choices]').hidden = true;
     $m('[data-sp-guests-q]').textContent = GUEST_QUESTIONS[Math.floor(Math.random() * GUEST_QUESTIONS.length)];
     ensureLibphonenumber().then(() => { if (!countryReady) { countryReady = true; setupCountryPhoneField(country); } });
     backdrop.hidden = false; modal.hidden = false;
@@ -280,6 +295,19 @@ function setupGate(root, d) {
   function close() {
     backdrop.classList.remove('is-open'); modal.classList.remove('is-open');
     setTimeout(() => { backdrop.hidden = true; modal.hidden = true; }, 350);
+  }
+  // More than one verified OTA: after the lead is in, show one button per
+  // platform (logo + name, new tab) instead of auto-redirecting to just one.
+  function showChoices() {
+    form.hidden = true;
+    $m('[data-sp-choices-name]').textContent = d.n;
+    $m('[data-sp-choice-list]').innerHTML = links.map((l) => {
+      const logo = otaLogo(l.n);
+      return `<a class="ota-choice-btn" href="${esc(l.u)}" target="_blank" rel="noopener noreferrer">` +
+        (logo ? `<img class="ota-choice-logo" src="${esc(logo)}" alt="" loading="lazy">` : '') +
+        `<span class="ota-choice-name">${esc(l.n)}</span></a>`;
+    }).join('');
+    $m('[data-sp-choices]').hidden = false;
   }
   // Custom per-listing message: the stay's name and area for the guest, plus
   // a reference line for us (stay id + page, and distance from our nearest
@@ -305,6 +333,7 @@ function setupGate(root, d) {
   root.querySelector('[data-sp-open]').addEventListener('click', open);
   root.querySelectorAll('[data-sp-wa-direct]').forEach((b) => b.addEventListener('click', whatsapp));
   $m('[data-sp-wa]').addEventListener('click', whatsapp);
+  $m('[data-sp-choices-done]').addEventListener('click', close);
   backdrop.addEventListener('click', close);
   $m('.ota-gate-close').addEventListener('click', close);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) close(); });
@@ -327,18 +356,21 @@ function setupGate(root, d) {
           name, email: email || undefined, phone: phone.normalized,
           preferred_stay: d.id, area: d.a, stay_name: d.n, guests_total: guests(),
           details: `Interested in ${d.n} (${d.ks.join(', ')}, ${d.a}).\nTotal guests (kids included): ${guests()}\n` +
-            (ota ? `Sent on to ${ota.n}: ${ota.u}` : 'No verified booking page: please follow up with availability and price.') +
+            (links.length ? `Sent on to ${links.map((l) => l.n).join(', ')}: ${links.map((l) => l.u).join(' | ')}` : 'No verified booking page: please follow up with availability and price.') +
             `\nStay page: ${location.origin}/hotels/stay?s=${d.id}${CQ}`,
-          source: ota ? stayRedirectSource(ota.n) : SOURCES.stayEnquiry
+          source: links.length ? stayRedirectSource(links.map((l) => l.n).join(' ')) : SOURCES.stayEnquiry
       }, { button: submitBtn });
       if (result.code === CAPTCHA_FAILED_CODE) {
         err('phone', phoneIn, CAPTCHA_FAILED_MESSAGE);
         return;
       }
       if (!result.ok) throw new Error(result.message || 'Request failed');
-      // Same-tab redirect (a window.open after an await is often blocked):
-      // the stay's verified booking page, else our thank-you page.
-      location.assign(ota ? ota.u : '/thanks');
+      // Exactly one verified link: same-tab redirect there (a window.open
+      // after an await is often blocked), as before. More than one: show the
+      // choice screen so the guest picks the OTA (new tab per button). None:
+      // our thank-you page.
+      if (links.length > 1) { showChoices(); return; }
+      location.assign(links.length === 1 ? links[0].u : '/thanks');
       return;
     } catch (error) {
       console.error('Stay page: failed to record enquiry', error);
