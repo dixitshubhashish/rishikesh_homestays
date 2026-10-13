@@ -72,8 +72,10 @@ same village and PIN on the page: the same place.
   (DuckDuckGo finds the most, then Bing, Google, Brave Search).
 - **Pages**: late titles are waited for; closed listings do not use up link slots (at most 3 per stay); a site is skipped for a
   stay only after two unreadable pages. MakeMyTrip and Goibibo often refuse automated browsers: never forced.
-- **Pace and manners**: 4–8 s between searches initially; after 15 clean result pages, the worker adapts down to half that
-  gap. It slows after a challenge. A captcha is never solved or bypassed, and a block is never worked around (no proxies, VPNs
+- **Pace and manners**: base gap 2–4 s between searches (tightened from 4–8 s on 2026-10-13, owner: "do it little faster
+  than human now", after 10+ hours showed near-zero blocking); after 15 clean result pages, the worker adapts down to as
+  low as 0.3x that (loosened from a 0.5x floor the same day). It slows after a challenge. A captcha is never solved or
+  bypassed, and a block is never worked around (no proxies, VPNs
   or Tor); the affected engine rests, or waits for a person when explicitly configured. If all engines for a worker are resting
   or blocked, it retries after 3 minutes. One tab per engine, opened directly
   at its first search URL and reused through its search box; booking pages are closed as soon as they are read. Blank tabs
@@ -81,7 +83,8 @@ same village and PIN on the page: the same place.
   use.
 - **Candidate concurrency (owner, 2026-10-13):** a stay's booking-site candidate pages (Booking.com, Agoda,
   MakeMyTrip, …) are opened and read up to `--concurrency` at a time per worker (`CONCURRENCY` in
-  `google_ota_search.mjs`, default 2, wired through by `search_supervisor.mjs`'s `COMMON` args). This only
+  `google_ota_search.mjs`, default 4 as of 2026-10-13 — raised from 2 the same day, paired with running
+  fewer separate browser processes; see the capacity note below). This only
   parallelizes `check()` — reading a booking-site's own property page — never the search engine's results
   page: `search()` and its `jitter`/`pace`/`adjustPace` gap stay exactly as serial as before, one search at
   a time. Each candidate still gets its own tab (`openBackground`/`openPick`, closed in its own `finally`),
@@ -144,6 +147,17 @@ The search can move between the Mac and a Windows laptop (owner, 2026-10-06). **
 `scripts/windows/setup.ps1` (one-time installs) is Windows-only; `scripts\windows\start-browsers.ps1` and `start-search.ps1 [-Status|-Stop]` are thin wrappers that run the same commands. **First-run checks on Windows done 2026-10-07** (status, port check and stop against the four open browsers); the full start has not yet run on real Windows: do the first-run check at the end of this section and report what differs.
 
 **Memory rule and one-click files (owner, 2026-10-07: "I don't need any browser for myself, manage them yourself").** Five headed browsers previously left about 0.4 GB free on the 16 GB laptop, tabs stopped answering, and search engines rested. Per the owner's later request, the pool now includes the four installed Chromium browsers plus headless Firefox on macOS; free disk still caps worker concurrency (under 1 GB pauses all workers).
+
+**Current state, not just the designed capability (2026-10-13):** this Mac's 2 GB swap can't sustain the doubled
+8-10 worker setup below plus `--concurrency 4` — it caused two forced shutdowns overnight (2026-10-12/13) before a
+real bug in `search-ctl.mjs`'s `--exclude` flag was found and fixed (it silently did nothing, so the supervisor kept
+trying to run every worker and crash-looped on the ones with no browser up). The search runs conservatively right
+now: 3 workers (opera/brave/edge, `--exclude opera2,brave2,edge2,chrome2,firefox2,chrome,firefox`), managed by a
+detached, session-local watchdog script (not committed — lives in a scratch directory for the session that set it
+up) that stops it on real memory danger (pressure/swap, not raw load average, which is noisy from unrelated system
+activity) and restarts it once calm, with event-driven idle-worker detection (watches the supervisor's own
+`"<name>: finished"` log lines) rather than a blind timer. The doubled-capacity design below is real and tested, just
+not what's running today on this machine — a machine with more free memory could run it as documented.
 
 **Doubled capacity (owner, 2026-10-12): a second, independent instance of each engine.** `chrome2`/`opera2`/`brave2`/`edge2` (and a second headless Firefox worker on macOS) run alongside the originals: same installed app, a second launch with its own profile folder and its own fixed debugging port (`scripts/lib/browser-specs.mjs`), never the owner's personal everyday browser windows. The supervisor doubles its shard count and splits it in half — the first half for the original five, the second half for their "2" twins — so the extra workers search previously-uncovered rows instead of redoing the same shard. Each "2" instance is fully independent: it does not require its "1" counterpart to be up (per the owner, Brave's original port 9224 may stay down while Brave2 on 9228 runs on its own).
 1. **Eight attached browser workers plus two headless Firefox workers on macOS** (Opera, Brave, Edge, Chrome and their "2" twins, plus Firefox/Firefox2; the supervisor's `WORKERS` list). Windows/Linux run the eight debugging-port browsers (no Firefox). Chrome and Chrome2 open only with `--all`; Firefox/Firefox2 use Playwright's separately installed runtime and are not normal Firefox.app windows.
