@@ -25,13 +25,13 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
 const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
 // --concurrency 4 (owner, 2026-10-13, raised from 2): candidate booking-site pages for one stay are
-// opened and read up to 4 at a time per worker (google_ota_search.mjs, CONCURRENCY) — the actual batch
-// size is min(CONCURRENCY, candidates found for that stay), and most stays only have 1-2 real
-// candidates per tonight's logs, so this raises the ceiling for the stays that do have several rather
-// than guaranteeing 4 tabs every time. Paired with fewer separate browser processes (3, not 5) after
-// 5 workers x concurrency 2 pushed this machine's small 2 GB swap too tight — the engine's own
+// opened and read up to 6 at a time per worker (google_ota_search.mjs, CONCURRENCY; raised 4 -> 6
+// 2026-10-13 after confirming every candidate tab closes in its own `finally` regardless of outcome,
+// per the owner's question) — the actual batch size is min(CONCURRENCY, candidates found for that
+// stay), and most stays only have 1-2 real candidates per tonight's logs, so this raises the ceiling
+// for the stays that do have several rather than guaranteeing 6 tabs every time. The engine's own
 // results-page fetch (--gap/pace below) stays exactly as serial/paced as before either way.
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000', '--concurrency', '4'];
+const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000', '--concurrency', '6'];
 // Base gap tightened 4-8s -> 2-4s (owner, 2026-10-13: "do it little faster than human now",
 // explicitly overriding the earlier "not much slower than a person" floor) after 10+ hours
 // of data showing near-zero blocking across all 5 engines. The adaptive pace system in
