@@ -287,6 +287,10 @@ async function trim(args = process.argv.slice(3)) {
   const protect = (pid) => { if (keep.has(pid)) return; keep.add(pid); for (const c of children.get(pid) || []) protect(c); };
   if (!all) for (const p of procs) if (isBrowser(p) && /--remote-debugging-port=/.test(p.cmd) && /rh-search/.test(p.cmd)) protect(p.pid);
   if (!all) for (const p of procs) if (/google_ota_search\.mjs/.test(p.cmd) && SEARCH_CMD.test(p.cmd)) protect(p.pid);
+  // Brave is never closed by trim, personal or rh-search, automation or not (owner, 2026-10-13, repeated
+  // several times: "don't touch brave at all") — this overrides the general "close every non-search
+  // browser" memory rule specifically for Brave, regardless of --all.
+  for (const p of procs) if (/Brave Browser/i.test(p.cmd)) protect(p.pid);
   const victims = procs.filter((p) => !keep.has(p.pid) && isBrowser(p));
   if (!victims.length) { console.log('trim: no browser to close'); return 0; }
   let closed = 0, denied = 0;
