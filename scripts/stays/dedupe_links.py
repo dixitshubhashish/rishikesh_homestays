@@ -63,7 +63,7 @@ FOUND = os.path.join(BL, 'found.tsv')
 REVIEW = os.path.join(BL, 'review.tsv')
 OTA_LINKS = os.path.join(HERE, 'ota-links.tsv')
 PLACES_OTA_LINKS = os.path.join(HERE, '.cache', 'places', 'ota-links.tsv')
-REVIEW_COLS = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review']
+REVIEW_COLS = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review', 'last_checked']
 
 DRY = '--dry' in sys.argv
 CHECK = '--check' in sys.argv

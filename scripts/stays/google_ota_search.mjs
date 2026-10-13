@@ -218,9 +218,9 @@ function recordReview(stay, r) {
   if (DRY) return null;
   return withLock(() => {
     const R = `${ROOT}docs/booking-links/review.tsv`;
-    if (!existsSync(R)) writeFileSync(R, 'key\tname\tcity\tplatform\turl\tpage_shows\twhy_review\n');
-    const cols = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review'];
-    writeTsv(R, cols, [...tsv(R).filter((x) => x.key !== stay.key), { key: stay.key, name: stay.name, city: stay.city, platform: r.platform, url: r.url, page_shows: r.title, why_review: r.review }]);
+    if (!existsSync(R)) writeFileSync(R, 'key\tname\tcity\tplatform\turl\tpage_shows\twhy_review\tlast_checked\n');
+    const cols = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review', 'last_checked'];
+    writeTsv(R, cols, [...tsv(R).filter((x) => x.key !== stay.key), { key: stay.key, name: stay.name, city: stay.city, platform: r.platform, url: r.url, page_shows: r.title, why_review: r.review, last_checked: new Date().toISOString() }]);
     if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((x) => x.key !== stay.key));
     // Owner, 2026-10-13: "otherwise it will never end even in a year" -- a review-status row used to
     // stay parked in unfound.tsv forever unless it happened to auto-settle via prune_unfound.py's 200 m
@@ -1057,17 +1057,32 @@ async function recheck(file) {
 const REVIEW_FILE = `${ROOT}docs/booking-links/review.tsv`;
 function dropReview(key) {
   if (DRY) return;
-  withLock(() => writeTsv(REVIEW_FILE, ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review'], tsv(REVIEW_FILE).filter((x) => x.key !== key)));
+  withLock(() => writeTsv(REVIEW_FILE, ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review', 'last_checked'], tsv(REVIEW_FILE).filter((x) => x.key !== key)));
+}
+// Cooldown (owner, 2026-10-13): a row that just came back "still unclear" has no new evidence to
+// re-read -- re-fetching the identical static page every single pass (as little as 60s apart under
+// the supervisor's own restart cycle) is pure waste and was observed live looping forever on a shard
+// with only one row. 6h between re-checks is enough to catch the page actually changing without
+// hammering it; verified/duplicate/retry rows still leave review.tsv immediately as before.
+const REVIEW_RECHECK_COOLDOWN_MS = 6 * 60 * 60 * 1000;
+function touchReview(key, whenISO) {
+  if (DRY) return;
+  withLock(() => writeTsv(REVIEW_FILE, ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review', 'last_checked'],
+    tsv(REVIEW_FILE).map((x) => (x.key === key ? { ...x, last_checked: whenISO } : x))));
 }
 async function settleReviews() {
   const rows = tsv(REVIEW_FILE).filter((r) => shareOf(r.key) === SHARD - 1);
   const b = BROWSERS[0];
-  const tally = { verified: 0, duplicate: 0, retry: 0, kept: 0, gone: 0 };
+  const tally = { verified: 0, duplicate: 0, retry: 0, kept: 0, gone: 0, skipped: 0 };
   let i = 0;
   for (const row of rows) {
     log(`[review ${++i}/${rows.length}] ${row.name} -> ${row.platform} ${row.url}`);
     const stay = tsv(UNFOUND).find((r) => r.key === row.key) || (existsSync(QUEUE) ? tsv(QUEUE).find((r) => r.key === row.key) : null);
     if (!stay) { dropReview(row.key); tally.gone++; log('   already sorted elsewhere: review row removed'); continue; }
+    const lastChecked = row.last_checked ? Date.parse(row.last_checked) : NaN;
+    if (!Number.isNaN(lastChecked) && Date.now() - lastChecked < REVIEW_RECHECK_COOLDOWN_MS) {
+      tally.skipped++; log(`   checked ${Math.round((Date.now() - lastChecked) / 60000)} min ago, within cooldown: skipped`); continue;
+    }
     const p = platformOf(row.url || '');
     if (!p) { log('   no booking-site page on this row: kept for the owner'); tally.kept++; continue; }
     const r = await check(b, stay, { p, url: row.url });
@@ -1075,7 +1090,7 @@ async function settleReviews() {
     if (r.ok) { record(stay, 'verified', { platform: r.platform || p.name, url: r.url, note: `page title as shown: "${r.title}"; ${r.evidence || 'name fits'} (review re-checked)`, source: 'claude review re-check' }); dropReview(row.key); tally.verified++; }
     else if (r.duplicate) { record(stay, 'duplicate', { log: `review re-check: same place as ${NAMES[r.duplicate]?.[0] || r.duplicate}: ${r.url}` }); dropReview(row.key); tally.duplicate++; }
     else if (r.dead || (!r.review && !r.unreadable)) { record(stay, 'retry', { log: `review re-check: ${r.dead ? 'closed listing' : `not this stay (${r.why})`}: ${row.url}` }); dropReview(row.key); tally.retry++; }
-    else tally.kept++;
+    else { touchReview(row.key, new Date().toISOString()); tally.kept++; }
     await jitter(1500, 3000);
   }
   log('review done', JSON.stringify(tally));

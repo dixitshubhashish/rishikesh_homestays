@@ -228,7 +228,7 @@ def main():
         done = {o['key'] for o in old}
         write(audit, AUDIT_COLS, old + [g for g in gone if g['key'] not in done])
         write(os.path.join(BL, 'unfound.tsv'), COLS, keep)
-        write(os.path.join(BL, 'review.tsv'), ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review'], review_keep)
+        write(os.path.join(BL, 'review.tsv'), ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review', 'last_checked'], review_keep)
         print(f'review.tsv: {len(review_keep)} rows left ({len(settled)} settled by the {SAME_PIN_M} m rule)')
         print(f'unfound.tsv: {len(keep)} rows left')
 

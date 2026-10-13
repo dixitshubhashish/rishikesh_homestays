@@ -21,7 +21,7 @@ const AG = `${ROOT}docs/booking-links/`, QUEUE = `${AG}all.tsv`, FOUND = `${AG}f
 const FOUND_COLS = ['key', 'status', 'platform', 'url', 'note', 'name', 'city', 'source'];
 const UNFOUND_COLS = ['key', 'name', 'city', 'area', 'search_log', 'status'];
 const QUEUE_COLS = ['key', 'name', 'city', 'area', 'type', 'rating', 'reviews', 'price_from_inr'];
-const REVIEW_COLS = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review'];
+const REVIEW_COLS = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review', 'last_checked'];
 const SOURCE = "claude in chrome (owner's normal Chrome), checked by hand";
 
 function tsv(file) {
