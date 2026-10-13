@@ -31,7 +31,10 @@ const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
 // stay), and most stays only have 1-2 real candidates per tonight's logs, so this raises the ceiling
 // for the stays that do have several rather than guaranteeing 6 tabs every time. The engine's own
 // results-page fetch (--gap/pace below) stays exactly as serial/paced as before either way.
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000', '--concurrency', '6'];
+// Dialed back 6 -> 4 on 2026-10-13: 3 danger-stops (swap exhaustion) in ~20 min at 4 workers x
+// concurrency 6 -- more net downtime recovering than the extra concurrency was worth. 4 workers x
+// concurrency 4 traded some per-stay parallelism for staying up continuously instead of flapping.
+const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000', '--concurrency', '4'];
 // Base gap tightened 4-8s -> 2-4s (owner, 2026-10-13: "do it little faster than human now",
 // explicitly overriding the earlier "not much slower than a person" floor) after 10+ hours
 // of data showing near-zero blocking across all 5 engines. The adaptive pace system in
