@@ -57,18 +57,24 @@ const edgePlan = (lo, hi) => [
 const EXCLUDED = new Set(process.argv.flatMap((arg, i) => arg === '--exclude' ? [process.argv[i + 1] || '']
   : arg.startsWith('--exclude=') ? [arg.slice('--exclude='.length)] : [])
   .flatMap((value) => value.split(',')).map((name) => name.trim().toLowerCase()).filter(Boolean));
+// opera/chrome (and their "2" twins) rebalanced deep-first, review-second on 2026-10-13 (owner:
+// "optimise it... close this all faster"): opera/opera2 used to be review-ONLY forever, no deep step
+// at all -- pure review on the current queue was running long streaks of "still unclear" ambiguous
+// near-duplicates (static evidence, re-checking them doesn't change the verdict) while the 'none'
+// backlog (genuinely unsearched stays, where new finds actually come from) sat untouched by these
+// two workers. Edge/firefox already ran deep-first; this just brings opera/chrome in line.
 const WORKERS = [
-  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['review', `1/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'opera', how: ['--attach', 'opera=http://localhost:9223'], plan: [['deep', `1/${SHARDS}`, '--no-tidy'], ['review', `1/${SHARDS}`, '--review', '--no-tidy']] },
   { name: 'brave', how: ['--attach', 'brave=http://localhost:9224'], plan: [['review', `2/${SHARDS}`, '--review', '--no-tidy']] },
   { name: 'edge', how: ['--attach', 'edge=http://localhost:9225'], plan: edgePlan(3, process.platform === 'darwin' ? 6 : 0) },
-  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['review', `4/${SHARDS}`, '--review', '--no-tidy'], ['deep', `4/${SHARDS}`, '--no-tidy']] },
+  { name: 'chrome', how: ['--attach', 'chrome=http://localhost:9222'], plan: [['deep', `4/${SHARDS}`, '--no-tidy'], ['review', `4/${SHARDS}`, '--review', '--no-tidy']] },
   ...(process.platform === 'darwin'
     ? [{ name: 'firefox', how: ['--browsers', 'firefox'], plan: [['deep', `5/${SHARDS}`, '--no-tidy'], ['review', `5/${SHARDS}`, '--review', '--no-tidy']] }]
     : []),
-  { name: 'opera2', how: ['--attach', 'opera2=http://localhost:9227'], plan: [['review', `${1 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] },
+  { name: 'opera2', how: ['--attach', 'opera2=http://localhost:9227'], plan: [['deep', `${1 + OFFSET}/${SHARDS}`, '--no-tidy'], ['review', `${1 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] },
   { name: 'brave2', how: ['--attach', 'brave2=http://localhost:9228'], plan: [['review', `${2 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] },
   { name: 'edge2', how: ['--attach', 'edge2=http://localhost:9229'], plan: edgePlan(3 + OFFSET, process.platform === 'darwin' ? 6 + OFFSET : 0) },
-  { name: 'chrome2', how: ['--attach', 'chrome2=http://localhost:9226'], plan: [['review', `${4 + OFFSET}/${SHARDS}`, '--review', '--no-tidy'], ['deep', `${4 + OFFSET}/${SHARDS}`, '--no-tidy']] },
+  { name: 'chrome2', how: ['--attach', 'chrome2=http://localhost:9226'], plan: [['deep', `${4 + OFFSET}/${SHARDS}`, '--no-tidy'], ['review', `${4 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] },
   ...(process.platform === 'darwin'
     ? [{ name: 'firefox2', how: ['--browsers', 'firefox'], plan: [['deep', `${5 + OFFSET}/${SHARDS}`, '--no-tidy'], ['review', `${5 + OFFSET}/${SHARDS}`, '--review', '--no-tidy']] }]
     : []),
