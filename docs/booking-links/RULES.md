@@ -79,6 +79,19 @@ same village and PIN on the page: the same place.
   at its first search URL and reused through its search box; booking pages are closed as soon as they are read. Blank tabs
   are closed immediately (replacing a browser's sole blank tab with a Google home page first); search pages are kept while in
   use.
+- **Candidate concurrency (owner, 2026-10-13):** a stay's booking-site candidate pages (Booking.com, Agoda,
+  MakeMyTrip, …) are opened and read up to `--concurrency` at a time per worker (`CONCURRENCY` in
+  `google_ota_search.mjs`, default 2, wired through by `search_supervisor.mjs`'s `COMMON` args). This only
+  parallelizes `check()` — reading a booking-site's own property page — never the search engine's results
+  page: `search()` and its `jitter`/`pace`/`adjustPace` gap stay exactly as serial as before, one search at
+  a time. Each candidate still gets its own tab (`openBackground`/`openPick`, closed in its own `finally`),
+  so concurrent tabs never collide with each other or with the per-engine search tab (`tabKey`); a batch's
+  URLs are added to `tried` synchronously before any of them is awaited, so two tabs never open the same
+  page; a MATCH/DUPLICATE/REVIEW result still stops the stay immediately (no further batch starts) and
+  still wins in the same order a serial run would have picked; list writes still go through the existing
+  `.lists-lock` (`withLock`), so two concurrent "verified" results can't race on the same TSV row; a crash
+  or timeout in one candidate's tab is caught inside `check()`'s own try/catch (it already returns
+  `{ok:false, unreadable:true, ...}` on error) and never hangs or fails the rest of the batch.
 - **By hand**: stays the workers cannot settle are checked in the owner's Chrome (Claude in Chrome, at most two agents per
   browser), recorded only through `record_manual.mjs` under the same rules; a second agent re-opens every link accepted.
   Directory and comparison sites (uttarakhand-hotels.com, tiket.com, Traveloka, Kayak, …) are skipped: they are not booking pages.

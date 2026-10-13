@@ -4,6 +4,27 @@ Read `CLAUDE.md` first (rules, where things live), then this file. Then, as need
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
 
+## Session 2026-10-13: candidate concurrency for the booking-link search (code done, not yet live)
+
+Implemented bounded concurrency for reading booking-site candidate pages (`check()` in
+`google_ota_search.mjs`) per the owner's request: up to `--concurrency` (default 2) candidate tabs now
+open and get read at once per worker, while the engine search itself (`search()`, `jitter`/`pace`/
+`adjustPace`, the `--gap`) stays exactly as serial as before — only the safe part (booking-site pages,
+not the search engine's own results page) is parallelized. `search_supervisor.mjs`'s `COMMON` args now
+pass `--concurrency 2`. Full design and the five safety properties (no tab-key collision, synchronous
+`tried` de-dup before awaiting a batch, first-match-wins ordering, `.lists-lock` TSV writes unchanged,
+one bad tab can't hang/fail the batch) are in `docs/booking-links/RULES.md` under "Candidate concurrency".
+Both files pass `node --check`.
+
+**Not yet live**: the search was found actively running (supervisor pid, 4 workers, found/unfound/review
+counts moving) when this session started, which conflicts with the coordination ledger's own note that
+search was stopped, and with GitHub Copilot's Active Claims row on these exact files marked "active;
+search remains stopped until uniqueness checks are implemented." Given that direct conflict in the
+ledger itself, this session did **not** stop or restart any live process (no `search-ctl.mjs stop/start`
+run) — the change sits in the working tree for a supervisor-initiated restart (it already respawns a
+worker that crashes, finishes its shard, or goes stale) or for the owner/Copilot to resolve the
+uniqueness-check gate first. See `.agents/coordination.md` Active Claims for the flagged row.
+
 ## Session 2026-10-12: AdSense "Low-value content" diagnosis (quantified, no template edit yet)
 
 Investigated the rejection (item 0 below). Read `scripts/stays/build_pages.py` (`CATEGORIES`, `CITY_COPY`, `city_copy()`, `render()`) and the live data modules. Did **not** edit `build_pages.py` or rebuild: it already has four active/uncommitted claims tonight (cities subagent, OTA choice-screen subagent, dedupe subagent, Copilot's URL-ownership/translation work) and the ledger explicitly warns a contaminated rebuild was discarded earlier this session — adding a fifth uncommitted hand into the same generator risked exactly that. This session's own change is docs-only (this file + `docs/ARCHITECTURE.md` + a `PROGRESS.md` line + a coordination row), so there is nothing to rebuild or test.

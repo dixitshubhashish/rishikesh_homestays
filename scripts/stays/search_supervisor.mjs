@@ -24,7 +24,11 @@ import { pythonCommand, pythonEnv } from '../py.mjs';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
 const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000'];
+// --concurrency 2 (owner, 2026-10-13): candidate booking-site pages for one stay are opened and read
+// up to 2 at a time per worker (google_ota_search.mjs, CONCURRENCY) — real near-zero blocking tonight
+// gave headroom to parallelize the safe part (reading Booking.com/Agoda/… pages) while the risky part
+// (the engine's own results-page fetch, this --gap/pace) stays exactly as serial as before.
+const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000', '--concurrency', '2'];
 // Base gap tightened 4-8s -> 2-4s (owner, 2026-10-13: "do it little faster than human now",
 // explicitly overriding the earlier "not much slower than a person" floor) after 10+ hours
 // of data showing near-zero blocking across all 5 engines. The adaptive pace system in

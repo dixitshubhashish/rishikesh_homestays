@@ -457,6 +457,20 @@ async function closeEngineTab(b, e) {
 // A search tab kept for hundreds of searches grows to gigabytes (Bing's pages leak; on 2026-10-04 two
 // such tabs pushed the Mac to 10 GB of swap): it is swapped for a fresh background tab every RECYCLE stays.
 const RECYCLE = Number(arg('--recycle', 40));
+// --concurrency N: candidate booking-site pages for the SAME stay are opened and read in up to N tabs
+// at once (default 2, conservative: each tab is real browser memory even in one process). This only
+// parallelizes check() — reading booking-site pages (Booking.com/Agoda/…), never a search engine's own
+// results page. The engine search itself (search(), its jitter/pace/adjustPace) stays exactly as
+// serialized as before: one search at a time, same gap. Safe because: (1) each check() opens its own
+// tab via openBackground/openPick and closes it in its own finally — no tabKey/tabs collision with the
+// per-engine search tabs or between two concurrent candidate tabs; (2) tried.add() for every candidate
+// in a batch happens synchronously before any of them is awaited, so two concurrent tabs never open the
+// same URL; (3) list writes (record/recordReview) go through the existing .lists-lock (withLock), same
+// as a serial run, so two concurrent "verified" results still serialize their TSV write; (4) a crash or
+// timeout in one candidate's tab is caught inside check()'s own try/catch (it already returns
+// {ok:false, unreadable:true, ...} on error) and never rejects the Promise.all, so one bad tab cannot
+// hang or take down the batch.
+const CONCURRENCY = Math.max(1, Number(arg('--concurrency', 2)));
 async function freshSearchTab(b) {
   for (const [key] of ourTabs(b)) await closeEngineTab(b, key.split(':')[1]); // the next search opens a clean one
   log(`   ${b}: closed its search tabs to keep memory down; next searches start fresh ones`);
@@ -897,39 +911,59 @@ async function processStay(stay) {
     }
     // closed listings do not use up the page's link slots (they crowded out live pages lower down), but at
     // most MAX_DEAD of them are opened per stay; a site is skipped only after its second unreadable page
-    let live = 0;
-    for (const cand of cands) {
-      if (live >= LINKS_PER_PAGE) break;
-      const p = cand.p;
-      if (skipped.has(p.name) || (cand.url && tried.has(cand.url))) continue;
-      if (deadSeen >= MAX_DEAD && p.name === 'Booking.com') continue;
-      tried.add(cand.url || `pick:${cand.label}`);
-      let r = await check(combo.b, stay, cand);
-      if (r.url && platformOf(r.url)) tried.add(r.url);
-      // a site that refuses this browser/connection (Goibibo outside India): same URL in another browser of this worker
-      const other = r.unreadable && r.url && BROWSERS.find((b) => b !== combo.b && combos.some((c) => c.b === b && c.until !== Infinity));
-      if (other) { log(`     unreadable in ${combo.b} ("${r.title}"), retrying in ${other}`); r = await check(other, stay, { p, url: r.url }); }
-      log(`     ${r.ok ? 'MATCH' : r.dead ? 'closed listing' : r.duplicate ? 'DUPLICATE of an already linked stay' : r.review ? `REVIEW, ${r.review}` : r.unreadable ? 'unreadable' : `no match, ${r.why}`}: ${r.url || cand.label} "${r.title}"`);
-      if (r.dead) { deadSeen++; if (relevance(stay, cand.label || cand.url) >= Math.max(1, coreWords(stay.name).length)) closedFits.push({ url: cand.url || '', label: cand.label || '', platform: platformOf(cand.url || '')?.name || '' }); await jitter(600, 1200); continue; }
-      live++;
-      if (r.ok) {
-        st.matches++;
+    // Candidate pages are opened and read up to CONCURRENCY at a time (the risky part, the engine's own
+    // results page, stays fully serial above; this only parallelizes reading booking-site pages). Each
+    // batch is built synchronously (so tried/skipped/deadSeen are consistent before anything is awaited),
+    // then run with Promise.all and its results applied in the original, deterministic order — so the
+    // first one that would have won a serial run still wins here, and MATCH/DUPLICATE/REVIEW still return
+    // immediately once found, without starting a further batch.
+    let live = 0, ci = 0, decision = null;
+    while (ci < cands.length && live < LINKS_PER_PAGE && !decision) {
+      const batch = [];
+      while (batch.length < CONCURRENCY && ci < cands.length && live + batch.length < LINKS_PER_PAGE) {
+        const cand = cands[ci++];
+        const p = cand.p;
+        if (skipped.has(p.name) || (cand.url && tried.has(cand.url))) continue;
+        if (deadSeen >= MAX_DEAD && p.name === 'Booking.com') continue;
+        tried.add(cand.url || `pick:${cand.label}`);
+        batch.push(cand);
+      }
+      if (!batch.length) continue;
+      const outcomes = await Promise.all(batch.map(async (cand) => {
+        let r = await check(combo.b, stay, cand);
+        if (r.url && platformOf(r.url)) tried.add(r.url);
+        // a site that refuses this browser/connection (Goibibo outside India): same URL in another browser of this worker
+        const other = r.unreadable && r.url && BROWSERS.find((b) => b !== combo.b && combos.some((c) => c.b === b && c.until !== Infinity));
+        if (other) { log(`     unreadable in ${combo.b} ("${r.title}"), retrying in ${other}`); r = await check(other, stay, { p, url: r.url }); }
+        return { cand, r };
+      }));
+      for (const { cand, r } of outcomes) {
+        const p = cand.p;
+        log(`     ${r.ok ? 'MATCH' : r.dead ? 'closed listing' : r.duplicate ? 'DUPLICATE of an already linked stay' : r.review ? `REVIEW, ${r.review}` : r.unreadable ? 'unreadable' : `no match, ${r.why}`}: ${r.url || cand.label} "${r.title}"`);
+        if (r.dead) { deadSeen++; if (relevance(stay, cand.label || cand.url) >= Math.max(1, coreWords(stay.name).length)) closedFits.push({ url: cand.url || '', label: cand.label || '', platform: platformOf(cand.url || '')?.name || '' }); continue; }
+        live++;
+        if (r.ok) { st.matches++; decision = { type: 'verified', r, p }; break; }
+        if (r.duplicate) { decision = { type: 'duplicate', r, p }; break; }
+        if (r.review) { decision = { type: 'review', r, p }; break; }
+        if (r.unreadable) {
+          unreadableN[p.name] = (unreadableN[p.name] || 0) + 1;
+          if (unreadableN[p.name] >= 2) { skipped.add(p.name); log(`     ${p.name} pages will not load here: skipping ${p.name} for this stay`); }
+        }
+      }
+      await jitter(500, 1000);
+    }
+    if (decision) {
+      const { type, r, p } = decision;
+      if (type === 'verified') {
         log('   lists:', JSON.stringify(record(stay, 'verified', { platform: r.platform || p.name, url: r.url, note: `page title as shown: "${r.title}"${r.evidence ? `; ${r.evidence}` : ''}`, source: `claude browser search, worker ${SHARD} (${combo.b}/${combo.where})` }) || 'dry run: not touched'));
         return 'verified'; // found: nothing more for this stay
       }
-      if (r.duplicate) {
+      if (type === 'duplicate') {
         log('   lists:', JSON.stringify(record(stay, 'duplicate', { log: `same place as ${NAMES[r.duplicate]?.[0] || r.duplicate} (${r.duplicate}), pins ${Math.round(r.d * 1000)} m apart: already listed with ${r.url}` }) || 'dry run: not touched'));
         return 'duplicate';
       }
-      if (r.review) {
-        log('   lists:', JSON.stringify(recordReview(stay, r) || 'dry run: not touched'));
-        return 'review';
-      }
-      if (r.unreadable) {
-        unreadableN[p.name] = (unreadableN[p.name] || 0) + 1;
-        if (unreadableN[p.name] >= 2) { skipped.add(p.name); log(`     ${p.name} pages will not load here: skipping ${p.name} for this stay`); }
-      }
-      await jitter(500, 1000);
+      log('   lists:', JSON.stringify(recordReview(stay, r) || 'dry run: not touched'));
+      return 'review';
     }
     if (st.searches >= MIN_TRIES && st.withLinks / st.searches < MIN_YIELD) {
       rest((c) => c.e === combo.e, Infinity, `${combo.e} is not helping (${st.withLinks}/${st.searches} pages with booking-site links): switched off`);
