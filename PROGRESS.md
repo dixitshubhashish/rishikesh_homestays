@@ -1,4 +1,28 @@
 # Progress Tracker
+- **2026-10-13 Goibibo-unreadable blind spot fixed, stuck stays routed to review (Claude)**: found that
+  203 of ~3,682 `unfound.tsv` stays were stuck permanently in `retry` with the identical reason "pages
+  would not load: Goibibo" — traced to `check()`'s catch block in `scripts/stays/google_ota_search.mjs`
+  logging `e.message` with no fallback; grepping the live `.cache/booking-search-2026-10-04/r4-*.log`
+  files showed thousands of `unreadable: <goibibo-url> ""` lines (genuinely empty `.message`, e.g.
+  Playwright timeouts/target-closed errors whose `.message` can legitimately be blank) across several
+  worker browsers (edge/brave/opera most), plus a handful on Agoda too — so the blind spot is general,
+  not literally Goibibo-only, though Goibibo dominates the retry-stuck set simply because it is the most
+  commonly surfaced candidate. Fixed: (1) a new `errMsg(e)` helper falls back to
+  `` `${e.name || e.constructor.name} (no message)` `` whenever `.message` is empty, used in both of the
+  file's catch blocks (`search()` and `check()`), so future failures are always diagnosable instead of a
+  bare `""`. (2) Per owner's follow-up: a stay is **not** given up on after one bad load — a
+  `[unreadable-retries:Site=N]` tag is carried in `unfound.tsv`'s `search_log` and only increments on a
+  DEEP (exhaustive, all-engines) pass; only once every currently-stuck site has failed `UNREADABLE_RETRY_LIMIT`
+  (3) deep passes in a row **and** no other OTA ever produced a match in that same exhaustive pass is the
+  stay routed to `review.tsv` via the existing `recordReview()` (same mechanism already used for
+  ambiguous matches; row stays in `unfound.tsv` with `status: review`, unchanged convention). Confirmed
+  by reading the surrounding loop that a site being skipped only filters that platform's candidates for
+  the rest of that one stay's current pass (`skipped` set) — every other OTA (Booking.com, Agoda,
+  MakeMyTrip, etc.) keeps being searched by name exactly as before, in the same pass and every later one;
+  a real match on any OTA still returns `'verified'` and goes to `found.tsv` through the unmodified
+  `record()` path well before the skipped-only fallback is ever reached. `node --check` passes. Did not
+  stop or restart the live search (per the owner's standing rule); the fix is picked up on its next
+  natural worker restart.
 - **2026-10-13 candidate concurrency for the booking-link search (Claude)**: implemented bounded
   concurrency around `check()` in `scripts/stays/google_ota_search.mjs` — up to `--concurrency` (default
   2, new `CONCURRENCY` constant) booking-site candidate pages for one stay are now opened and read at

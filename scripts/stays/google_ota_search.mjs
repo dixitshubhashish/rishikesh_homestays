@@ -70,6 +70,15 @@ const SEARCHES_PER_STAY = DEEP ? 6 : 2, LINKS_PER_PAGE = DEEP ? 4 : 3, SCROLL_ST
 const ENGINE_FALLBACKS = 2;
 const MAX_DEAD = 3; // closed listings opened per stay, on top of LINKS_PER_PAGE live ones
 const MORE_PAGES = 2; // "More results" / next page, when the first page shows nothing like the stay // a search that shows nothing like the stay is repeated on up to 2 other engines
+// Playwright's own errors (TimeoutError, a page/target closed mid-await, a crashed page) sometimes carry
+// an empty .message (seen a lot for Goibibo in the wild, 2026-10-13): fall back to the error's name/kind
+// so a failure is always diagnosable from the log instead of showing a bare "".
+const errMsg = (e) => (e?.message && e.message.trim() ? e.message.split('\n')[0] : `${e?.name || e?.constructor?.name || 'error'} (no message)`);
+// Consecutive DEEP (exhaustive) passes a stay can come back with nothing but the same unreadable
+// site(s) before that is treated as permanent rather than a transient block/timeout (owner, 2026-10-13):
+// routed to review.tsv instead of retrying forever. Other sites keep being tried every pass regardless;
+// only a site that is itself stuck this many times in a row stops blocking that stay specifically.
+const UNREADABLE_RETRY_LIMIT = 3;
 // --attach chrome=http://localhost:9222[,opera=…]: browsers you opened yourself (a bare URL means chrome)
 const ATTACH = Object.fromEntries(arg('--attach', '').split(',').filter(Boolean)
   .map((x) => (/^\w+=/.test(x) ? x.split(/=(.*)/s).slice(0, 2) : ['chrome', x])));
@@ -606,7 +615,7 @@ async function search(combo, query, stay) {
     }
     return { state: 'ok', ...got };
   } catch (e) {
-    const msg = e.message.split('\n')[0];
+    const msg = errMsg(e);
     // no internet / DNS: nothing to do with this engine; the caller waits and retries the same search
     if (/ERR_NAME_NOT_RESOLVED|ERR_INTERNET_DISCONNECTED|ERR_NETWORK_CHANGED|ERR_ADDRESS_UNREACHABLE|hostname could not be found|network connection was lost|NS_ERROR_UNKNOWN_HOST|NS_ERROR_OFFLINE/i.test(msg)) return { state: 'offline', links: [], picks: [] };
     log('   search error:', msg);
@@ -730,7 +739,7 @@ async function check(b, stay, cand) {
     if (j.verdict === 'verified') return { ok: true, title, url, platform: landed.name, evidence: j.why };
     return { ok: false, title, url, why: m.ok ? j.why : `${m.why}${m.detail ? ` (${m.detail})` : ''}; ${j.why}` };
   } catch (e) {
-    return { ok: false, unreadable: true, title: e.message.split('\n')[0], url: platformOf(finalUrl) ? cleanUrl(finalUrl, platformOf(finalUrl).name) : '' };
+    return { ok: false, unreadable: true, title: errMsg(e), url: platformOf(finalUrl) ? cleanUrl(finalUrl, platformOf(finalUrl).name) : '' };
   } finally {
     await page?.close().catch(() => {});
   }
@@ -841,6 +850,12 @@ async function processStay(stay) {
   // sorted meanwhile by another worker or by hand (lists are shared): never searched or written twice
   const still = DEEP ? tsv(UNFOUND).some((r) => r.key === stay.key && r.status === 'retry') : tsv(QUEUE).some((r) => r.key === stay.key);
   if (!still) { log('   already sorted elsewhere: skipped'); return 'skipped'; }
+  // how many deep passes in a row already ended with nothing but this site unreadable (tag left in the
+  // previous search_log by this same block below); reset the moment a pass is not purely that site's fault
+  const priorRetries = {};
+  for (const m of (tsv(UNFOUND).find((r) => r.key === stay.key)?.search_log || '').matchAll(/unreadable-retries:([^\]]+)/g)) {
+    for (const part of m[1].split(';')) { const [plat, n] = part.split('='); if (plat) priorRetries[plat] = Number(n) || 0; }
+  }
   if (!coreWords(stay.name).length) { // nothing in the name can identify it on a booking site
     log(`   name "${stay.name}" has nothing distinctive (core "${coreName(stay.name)}"): not searched, left for a person`);
     log('   lists:', JSON.stringify(record(stay, 'manual', { log: `name too generic to identify on a booking site (core "${coreName(stay.name)}"); check by hand` }) || 'dry run: not touched'));
@@ -971,14 +986,24 @@ async function processStay(stay) {
     // quick pass: once a results page showed links that look like this stay, no further search for now;
     // deep pass (owner, 2026-10-05): go on to the next booking site until one is this stay
     if (cands.length && !DEEP) {
-      const skipNote = skipped.size ? `; pages would not load: ${[...skipped].join(', ')}` : '';
+      // quick pass only here (DEEP is always false in this branch): never the exhaustive sweep the owner
+      // wants before giving up on a site, so the retry count carries over unchanged, never increments
+      const skipNote = skipped.size ? `; pages would not load: ${[...skipped].join(', ')} [unreadable-retries:${[...skipped].map((p) => `${p}=${priorRetries[p] || 0}`).join(';')}]` : '';
       const outcome = skipped.size || !DEEP ? 'retry' : 'none'; // quick pass, or a page that would not load: search again later
       log('   lists:', JSON.stringify(record(stay, outcome, { log: `${DEEP ? 'deep' : 'quick'} pass: links found on search ${searches} (${combo.b}/${combo.where}); opened ${Math.min(cands.length, LINKS_PER_PAGE)} booking-site link(s), none was this stay${skipNote}` }) || 'dry run: not touched'));
       return outcome;
     }
   }
-  if (skipped.size) { // a site that would not load: search again later
-    log('   lists:', JSON.stringify(record(stay, 'retry', { log: `${DEEP ? 'deep' : 'quick'} pass: ${searches} search(es); pages would not load: ${[...skipped].join(', ')}` }) || 'dry run: not touched'));
+  if (skipped.size) { // a site that would not load: search again later, unless it has done so for UNREADABLE_RETRY_LIMIT deep passes running
+    const retries = {}; for (const p of skipped) retries[p] = (priorRetries[p] || 0) + (DEEP ? 1 : 0); // only an exhaustive (deep) pass counts as a real attempt
+    const tag = `[unreadable-retries:${[...skipped].map((p) => `${p}=${retries[p]}`).join(';')}]`;
+    if (DEEP && [...skipped].every((p) => retries[p] >= UNREADABLE_RETRY_LIMIT)) {
+      const why = `${[...skipped].join(', ')} page would not load after ${UNREADABLE_RETRY_LIMIT} deep-pass attempts; no other booking-site candidate found across ${searches} search(es)`;
+      log(`   ${[...skipped].join(', ')} unreadable for ${UNREADABLE_RETRY_LIMIT} deep passes running, nothing else found: routing to review.tsv for a person`);
+      log('   lists:', JSON.stringify(recordReview(stay, { review: why, platform: [...skipped][0], url: '', title: '' }) || 'dry run: not touched'));
+      return 'review';
+    }
+    log('   lists:', JSON.stringify(record(stay, 'retry', { log: `${DEEP ? 'deep' : 'quick'} pass: ${searches} search(es); pages would not load: ${[...skipped].join(', ')} ${tag}` }) || 'dry run: not touched'));
     return 'retry';
   }
   if (DEEP && closedFits.length) {
