@@ -71,13 +71,18 @@ const ENGINE_FALLBACKS = 2;
 const MAX_DEAD = 3; // closed listings opened per stay, on top of LINKS_PER_PAGE live ones
 const MORE_PAGES = 2; // "More results" / next page, when the first page shows nothing like the stay // a search that shows nothing like the stay is repeated on up to 2 other engines
 // Playwright's own errors (TimeoutError, a page/target closed mid-await, a crashed page) sometimes carry
-// an empty .message (seen a lot for Goibibo in the wild, 2026-10-13): fall back to the error's name/kind
-// so a failure is always diagnosable from the log instead of showing a bare "".
+// an empty .message: fall back to the error's name/kind so a failure is always diagnosable from the log
+// instead of showing a bare "". Seen most on Goibibo in tonight's logs (2026-10-13), and at least once on
+// Agoda too — this is a general Playwright/site-load issue, not specific to one OTA, so the fallback and
+// the retry-limit/review-routing below (both keyed only by the generic platform name, never a hardcoded
+// site) apply the same way to whichever OTA(s) actually fail for a given stay (Goibibo, MakeMyTrip, or any
+// other entry in PLATFORMS).
 const errMsg = (e) => (e?.message && e.message.trim() ? e.message.split('\n')[0] : `${e?.name || e?.constructor?.name || 'error'} (no message)`);
 // Consecutive DEEP (exhaustive) passes a stay can come back with nothing but the same unreadable
 // site(s) before that is treated as permanent rather than a transient block/timeout (owner, 2026-10-13):
 // routed to review.tsv instead of retrying forever. Other sites keep being tried every pass regardless;
-// only a site that is itself stuck this many times in a row stops blocking that stay specifically.
+// only a site that is itself stuck this many times in a row stops blocking that stay specifically — this
+// applies per-platform-name generically (whatever ends up in the `skipped` set), not to one named OTA.
 const UNREADABLE_RETRY_LIMIT = 3;
 // --attach chrome=http://localhost:9222[,opera=…]: browsers you opened yourself (a bare URL means chrome)
 const ATTACH = Object.fromEntries(arg('--attach', '').split(',').filter(Boolean)
