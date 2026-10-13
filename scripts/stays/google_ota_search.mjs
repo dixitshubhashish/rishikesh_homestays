@@ -317,11 +317,12 @@ function nextCombo(avoid = new Set()) {
 const noAnswer = {}; // browser/engine -> searches in a row that got no results page (not a challenge)
 // Pace (owner, 2026-10-05: "speed up and down based on rate limit"): the gap between searches is
 // multiplied by `pace`; a challenge or block makes it 1.25x slower (never more than 1.5x: owner, "not much slower than a person"), every 15 clean results
-// pages make it 10% faster (down to half the --gap).
+// pages make it 10% faster (down to 0.3x the --gap; floor loosened from 0.5x on 2026-10-13, owner:
+// "do it little faster than human now", after 10+ hours showed near-zero blocking across all engines).
 let pace = 1, cleanRun = 0;
 function adjustPace(what) {
   if (what === 'slower') { pace = Math.min(1.5, pace * 1.25); cleanRun = 0; log(`   pace: slower, searches now ${Math.round(GAP_MIN * pace)}-${Math.round(GAP_MAX * pace)} s apart`); }
-  else if (what === 'ok' && ++cleanRun >= 15) { cleanRun = 0; if (pace > 0.5) { pace = Math.max(0.5, pace * 0.9); log(`   pace: faster, searches now ${Math.round(GAP_MIN * pace)}-${Math.round(GAP_MAX * pace)} s apart`); } }
+  else if (what === 'ok' && ++cleanRun >= 15) { cleanRun = 0; if (pace > 0.3) { pace = Math.max(0.3, pace * 0.9); log(`   pace: faster, searches now ${Math.round(GAP_MIN * pace)}-${Math.round(GAP_MAX * pace)} s apart`); } }
 }
 const rest = (pred, ms, why) => {
   for (const c of combos) if (pred(c)) {

@@ -24,7 +24,12 @@ import { pythonCommand, pythonEnv } from '../py.mjs';
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const LOGS = `${ROOT}scripts/stays/.cache/booking-search-2026-10-04/`;
 const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '4-8', '--limit', '4000'];
+const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000'];
+// Base gap tightened 4-8s -> 2-4s (owner, 2026-10-13: "do it little faster than human now",
+// explicitly overriding the earlier "not much slower than a person" floor) after 10+ hours
+// of data showing near-zero blocking across all 5 engines. The adaptive pace system in
+// google_ota_search.mjs (adjustPace) still applies on top of this base and will still slow
+// down automatically on an actual block/challenge.
 const ROUNDS = 4;
 // Keep every available search browser on a disjoint shard. Playwright Firefox is a headless worker
 // on macOS; its managed runtime is not a debugging-port browser.
