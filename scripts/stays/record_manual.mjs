@@ -63,7 +63,9 @@ if (cmd === 'unfind') { // a second look disproved a found link: review.tsv for 
   withLock(() => {
     writeTsv(FOUND, FOUND_COLS, tsv(FOUND).filter((r) => r.key !== key));
     writeTsv(REVIEW, REVIEW_COLS, [...tsv(REVIEW).filter((r) => r.key !== key), { key, name: row.name, city: row.city, platform: row.platform, url: row.url, page_shows: row.note, why_review: `second check: ${why}` }]);
-    writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((r) => r.key !== key), { key, name: row.name, city: row.city, area: '', search_log: `in review.tsv for the owner: second check: ${why}`, status: 'review' }]);
+    // Owner, 2026-10-13: review rows leave unfound.tsv entirely now, review.tsv is their one home (see
+    // the matching note in google_ota_search.mjs's recordReview()).
+    writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
   });
   out(`unfound + review: ${row.name}`);
 }
@@ -97,7 +99,7 @@ if (cmd === 'verified') {
         note: `page shows "${title}"${address ? `, address "${address}"` : ''}; ${j.why}`, name: stay.name, city: stay.city, source: SOURCE }]);
     } else {
       writeTsv(REVIEW, REVIEW_COLS, [...tsv(REVIEW).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, platform: p.name, url: clean, page_shows: `${title}${address ? ` | ${address}` : ''}`, why_review: j.why }]);
-      writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, area: stay.area, search_log: `in review.tsv for the owner: ${j.why}`, status: 'review' }]);
+      writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
     }
   });
   out(j.verdict === 'verified' ? `FOUND ${stay.name} -> ${p.name} ${clean} (${j.why})` : `REVIEW ${stay.name} -> ${p.name} ${clean} (${j.why})`);
@@ -108,7 +110,7 @@ if (cmd === 'review') {
   withLock(() => {
     writeTsv(REVIEW, REVIEW_COLS, [...tsv(REVIEW).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, platform, url, page_shows: shows, why_review: why }]);
     if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
-    writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, area: stay.area, search_log: `in review.tsv for the owner: ${why}`, status: 'review' }]);
+    writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
   });
   out(`review ${stay.name}`);
 }

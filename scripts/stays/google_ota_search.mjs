@@ -222,7 +222,13 @@ function recordReview(stay, r) {
     const cols = ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review'];
     writeTsv(R, cols, [...tsv(R).filter((x) => x.key !== stay.key), { key: stay.key, name: stay.name, city: stay.city, platform: r.platform, url: r.url, page_shows: r.title, why_review: r.review }]);
     if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((x) => x.key !== stay.key));
-    writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((x) => x.key !== stay.key), { key: stay.key, name: stay.name, city: stay.city, area: stay.area, search_log: `in review.tsv for the owner: ${r.review}`, status: 'review' }]);
+    // Owner, 2026-10-13: "otherwise it will never end even in a year" -- a review-status row used to
+    // stay parked in unfound.tsv forever unless it happened to auto-settle via prune_unfound.py's 200 m
+    // rule (which reads review.tsv directly as its source of truth, not this copy, so removing it here
+    // doesn't break that). Now it's removed from unfound.tsv entirely the moment it's routed to review:
+    // review.tsv is its one home from here, so unfound.tsv's count actually reflects what's still being
+    // actively searched, not a permanent parking lot for every undecided case ever found.
+    writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((x) => x.key !== stay.key));
     return counts();
   });
 }
