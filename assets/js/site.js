@@ -14,6 +14,7 @@ import { setupLangPicker } from './modules/lang-picker.js';
 import { setupThemeToggle } from './modules/theme-toggle.js';
 import { setupNavFit } from './modules/nav-fit.js';
 import { setupSiteSearch } from './modules/site-search.js';
+import { initPartnerBanner } from './modules/partner-banner.js';
 
 // Re-export for any inline script usage
 window.AREAS = AREAS;
@@ -32,6 +33,7 @@ window.applyListingParams = applyListingParams;
 document.addEventListener("DOMContentLoaded", () => {
   setupThemeToggle();
   setupSiteSearch();
+  initPartnerBanner();
   setupNav();
   setupLangPicker();
   setupNavFit();

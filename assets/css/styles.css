@@ -2172,6 +2172,57 @@ a.homestay-photo:hover {
 }
 
 
+/* Official-partner sliding banner (homepage footer, above the copyright bar) */
+.rhs-partner-banner{
+    margin-top:40px;
+    padding:18px 0;
+    border-top:1px solid rgba(255,255,255,.1);
+    overflow:hidden;
+}
+.rhs-partner-banner-label{
+    text-align:center;
+    margin:0 0 14px;
+    font-size:.72rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:#94a3b8;
+}
+.rhs-partner-banner-track{
+    display:flex;
+    width:max-content;
+    gap:40px;
+    animation:rhs-partner-scroll 32s linear infinite;
+}
+@media (prefers-reduced-motion: reduce){
+    .rhs-partner-banner-track{ animation:none; overflow-x:auto; }
+}
+.rhs-partner-pill{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:none;
+    height:36px;
+    padding:0 18px;
+    border-radius:999px;
+    background:rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.1);
+}
+.rhs-partner-pill img{
+    max-height:22px;
+    max-width:110px;
+    display:block;
+}
+.rhs-partner-name{
+    color:#cbd5e1;
+    font-size:.85rem;
+    font-weight:600;
+    white-space:nowrap;
+}
+@keyframes rhs-partner-scroll{
+    from{ transform:translateX(0); }
+    to{ transform:translateX(-50%); }
+}
+
 /* Bottom */
 
 .rhs-footer-bottom{

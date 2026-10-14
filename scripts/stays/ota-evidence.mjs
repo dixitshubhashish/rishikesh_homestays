@@ -99,7 +99,11 @@ export function addressMatch(address, pageText) {
 
 // The page names the stay's town or its area ("Tapovan", "Bhupatwala", "Laxman Jhula"...), or the village of its address.
 const TOWNS = { rishikesh: ['rishikesh', 'rishīkesh', 'tapovan', 'laxman jhula', 'lakshman jhula', 'ram jhula', 'swarg ashram', 'muni ki reti', 'shivpuri', 'neelkanth', 'mohan chatti', 'mohanchatti'],
-  haridwar: ['haridwar', 'hardwar', 'har ki pauri', 'kankhal', 'jwalapur', 'bhupatwala', 'bhoopatwala', 'ranipur', 'bhel', 'sidcul', 'bahadrabad', 'motichur', 'shantikunj'] };
+  haridwar: ['haridwar', 'hardwar', 'har ki pauri', 'kankhal', 'jwalapur', 'bhupatwala', 'bhoopatwala', 'ranipur', 'bhel', 'sidcul', 'bahadrabad', 'motichur', 'shantikunj'],
+  // Owner, 2026-10-14: dehradun/mussoorie had no entry here at all (this project started with just
+  // Rishikesh/Haridwar) -- a page naming its own town or a known landmark got no credit for it.
+  dehradun: ['dehradun', 'clock tower', 'rajpur road', 'paltan bazaar', 'sahastradhara', 'tapkeshwar', 'mindrolling', 'robbers cave', 'doon school'],
+  mussoorie: ['mussoorie', 'library chowk', 'mall road', 'gun hill', 'landour', 'char dukan', 'kempty falls', 'happy valley', 'camels back road'] };
 export function placeNamed({ city, area, address }, pageText) {
   const t = ` ${words(pageText || '').join(' ')} `;
   const has = (x) => x && t.includes(` ${words(x).join(' ')} `);

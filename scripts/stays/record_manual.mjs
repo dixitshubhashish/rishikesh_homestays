@@ -17,7 +17,7 @@ import { judge, places } from './ota-evidence.mjs';
 import { fileURLToPath } from 'url';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const AG = `${ROOT}docs/booking-links/`, QUEUE = `${AG}all.tsv`, FOUND = `${AG}found.tsv`, UNFOUND = `${AG}unfound.tsv`, REVIEW = `${AG}review.tsv`;
+const AG = `${ROOT}docs/booking-links/`, QUEUE = `${AG}all.tsv`, FOUND = `${AG}found.tsv`, UNFOUND = `${AG}unfound.tsv`, REVIEW = `${AG}review.tsv`, OWNER_SEARCH = `${AG}owner-to-search.tsv`;
 const FOUND_COLS = ['key', 'status', 'platform', 'url', 'note', 'name', 'city', 'source'];
 const UNFOUND_COLS = ['key', 'name', 'city', 'area', 'search_log', 'status'];
 const QUEUE_COLS = ['key', 'name', 'city', 'area', 'type', 'rating', 'reviews', 'price_from_inr'];
@@ -116,9 +116,17 @@ if (cmd === 'review') {
 }
 
 if (['none', 'retry', 'manual'].includes(cmd)) {
+  const row = { key, name: stay.name, city: stay.city, area: stay.area, search_log: `by hand in the owner's Chrome: ${rest.join(' ')}`, status: cmd };
   withLock(() => {
     if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
-    writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, area: stay.area, search_log: `by hand in the owner's Chrome: ${rest.join(' ')}`, status: cmd }]);
+    writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
+    if (cmd === 'none') {
+      // Owner, 2026-10-14: "move it to new tsv so that i would manually search" -- same routing as
+      // google_ota_search.mjs's record(): a genuine "nothing found" leaves unfound.tsv entirely.
+      writeTsv(OWNER_SEARCH, UNFOUND_COLS, [...tsv(OWNER_SEARCH), row]);
+    } else {
+      writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND), row]);
+    }
   });
   out(`${cmd} ${stay.name}`);
 }

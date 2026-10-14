@@ -34,7 +34,7 @@ const CITY_WORDS = {
   // Owner, 2026-10-14: Mussoorie/Dehradun had no entry here at all (the project started with just
   // Rishikesh/Haridwar) -- every legitimate match for these two cities was being rejected as
   // "town-missing" even when the page clearly named its own town or a known landmark.
-  dehradun: /dehradun|clock ?tower|forest research institute|\bfri\b|robbers? ?cave|sahastradhara|mindrolling|tapkeshwar|doon school|\bisbt\b|rajpur ?road|gandhi ?road|paltan ?bazaar/i,
+  dehradun: /dehra ?dun|clock ?tower|forest research institute|\bfri\b|robbers? ?cave|sahastradhara|mindrolling|tapkeshwar|doon school|\bisbt\b|rajpur ?road|gandhi ?road|paltan ?bazaar/i,
   mussoorie: /mussoorie|library ?chowk|mall ?road|gun ?hill|camel'?s? ?back ?road|kempty ?falls|landour|char ?dukan|mussoorie ?lake|happy ?valley/i,
 };
 const plain = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // "Rishīkesh" -> "Rishikesh"
@@ -53,7 +53,10 @@ const closeWord = (a, b) => {
   return d[a.length][b.length] <= 2;
 };
 const hasFuzzy = (set, w) => set.has(w) || [...set].some((x) => closeWord(w, x));
-const isTownWord = (w) => /^(?:rishikesh|haridwar|hardwar|tapovan|lakshman|laxman|shivpuri|swarg|raiwala|byasi|kaudiyala|neelkanth|yamkeshwar|kankhal|jwalapur|bhupatwala|bahadrabad|roorkee|motichur|muni|reti)$/.test(w);
+// Owner, 2026-10-14: this list (and CITY_WORDS above) only covered Rishikesh/Haridwar, so a page
+// naming its own Mussoorie/Dehradun town got "extra-words" rejected for the town word itself (found
+// live by a hand-search agent: exact OTA matches for Mussoorie stays kept failing to auto-verify).
+const isTownWord = (w) => /^(?:rishikesh|haridwar|hardwar|tapovan|lakshman|laxman|shivpuri|swarg|raiwala|byasi|kaudiyala|neelkanth|yamkeshwar|kankhal|jwalapur|bhupatwala|bahadrabad|roorkee|motichur|muni|reti|dehradun|mussoorie|landour|kempty|sahastradhara|tapkeshwar|mindrolling|rajpur|paltan)$/.test(w);
 
 // A possessive is the word itself ("Sushma's Homestay" is "Sushma Homestay"), never a word "s";
 // dharmshala / dharmsala / dharamsala are one word.
@@ -165,7 +168,12 @@ export function matchReason(name, city, title) {
   const left = words(coreName(name)); // the name's own words, not its tagline ("Best Property in Haridwar")
   const spare = words(head).filter((w) => { const i = left.indexOf(w); if (i < 0) return true; left.splice(i, 1); return false; });
   const rest = t.slice(t.indexOf(head) + head.length);
-  if (!townIn(city, rest) && !townIn(city, spare.join(' '))) return { ok: false, why: 'town-missing' };
+  // Owner, 2026-10-14: found live by a hand-search agent -- when our own stored name already bakes in
+  // the town word (e.g. "Ida Dehradun", "The Mountain Quail" sharing "Quail" with its town's landmark),
+  // that word gets consumed matching our own name and spare/rest never see it, so an exact, correctly
+  // titled page was wrongly rejected as "town-missing". The page's head (before subtracting our own
+  // name's words) still has the literal text, so check it too.
+  if (!townIn(city, rest) && !townIn(city, spare.join(' ')) && !townIn(city, head)) return { ok: false, why: 'town-missing' };
   const nameAll = new Set(tokens(name));
   const got = new Set(tokens(title));
   const nameUnits = tokens(coreName(name)).filter((w) => UNITS.has(w));

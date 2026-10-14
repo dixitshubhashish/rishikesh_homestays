@@ -116,7 +116,7 @@ for (const s of ['SIGINT', 'SIGTERM']) process.on(s, async () => {
 //                manual (name too generic to identify)
 // Sorting a stay is a move between files (all -> found/unfound, unfound retry -> found/unfound),
 // done under a lock so parallel workers never overwrite each other. Nothing is rebuilt.
-const QUEUE = `${AG}all.tsv`, FOUND = `${AG}found.tsv`, UNFOUND = `${AG}unfound.tsv`;
+const QUEUE = `${AG}all.tsv`, FOUND = `${AG}found.tsv`, UNFOUND = `${AG}unfound.tsv`, OWNER_SEARCH = `${AG}owner-to-search.tsv`;
 const FOUND_COLS = ['key', 'status', 'platform', 'url', 'note', 'name', 'city', 'source'];
 const UNFOUND_COLS = ['key', 'name', 'city', 'area', 'search_log', 'status'];
 const QUEUE_COLS = ['key', 'name', 'city', 'area', 'type', 'rating', 'reviews', 'price_from_inr'];
@@ -206,7 +206,14 @@ function record(stay, outcome, data) {
     if (outcome === 'verified') {
       writeTsv(FOUND, FOUND_COLS, [...tsv(FOUND), { key: stay.key, status: 'verified', city: stay.city, name: stay.name, ...data }]);
       writeTsv(UNFOUND, UNFOUND_COLS, unfound);
-    } else { // 'none' (searched, nothing matched), 'retry' (a page would not load: search again later), 'manual'
+    } else if (outcome === 'none') {
+      // Owner, 2026-10-14: "move it to new tsv so that i would manually search and give you review" --
+      // searched well (by the automated pipeline or a hand-search pass) with genuinely nothing found
+      // leaves unfound.tsv entirely now, same pattern as a settled review row. The owner works through
+      // owner-to-search.tsv by hand; whatever they find comes back through record_manual.mjs as usual.
+      writeTsv(UNFOUND, UNFOUND_COLS, unfound);
+      writeTsv(OWNER_SEARCH, UNFOUND_COLS, [...tsv(OWNER_SEARCH), { key: stay.key, name: stay.name, city: stay.city, area: stay.area, search_log: data.log, status: outcome }]);
+    } else { // 'retry' (a page would not load: search again later), 'manual'
       writeTsv(UNFOUND, UNFOUND_COLS, [...unfound, { key: stay.key, name: stay.name, city: stay.city, area: stay.area, search_log: data.log, status: outcome }]);
     }
     return counts();
