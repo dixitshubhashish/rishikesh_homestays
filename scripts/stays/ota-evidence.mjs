@@ -141,8 +141,14 @@ export function judge({ key, name, city = '', nameOk, title, urlPath = '', pageL
   const oyoNo = (x) => (String(x).match(/\b(?:oyo|capital o|collection o|townhouse|spot on|flagship|silverkey)\s*(\d{3,})\b/i) || [])[1];
   if (oyoNo(name) && oyoNo(title) && oyoNo(name) !== oyoNo(title)) return { verdict: 'reject', why: `a different OYO property (${oyoNo(title)}, ours ${oyoNo(name)})`, km: d };
   // a page that sits in another town (its address or link says so) is not this stay
-  const elsewhere = ELSEWHERE;
-  if (elsewhere.test(`${urlPath} ${title}`) && !elsewhere.test(name)) return { verdict: 'reject', why: `the page is in another town (${(`${urlPath} ${title}`.match(elsewhere) || [])[0]})`, km: d };
+  // Owner, 2026-10-14: ELSEWHERE still listed "mussoorie" and "dehradun city" as other towns from when
+  // this list was built with only Rishikesh/Haridwar in scope -- it rejected every legitimate Mussoorie
+  // or Dehradun page just for naming its own town (found live: a real, hand-confirmed MakeMyTrip match
+  // for a Mussoorie stay rejected as "the page is in another town (mussoorie)"). Own-city match no longer rejects.
+  const OWN_CITY_IN_ELSEWHERE = { mussoorie: 'mussoorie', dehradun: 'dehradun city' }; // literal strings ELSEWHERE lists for our own cities
+  const elsewhereMatch = `${urlPath} ${title}`.match(ELSEWHERE);
+  const ownCityHit = elsewhereMatch && OWN_CITY_IN_ELSEWHERE[city] === elsewhereMatch[0].toLowerCase();
+  if (elsewhereMatch && !ownCityHit && !ELSEWHERE.test(name)) return { verdict: 'reject', why: `the page is in another town (${elsewhereMatch[0]})`, km: d };
   const where = d === null ? '' : `map pin ${d < 1 ? `${Math.round(d * 1000)} m` : `${d.toFixed(1)} km`} from this stay`;
   if (nameOk) {
     if (d !== null && d > NEAR_KM) return { verdict: 'review', why: `name fits but the page's ${where}`, km: d };

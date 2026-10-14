@@ -31,9 +31,28 @@ export const MARKETING = new Set(('prime location luxury luxurious spacious best
 const CITY_WORDS = {
   rishikesh: /rish[iī]kesh|tapovan|lakshman|laxman|muni ki reti|shivpuri|narendra ?nagar|swarg|raiwala|byasi|kaudiyala|neelkanth|yamkeshwar|mohan ?chatti/i,
   haridwar: /har[iī]dw[aā]r|hardwar|kankhal|jwalapur|bhupatwala|bahadrabad|roorkee|motichur|raiwala/i,
+  // Owner, 2026-10-14: Mussoorie/Dehradun had no entry here at all (the project started with just
+  // Rishikesh/Haridwar) -- every legitimate match for these two cities was being rejected as
+  // "town-missing" even when the page clearly named its own town or a known landmark.
+  dehradun: /dehradun|clock ?tower|forest research institute|\bfri\b|robbers? ?cave|sahastradhara|mindrolling|tapkeshwar|doon school|\bisbt\b|rajpur ?road|gandhi ?road|paltan ?bazaar/i,
+  mussoorie: /mussoorie|library ?chowk|mall ?road|gun ?hill|camel'?s? ?back ?road|kempty ?falls|landour|char ?dukan|mussoorie ?lake|happy ?valley/i,
 };
 const plain = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // "Rishīkesh" -> "Rishikesh"
 const townIn = (city, s) => (CITY_WORDS[city] || CITY_WORDS.rishikesh).test(plain(s));
+// Owner, 2026-10-14: "name fuzzy logic already i told you to incorporate always" -- the core-word check
+// below used to require an exact string match, so a one-letter typo/transliteration difference in our
+// own data ("Savitris" vs the real "Savitri") rejected an otherwise-perfect, hand-confirmed link. Same
+// small edit-distance tolerance google_ota_search.mjs's close() already gives a RESULT now applies here too.
+const closeWord = (a, b) => {
+  if (a === b) return true;
+  if (Math.min(a.length, b.length) < 5 || Math.abs(a.length - b.length) > 2) return false;
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length] <= 2;
+};
+const hasFuzzy = (set, w) => set.has(w) || [...set].some((x) => closeWord(w, x));
 const isTownWord = (w) => /^(?:rishikesh|haridwar|hardwar|tapovan|lakshman|laxman|shivpuri|swarg|raiwala|byasi|kaudiyala|neelkanth|yamkeshwar|kankhal|jwalapur|bhupatwala|bahadrabad|roorkee|motichur|muni|reti)$/.test(w);
 
 // A possessive is the word itself ("Sushma's Homestay" is "Sushma Homestay"), never a word "s";
@@ -139,8 +158,8 @@ export function matchReason(name, city, title) {
   const headSet = new Set(headT);
   // every core word in the title's own name (not just its address tail); a long core may
   // lack its last word ("Sterling Palm Bliss Wellness Resort" vs "Sterling Palm Bliss")
-  const need = core.length >= 4 && !headSet.has(core.at(-1)) ? core.slice(0, -1) : core;
-  const missing = need.filter((w) => !headSet.has(w));
+  const need = core.length >= 4 && !hasFuzzy(headSet, core.at(-1)) ? core.slice(0, -1) : core;
+  const missing = need.filter((w) => !hasFuzzy(headSet, w));
   if (missing.length) return { ok: false, why: 'core-word-missing', detail: missing.join(',') };
   // the town must be named by the page, not only inside the stay's own name
   const left = words(coreName(name)); // the name's own words, not its tagline ("Best Property in Haridwar")

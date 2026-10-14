@@ -163,11 +163,16 @@ def main():
                 if here:
                     tok, unit = of.tokens(r['name']), of.unit(r['name'])
                     for p in linked:
-                        if p['city'] != r['city'] or not p['_ll'] or p['_unit'] != unit or abs(p['_ll'][0] - here[0]) > 0.0004:
+                        # Owner, 2026-10-14: "200m is also a good check to dedupe" -- raised from 40 m (found live:
+                        # "Savitris Nand Palace" / hotel-mussoorie-6 sat unresolved ~285 m from its own already-linked
+                        # twin savitri-nand-palace, same name, same business, just outside the old 40 m net) to match
+                        # the SAME_PIN_M rule already used elsewhere in this file. The bounding-box pre-filter widens
+                        # to match (0.002 deg lat =~ 222 m, a small safety margin over SAME_PIN_M itself).
+                        if p['city'] != r['city'] or not p['_ll'] or p['_unit'] != unit or abs(p['_ll'][0] - here[0]) > 0.002:
                             continue
                         d = metres(here, p['_ll'])
-                        if d <= 40 and of.same_name(tok, p['_tok']):
-                            hit = ('within 40 m of a linked stay with the same name', p, str(int(d)))
+                        if d <= SAME_PIN_M and of.same_name(tok, p['_tok']):
+                            hit = (f'within {SAME_PIN_M} m of a linked stay with the same name', p, str(int(d)))
                             break
             if hit:
                 gone.append(dict(key=r['key'], name=r['name'], city=r['city'], status_was=r['status'], reason=hit[0],

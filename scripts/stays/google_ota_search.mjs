@@ -238,7 +238,15 @@ const cssHit = (page, sel) => page.locator(sel).count().then((n) => n > 0).catch
 const textHit = (page, re) => page.getByText(re).count().then((n) => n > 0).catch(() => false);
 const ENGINES = {
   google: {
-    regions: [['co.in', 'in'], ['co.uk', 'uk'], ['ca', 'ca'], ['de', 'de'], ['fr', 'fr'], ['es', 'es'], ['it', 'it'], ['ae', 'ae'], ['com.au', 'au'], ['co.za', 'za']],
+    // Owner, 2026-10-14: "add more tld to google then" -- 34 more, each checked live (curl, 200,
+    // real search page, not a redirect loop) before adding. Purely for rate-limit diversity (more
+    // distinct domains/sessions to rotate through), not regional relevance.
+    regions: [['co.in', 'in'], ['co.uk', 'uk'], ['ca', 'ca'], ['de', 'de'], ['fr', 'fr'], ['es', 'es'], ['it', 'it'], ['ae', 'ae'], ['com.au', 'au'], ['co.za', 'za'],
+      ['com', 'us'], ['com.sg', 'sg'], ['co.jp', 'jp'], ['com.hk', 'hk'], ['nl', 'nl'], ['be', 'be'], ['ch', 'ch'], ['at', 'at'], ['se', 'se'], ['no', 'no'],
+      ['dk', 'dk'], ['fi', 'fi'], ['pl', 'pl'], ['pt', 'pt'], ['gr', 'gr'], ['ie', 'ie'], ['co.nz', 'nz'], ['com.br', 'br'], ['com.mx', 'mx'], ['co.kr', 'kr'],
+      ['com.tr', 'tr'], ['co.id', 'id'], ['com.ph', 'ph'], ['com.my', 'my'], ['com.vn', 'vn'], ['co.th', 'th'], ['com.pk', 'pk'], ['com.sa', 'sa'], ['com.eg', 'eg'],
+      ['com.ng', 'ng'], ['co.ke', 'ke'], ['com.np', 'np'], ['ru', 'ru'], ['hu', 'hu'], ['ro', 'ro'], ['bg', 'bg'], ['cz', 'cz'], ['sk', 'sk'], ['si', 'si'],
+      ['hr', 'hr'], ['lt', 'lt'], ['lv', 'lv'], ['ee', 'ee'], ['is', 'is']],
     label: ([tld]) => `google.${tld}`,
     host: /(^|\.)google\.[a-z.]+$/,
     home: ([tld, gl]) => `https://www.google.${tld}/?hl=en&gl=${gl}`,
@@ -284,6 +292,174 @@ const ENGINES = {
     results: '[data-testid=result], #links',
     more: '#more-results, button:has-text("More results"), button:has-text("More Results")',
     blocked: async (p) => /anomaly/.test(p.url()) || await cssHit(p, '.anomaly-modal__modal') || textHit(p, /select all squares/i),
+  },
+  // Owner, 2026-10-13: "you can use search engines which are not indian famous as well like yandex" --
+  // a different crawler/index than the other four, so it is unlikely to share their rate limits or
+  // blocks; worth trying when the usual engines are all resting for a given browser.
+  yandex: {
+    regions: [['en'], ['com']],
+    label: ([lang]) => `yandex(${lang})`,
+    host: /(^|\.)yandex\.(com|ru)$/,
+    home: ([lang]) => `https://yandex.com/?lang=${lang}`,
+    search: ([lang], q) => `https://yandex.com/search/?text=${encodeURIComponent(q)}&lang=${lang}`,
+    box: 'input[name=text], textarea[name=text]',
+    resultsUrl: /\/search\//,
+    results: '#search-result, .serp-list, .main__content, ul.serp-list',
+    more: 'a.pager__item_kind_next, a[aria-label="Next page"], a:has-text("Next page")',
+    blocked: async (p) => /showcaptcha/.test(p.url()) || textHit(p, /confirm that you are not a robot|подтвердите, что запросы отправляете вы/i),
+  },
+  // Owner, 2026-10-13: "use top 10 search engine of the world" -- rounding the set out to the ten most
+  // used engines globally (google, bing, yandex, ddg and brave above; yahoo, ecosia and qwant
+  // here). Each is a distinct crawler/index and rate-limits independently of the others, so a browser
+  // blocked on four engines may still have a fifth or sixth open. Selectors are best-effort from each
+  // engine's current markup (like the ones above) and may need a touch-up if an engine changes its DOM.
+  yahoo: {
+    regions: [['in']],
+    label: () => 'yahoo',
+    host: /(^|\.)search\.yahoo\.com$/,
+    home: () => 'https://search.yahoo.com/',
+    search: (r, q) => `https://search.yahoo.com/search?p=${encodeURIComponent(q)}`,
+    box: 'input[name=p]',
+    resultsUrl: /\/search(;|\?)/,
+    results: '#web, #results',
+    more: 'a.next, a[aria-label="Next"]',
+    blocked: async (p) => textHit(p, /are you a robot|verify you are human/i) || await cssHit(p, 'iframe[src*="recaptcha"]'),
+  },
+  ecosia: {
+    regions: [['en']],
+    label: () => 'ecosia',
+    host: /(^|\.)ecosia\.org$/,
+    home: () => 'https://www.ecosia.org/',
+    search: (r, q) => `https://www.ecosia.org/search?q=${encodeURIComponent(q)}`,
+    box: 'input[name=q]',
+    resultsUrl: /\/search\?/,
+    results: '.mainline, .results, main',
+    more: 'a.pagination-next, button:has-text("Load more results")',
+    blocked: async (p) => textHit(p, /unusual traffic|verify you are human/i),
+  },
+  // Owner, 2026-10-14: "Ask.com is dead, while AOL Search is still technically active (though heavily
+  // reduced and powered by Bing)" -- confirmed live: aol.com/search 301s to a Yahoo-hosted results page
+  // (search.yahoo.com/yhs/?...hspart=aol), same #web/#results/#main markup as Yahoo's own, box id=yschsp.
+  aol: {
+    regions: [['in']],
+    label: () => 'aol',
+    host: /(^|\.)(aol|search\.yahoo)\.com$/,
+    home: () => 'https://www.aol.com/',
+    search: (r, q) => `https://www.aol.com/search?q=${encodeURIComponent(q)}`,
+    box: 'input#yschsp, input[name=q]',
+    resultsUrl: /\/yhs\/|\/search\?/,
+    results: '#web, #results, #main',
+    more: 'a.next, a[aria-label="Next"]',
+    blocked: async (p) => textHit(p, /are you a robot|verify you are human/i) || await cssHit(p, 'iframe[src*="recaptcha"]'),
+  },
+  qwant: {
+    regions: [['en']],
+    label: () => 'qwant',
+    host: /(^|\.)qwant\.com$/,
+    home: () => 'https://www.qwant.com/',
+    search: (r, q) => `https://www.qwant.com/?q=${encodeURIComponent(q)}&t=web`,
+    box: 'input[name=q]',
+    resultsUrl: /[?&]q=/,
+    results: '[data-testid="webResult"], .web_results, main',
+    more: 'button:has-text("See more"), button:has-text("Next")',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
+  },
+  // Owner, 2026-10-14: "these all are search engines... you can utilise all in combination" -- rounding
+  // out further with the rest of the pasted list that can be automated anonymously. Several of these
+  // share an underlying index (startpage -> Google; mojeek/swisscows/the InfoSpace trio -> Bing or
+  // their own), but each is still a separate domain with its own rate limit and session, so a block on
+  // one doesn't mean a block on the others. Selectors are best-effort, same as the ones above.
+  // Live-tested 2026-10-14 (owner: "tested each one individually how would it react"), curl with a real
+  // browser UA, no JS/cookies (worst case for a headless Playwright worker, which has both):
+  // google/bing/brave/ddg/qwant/startpage/mojeek/swisscows all returned a real results page (200).
+  // ecosia/yep/metacrawler/webcrawler 403'd (Cloudflare-style bot block) and yandex redirected straight
+  // to /showcaptcha -- kept anyway since the existing blocked()/cooldown logic already skips a blocked
+  // combo and moves on at near-zero cost, and a real browser's JS/cookies can sometimes pass what curl
+  // can't. you.com was dropped entirely: every attempt now redirects to a login wall, a guaranteed
+  // waste every single time rather than an occasional block.
+  startpage: {
+    regions: [['en']],
+    label: () => 'startpage',
+    host: /(^|\.)startpage\.com$/,
+    home: () => 'https://www.startpage.com/',
+    search: (r, q) => `https://www.startpage.com/sp/search?query=${encodeURIComponent(q)}`,
+    box: 'input[name=query]',
+    resultsUrl: /\/sp\/search/,
+    results: '.w-gl__result, #main, main',
+    more: 'a.pagination__next, a[aria-label="Next page"]',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
+  },
+  mojeek: {
+    regions: [['en']],
+    label: () => 'mojeek',
+    host: /(^|\.)mojeek\.com$/,
+    home: () => 'https://www.mojeek.com/',
+    search: (r, q) => `https://www.mojeek.com/search?q=${encodeURIComponent(q)}`,
+    box: 'input[name=q]',
+    resultsUrl: /\/search\?/,
+    results: '#results, .results-standard, main',
+    more: 'a.pagination-next, a[rel="next"]',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
+  },
+  yep: {
+    regions: [['en']],
+    label: () => 'yep',
+    host: /(^|\.)yep\.com$/,
+    home: () => 'https://yep.com/',
+    search: (r, q) => `https://yep.com/web?q=${encodeURIComponent(q)}`,
+    box: 'input[name=q]',
+    resultsUrl: /\/web\?/,
+    results: '#main, .results, main',
+    more: 'a[aria-label="Next page"], button:has-text("Next")',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
+  },
+  swisscows: {
+    regions: [['en']],
+    label: () => 'swisscows',
+    host: /(^|\.)swisscows\.com$/,
+    home: () => 'https://swisscows.com/en/web',
+    search: (r, q) => `https://swisscows.com/en/web?query=${encodeURIComponent(q)}`,
+    box: 'input[name=query]',
+    resultsUrl: /\/web\?/,
+    results: '.web-results, #results, main',
+    more: 'a.next, button:has-text("Next")',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
+  },
+  dogpile: {
+    regions: [['en']],
+    label: () => 'dogpile',
+    host: /(^|\.)dogpile\.com$/,
+    home: () => 'https://www.dogpile.com/',
+    search: (r, q) => `https://www.dogpile.com/serp?q=${encodeURIComponent(q)}`,
+    box: 'input[name=q]',
+    resultsUrl: /\/serp\?/,
+    results: '.web, #results, main',
+    more: 'a.pagination-next, a:has-text("Next")',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
+  },
+  metacrawler: {
+    regions: [['en']],
+    label: () => 'metacrawler',
+    host: /(^|\.)metacrawler\.com$/,
+    home: () => 'https://www.metacrawler.com/',
+    search: (r, q) => `https://www.metacrawler.com/serp?q=${encodeURIComponent(q)}`,
+    box: 'input[name=q]',
+    resultsUrl: /\/serp\?/,
+    results: '.web, #results, main',
+    more: 'a.pagination-next, a:has-text("Next")',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
+  },
+  webcrawler: {
+    regions: [['en']],
+    label: () => 'webcrawler',
+    host: /(^|\.)webcrawler\.com$/,
+    home: () => 'https://www.webcrawler.com/',
+    search: (r, q) => `https://www.webcrawler.com/serp?q=${encodeURIComponent(q)}`,
+    box: 'input[name=q]',
+    resultsUrl: /\/serp\?/,
+    results: '.web, #results, main',
+    more: 'a.pagination-next, a:has-text("Next")',
+    blocked: async (p) => textHit(p, /verify you are human|unusual traffic/i),
   },
 };
 const ENGINES_ON = [...arg('--engines', 'google,bing,brave').split(',').filter(Boolean), ...(flag('--ddg') ? ['ddg'] : [])];
@@ -785,21 +961,59 @@ async function mapsPartners(b, mapsUrl) {
 }
 
 // ---- one stay ---------------------------------------------------------------
+// Owner, 2026-10-14: "name fuzzy logic already i told you to incorporate always" -- close()/relevance()
+// below only forgive a small spelling gap in a RESULT we already got back; they can't rescue a stay whose
+// listing uses a different common transliteration than ours if the query itself never used that spelling
+// (confirmed live: "ShriJi Inn" found nothing on Agoda, but the real page is "Shree Ji Inn" -- Google
+// didn't surface it for any query spelled our way, even unrestricted, even with the right words otherwise).
+// Common Hindi-origin English transliteration pairs, applied to whole words only, case-insensitive.
+const SPELLING_PAIRS = [
+  [/\bshri\b/gi, 'shree'], [/\bshree\b/gi, 'shri'], [/\bsri\b/gi, 'shri'],
+  [/\bbhawan\b/gi, 'bhavan'], [/\bbhavan\b/gi, 'bhawan'],
+  [/\bniwas\b/gi, 'nivas'], [/\bnivas\b/gi, 'niwas'],
+  [/\blaxman\b/gi, 'lakshman'], [/\blakshman\b/gi, 'laxman'],
+  [/\bganga\b/gi, 'gunga'], [/\bgunga\b/gi, 'ganga'],
+  [/\bkunj\b/gi, 'kunj'],
+  [/\bjee\b/gi, 'ji'], [/\bji\b/gi, 'jee'],
+];
+// Any of these already narrows a bare proper name toward lodging results on its own; "Hotel" below is
+// only for names that have none of them (a possessive or placename alone is the weakest kind of query).
+const KIND_WORDS = /\b(?:hotel|hotels|resort|resorts|homestay|homestays|guest ?house|guesthouse|hostel|hostels|villa|villas|cottage|cottages|apartment|apartments|lodge|lodges|dharamshala|ashram|aashram|inn|camp|camps|retreat|retreats|suites?)\b/i;
+function spellingVariant(name) {
+  for (const [re, to] of SPELLING_PAIRS) {
+    if (re.test(name)) { re.lastIndex = 0; const alt = name.replace(re, to); if (alt !== name) return alt; }
+  }
+  return null;
+}
 function queries(stay) {
   // lessons from 186 hand checks (2026-10-05): the area helps, Booking.com stays second for the quick pass,
   // one OR search covers the sites that were cut off, typos in our names are fixed first
   const n = coreName(stay.name).replace(/\bhotal\b/gi, 'Hotel').replace(/\b(hotel)\s+hotel\b/gi, '$1').replace(/\s+/g, ' ').trim(), c = stay.city;
+  const nAlt = spellingVariant(n);
   const area = stay.area && !/^(elsewhere|outside)\b/i.test(stay.area) ? stay.area.split('&')[0].trim() : '';
   const withArea = area && !n.toLowerCase().includes(area.toLowerCase()) ? `${n} ${area} ${c}` : `${n} ${c}`;
   const hostel = /hostel|backpack|zostel|dorm/i.test(`${stay.name} ${stay.type || ''}`), oyo = /\b(oyo|townhouse|capital o|collection o|spot on|flagship)\b/i.test(stay.name);
-  const q = (x) => (x.startsWith('site:') ? `${x} ${n} ${c}` : `${n} ${c} ${x}`);
+  // Owner, 2026-10-14: "search engine without pre site name works more better always" -- dropped every
+  // site: operator (confirmed live: site:agoda.com returned zero results for a page we then verified is
+  // live and correctly spelled; Google's site: operator is known to suppress results it otherwise indexes
+  // fine). Plain "<name> <city> <platform keyword>" queries replace every site:<domain> query below.
+  const q = (platformWord) => `${n} ${c} ${platformWord}`;
   // quick pass: the name with its area, then Booking.com
-  if (!DEEP) return [withArea, `site:booking.com ${n} ${c}`].slice(0, SEARCHES_PER_STAY);
+  if (!DEEP) return [withArea, `${n} ${c} booking.com`].slice(0, SEARCHES_PER_STAY);
   // Booking.com is the preferred OTA (owner, 2026-10-10): search it before other OTA-specific queries.
   // If its property page verifies, processStay returns immediately; other candidate OTAs remain fallbacks.
-  return [withArea, `site:booking.com ${n} ${c}`, `${n} ${c} makemytrip OR easemytrip OR trip.com`, q('site:agoda.com'),
-    ...(hostel ? [q('site:hostelworld.com')] : []), ...(oyo ? [q('site:oyorooms.com')] : []), q('airbnb'), q('site:goibibo.com'),
-    q('site:expedia.co.in'), q('site:cleartrip.com')].slice(0, SEARCHES_PER_STAY);
+  // Owner, 2026-10-14: "if dont have hotel then only you should use if not found... if that has it
+  // already then doesnt matter" -- a last-resort fallback appending "Hotel" when the name has no kind
+  // word of its own at all (a bare proper name alone is a weak query; "Hotel" narrows it back toward
+  // lodging results). Skipped entirely when the name already has hotel, or any other kind word
+  // (resort/homestay/guesthouse/...), since forcing "Hotel" on those would be wrong, not just redundant.
+  const hasKindWord = KIND_WORDS.test(n);
+  const nHotel = hasKindWord ? null : `${n} Hotel`;
+  return [withArea, `${n} ${c} booking.com`, `${n} ${c} makemytrip OR easemytrip OR trip.com`, q('agoda'),
+    ...(nAlt ? [`${nAlt} ${c} booking.com`, `${nAlt} ${c} agoda`] : []),
+    ...(hostel ? [q('hostelworld')] : []), ...(oyo ? [q('oyorooms')] : []), q('airbnb'), q('goibibo'),
+    q('expedia'), q('cleartrip'), ...(nHotel ? [`${nHotel} ${c} booking.com`] : [])]
+    .slice(0, SEARCHES_PER_STAY + (nHotel ? 1 : 0)); // +1 so this last-resort query always gets its turn, never just crowded out by the others
 }
 // How much a link looks like this stay: core-name words in its address slug or Google result
 // title, small spelling differences allowed ("pardesi" ~ "paradesi").
@@ -1111,14 +1325,11 @@ if (SYNC_ONLY) {
   const mine = (r) => shareOf(r.key) === SHARD - 1 && !OWN_KEYS.has(r.key);
   const fresh = tsv(QUEUE).filter(mine);
   const retry = tsv(UNFOUND).filter((r) => r.status === 'retry' && mine(r));
-  // likeliest first (owner, 2026-10-05: "faster"): a stay with guest reviews and a price is almost always on a
-  // booking site; Google Maps places without either come last (random order within each group)
-  const STAY = {};
-  for (const f of ['scripts/stays/.cache/stays.json', 'scripts/stays/.cache/haridwar/stays.json']) {
-    try { for (const x of JSON.parse(readFileSync(ROOT + f, 'utf8'))) STAY[x.id] = x; } catch { /* no crawl here */ }
-  }
-  const likely = (r) => { const x = STAY[r.key] || {}; return (Number(x.c || r.reviews) > 0 ? 2 : 0) + (x.p || Number(r.price_from_inr) > 0 ? 1 : 0) + (r.key.startsWith('g-') ? 0 : 1); };
-  const ordered = (rows) => shuffle(rows).map((r) => [likely(r), r]).sort((a, b) => b[0] - a[0]).map(([, r]) => r);
+  // Owner, 2026-10-13: "i dont want you pick first or last rows first it should be random row lines to
+  // be picked up across lengths" -- the old "likeliest first" scoring (reviews/price present) made a
+  // consistent subset of rows surface first every run regardless of their position in the file. Now
+  // every row in the shard has an equal chance, picked purely at random across the whole list.
+  const ordered = (rows) => shuffle(rows);
   const picked = (DEEP ? ordered(retry) : ordered(fresh));
   if (flag('--reverse')) picked.reverse();
   const todo = picked.slice(OFFSET, OFFSET + LIMIT);

@@ -34,13 +34,32 @@ const LOCK = `${ROOT}docs/booking-links/.lists-lock`;
 // Dialed back 6 -> 4 on 2026-10-13: 3 danger-stops (swap exhaustion) in ~20 min at 4 workers x
 // concurrency 6 -- more net downtime recovering than the extra concurrency was worth. 4 workers x
 // concurrency 4 traded some per-stay parallelism for staying up continuously instead of flapping.
-const COMMON = ['--engines', 'google,bing,brave,ddg', '--gap', '2-4', '--limit', '4000', '--concurrency', '4'];
+// Raised 4 -> 5 later on 2026-10-13 after the owner freed ~84GB of disk (11GB -> 95GB free): disk was
+// the thing capping available swap, so there is real headroom now. Staying short of 6 since swap
+// itself (not disk) is still only moderately free, not abundant -- same danger-stop risk if pushed
+// straight back to the old ceiling.
+// 20 engines (owner, 2026-10-13/14: "use top 10 search engine of the world", then "these all are search
+// engines... you can utilise all in combination") -- each is its own domain/session with its own rate
+// limit even where a few share an underlying index, so a browser blocked on several engines still has
+// plenty of others open; see the ENGINES table in google_ota_search.mjs. The random browser x engine
+// pairing and per-combo block cooldown (rest(), combos) already does the "discard and switch" the
+// owner asked for -- this just gives it a much bigger pool to draw from before running dry.
+// Owner, 2026-10-14: ask, lycos and excite dropped after checking live -- ask.com now serves as a
+// static site with no search backend, and lycos/excite's search subdomains no longer resolve at all
+// (NXDOMAIN). aol stays (owner: "AOL Search is still technically active, though... powered by Bing") --
+// aol.com/search redirects to a live Yahoo-hosted results page, confirmed working. 17 real engines left.
+// Owner, 2026-10-14: "the blocked one i can solve captcha for now... send one by one... across browsers"
+// -- --wait-captcha pauses a worker on a challenge page in its own (visible, --attach) browser window
+// and waits for a human solve before continuing, instead of just cooling down and skipping. Workers run
+// on a staggered cycle, not in lockstep, so in practice these surface one at a time, not all together.
+const COMMON = ['--engines', 'google,bing,brave,ddg,yandex,yahoo,ecosia,aol,qwant,startpage,mojeek,yep,swisscows,dogpile,metacrawler,webcrawler', '--gap', '2-4', '--limit', '4000', '--concurrency', '5', '--wait-captcha', '180'];
 // Base gap tightened 4-8s -> 2-4s (owner, 2026-10-13: "do it little faster than human now",
 // explicitly overriding the earlier "not much slower than a person" floor) after 10+ hours
 // of data showing near-zero blocking across all 5 engines. The adaptive pace system in
 // google_ota_search.mjs (adjustPace) still applies on top of this base and will still slow
 // down automatically on an actual block/challenge.
 const ROUNDS = 4;
+const EMPTY_LOOPS_LIMIT = 3; // give up on a shard only after 3 full plan loops in a row with zero work done
 // Keep every available search browser on a disjoint shard. Playwright Firefox is a headless worker
 // on macOS; its managed runtime is not a debugging-port browser.
 //
@@ -294,9 +313,19 @@ for (;;) {
       w.pid = 0;
       if (t.unresolved && t.unresolved >= worked) { w.notBefore = now + 3 * 60e3; say(`${w.name}: its engines were all resting or blocked; again in 3 min`); continue; }
       const [mode] = w.plan[w.step];
+      if (worked > 0) w.emptyLoops = 0;
       if (mode === 'quick' || worked === 0 || ++w.rounds >= ROUNDS) {
         if (w.step + 1 < w.plan.length) { w.step++; w.rounds = 0; say(`${w.name}: on to ${w.plan[w.step].join(' ')}`); }
-        else { w.finished = true; say(`${w.name}: finished`); continue; }
+        else {
+          // Owner, 2026-10-13: "when they were idle you could have given new work" -- exhausting the
+          // whole plan used to finish a worker forever, even though new 'retry'/'none' rows keep
+          // arriving in every shard from ongoing review settlements elsewhere. Loop back to the start
+          // of its own plan instead, so it keeps picking up anything new; only give up for real after
+          // EMPTY_LOOPS_LIMIT full loops in a row that each did zero work (a stuck shard, not a busy one).
+          w.emptyLoops = (worked === 0 ? (w.emptyLoops || 0) + 1 : 0);
+          if (w.emptyLoops >= EMPTY_LOOPS_LIMIT) { w.finished = true; say(`${w.name}: finished (${EMPTY_LOOPS_LIMIT} empty loops in a row)`); continue; }
+          w.step = 0; w.rounds = 0; say(`${w.name}: looping back to ${w.plan[0].join(' ')} (empty loops: ${w.emptyLoops})`);
+        }
       }
     }
     start(w);
