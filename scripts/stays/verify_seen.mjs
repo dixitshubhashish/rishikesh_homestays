@@ -1,58 +1,42 @@
 #!/usr/bin/env node
-// Opens the booking-site pages the search harvested (docs/booking-links/seen-pages.tsv: up to 6 property links per
-// search) FAST: headless browser, 8 pages at once, no images, styles, fonts or media, DOM-ready only, 12 s at most
-// per page: a few seconds for the whole batch. Reads the property's name, its pin and its town (the JSON-LD and meta
-// tags the booking sites put in the HTML) and writes docs/booking-links/seen-pages-checked.tsv. Only pages whose pin is
-// in Rishikesh or Haridwar (25 km of either) count (owner, 2026-10-06). map_seen_pages.py maps them to stays.
+// Opens the booking-site pages the search harvested (candidate_pages, status 'unchecked': up to 6 property links per
+// search, scripts/stays/db.mjs) FAST: headless browser, 8 pages at once, no images, styles, fonts or media, DOM-ready only,
+// 12 s at most per page: a few seconds for the whole batch. Reads the property's name, its pin and its town (the JSON-LD and
+// meta tags the booking sites put in the HTML) and UPDATEs the row to status 'checked'. Only pages whose pin is in Rishikesh
+// or Haridwar (25 km of either) count (owner, 2026-10-06). map_seen_pages.py maps them to stays.
 //
 // Besides the pin it stores the evidence import_new_stays.py needs to auto-list a page as a new stay (owner, 2026-10-07):
 // the JSON-LD lodging type (ltype), where the name came from (name_src), the address locality and postal code, signals
 // (rated = a guest rating in the data, bookable = an availability/reserve button) and the final URL after redirects.
 //
 //   node scripts/stays/verify_seen.mjs [--limit 400] [--workers 8] [--refresh-days 10]
-// --refresh-days N also re-opens `ok` pages read more than N days ago (or before the evidence columns existed) that no stay
-// of ours lists yet, so a candidate's evidence stays fresh.
+// --refresh-days N also re-opens `checked`/`held` rows whose state is `ok`, read more than N days ago (or missing the
+// evidence columns), that no stay of ours lists yet, so a candidate's evidence stays fresh.
 import { chromium } from 'playwright';
-import { readFileSync, appendFileSync, existsSync, writeFileSync, renameSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { platformOf, cleanUrl } from './ota-match.mjs';
 import { fileURLToPath } from 'url';
+import { getDb } from './db.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const BL = `${ROOT}docs/booking-links/`;
-const SEEN = `${BL}seen-pages.tsv`, CHECKED = `${BL}seen-pages-checked.tsv`;
 const arg = (n, d) => (process.argv.includes(n) ? process.argv[process.argv.indexOf(n) + 1] : d);
 const LIMIT = Number(arg('--limit', 400)), WORKERS = Number(arg('--workers', 8));
 const REFRESH_DAYS = Number(arg('--refresh-days', 0));
 // the centres of scripts/stays/cities.py (a test keeps them equal); a pin's town is the NEARER centre within 25 km
-const CENTRES = { rishikesh: [30.103, 78.297], haridwar: [29.945, 78.164] };
+const CENTRES = { rishikesh: [30.103, 78.297], haridwar: [29.945, 78.164], dehradun: [30.3244, 78.0419], mussoorie: [30.4598, 78.0643] };
 const km = (a, b) => Math.hypot((a[0] - b[0]) * 111.32, (a[1] - b[1]) * 111.32 * 0.87);
 const townOf = (pin) => {
   const [name, d] = Object.entries(CENTRES).map(([n, c]) => [n, km(pin, c)]).sort((a, b) => a[1] - b[1])[0];
   return d <= 25 ? name : '';
 };
+// kept for coverage-report.test.js, which checks this list against CHECKED_COLS (the DB columns the same evidence fills)
 const HEADER = ['url', 'platform', 'name', 'lat', 'lng', 'town', 'state', 'seen_for', 'checked', 'ltype', 'name_src', 'locality', 'postal', 'signals', 'final_url'];
 const norm = (u) => u.split('?')[0].replace(/\/+$/, '').toLowerCase();
-const lines = (f) => (existsSync(f) ? readFileSync(f, 'utf8').split(/\r?\n/).slice(1).filter(Boolean).map((l) => l.split('\t')) : []);
 
-// rows written before the evidence columns existed have 9 fields: pad them once, atomically (map_seen_pages.py may be reading)
-function migrateHeader() {
-  if (!existsSync(CHECKED)) return;
-  const text = readFileSync(CHECKED, 'utf8');
-  const first = text.split(/\r?\n/, 1)[0];
-  if (first.split('\t').includes('ltype')) return;
-  const out = text.split(/\r?\n/).filter(Boolean).map((l, i) => (i === 0 ? HEADER.join('\t') : [...l.split('\t'), ...Array(HEADER.length).fill('')].slice(0, HEADER.length).join('\t')));
-  const tmp = `${CHECKED}.tmp-${process.pid}`;
-  writeFileSync(tmp, out.join('\n') + '\n');
-  for (let i = 0; i < 20; i++) {
-    try { renameSync(tmp, CHECKED); return; } catch (e) { if (i === 19) throw e; Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 100); }
-  }
-}
-migrateHeader();
+const db = getDb();
 
 // the latest row per page wins (a re-read appends)
-const latest = new Map();
-for (const c of lines(CHECKED)) latest.set(norm(c[0]), c);
-const done = new Set(latest.keys());
 // pages a stay of ours lists (the booking-stays registry, owner 2026-10-07) need no re-read
 const registered = new Set();
 try {
@@ -61,31 +45,37 @@ try {
     for (const u of [c[8], ...(c[9] || '').split(';').map((x) => x.split('|')[1])]) if (u) registered.add(norm(u));
   }
 } catch { /* no registry yet */ }
-if (REFRESH_DAYS > 0) {
-  const cutoff = new Date(Date.now() - REFRESH_DAYS * 86400e3).toISOString().slice(0, 10);
-  for (const [n, c] of latest) if (c[6] === 'ok' && !registered.has(n) && ((c[8] || '') < cutoff || (!c[9] && !c[10]))) done.delete(n);
-}
 // pages a stay already has need no look: found.tsv, ota-links.tsv and the places' links
 const have = new Set();
 for (const f of [`${BL}found.tsv`, `${ROOT}scripts/stays/ota-links.tsv`, `${ROOT}scripts/stays/.cache/places/ota-links.tsv`]) {
   if (!existsSync(f)) continue;
   for (const l of readFileSync(f, 'utf8').split(/\r?\n/).slice(1)) { const c = l.split('\t'); const u = c.find((x) => /^https?:\/\//.test(x)); if (u) have.add(norm(u)); }
 }
+
 const queue = [];
-for (const [url, platform, label, seenFor] of lines(SEEN)) {
-  const n = norm(url);
-  if (done.has(n) || have.has(n) || !platformOf(url)) continue;
-  done.add(n); // once per run
-  queue.push({ url, platform, label, seenFor });
+for (const r of db.prepare(`SELECT url, platform_key as platform, label, seen_for FROM candidate_pages WHERE status = 'unchecked'`).all()) {
+  const n = norm(r.url);
+  if (have.has(n) || !platformOf(r.url)) continue;
+  queue.push({ url: r.url, platform: r.platform, label: r.label, seenFor: r.seen_for });
 }
-// ok pages due for a re-read (a page no stay of ours lists, so `have` does not hold it)
+// checked/held pages due for a re-read (a page no stay of ours lists, so `have` does not hold it): state ok, stale or
+// missing its evidence columns, not registered. A held page is included too: its evidence may refresh and requalify it.
 if (REFRESH_DAYS > 0) {
-  for (const [n, c] of latest) if (c[6] === 'ok' && !registered.has(n) && !done.has(n) && platformOf(c[0])) { done.add(n); queue.push({ url: c[0], platform: c[1], label: '', seenFor: c[7] }); }
+  const cutoff = new Date(Date.now() - REFRESH_DAYS * 86400e3).toISOString().slice(0, 10);
+  const stale = db.prepare(`
+    SELECT url, platform_key as platform, seen_for FROM candidate_pages
+    WHERE status IN ('checked', 'held') AND state = 'ok'
+      AND (checked < ? OR checked IS NULL OR (COALESCE(ltype, '') = '' AND COALESCE(name_src, '') = ''))
+  `).all(cutoff);
+  for (const r of stale) {
+    const n = norm(r.url);
+    if (registered.has(n) || !platformOf(r.url)) continue;
+    queue.push({ url: r.url, platform: r.platform, label: '', seenFor: r.seen_for });
+  }
 }
 // Booking.com first: its pages carry the pin in plain HTML
 queue.sort((a, b) => (b.platform === 'Booking.com') - (a.platform === 'Booking.com'));
 const batch = queue.slice(0, LIMIT);
-if (!existsSync(CHECKED)) writeFileSync(CHECKED, HEADER.join('\t') + '\n');
 
 const extract = () => {
   let name = '', pin = null, ltype = '', locality = '', postal = '', rated = false, ldName = false;
@@ -124,6 +114,12 @@ function sameProperty(url, final) {
   try { return new URL(cleanUrl(url, p.name)).pathname.toLowerCase() === new URL(cleanUrl(final, q.name)).pathname.toLowerCase(); } catch { return false; }
 }
 
+const updStmt = db.prepare(`
+  UPDATE candidate_pages SET platform_key = ?, name = ?, lat = ?, lng = ?, town = ?, state = ?, seen_for = ?, checked = ?,
+    ltype = ?, name_src = ?, locality = ?, postal = ?, signals = ?, final_url = ?, status = 'checked'
+  WHERE url = ?
+`);
+
 const browser = await chromium.launch();
 const started = Date.now();
 let n = 0, ok = 0;
@@ -154,8 +150,9 @@ const worker = async () => {
     n++; if (state === 'ok') ok++;
     const clean = (v) => String(v ?? '').replace(/[\t\n\r]+/g, ' ');
     const signals = [ev.rated ? 'rated' : '', ev.bookable ? 'bookable' : ''].filter(Boolean).join(',');
-    appendFileSync(CHECKED, [job.url, job.platform, clean(name), pin?.[0] ?? '', pin?.[1] ?? '', town, state, job.seenFor, new Date().toISOString().slice(0, 10),
-      clean(ev.ltype), clean(ev.nameSrc), clean(ev.locality), clean(ev.postal), signals, clean(finalUrl)].join('\t') + '\n');
+    updStmt.run(job.platform, clean(name), pin?.[0] ?? null, pin?.[1] ?? null, town || null, state, job.seenFor,
+      new Date().toISOString().slice(0, 10), clean(ev.ltype), clean(ev.nameSrc), clean(ev.locality), clean(ev.postal),
+      signals, clean(finalUrl), job.url);
   }
 };
 await Promise.all(Array.from({ length: WORKERS }, worker));

@@ -69,7 +69,7 @@ if (cmd === 'unfind') { // a second look disproved a found link: review.tsv for 
   });
   out(`unfound + review: ${row.name}`);
 }
-const stay = [...tsv(QUEUE), ...tsv(UNFOUND)].find((r) => r.key === key);
+const stay = [...tsv(QUEUE), ...tsv(UNFOUND), ...tsv(OWNER_SEARCH)].find((r) => r.key === key);
 if (!cmd || !key) out('usage: see the top of scripts/stays/record_manual.mjs', 1);
 if (!stay) out(`skip: ${key} is not unsorted any more (a worker or another check sorted it)`);
 
@@ -95,11 +95,13 @@ if (cmd === 'verified') {
     if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
     if (j.verdict === 'verified') {
       writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
+      writeTsv(OWNER_SEARCH, UNFOUND_COLS, tsv(OWNER_SEARCH).filter((r) => r.key !== key));
       writeTsv(FOUND, FOUND_COLS, [...tsv(FOUND).filter((r) => r.key !== key), { key, status: 'verified', platform: p.name, url: clean,
         note: `page shows "${title}"${address ? `, address "${address}"` : ''}; ${j.why}`, name: stay.name, city: stay.city, source: SOURCE }]);
     } else {
       writeTsv(REVIEW, REVIEW_COLS, [...tsv(REVIEW).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, platform: p.name, url: clean, page_shows: `${title}${address ? ` | ${address}` : ''}`, why_review: j.why }]);
       writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
+      writeTsv(OWNER_SEARCH, UNFOUND_COLS, tsv(OWNER_SEARCH).filter((r) => r.key !== key));
     }
   });
   out(j.verdict === 'verified' ? `FOUND ${stay.name} -> ${p.name} ${clean} (${j.why})` : `REVIEW ${stay.name} -> ${p.name} ${clean} (${j.why})`);
@@ -111,6 +113,7 @@ if (cmd === 'review') {
     writeTsv(REVIEW, REVIEW_COLS, [...tsv(REVIEW).filter((r) => r.key !== key), { key, name: stay.name, city: stay.city, platform, url, page_shows: shows, why_review: why }]);
     if (existsSync(QUEUE)) writeTsv(QUEUE, QUEUE_COLS, tsv(QUEUE).filter((r) => r.key !== key));
     writeTsv(UNFOUND, UNFOUND_COLS, tsv(UNFOUND).filter((r) => r.key !== key));
+    writeTsv(OWNER_SEARCH, UNFOUND_COLS, tsv(OWNER_SEARCH).filter((r) => r.key !== key));
   });
   out(`review ${stay.name}`);
 }
@@ -123,8 +126,10 @@ if (['none', 'retry', 'manual'].includes(cmd)) {
     if (cmd === 'none') {
       // Owner, 2026-10-14: "move it to new tsv so that i would manually search" -- same routing as
       // google_ota_search.mjs's record(): a genuine "nothing found" leaves unfound.tsv entirely.
-      writeTsv(OWNER_SEARCH, UNFOUND_COLS, [...tsv(OWNER_SEARCH), row]);
+      // Re-recording a row already in owner-to-search.tsv (this second pass) replaces its old log line.
+      writeTsv(OWNER_SEARCH, UNFOUND_COLS, [...tsv(OWNER_SEARCH).filter((r) => r.key !== key), row]);
     } else {
+      writeTsv(OWNER_SEARCH, UNFOUND_COLS, tsv(OWNER_SEARCH).filter((r) => r.key !== key));
       writeTsv(UNFOUND, UNFOUND_COLS, [...tsv(UNFOUND), row]);
     }
   });

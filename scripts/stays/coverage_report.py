@@ -7,8 +7,9 @@ the registry) prints n/a instead of failing.
   python3 scripts/stays/coverage_report.py [--json] [--root DIR]
 
 Sections: site stays per city (directory / Google Maps / booking-found, each linked and unlinked, our own 3), the search's open
-work (unfound.tsv by status), the seen pages (checked by state and platform, the queue, what new-properties.tsv decided) and
-an estimate of what is still uncovered. The estimates say plainly that headless reads only Booking.com today.
+work (unfound.tsv by status), the seen pages (the DB's candidate_pages table: checked by state and platform, the unchecked
+queue, what import_new_stays.py decided) and an estimate of what is still uncovered. The estimates say plainly that headless
+reads only Booking.com today.
 """
 import json
 import os
@@ -19,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import booking_stays as bs  # noqa: E402
 import import_new_stays as ins  # noqa: E402
 import organise_found as of  # noqa: E402
+import db as stays_db  # noqa: E402
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
@@ -77,32 +79,31 @@ def build():
     rep['search']['found_tsv'] = {city: sum(1 for r in found if r.get('city') == city) for city in MODULES}
     rep['search']['found_tsv']['total'] = len(found)
 
-    # ---- seen pages
-    seen = ins.tsv_rows(os.path.join(bs.BL, 'seen-pages.tsv'))
-    seen_urls = {bs.canon_url(r['url']): r for r in seen if r.get('url')}
-    latest = {}
-    for r in ins.tsv_rows(os.path.join(bs.BL, 'seen-pages-checked.tsv')):
-        if r.get('url'):
-            latest[bs.canon_url(r['url'])] = r
+    # ---- seen pages (candidate_pages: replaces seen-pages.tsv, seen-pages-checked.tsv, new-properties*.tsv)
+    cand_rows = [dict(r) for r in stays_db.get_db().execute(
+        'SELECT url, platform_key as platform, state, status, decision_why FROM candidate_pages').fetchall()]
+    seen_urls = {bs.canon_url(r['url']): r for r in cand_rows}
+    latest = {bs.canon_url(r['url']): r for r in cand_rows if r['status'] != 'unchecked'}
     known = ins.known_urls(set())
     reg_urls = bs.registry_urls(reg)
     by_state = {}
     for r in latest.values():
-        by_state.setdefault(r.get('state', ''), {}).setdefault(r.get('platform', ''), 0)
-        by_state[r.get('state', '')][r.get('platform', '')] += 1
+        by_state.setdefault(r.get('state') or '', {}).setdefault(r.get('platform') or '', 0)
+        by_state[r.get('state') or ''][r.get('platform') or ''] += 1
     queue = {}
     for u, r in seen_urls.items():
-        if u not in latest and u not in known and u not in reg_urls:
-            queue[r.get('platform', '')] = queue.get(r.get('platform', ''), 0) + 1
-    decisions = ins.tsv_rows(os.path.join(bs.BL, 'new-properties-decisions.tsv'))
+        if r['status'] == 'unchecked' and u not in known and u not in reg_urls:
+            queue[r.get('platform') or ''] = queue.get(r.get('platform') or '', 0) + 1
+    # a checked/held row is a new-property candidate (not yet mapped to a stay we have, not yet imported/rejected)
+    newp_candidates = [r for r in cand_rows if r['status'] in ('checked', 'held')]
+    decided_rows = [r for r in cand_rows if r['status'] in ('imported', 'held', 'rejected')]
     dec = {}
     held = {}
-    for d in decisions:
-        dec[d['decision']] = dec.get(d['decision'], 0) + 1
-        if d['decision'] == 'held':
-            w = d['why'].split(' (')[0].split(':')[0][:60]
+    for r in decided_rows:
+        dec[r['status']] = dec.get(r['status'], 0) + 1
+        if r['status'] == 'held' and r.get('decision_why'):
+            w = r['decision_why'].split(' (')[0].split(':')[0][:60]
             held[w] = held.get(w, 0) + 1
-    newp = ins.tsv_rows(os.path.join(bs.BL, 'new-properties.tsv'))
     rep['seen'] = {
         'unique': len(seen_urls),
         'already_known': sum(1 for u in seen_urls if u in known or u in reg_urls),
@@ -110,10 +111,10 @@ def build():
         'checked_total': len(latest),
         'queue': queue,
         'queue_total': sum(queue.values()),
-        'new_properties_rows': len(newp),
+        'new_properties_rows': len(newp_candidates),
         'decisions': dec,
         'held_reasons': held,
-        'decisions_file': bool(decisions),
+        'decisions_file': bool(decided_rows),
     }
 
     # ---- uncovered estimate
@@ -138,7 +139,7 @@ def build():
             plat.setdefault(p, {}).setdefault(st, 0)
             plat[p][st] += n
     ok_total = sum(by_state.get('ok', {}).values())
-    new_share = (sum(1 for n in newp if bs.canon_url(n['url']) in latest and latest[bs.canon_url(n['url'])].get('state') == 'ok') / ok_total) if ok_total else None
+    new_share = (sum(1 for r in newp_candidates if r.get('state') == 'ok') / ok_total) if ok_total else None
     expect = {}
     for p, n in queue.items():
         checked = sum(plat.get(p, {}).values())
@@ -178,7 +179,7 @@ def fmt(rep):
     for st, d in sorted(s['checked'].items()):
         L.append(f"  checked {st or '(blank)':11}{sum(d.values()):>5}  " + ', '.join(f'{p} {n}' for p, n in sorted(d.items(), key=lambda t: -t[1])))
     L.append('  queue by site: ' + (', '.join(f'{p} {n}' for p, n in sorted(s['queue'].items(), key=lambda t: -t[1])) or 'empty'))
-    L.append(f"  new-properties.tsv: {s['new_properties_rows']} row(s); decisions: " + (', '.join(f'{k} {v}' for k, v in sorted(s['decisions'].items())) if s['decisions_file'] else 'n/a (import_new_stays.py has not run for real yet)'))
+    L.append(f"  new-property candidates (candidate_pages, checked/held): {s['new_properties_rows']} row(s); decisions: " + (', '.join(f'{k} {v}' for k, v in sorted(s['decisions'].items())) if s['decisions_file'] else 'n/a (import_new_stays.py has not run for real yet)'))
     for w, n in sorted(s['held_reasons'].items(), key=lambda t: -t[1]):
         L.append(f'    held: {n} x {w}')
     u = rep['uncovered']

@@ -40,6 +40,7 @@ import { coreName, coreWords, matchReason, cleanUrl, platformOf, PLATFORMS } fro
 import { judge, fuzzyName } from './ota-evidence.mjs';
 import { fileURLToPath } from 'url';
 import os from 'os';
+import { getDb } from './db.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const AG = `${ROOT}docs/booking-links/`;
@@ -1061,19 +1062,27 @@ function candidates(res, tried) {
 }
 
 // Every results page shows more than the stay searched for: up to HARVEST_MAX booking-site property links per search go to
-// seen-pages.tsv (owner, 2026-10-06: "add 4-6 properties per search"; 2026-10-07: "5-10 more", Booking.com first), without opening anything here. verify_seen.mjs opens
-// them in parallel within seconds, map_seen_pages.py maps each page whose pin is in Rishikesh or Haridwar to the stay it is
-// (or lists it as a new property), so a search that finds nothing still enlarges the lists.
-const SEEN = `${ROOT}docs/booking-links/seen-pages.tsv`, HARVEST_MAX = 10;
+// the DB's candidate_pages table, status 'unchecked' (owner, 2026-10-06: "add 4-6 properties per search"; 2026-10-07:
+// "5-10 more", Booking.com first), without opening anything here. verify_seen.mjs opens them in parallel within seconds,
+// map_seen_pages.py maps each page whose pin is in Rishikesh or Haridwar to the stay it is (or leaves it `checked`, a new
+// property for import_new_stays.py to consider), so a search that finds nothing still enlarges the pool.
+const HARVEST_MAX = 10;
+const insCandidate = getDb().prepare(`
+  INSERT INTO candidate_pages (url, platform_key, label, seen_for, status) VALUES (?, ?, ?, ?, 'unchecked')
+  ON CONFLICT(url) DO NOTHING
+`);
+const ensurePlatform = getDb().prepare(`INSERT OR IGNORE INTO platforms (platform_key, rank, autolist) VALUES (?, 999, 1)`);
+const harvestTxn = getDb().transaction((rows) => {
+  for (const [url, platform, label, seenFor] of rows) { ensurePlatform.run(platform); insCandidate.run(url, platform, label, seenFor); }
+});
 function harvest(all, stay) {
   if (DRY) return;
   try {
-    if (!existsSync(SEEN)) writeFileSync(SEEN, 'url\tplatform\tlabel\tseen_for\n');
     const seen = new Set();
     const rows = all.filter((c) => c.url && !c.pick && !seen.has(c.url) && seen.add(c.url))
       .sort((a, b) => (b.p.name === 'Booking.com') - (a.p.name === 'Booking.com')).slice(0, HARVEST_MAX)
-      .map((c) => [c.url, c.p.name, (c.label || '').replace(/[\t\n\r]+/g, ' ').slice(0, 160), stay.key].join('\t'));
-    if (rows.length) appendFileSync(SEEN, rows.join('\n') + '\n');
+      .map((c) => [c.url, c.p.name, (c.label || '').replace(/[\t\n\r]+/g, ' ').slice(0, 160), stay.key]);
+    if (rows.length) harvestTxn(rows);
   } catch { /* never stops a search */ }
 }
 

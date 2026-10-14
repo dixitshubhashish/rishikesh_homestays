@@ -10,7 +10,8 @@
 # Steps (docs/booking-links/RULES.md §4): stays that already have a verified link keep it;
 # directory stays -> postcheck_matches.py -> merge_ota.py; Google Maps places (g- keys) ->
 # postcheck against .cache/places/ota-links.tsv -> push_places.mjs -> import_google_stays.py;
-# pages the search found for properties we do not list (docs/booking-links/new-properties.tsv) are AUTO-LISTED first by
+# pages the search found for properties we do not list (candidate_pages rows, status checked/held: scripts/stays/db.py)
+# are AUTO-LISTED first by
 # import_new_stays.py (owner, 2026-10-07: no listing missed): it appends to the committed registry
 # scripts/stays/booking-stays.tsv and writes their verified ota-links.tsv rows (commit both together);
 # then process.py (reads the registry), npm run build:stays, npm run check:stays. BigQuery and the commit are left

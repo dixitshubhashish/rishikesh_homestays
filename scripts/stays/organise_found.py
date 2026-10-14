@@ -2,27 +2,31 @@
 """Found booking links, organised by property (owner, 2026-10-06).
 
 Reads docs/booking-links/found.tsv (what the search found), scripts/stays/ota-links.tsv (the directory stays'
-links on the site) and scripts/stays/.cache/places/ota-links.tsv (Google Maps stays), and writes two copies; the
-originals are never touched, nothing goes to BigQuery:
+links on the site) and scripts/stays/.cache/places/ota-links.tsv (Google Maps stays), and writes the computed,
+deduped result into the local DB (scripts/stays/.cache/stays.db, db.py): the originals are never touched, nothing
+goes to BigQuery. Rebuilt in full (DELETE + INSERT) every run.
 
-  docs/booking-links/found-by-property.tsv   one row per property, the booking sites as columns
+  found_properties   one row per property
       slug              our own: the property's current name, lower case, letters, digits and hyphens only
       key               the key the lists and the site use (a directory slug, or g-<Google place id>)
       google_place_id   ChIJ... for Google Maps stays (the g- key without its prefix): kept for later joins
       listing_id        the site's permanent numeric id, when the stay is listed
       name, name_at_search, city, area, lat, lng, maps_url
       primary_ota, primary_url   the best link: the first OTA of scripts/stays/ota-priority.tsv that has one
-      <ota>_url ...     one column per booking site in priority order (Booking.com first); a new verified
-                        link goes into its site's column
+      urls_json         JSON {ota: url}, one entry per booking site this property has (Booking.com first); a
+                        new verified link goes into its site's entry
       sources           which list each link came from
-  docs/booking-links/found-links.tsv         one row per link with everything the lists hold
+  found_links        one row per link with everything the lists hold
       key, slug, ota, rank, url, status, note, checked, source_file
+
+Readers use linked_properties() / links_rows() (the narrow shapes found-by-property.tsv's and found-links.tsv's
+actual consumers read), or properties_rows() for the whole found_properties table.
 
 Close duplicates are merged (owner, 2026-10-06): two rows are one property when they share a booking-site page, or
 sit within 40 m of each other with the same core name. The survivor is the stay the site lists, else the one with the
 shortest readable name; a different size in the name (1BHK / 2BHK / studio) always keeps two rows apart; it learns what the others knew (Google place id, listing id, coordinates, any booking-site
 link it lacked) and keeps the other keys in `alias_keys` and any different link of the same site in `other_urls`.
-found-duplicates.tsv lists what was merged into what. Rows are sorted by city, then slug.
+found_duplicates lists what was merged into what.
 
 No phone numbers (those stay in BigQuery places_lodging, internal only). Usage: python3 scripts/stays/organise_found.py
 """
@@ -30,7 +34,11 @@ import csv
 import json
 import os
 import re
+import sys
 import unicodedata
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import db as stays_db  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -110,7 +118,6 @@ def processed_stays():
 def main():
     ota_rows = tsv(os.path.join(HERE, 'ota-priority.tsv'))
     rank = {r['ota']: int(r['rank']) for r in ota_rows}
-    col = {r['ota']: r['column'] for r in ota_rows}
     otas = [r['ota'] for r in sorted(ota_rows, key=lambda r: int(r['rank']))]
 
     # every verified link, with the list it came from (found.tsv first: it is the newest)
@@ -255,36 +262,73 @@ def main():
             name_at_search=f.get('name', ''), city=r['city'], area=r['area'], lat=ll[0], lng=ll[1],
             maps_url=f'https://www.google.com/maps/place/?q=place_id:{pid}' if pid else '',
             primary_ota=best, primary_url=mine[best]['url'] if best else '',
-            **{f'{col[o]}_url': mine[o]['url'] if o in mine else '' for o in otas},
+            urls={o: mine[o]['url'] for o in mine},
             sources=';'.join(f'{o}:{mine[o]["source_file"]}' for o in mine),
             alias_keys=';'.join(r['alias_keys']), other_urls=' | '.join(r['other_urls'])))
 
-    head = ['slug', 'key', 'google_place_id', 'listing_id', 'name', 'name_at_search', 'city', 'area', 'lat', 'lng', 'maps_url',
-            'primary_ota', 'primary_url'] + [f'{col[o]}_url' for o in otas] + ['sources', 'alias_keys', 'other_urls']
-    clean = lambda v: re.sub(r'[\t\r\n]+', ' ', str(v))
-    with open(os.path.join(BL, 'found-by-property.tsv'), 'w', encoding='utf8', newline='\n') as f:
-        f.write('\t'.join(head) + '\n')
-        for p in sorted(props, key=lambda p: (p['city'], p['slug'])):
-            f.write('\t'.join(clean(p[h]) for h in head) + '\n')
     slug_of = {p['key']: p['slug'] for p in props}
     for p in props:  # a merged duplicate's links belong to the survivor's slug
         for a in filter(None, p['alias_keys'].split(';')):
             slug_of[a] = p['slug']
-    with open(os.path.join(BL, 'found-duplicates.tsv'), 'w', encoding='utf8', newline='\n') as f:
-        f.write('kept_slug\tkept_key\tmerged_key\tmerged_name\tmerged_slug_would_be\n')
-        for keep, r in sorted(dup_rows, key=lambda kr: (slug_of[kr[0]['key']], kr[1]['key'])):
-            f.write('\t'.join(clean(x) for x in (slug_of[keep['key']], keep['key'], r['key'], r['name'], r['base'])) + '\n')
-    lh = ['key', 'slug', 'ota', 'rank', 'url', 'status', 'note', 'checked', 'source_file']
-    with open(os.path.join(BL, 'found-links.tsv'), 'w', encoding='utf8', newline='\n') as f:
-        f.write('\t'.join(lh) + '\n')
-        for (key, ota), r in sorted(links.items(), key=lambda kv: (slug_of[kv[0][0]], rank[kv[0][1]])):
-            row = dict(key=key, slug=slug_of[key], ota=ota, rank=rank[ota], url=r['url'], status=r['status'],
-                       note=r.get('note', ''), checked=r.get('checked', ''), source_file=r['source_file'])
-            f.write('\t'.join(clean(row[h]) for h in lh) + '\n')
+    dup_out = [dict(merged_key=r['key'], kept_slug=slug_of[keep['key']], kept_key=keep['key'], merged_name=r['name'], merged_slug_would_be=r['base'])
+               for keep, r in sorted(dup_rows, key=lambda kr: (slug_of[kr[0]['key']], kr[1]['key']))]
+    link_out = []
+    for (key, ota), r in sorted(links.items(), key=lambda kv: (slug_of[kv[0][0]], rank[kv[0][1]])):
+        link_out.append(dict(key=key, slug=slug_of[key], ota=ota, rank=rank[ota], url=r['url'], status=r['status'],
+                              note=r.get('note', ''), checked=r.get('checked', ''), source_file=r['source_file']))
+
+    # found_properties / found_links / found_duplicates are a cache of this computation (replaces
+    # found-by-property.tsv / found-links.tsv / found-duplicates.tsv): rebuilt in full every run.
+    # Every value is stringified first (same str(v) the old TSV write used): SQLite's own REAL -> TEXT affinity
+    # conversion does not always match Python's float repr (a 17-digit tail where Python prints the shortest
+    # round-trip form), so passing a float straight through would quietly reformat lat/lng.
+    conn = stays_db.get_db()
+    with conn:
+        conn.execute('DELETE FROM found_properties')
+        conn.execute('DELETE FROM found_links')
+        conn.execute('DELETE FROM found_duplicates')
+        conn.executemany(
+            """INSERT INTO found_properties (slug, key, google_place_id, listing_id, name, name_at_search, city, area,
+                   lat, lng, maps_url, primary_ota, primary_url, urls_json, sources, alias_keys, other_urls)
+               VALUES (:slug, :key, :google_place_id, :listing_id, :name, :name_at_search, :city, :area,
+                   :lat, :lng, :maps_url, :primary_ota, :primary_url, :urls_json, :sources, :alias_keys, :other_urls)""",
+            [{**{k: ('' if v is None else str(v)) for k, v in p.items() if k != 'urls'},
+              'urls_json': json.dumps(p['urls'], ensure_ascii=False)} for p in props])
+        conn.executemany(
+            """INSERT INTO found_links (key, slug, ota, rank, url, status, note, checked, source_file)
+               VALUES (:key, :slug, :ota, :rank, :url, :status, :note, :checked, :source_file)""", link_out)
+        conn.executemany(
+            """INSERT INTO found_duplicates (merged_key, kept_slug, kept_key, merged_name, merged_slug_would_be)
+               VALUES (:merged_key, :kept_slug, :kept_key, :merged_name, :merged_slug_would_be)""", dup_out)
     by = {}
     for p in props:
         by[p['primary_ota']] = by.get(p['primary_ota'], 0) + 1
-    print(f'found-by-property.tsv: {len(props)} properties, {len(links)} links; primary link by site: {by}')
+    print(f'found_properties: {len(props)} properties, {len(link_out)} links; primary link by site: {by}')
+
+
+def properties_rows():
+    """found_properties, one dict per row (found-by-property.tsv's old shape, plus urls as a dict instead of
+    per-ota columns): for a reader that wants the whole computed table (none currently do; organise_found.py's
+    own readers use linked_properties()/links_rows() below, the narrower shapes they actually need)."""
+    rows = [dict(r) for r in stays_db.get_db().execute('SELECT * FROM found_properties').fetchall()]
+    for r in rows:
+        r['urls'] = json.loads(r.pop('urls_json') or '{}')
+    return rows
+
+
+def linked_properties():
+    """key/alias_keys/lat/lng/name/city for every found_properties row -- what prune_unfound.py, map_seen_pages.py
+    and booking_stays.taken_slugs() actually read (found-by-property.tsv's old consumers)."""
+    return [dict(key=r['key'], slug=r['slug'], alias_keys=r['alias_keys'] or '', name=r['name'] or '',
+                 city=r['city'] or '', lat=r['lat'] or '', lng=r['lng'] or '')
+            for r in stays_db.get_db().execute('SELECT key, slug, alias_keys, name, city, lat, lng FROM found_properties').fetchall()]
+
+
+def links_rows():
+    """found_links, one dict per row (found-links.tsv's old shape: key, slug, ota, rank, url, status, note,
+    checked, source_file)."""
+    return [dict(r) for r in stays_db.get_db().execute(
+        'SELECT key, slug, ota, rank, url, status, note, checked, source_file FROM found_links').fetchall()]
 
 
 if __name__ == '__main__':

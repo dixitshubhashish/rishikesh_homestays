@@ -13,8 +13,9 @@ the page), and go to found.tsv:
   - any `retry`, `none` or `manual` row that sits within 40 m of a linked stay in the same city with the same core name
     and the same size in the name (1BHK / 2BHK / studio): the rule organise_found.py uses for its duplicates, or
   - a row whose own key is linked by now (a worker found it meanwhile).
-`review` rows are the owner's checklist and stay. Each removed row is kept in docs/booking-links/duplicates-resolved.tsv
-(why, and which linked stay it is). Written under the lists lock, so it is safe while the search workers run.
+`review` rows are the owner's checklist and stay. Each removed row is kept in the DB's resolved_duplicates table
+(why, and which linked stay it is; db.py, replaces the old docs/booking-links/duplicates-resolved.tsv). Written
+under the lists lock, so it is safe while the search workers run.
 
   python3 scripts/stays/prune_unfound.py --dry     what would go
   python3 scripts/stays/prune_unfound.py           remove them
@@ -27,6 +28,7 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import organise_found as of  # noqa: E402
+import db as stays_db  # noqa: E402
 
 # Names can hold characters a Windows console code page can't encode (Rishīkesh, Devanagari).
 if hasattr(sys.stdout, 'reconfigure'):
@@ -59,6 +61,13 @@ def pin_metres(text):
 
 
 SAME_PIN_M = 200  # owner, 2026-10-06: a found page whose pin is within 200 m of our pin is the same place, whatever the name
+
+
+def resolved_duplicates_rows():
+    """resolved_duplicates, one dict per row (duplicates-resolved.tsv's old shape): import_new_stays.py's
+    known_urls() reads this to treat an already-resolved page's URL as owned by the stay it was folded into."""
+    return [dict(r) for r in stays_db.get_db().execute(
+        'SELECT key, name, city, status_was, reason, same_as_key, same_as_name, metres, url FROM resolved_duplicates').fetchall()]
 
 
 def urls_in(text):
@@ -112,7 +121,7 @@ class Lock:
 def main():
     # the linked properties (organise_found.py output, re-made first so it is current)
     of.main()
-    linked = read(os.path.join(BL, 'found-by-property.tsv'))
+    linked = of.linked_properties()
     linked_keys = {}
     for r in linked:
         for k in [r['key']] + [a for a in r['alias_keys'].split(';') if a]:
@@ -121,7 +130,7 @@ def main():
         r['_ll'] = (float(r['lat']), float(r['lng'])) if r['lat'] and r['lng'] else None
         r['_tok'], r['_unit'] = of.tokens(r['name']), of.unit(r['name'])
 
-    links_all = read(os.path.join(BL, 'found-links.tsv'))
+    links_all = of.links_rows()
     url_owner = {}
     for l in links_all:
         url_owner.setdefault(norm_url(l['url']), linked_keys.get(l['key']))
@@ -228,10 +237,13 @@ def main():
         if add:
             write(os.path.join(BL, 'found.tsv'), FOUND_COLS, found + add)
         print(f'{len(add)} of them recorded in found.tsv with their booking page')
-        audit = os.path.join(BL, 'duplicates-resolved.tsv')
-        old = read(audit)
-        done = {o['key'] for o in old}
-        write(audit, AUDIT_COLS, old + [g for g in gone if g['key'] not in done])
+        conn = stays_db.get_db()
+        done = {r['key'] for r in conn.execute('SELECT key FROM resolved_duplicates').fetchall()}
+        new_audit = [g for g in gone if g['key'] not in done]
+        with conn:
+            conn.executemany(
+                """INSERT OR IGNORE INTO resolved_duplicates (key, name, city, status_was, reason, same_as_key, same_as_name, metres, url)
+                   VALUES (:key, :name, :city, :status_was, :reason, :same_as_key, :same_as_name, :metres, :url)""", new_audit)
         write(os.path.join(BL, 'unfound.tsv'), COLS, keep)
         write(os.path.join(BL, 'review.tsv'), ['key', 'name', 'city', 'platform', 'url', 'page_shows', 'why_review', 'last_checked'], review_keep)
         print(f'review.tsv: {len(review_keep)} rows left ({len(settled)} settled by the {SAME_PIN_M} m rule)')

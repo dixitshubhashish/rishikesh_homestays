@@ -1,51 +1,54 @@
 #!/usr/bin/env python3
-"""Maps the pages the search harvested (verify_seen.mjs -> docs/booking-links/seen-pages-checked.tsv) across to our stays
-(owner, 2026-10-06: "if you get 2 or 4 different properties you can map them across, the city must be Rishikesh or Haridwar").
+"""Maps the pages the search harvested (verify_seen.mjs -> the DB's candidate_pages table, scripts/stays/db.py) across to
+our stays (owner, 2026-10-06: "if you get 2 or 4 different properties you can map them across, the city must be
+Rishikesh or Haridwar").
 
-A checked page counts when its pin is in Rishikesh or Haridwar (state `ok`). It maps to the stay without a link that sits
-within 200 m of the page's pin in the same city and reads as the same place: the same words and numbers in the name
-(organise_found.same_name; a different size, 1BHK / 2BHK, is another place), or the only stay without a link within 200 m.
-A mapped page is recorded in found.tsv (verified, under that stay's key, the note says how). A page with no stay for it is a
-new property: it goes to docs/booking-links/new-properties.tsv (name, town, pin, page), and import_new_stays.py (run by
-merge_found.sh, owner 2026-10-07) lists it automatically as a new stay when it passes its checks. Only DISTANCE decides here:
-200 m cannot cross from one city to the other, and the town stored with a page was once the FIRST centre within 25 km, not the
-nearer one, so the city is worked out again from the pin (booking_stays.city_of). The pages the registry of auto-listed stays
-already uses are never new properties again. Written under the lists lock, safe while the workers run.
+A checked page counts when its pin is in Rishikesh or Haridwar (state `ok`, or `elsewhere` under the old centres but
+within 25 km of a cities.py centre). It maps to the stay without a link that sits within 200 m of the page's pin in
+the same city and reads as the same place: the same words and numbers in the name (organise_found.same_name; a
+different size, 1BHK / 2BHK, is another place), or the only stay without a link within 200 m. A mapped page is
+recorded in found.tsv (verified, under that stay's key, the note says how) and candidate_pages' row is marked
+`imported` (key = the stay it was mapped to, when that stay already has a properties row). A page with no stay for
+it stays `checked` in candidate_pages: it is a new-property candidate, and import_new_stays.py (run by
+merge_found.sh, owner 2026-10-07) lists it automatically as a new stay when it passes its checks. Only DISTANCE
+decides here: 200 m cannot cross from one city to the other, and the town stored with a page was once the FIRST
+centre within 25 km, not the nearer one, so the city is worked out again from the pin (booking_stays.city_of). The
+pages the registry of auto-listed stays already uses are never new properties again. Written under the lists lock,
+safe while the workers run.
 
   python3 scripts/stays/map_seen_pages.py [--dry]
 """
 import json
 import os
-import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import booking_stays as bs  # noqa: E402
 import organise_found as of  # noqa: E402
 import prune_unfound as pu  # noqa: E402
+import db as stays_db  # noqa: E402
 
 BL, HERE = of.BL, of.HERE
 DRY = '--dry' in sys.argv
-NEW_COLS = ['url', 'platform', 'name', 'town', 'lat', 'lng', 'seen_for', 'checked']
 
 
 def checked_pages():
-    """The pages verify_seen.mjs read, the latest row per page (a re-read appends), whose pin is in Rishikesh or Haridwar:
-    state `ok`, or `elsewhere` under the old centres but within 25 km of a cities.py centre. `town` is the nearer centre."""
-    latest = {}
-    for r in of.tsv(os.path.join(BL, 'seen-pages-checked.tsv')):
-        if r.get('url'):
-            latest[bs.canon_url(r['url'])] = r
+    """candidate_pages rows awaiting a decision (status `checked` or `held`: a held page's evidence may have
+    refreshed since verify_seen.mjs last read it) whose pin is in Rishikesh or Haridwar: state `ok`, or `elsewhere`
+    under the old centres but within 25 km of a cities.py centre. `town` is recomputed as the nearer centre."""
     out = []
-    for r in latest.values():
-        if r.get('state') not in ('ok', 'elsewhere'):
-            continue
+    for r in stays_db.get_db().execute(
+            "SELECT * FROM candidate_pages WHERE status IN ('checked','held') AND state IN ('ok','elsewhere')").fetchall():
+        r = dict(r)
         try:
             town = bs.city_of(float(r['lat']), float(r['lng']))
         except (TypeError, ValueError):
             continue
-        if town:
-            out.append(dict(r, town=town))
+        if not town:
+            continue
+        r['town'] = town
+        r['platform'] = r.pop('platform_key')
+        out.append(r)
     return out
 
 
@@ -55,9 +58,10 @@ def main():
         print('map_seen_pages: nothing checked yet')
         return
     of.main()
-    linked = of.tsv(os.path.join(BL, 'found-by-property.tsv'))
+    linked = of.linked_properties()
     linked_keys = {k for r in linked for k in [r['key']] + [a for a in r['alias_keys'].split(';') if a]}
-    linked_urls = {bs.canon_url(l['url']) for l in of.tsv(os.path.join(BL, 'found-links.tsv'))}
+    links_rows = of.links_rows()
+    linked_urls = {bs.canon_url(l['url']) for l in links_rows}
     registry = bs.load_registry()   # auto-listed stays (booking-stays.tsv): their pages, primary and extra, are taken
     linked_urls |= set(bs.registry_urls(registry))
 
@@ -94,10 +98,10 @@ def main():
             if a in everyone and r['key'] in everyone:
                 everyone[a]['survivor'] = r['key']
     links_of = {}
-    for l in of.tsv(os.path.join(BL, 'found-links.tsv')):
+    for l in links_rows:
         links_of.setdefault(l['key'], set()).add(l['ota'])
     metres = lambda a, b: (((a[0] - b[0]) * 111320) ** 2 + ((a[1] - b[1]) * 111320 * 0.87) ** 2) ** 0.5
-    found_rows, new_rows, extra_rows, used = [], [], [], set()
+    found_rows, new_rows, extra_rows, redundant_rows, used = [], [], [], [], set()
     for r in checked:
         if bs.canon_url(r['url']) in linked_urls:
             continue
@@ -126,9 +130,15 @@ def main():
                                            note=f"extra link: this stay is already listed; the page \"{r['name'][:60]}\" has its pin within 200 m (a search for {r['seen_for']})",
                                            source='map_seen_pages.py, extra link for a listed stay'))
                     links_of.setdefault(owner, set()).add(r['platform'])
+                elif r['platform'] in links_of.get(owner, set()):
+                    # that stay already has a link for this exact site: this page is the same property, not a new one
+                    # or an extra link either -- permanently not a new-property candidate (never add a found.tsv row for it)
+                    redundant_rows.append(dict(r, key=owner, note=f"same place as {owner} ({r['platform']} already has its link)"))
+                # else: another candidate already claimed this stay's extra-link slot THIS run (owner in `used`); a
+                # transient, per-run conflict, not a permanent one -- left `checked`, re-examined next run
             else:
-                new_rows.append({c: (r.get(c) or '') for c in NEW_COLS})
-    print(f'map_seen_pages: {len(checked)} checked page(s) in Rishikesh/Haridwar: {len(found_rows)} mapped to a stay without a link, {len(extra_rows)} extra links for listed stays, {len(new_rows)} new properties')
+                new_rows.append(r)
+    print(f'map_seen_pages: {len(checked)} checked page(s) in Rishikesh/Haridwar: {len(found_rows)} mapped to a stay without a link, {len(extra_rows)} extra links for listed stays, {len(redundant_rows)} already linked under another page, {len(new_rows)} new properties')
     if DRY:
         for f in found_rows[:6]:
             print('  ', f['name'][:40], '<-', f['note'][:110])
@@ -138,17 +148,18 @@ def main():
         have = {f['key'] for f in found}
         add = [f for f in found_rows if f['key'] not in have]
         extra = [e for e in extra_rows if (e['key'], e['platform']) not in {(f['key'], f['platform']) for f in found}]
+        mapped_for_db = list(add) + list(extra)   # captured before `add` is reset below, for the found.tsv write-dedup trick
         if extra:
             pu.write(os.path.join(BL, 'found.tsv'), pu.FOUND_COLS, found + add + extra)
             add = []
         if add:
             pu.write(os.path.join(BL, 'found.tsv'), pu.FOUND_COLS, found + add)
-        newp = os.path.join(BL, 'new-properties.tsv')
-        old = of.tsv(newp)
-        seen = {bs.canon_url(o['url']) for o in old}
-        fresh = [n for n in new_rows if bs.canon_url(n['url']) not in seen]
-        pu.write(newp, NEW_COLS, [{c: (o.get(c) or '') for c in NEW_COLS} for o in old] + fresh)
-    print(f'  recorded {len(add) + len(extra)} in found.tsv ({len(extra)} extra links); new-properties.tsv has {len(old) + len(fresh)} row(s)')
+        today_ = bs.today()
+        for f in mapped_for_db:
+            bs.update_candidate(f['url'], 'imported', f['note'], f['key'], today_)
+        for f in redundant_rows:   # no found.tsv row (nothing new to add there), but no longer a new-property candidate either
+            bs.update_candidate(f['url'], 'imported', f['note'], f['key'], today_)
+    print(f'  recorded {len(add) + len(extra)} in found.tsv ({len(extra)} extra links); candidate_pages: {len(mapped_for_db) + len(redundant_rows)} marked imported')
 
 
 if __name__ == '__main__':

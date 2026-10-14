@@ -20,6 +20,7 @@ import unicodedata
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import organise_found as of  # noqa: E402
 import prune_unfound as pu  # noqa: E402
+import db as stays_db  # noqa: E402
 from cities import CITIES  # noqa: E402
 
 HERE = of.HERE
@@ -28,7 +29,6 @@ BL = of.BL
 REGISTRY = os.path.join(HERE, 'booking-stays.tsv')
 COLS = ['slug', 'name', 'city', 'lat', 'lng', 'type', 'type_word', 'platform', 'url', 'extra_links', 'state', 'first_listed',
         'checked', 'seen_for', 'note']
-DECISION_COLS = ['url', 'platform', 'name', 'decision', 'why', 'slug', 'decided']
 SCOPE_KM = 25
 # process.py's OWN_KEYS: our own 3 stays; a slug may never contain one (build_pages.prepared_stays drops such urls)
 OWN_KEYS = ['advaitam-ganga-hill-view-homestay-by-the-ganges-ghat', 'villa-elysium-the-himalayan-ganges-view-yoga-retreat',
@@ -48,6 +48,7 @@ def set_root(root):
     REGISTRY = os.path.join(HERE, 'booking-stays.tsv')
     of.ROOT, of.HERE, of.BL = ROOT, HERE, BL
     pu.HERE, pu.BL = HERE, BL
+    stays_db.set_root(root)
     # the fixture needs no copy of the shared priority list or city file
     # (ota-priority.tsv falls back to the real one: see _priority_path)
 
@@ -336,7 +337,7 @@ def taken_slugs(registry=None):
             for line in open(f, encoding='utf8'):
                 if line.strip():
                     taken.add(json.loads(line)['url'].split('//')[1].split('.')[0])
-    for r in of.tsv(os.path.join(BL, 'found-by-property.tsv')):
+    for r in of.linked_properties():
         taken.add(r.get('slug', ''))
         taken.add(r.get('key', ''))
     taken.discard('')
@@ -345,3 +346,33 @@ def taken_slugs(registry=None):
 
 def today():
     return datetime.date.today().isoformat()
+
+
+# ---------------------------------------------------------------------------------------------------- candidate_pages
+
+def existing_property_key(key):
+    """key if a properties row with that key already exists, else None: candidate_pages.key is a foreign key to
+    properties, so map_seen_pages.py / import_new_stays.py only ever set it when the row is really there -- a
+    brand-new auto-listed stay has no properties row yet (process.py / the site build makes one later)."""
+    if not key:
+        return None
+    row = stays_db.get_db().execute('SELECT 1 FROM properties WHERE key=?', (key,)).fetchone()
+    return key if row else None
+
+
+def update_candidate(url, status, why='', key=None, decided_default=None):
+    """candidate_pages' decision fields for one page (map_seen_pages.py: a page mapped to a stay we have;
+    import_new_stays.py: listed / extra_link / held / duplicate / out_of_scope): status, decision_why, key
+    (existing_property_key above) and decided -- kept stable across a re-run that reaches the very same decision
+    (new-properties-decisions.tsv's old dedup-by-tuple rule), reset to today the moment anything about the
+    decision changes. Returns (decided, changed): changed is False when the row already held this exact decision."""
+    conn = stays_db.get_db()
+    key = existing_property_key(key)
+    fallback = decided_default or today()
+    row = conn.execute('SELECT status, decision_why, key, decided FROM candidate_pages WHERE url=?', (url,)).fetchone()
+    same = row and row['status'] == status and (row['decision_why'] or '') == (why or '') and (row['key'] or '') == (key or '')
+    decided = (row['decided'] or fallback) if same else fallback
+    with conn:
+        conn.execute('UPDATE candidate_pages SET status=?, decision_why=?, key=?, decided=? WHERE url=?',
+                     (status, why or None, key, decided, url))
+    return decided, not same

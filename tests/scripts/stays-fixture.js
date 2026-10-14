@@ -6,16 +6,18 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import Database from 'better-sqlite3';
 import { pythonCommand, pythonEnv } from '../../scripts/py.mjs';
 
 export const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const TODAY = '2026-10-07';
+// kept for coverage-report.test.js's cross-check against verify_seen.mjs's HEADER array (the evidence columns a
+// checked candidate_pages row carries, by another name)
 export const CHECKED_COLS = ['url', 'platform', 'name', 'lat', 'lng', 'town', 'state', 'seen_for', 'checked', 'ltype', 'name_src', 'locality', 'postal', 'signals', 'final_url'];
-export const NEW_COLS = ['url', 'platform', 'name', 'town', 'lat', 'lng', 'seen_for', 'checked'];
 
 export const tsv = (cols, rows) => cols.join('\t') + '\n' + rows.map((r) => cols.map((c) => r[c] ?? '').join('\t') + '\n').join('');
 
-/** A page the search read (one row of seen-pages-checked.tsv) with sensible defaults for a clean Booking.com property. */
+/** A page the search read (one candidate_pages row, status 'checked') with sensible defaults for a clean Booking.com property. */
 export function page(over = {}) {
   const p = {
     url: 'https://www.booking.com/hotel/in/riverside-nook.html', platform: 'Booking.com', name: 'Riverside Nook', lat: '30.1210', lng: '78.3300',
@@ -26,12 +28,58 @@ export function page(over = {}) {
   return p;
 }
 
+/** Creates scripts/stays/.cache/stays.db at root with just enough schema (candidate_pages + properties) for the Python
+ * tools under test; db.py's own CREATE TABLE IF NOT EXISTS fills in the rest (cities, platforms, ...) the first time it
+ * runs against this file. Every `pages` row becomes a candidate_pages row, status 'checked' (import_new_stays.py's and
+ * map_seen_pages.py's input pool) unless `status` is given explicitly. */
+function makeDb(root, pages) {
+  const dir = join(root, 'scripts', 'stays', '.cache');
+  mkdirSync(dir, { recursive: true });
+  const db = new Database(join(dir, 'stays.db'));
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS properties (
+      key TEXT PRIMARY KEY, listing_id INTEGER UNIQUE, slug TEXT, city_key TEXT, name TEXT, area TEXT,
+      lat REAL, lng REAL, bedrooms INTEGER, is_own INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1
+    );
+    CREATE TABLE IF NOT EXISTS candidate_pages (
+      url TEXT PRIMARY KEY, platform_key TEXT, label TEXT, seen_for TEXT, name TEXT, lat REAL, lng REAL, town TEXT,
+      state TEXT, ltype TEXT, name_src TEXT, locality TEXT, postal TEXT, signals TEXT, final_url TEXT,
+      status TEXT NOT NULL DEFAULT 'unchecked', decision_why TEXT, key TEXT, images_json TEXT, details_json TEXT,
+      details_fetched TEXT, checked TEXT, decided TEXT
+    );
+  `);
+  const insCand = db.prepare(`INSERT INTO candidate_pages
+    (url, platform_key, name, lat, lng, town, state, seen_for, checked, ltype, name_src, locality, postal, signals, final_url, status)
+    VALUES (@url,@platform,@name,@lat,@lng,@town,@state,@seen_for,@checked,@ltype,@name_src,@locality,@postal,@signals,@final_url,@status)`);
+  for (const p of pages) {
+    insCand.run({
+      url: p.url, platform: p.platform ?? null, name: p.name ?? null,
+      lat: p.lat === '' || p.lat == null ? null : Number(p.lat), lng: p.lng === '' || p.lng == null ? null : Number(p.lng),
+      town: p.town ?? null, state: p.state ?? null, seen_for: p.seen_for ?? null, checked: p.checked ?? null,
+      ltype: p.ltype ?? null, name_src: p.name_src ?? null, locality: p.locality ?? null, postal: p.postal ?? null,
+      signals: p.signals ?? null, final_url: p.final_url ?? null, status: p.status || 'checked',
+    });
+  }
+  db.close();
+}
+
+/** Opens the fixture's DB read-only, for assertions (candidateOf below). */
+function openDb(root) {
+  return new Database(join(root, 'scripts', 'stays', '.cache', 'stays.db'), { readonly: true, fileMustExist: true });
+}
+
+/** The candidate_pages row for one url, after running a script against the fixture (import-new-stays.test.js,
+ * map-seen-pages tests): { status, decision_why, key, decided, ... }, or undefined. */
+export function candidateOf(root, url) {
+  const db = openDb(root);
+  try { return db.prepare('SELECT * FROM candidate_pages WHERE url = ?').get(url); } finally { db.close(); }
+}
+
 export function makeTree({ pages = [], stays = [], own = [], registry = null, otaLinks = [], found = [], unfound = [], extraFiles = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'rh-newstays-'));
   const w = (rel, text) => { mkdirSync(dirname(join(root, rel)), { recursive: true }); writeFileSync(join(root, rel), text, { encoding: 'utf8' }); };
   const BL = 'docs/booking-links/';
-  w(BL + 'seen-pages-checked.tsv', tsv(CHECKED_COLS, pages));
-  w(BL + 'new-properties.tsv', tsv(NEW_COLS, pages.filter((p) => p.state === 'ok' || p.inbox).map((p) => ({ ...p, town: p.town || 'rishikesh' }))));
+  makeDb(root, pages);
   w(BL + 'found.tsv', tsv(['key', 'status', 'platform', 'url', 'note', 'name', 'city', 'source'], found));
   w(BL + 'unfound.tsv', tsv(['key', 'name', 'city', 'area', 'search_log', 'status'], unfound));
   w('scripts/stays/ota-links.tsv', tsv(['key', 'status', 'ota', 'url', 'note', 'checked'], otaLinks));

@@ -15,6 +15,7 @@ import { setupThemeToggle } from './modules/theme-toggle.js';
 import { setupNavFit } from './modules/nav-fit.js';
 import { setupSiteSearch } from './modules/site-search.js';
 import { initPartnerBanner } from './modules/partner-banner.js';
+import { initKumbhTrivia } from './modules/kumbh-trivia.js';
 
 // Re-export for any inline script usage
 window.AREAS = AREAS;
@@ -34,6 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupThemeToggle();
   setupSiteSearch();
   initPartnerBanner();
+  initKumbhTrivia();
   setupNav();
   setupLangPicker();
   setupNavFit();

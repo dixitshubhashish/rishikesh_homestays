@@ -2,15 +2,18 @@
 """Auto-lists the properties the search found that we do not list (owner, 2026-10-07: "no listing in Rishikesh or
 Haridwar should be missed").
 
-map_seen_pages.py is the one verdict "no stay of ours is this page": it puts such a page in
-docs/booking-links/new-properties.tsv. This step takes each of those rows, re-reads the evidence verify_seen.mjs stored for
-the page (docs/booking-links/seen-pages-checked.tsv), and lists the ones that pass every check as a NEW STAY with that
-booking link, like the Google Maps stays, so the list grows with no manual step. The stay's identity is the committed,
-append-only registry scripts/stays/booking-stays.tsv; process.py reads it (booking_stays.registry_rows) and gives the stay
-its listing id, area, types and tags; the verified booking link goes to ota-links.tsv (merge_ota.py).
+map_seen_pages.py is the one verdict "no stay of ours is this page": such a page's candidate_pages row (db.py) stays
+`checked` (status 'held' also keeps it in play: a held page's evidence may have refreshed since). This step reads
+every such row -- url, pin, and the evidence verify_seen.mjs stored on it (ltype, name_src, locality, postal,
+signals, final_url) -- and lists the ones that pass every check as a NEW STAY with that booking link, like the
+Google Maps stays, so the list grows with no manual step. The stay's identity is the committed, append-only registry
+scripts/stays/booking-stays.tsv; process.py reads it (booking_stays.registry_rows) and gives the stay its listing
+id, area, types and tags; the verified booking link goes to ota-links.tsv (merge_ota.py). Every decision (listed,
+extra_link, held, duplicate, out_of_scope) is written back onto the candidate_pages row itself (status, decision_why,
+key, decided) -- there is no separate new-properties-decisions.tsv any more.
 
-A candidate is listed only when ALL hold (anything else is `held` with its reason in
-docs/booking-links/new-properties-decisions.tsv, never silently dropped):
+A candidate is listed only when ALL hold (anything else is `held` with its reason on the candidate_pages row's
+decision_why, never silently dropped):
   - the page was read fine (`ok`: a pin from its own data, not dead, still a property page after redirects);
   - its site is one scripts/stays/ota-priority.tsv marks `autolist=y` (not Airbnb, whose pins are offset, or Trivago);
   - lodging evidence: a JSON-LD lodging type and a JSON-LD name (not the browser title);
@@ -42,13 +45,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import booking_stays as bs  # noqa: E402
 import organise_found as of  # noqa: E402
 import prune_unfound as pu  # noqa: E402
+import db as stays_db  # noqa: E402
 
 if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8')
 
 FRESH_DAYS = 14
 LAT_WINDOW = 0.0025   # same latitude pre-filter as map_seen_pages (~280 m)
-EVIDENCE = ['state', 'ltype', 'name_src', 'locality', 'postal', 'signals', 'final_url']
+# decision -> candidate_pages.status: `held` is left out on purpose (status stays `checked`), so a held row keeps
+# being re-joined with the freshest evidence every run, the same way new-properties.tsv never dropped a row --
+# verify_seen.mjs's --refresh-days can still update a held row's pin/evidence and have it re-qualify later.
+STATUS_OF = {'listed': 'imported', 'extra_link': 'imported', 'duplicate': 'rejected', 'out_of_scope': 'rejected'}
 
 
 def arg(argv, name, default=None):
@@ -62,21 +69,19 @@ def tsv_rows(path):
 # ---------------------------------------------------------------------------------------------------- candidates
 
 def load_candidates():
-    """new-properties.tsv rows joined (canon_url) to the page's latest row in seen-pages-checked.tsv (the evidence)."""
-    latest = {}
-    for r in tsv_rows(os.path.join(bs.BL, 'seen-pages-checked.tsv')):
-        if r.get('url'):
-            latest[bs.canon_url(r['url'])] = r   # a later row (a re-read) wins
+    """candidate_pages rows awaiting a decision: status `checked` (not yet mapped to a stay by map_seen_pages.py,
+    not yet decided by this script) or `held` (decided `held` on an earlier run: re-examined every time in case
+    verify_seen.mjs's --refresh-days has since updated its pin or evidence). qualify() is the one place that
+    decides a row's fate (not this query): a `no pin`/`unreadable`/`closed`/`redirected`/out-of-25-km page is
+    `held`/`out_of_scope` there, same as a page map_seen_pages.py never even got to look at (map_seen_pages.py's
+    own checked_pages() only considers `ok`/`elsewhere` pins). A row with no pin at all can never pass qualify()
+    (always `held: no pin`, deterministically), so it is excluded here too -- a pure performance cut, not a
+    behaviour change: npm run report:coverage's "seen pages" counts still show that pool's size separately."""
     out = []
-    for n in tsv_rows(os.path.join(bs.BL, 'new-properties.tsv')):
-        if not n.get('url'):
-            continue
-        e = latest.get(bs.canon_url(n['url']), {})
-        c = dict(url=n['url'], platform=e.get('platform') or n.get('platform', ''), name=e.get('name') or n.get('name', ''),
-                 lat=e.get('lat') or n.get('lat', ''), lng=e.get('lng') or n.get('lng', ''), seen_for=n.get('seen_for', ''),
-                 checked=e.get('checked') or n.get('checked', ''))
-        for k in EVIDENCE:
-            c[k] = e.get(k, '')
+    for r in stays_db.get_db().execute(
+            "SELECT * FROM candidate_pages WHERE status IN ('checked','held') AND lat IS NOT NULL AND lng IS NOT NULL").fetchall():
+        c = {k: (v if v is not None else '') for k, v in dict(r).items()}
+        c['platform'] = c.pop('platform_key')
         out.append(c)
     return out
 
@@ -91,7 +96,7 @@ def known_urls(reg_slugs):
 
     for r in tsv_rows(os.path.join(bs.BL, 'found.tsv')):
         put(r.get('url'), r.get('key', ''), 'found.tsv')
-    for r in tsv_rows(os.path.join(bs.BL, 'found-links.tsv')):
+    for r in of.links_rows():
         put(r.get('url'), r.get('key', ''), 'found-links.tsv')
     for path, src in ((os.path.join(bs.HERE, 'ota-links.tsv'), 'ota-links.tsv'),
                       (os.path.join(bs.HERE, '.cache', 'places', 'ota-links.tsv'), 'places/ota-links.tsv')):
@@ -100,7 +105,7 @@ def known_urls(reg_slugs):
                 put(r.get('url'), r.get('key', ''), src)
     for r in tsv_rows(os.path.join(bs.BL, 'review.tsv')):
         put(r.get('url'), r.get('key', ''), 'review.tsv')
-    for r in tsv_rows(os.path.join(bs.BL, 'duplicates-resolved.tsv')):
+    for r in pu.resolved_duplicates_rows():
         put(r.get('url'), r.get('same_as_key') or r.get('key', ''), 'duplicates-resolved.tsv')
     for r in tsv_rows(os.path.join(bs.BL, 'unfound.tsv')):
         if r.get('status') == 'duplicate':
@@ -125,7 +130,10 @@ def qualify(c, today):
     c['city'] = bs.city_of(lat, lng)
     if not c['city']:
         return 'out_of_scope', 'pin is more than 25 km from Rishikesh and from Haridwar'
-    if c['state'] != 'ok':
+    if c['state'] not in ('ok', 'elsewhere'):
+        # 'elsewhere' is fine here: c['city'] above already reran the scope check against every cities.py centre
+        # (verify_seen.mjs's own CENTRES only knows Rishikesh/Haridwar, so a Dehradun/Mussoorie pin reads 'elsewhere'
+        # there even though it is genuinely in scope; map_seen_pages.py's checked_pages() makes the same allowance).
         return 'held', f"page not read ok yet (state '{c['state'] or 'no evidence'}'): re-read pending"
     if not bs.autolist(c['platform']):
         return 'held', f"{c['platform']} pages are not auto-listed (autolist=n in ota-priority.tsv)"
@@ -199,6 +207,7 @@ def make_slug(name, locality, city, taken):
     tries.append(f'{base}-{city}')
     tries += (f'{base}-{city}-{n}' for n in range(2, 10000))
     for slug in tries:
+        slug = slug[:90].strip('-') or 'stay'   # a long locality must never push the slug past the test's 90-char cap
         if slug not in taken and not any(k in slug for k in bs.OWN_KEYS):
             taken.add(slug)
             return slug
@@ -380,13 +389,12 @@ def run(argv):
                            stdout=subprocess.DEVNULL)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
-    dpath = os.path.join(bs.BL, 'new-properties-decisions.tsv')
-    old = {(r.get('url'), r.get('decision'), r.get('why'), r.get('slug')): r.get('decided', '') for r in tsv_rows(dpath)}
-    for d in decisions:
-        d['decided'] = old.get((d['url'], d['decision'], d['why'], d['slug'])) or today
     with pu.Lock():
-        wrote = bs.write_if_changed(dpath, bs.DECISION_COLS, decisions)
-    print(summary + f" (registry {'written' if changed else 'unchanged'}, decisions {'written' if wrote else 'unchanged'})")
+        any_changed = False
+        for d in decisions:
+            _, row_changed = bs.update_candidate(d['url'], STATUS_OF.get(d['decision'], 'checked'), d['why'], d.get('slug') or None, today)
+            any_changed = any_changed or row_changed
+    print(summary + f" (registry {'written' if changed else 'unchanged'}, decisions {'written' if any_changed else 'unchanged'})")
 
 
 def main(argv=None):

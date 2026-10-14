@@ -26,10 +26,12 @@ const metres = (a, b) => km(a, b) * 1000;
 
 test('verify_seen.mjs uses the city centres of cities.py (a stay\'s city is the nearer centre)', () => {
   const js = text(join(S, 'verify_seen.mjs'));
-  const m = js.match(/const CENTRES = \{ rishikesh: \[([\d.]+), ([\d.]+)\], haridwar: \[([\d.]+), ([\d.]+)\] \};/);
+  const m = js.match(/const CENTRES = \{([^}]*)\};/);
   assert(m, 'CENTRES literal in verify_seen.mjs');
+  const jsCentres = Object.fromEntries([...m[1].matchAll(/(\w+): \[([\d.]+), ([\d.]+)\]/g)].map((g) => [g[1], [Number(g[2]), Number(g[3])]]));
   const c = centres();
-  assert.deepStrictEqual([[Number(m[1]), Number(m[2])], [Number(m[3]), Number(m[4])]], [c.rishikesh, c.haridwar]);
+  assert.deepStrictEqual(Object.keys(jsCentres).sort(), Object.keys(c).sort(), 'every cities.py city is in verify_seen.mjs\'s CENTRES');
+  for (const city of Object.keys(c)) assert.deepStrictEqual(jsCentres[city], c[city], `${city} centre matches cities.py`);
   assert(/\.sort\(\(a, b\) => a\[1\] - b\[1\]\)/.test(js), 'townOf picks the NEAREST centre, not the first within 25 km');
 });
 

@@ -342,7 +342,7 @@ for (;;) {
     const tail = (cmd, n, ms) => { try { return execSync(`${typeof cmd === 'function' ? cmd() : cmd} 2>&1`, { cwd: ROOT, timeout: ms, encoding: 'utf8', env: pythonEnv, windowsHide: true }).trim().split(/\r?\n/).slice(-n).join(' | '); } catch (e) { return `failed: ${String(e.message).split('\n')[0]}`; } };
     say('seen pages:', tail('node scripts/stays/verify_seen.mjs --limit 400 --refresh-days 10', 1, 360000), '|', tail(py('scripts/stays/map_seen_pages.py'), 2, 120000));
     say('prune_unfound:', tail(py('scripts/stays/prune_unfound.py'), 3, 120000));
-    // what merge_found.sh would auto-list from new-properties.tsv: a dry run, it writes nothing (the merge is serialised and owner-run)
+    // what merge_found.sh would auto-list from the DB's candidate_pages table: a dry run, it writes nothing (the merge is serialised and owner-run)
     say('new stays:', tail(py('scripts/stays/import_new_stays.py --dry'), 2, 120000));
     say('status:', counts(), '|', WORKERS.map((w) => `${w.name} ${w.finished ? 'finished' : w.pid && alive(w.pid) ? `${w.plan[w.step].join(' ')}` : 'waiting'}`).join(', '), tight ? `| memory: ${tight}` : '');
   }
