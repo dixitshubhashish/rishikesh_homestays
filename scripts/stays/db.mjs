@@ -187,6 +187,20 @@ export function getDb() {
       url TEXT
     );
   `);
+  db.exec(`
+    -- One JSON object per property, {platform_key: url}, rebuilt from booking_links by
+    -- refreshLinksJson() below. The owner's idea (2026-10-15): "each OTA is a key like
+    -- mmt:abc.html" -- assigning a link to a property (dedup reattachment, a link-health
+    -- check promoting the next-ranked OTA once one is confirmed dead) becomes one JSON
+    -- key set here instead of row surgery across ota-links.tsv. This is a DB-side
+    -- convenience only: the live site still builds from ota-links.tsv as before (never
+    -- restructured, since build_pages.py/stay-page.js depend on its row shape) -- keep
+    -- both in sync by calling refreshLinksJson() after any booking_links write.
+    CREATE TABLE IF NOT EXISTS property_links_json (
+      key TEXT PRIMARY KEY REFERENCES properties(key),
+      links_json TEXT NOT NULL   -- e.g. {"Booking.com":"https://...","MakeMyTrip":"https://..."}
+    );
+  `);
   return db;
 }
 
@@ -195,3 +209,24 @@ export const bestLinksStmt = (db) => db.prepare(`
   SELECT bl.*, p.rank FROM booking_links bl JOIN platforms p ON p.platform_key = bl.platform_key
   WHERE bl.key = ? ORDER BY p.rank
 `);
+
+// Rebuilds property_links_json for one key from its current booking_links rows (verified
+// only, Booking.com-first order baked into the JSON key order). Call after writing/deleting
+// a booking_links row for this key, so the JSON view never drifts from the source of truth.
+export function refreshLinksJson(db, key) {
+  const rows = bestLinksStmt(db).all(key).filter((r) => r.status === 'verified');
+  const obj = Object.fromEntries(rows.map((r) => [r.platform_key, r.url]));
+  if (rows.length === 0) {
+    db.prepare('DELETE FROM property_links_json WHERE key = ?').run(key);
+  } else {
+    db.prepare(`INSERT INTO property_links_json (key, links_json) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET links_json = excluded.links_json`).run(key, JSON.stringify(obj));
+  }
+}
+
+// The next-ranked verified link for a property once a given platform's link is confirmed
+// dead (the "fire to next" idea) -- or null if there isn't one left to fall back to.
+export function nextLinkAfter(db, key, deadPlatform) {
+  const rows = bestLinksStmt(db).all(key).filter((r) => r.status === 'verified' && r.platform_key !== deadPlatform);
+  return rows[0] || null;
+}

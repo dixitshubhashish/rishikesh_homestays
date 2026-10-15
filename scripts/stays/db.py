@@ -178,6 +178,13 @@ SCHEMA = """
       metres TEXT,
       url TEXT
     );
+
+    -- One JSON object per property, {platform_key: url}, rebuilt from booking_links by
+    -- refresh_links_json() below. See db.mjs for the full note on why this exists.
+    CREATE TABLE IF NOT EXISTS property_links_json (
+      key TEXT PRIMARY KEY REFERENCES properties(key),
+      links_json TEXT NOT NULL
+    );
 """
 
 
@@ -202,3 +209,22 @@ def get_db():
         _conn.executescript(SCHEMA)
         _conn.commit()
     return _conn
+
+
+def refresh_links_json(conn, key):
+    """Rebuilds property_links_json for one key from its current verified booking_links rows,
+    Booking.com-first order (platforms.rank). Call after writing/deleting a booking_links row
+    for this key. Mirrors db.mjs's refreshLinksJson."""
+    import json
+    rows = conn.execute(
+        """SELECT bl.platform_key, bl.url FROM booking_links bl
+           JOIN platforms p ON p.platform_key = bl.platform_key
+           WHERE bl.key = ? AND bl.status = 'verified' ORDER BY p.rank""", (key,)).fetchall()
+    if not rows:
+        conn.execute('DELETE FROM property_links_json WHERE key = ?', (key,))
+    else:
+        obj = {r['platform_key']: r['url'] for r in rows}
+        conn.execute(
+            """INSERT INTO property_links_json (key, links_json) VALUES (?, ?)
+               ON CONFLICT(key) DO UPDATE SET links_json = excluded.links_json""",
+            (key, json.dumps(obj, ensure_ascii=False)))
