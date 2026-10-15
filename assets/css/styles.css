@@ -2225,24 +2225,9 @@ a.homestay-photo:hover {
 
 /* Bottom */
 
-.rhs-footer-bottom{
-    margin-top:55px;
-    border-top:1px solid rgba(255,255,255,.1);
-    padding:22px 0;
-}
-
-
 .rhs-footer-logo-img{
     width:56px;
     height:56px;
-}
-
-.rhs-footer-bottom-inner{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:18px;
 }
 
 .rhs-footer-sitemap{
@@ -2371,9 +2356,7 @@ a.homestay-photo:hover {
     text-align:center;
     color:#94a3b8;
     font-size:13px;
-    padding-top:14px;
-    margin-top:14px;
-    border-top:1px solid rgba(255,255,255,.1);
+    margin-top:10px;
 }
 
 .rhs-kumbh-trivia a{

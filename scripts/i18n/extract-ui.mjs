@@ -41,7 +41,7 @@ export const UI_FILES = [
   "assets/js/modules/currency.js", "assets/js/modules/button-loading.js",
   "assets/js/modules/landmark-map.js", "assets/js/modules/country-select.js",
   "assets/js/modules/lang-picker.js", "assets/js/modules/site-search.js",
-  "assets/js/modules/captcha.js", "assets/js/modules/kumbh-trivia.js",
+  "assets/js/modules/captcha.js", "assets/js/modules/kumbh-trivia.js", "assets/js/modules/partner-banner.js",
 ];
 
 export const MONTHS = ["January", "February", "March", "April", "May", "June", "July",
