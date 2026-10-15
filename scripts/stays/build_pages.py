@@ -1651,6 +1651,16 @@ def main(data_path):
         render(sp['stem'], sp['h1'], singular, 'q:' + sp['rule'], sp['intro'], guide_of.get(g_slug) or guide_of.get('hotels', ''), search=sp)
 
     near_pages = build_landmark_pages(stays, own, landmarks, top, bottom, today)
+    # a landmark whose nearby-stay count fell below build_landmark_pages()'s own 5-stay floor (normally only
+    # happens when stays are REMOVED, e.g. a bad-duplicate import gets reverted) is no longer in near_pages;
+    # its stale best-stays-near-<slug>.html is this city's own output (CLAUDE.md: "the build deletes only its
+    # own outputs"), so prune it the same way the category/search-phrase pages just above are pruned -- never a
+    # hand-made page, since landmarks.tsv only ever names generated landmark pages.
+    live_landmark_files = {f"best-stays-near-{np['slug']}.html" for np in near_pages}
+    for lm in landmarks:
+        f = f"best-stays-near-{lm['slug']}.html"
+        if f not in live_landmark_files and os.path.exists(f'{STAYS_DIR}/{f}'):
+            os.remove(f'{STAYS_DIR}/{f}')
     for np in near_pages:
         full.append(full_entry(np['h1'], np['url'], np['desc'], None, np['facts'], np['tips'], np['faq'], np['picks'], False, [])
                     .replace('Top picks (the ones you can book online first):', 'Closest stays:'))

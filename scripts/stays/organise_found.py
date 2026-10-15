@@ -39,6 +39,7 @@ import unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import db as stays_db  # noqa: E402
+from cities import CITIES, DEFAULT_CITY  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -71,9 +72,11 @@ def name_from_key(key):
 
 
 def stays_index():
-    """key -> {n, a, ll, lid, cy} of the stays on the site (current names)."""
+    """key -> {n, a, ll, lid, cy} of the stays on the site (current names), every city. Bug fixed 2026-10-15: this
+    only read Rishikesh's and Haridwar's built modules, missing stays-index-data-dehradun.js/-mussoorie.js (see
+    processed_stays()'s note -- the same gap, same fix)."""
     out = {}
-    for fn in ('stays-index-data.js', 'stays-index-data-haridwar.js'):
+    for fn in ('stays-index-data.js', 'stays-index-data-haridwar.js', 'stays-index-data-dehradun.js', 'stays-index-data-mussoorie.js'):
         p = os.path.join(ROOT, 'assets', 'js', 'modules', fn)
         if not os.path.exists(p):
             continue
@@ -106,9 +109,14 @@ def same_name(a, b):
 
 
 def processed_stays():
-    """key -> {n, a, ll} from the crawl's processed data (it still has stays the site no longer lists)."""
+    """key -> {n, a, ll} from the crawl's processed data, every city (it still has stays the site no longer lists).
+    Bug fixed 2026-10-15: this only read Rishikesh's (legacy path) and Haridwar's caches, so the booking-link
+    importer's duplicate check (booking_stays.known_stays -> here) never saw Dehradun or Mussoorie's existing
+    crawl stays and could auto-list a same-city near-duplicate of one (process.py's own, separate 150 m dedup then
+    silently dropped it later, with no listing_id -- caught by tests/integration/booking-stays.test.js)."""
     out = {}
-    for path in (os.path.join(HERE, '.cache', 'stays.json'), os.path.join(HERE, '.cache', 'haridwar', 'stays.json')):
+    for city in CITIES:
+        path = os.path.join(HERE, '.cache', 'stays.json') if city == DEFAULT_CITY else os.path.join(HERE, '.cache', city, 'stays.json')
         if os.path.exists(path):
             for s in json.load(open(path, encoding='utf8')):
                 out.setdefault(s['id'], s)

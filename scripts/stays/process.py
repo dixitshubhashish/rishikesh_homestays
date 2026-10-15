@@ -192,11 +192,77 @@ for r in rows:
         words=['hotel'] if (t=='Hotels' and ks) else kws
         if t not in ks and any(re.search(r'\b'+re.escape(k)+r's?\b',n) for k in words): add(t)
     r['ks']=ks or ['Other stays']; r['kind']=r['ks'][0]
+def _reattach_dup_links(city,dup_merges,id_of):
+    """A registry row dropped as a duplicate (below) already has a verified ota-links.tsv row of its own, keyed to the
+    slug that just lost its listing_id: import_new_stays.py writes one for every 'listed' registry row before process.py
+    ever runs its own (stricter, freshly-crawled) same-name/150 m check. Left alone that row is dead weight -- nothing
+    will ever build a page for its key -- and the real booking link it carries never reaches the stay that survives.
+    Re-keys it onto the survivor instead of leaving the link lost. Conservative: never overwrites a survivor's existing
+    verified link to a *different* URL on the same platform (prints instead, for a human to look at); only removes the
+    orphan row once the link is safely attached (or was already identical) there, and only for a slug that isn't a live
+    id anywhere in this city's own data (so a wrong guess can never delete a real stay's link)."""
+    path=os.path.join(os.path.dirname(os.path.abspath(__file__)),'ota-links.tsv')
+    if not os.path.exists(path) or not dup_merges: return
+    lines=open(path,encoding='utf8').read().splitlines()
+    if not lines: return
+    header=lines[0]
+    by_key={}
+    for ln in lines[1:]:
+        if not ln.strip(): continue
+        c=ln.split('\t')
+        by_key.setdefault(c[0],[]).append(c)
+    live_ids={x['id'] for x in data}
+    changed=False; recovered=0
+    for dropped_slug,survivor_obj in dup_merges:
+        sid=id_of.get(id(survivor_obj))
+        if not sid or sid==dropped_slug or dropped_slug not in by_key: continue
+        for orig in list(by_key[dropped_slug]):
+            c=(orig+['']*6)[:6]
+            if c[1]!='verified' or not c[3]: continue
+            ota,url=c[2],c[3]
+            srows=by_key.get(sid,[])
+            already=any(s[2]==ota and s[3]==url for s in srows)
+            conflict=any(s[2]==ota and s[3]!=url for s in srows)
+            if conflict:
+                print(f'dedup: NOT re-attaching {ota} link of dropped {dropped_slug} to {sid}: {sid} already has a different {ota} link -- leaving both rows for a human to check')
+                continue
+            if not already:
+                note=(c[4]+'; ' if c[4] else '')+f'recovered from duplicate registry row {dropped_slug} (process.py dedup)'
+                by_key.setdefault(sid,[]).append([sid,'verified',ota,url,note,c[5]])
+                recovered+=1; changed=True
+                print(f'dedup: re-attached {ota} link of dropped {dropped_slug} to surviving stay {sid}')
+            if dropped_slug not in live_ids:
+                by_key[dropped_slug]=[x for x in by_key[dropped_slug] if x is not orig]
+                changed=True
+        if dropped_slug in by_key and not by_key[dropped_slug]:
+            del by_key[dropped_slug]
+    if not changed: return
+    with open(path,'w',encoding='utf8',newline='\n') as f:
+        f.write(header+'\n')
+        for k in sorted(by_key):
+            for c in by_key[k]:
+                f.write('\t'.join(c)+'\n')
+    print(f'dedup: ota-links.tsv updated for {city}: {recovered} link(s) recovered for surviving stays')
 # de-duplicate: same clean name within 150 m
-seen=[]; out=[]
+def _src(r):
+    u=r.get('url') or ''
+    if u.endswith('.booking/en/'): return 'registry'
+    if r.get('gm'): return 'google'
+    return 'crawl'
+def _slug_of(r):
+    return r['url'].split('//')[1].split('.')[0]
+seen=[]; out=[]; dup_merges=[]   # (dropped registry slug, survivor row object) for every registry row dropped as a dup
 for r in sorted(rows,key=lambda r:-(r.get('reviews') or 0)):
-    dup=any(s['clean'].lower()==r['clean'].lower() and r.get('lat') and s.get('lat') and km((s['lat'],s['lng']),(r['lat'],r['lng']))<0.15 for s in seen)
-    if dup: continue
+    match=None
+    for s in seen:
+        if s['clean'].lower()==r['clean'].lower() and r.get('lat') and s.get('lat') and km((s['lat'],s['lng']),(r['lat'],r['lng']))<0.15:
+            match=s; break
+    if match:
+        # same visibility as the cross-city "already listed in" drop below: never silent.
+        print('dedup:',_src(r),_slug_of(r),f"({r['clean']})",'is a duplicate of',_src(match),_slug_of(match),f"({match['clean']})",'in',CITY,'-- dropped')
+        if _src(r)=='registry':
+            dup_merges.append((_slug_of(r),match))
+        continue
     seen.append(r); out.append(r)
 def tags(r):
     t=[]; n=r['clean'].lower(); f=[x.lower() for x in (r.get('facilities') or [])]
@@ -257,6 +323,13 @@ if CITY in FAR_KM:
     out=keep
 data=[{'id':r.get('url_slug') or r['url'].split('//')[1].split('.')[0],'ad':r.get('address') or '','ll':[r['lat'],r['lng']] if r.get('lat') else None,'t':tags(r),'n':r['clean'],'u':r['url'],'s':int(r['stars'] or 0),'a':r['area'],'k':r['kind'],'ks':r['ks'],'g':r.get('guestRating'),'c':r.get('reviews'),'f':r.get('facilities') or [],'p':(int(re.sub(r'\D','',r['price'])) if r.get('price') and re.search(r'\d',r['price']) else None)} for r in out]
 assert len({x['id'] for x in data})==len(data), 'two stays share one id (a Google/registry slug clash would map them to one listing_id)'
+# A registry row process.py's own dedup (above) drops as a duplicate already has a verified ota-links.tsv row of its own
+# (import_new_stays.py writes one for every 'listed' registry row), keyed to the slug that just lost its listing_id.
+# Left alone, that row is dead: it names a key nothing will ever build a page for, and the real booking link it carries
+# is lost for the stay that actually survives. Re-key it onto the survivor so the link reaches a live stay.
+if dup_merges:
+    id_of={id(r):x['id'] for x,r in zip(data,out)}
+    _reattach_dup_links(CITY,dup_merges,id_of)
 for x,r in zip(data,out):
     if r.get('gm'): x['gm']=r['gm']
     b=bedrooms(r)

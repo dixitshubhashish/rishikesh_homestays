@@ -199,12 +199,25 @@ def latin_share(name):
     return (sum(1 for c in letters if _LATIN.match(c)) / len(letters)) if letters else 0
 
 
-def name_problem(raw, url):
+def name_problem(raw, url, relaxed=False, locality='', postal=''):
     """Why a page's name is not a property's name, or ''. The name must read as one place, in Latin script, share a word
-    with the URL slug (name-based on Booking, Agoda, MakeMyTrip and Goibibo: a mismatch is a renamed or redirected page)."""
+    with the URL slug (name-based on Booking, Agoda, MakeMyTrip and Goibibo: a mismatch is a renamed or redirected page).
+
+    relaxed (owner, 2026-10-15, the "discover new stays" sweep -- "I want all those 24k listings listed at any
+    cost... we can have a small error of 500-1000 properties"; an explicit, one-off loosening, never the default):
+    skips ONLY the final URL-slug-match test, and only when `locality` or `postal` is non-empty -- i.e. the page's
+    own JSON-LD independently placed it somewhere real, not just a bare pin. A chain brand's franchise number or
+    tag in the display name that never appears in the booking site's URL slug (OYO/Capital O/Collection O/SPOT
+    ON/Hotel O/POP/Flagship: "OYO 83421 City View" at URL .../hotel-abc-dehradun.html) is a known, expected OTA
+    naming quirk, not evidence of a wrong property, once the place itself is independently confirmed. Every other
+    check still applies in relaxed mode -- word count (widened 8->10: these chains' names often carry a verbose
+    "Formerly <old name>" tail), Latin script, not a list title, a distinctive word -- so relaxed mode accepts
+    weaker NAME evidence when LOCATION evidence is strong, never the other way round, and never drops a check
+    entirely."""
     dn = display_name(raw)
     words = dn.split()
-    if not (2 <= len(words) <= 8):
+    max_words = 10 if relaxed else 8
+    if not (2 <= len(words) <= max_words):
         return f'name has {len(words)} word(s): "{dn[:40]}"'
     if latin_share(dn) < 0.8:
         return 'name is not in Latin script'
@@ -213,6 +226,8 @@ def name_problem(raw, url):
     tok = of.tokens(dn)
     if not tok:
         return 'name has no distinctive word'
+    if relaxed and (locality.strip() or postal.strip()):
+        return ''
     slug_words = set(url_words(url))
     if not fuzzy_shared(tok, slug_words, strict=False):
         return f'name "{dn[:40]}" shares no word with the page address'

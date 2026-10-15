@@ -28,10 +28,18 @@ worse than a delayed listing. The same property on several sites is ONE stay: th
 primary link, the others are extra links; a better-ranked page arriving later swaps the primary (slug, name and listing
 id never change).
 
-  python3 scripts/stays/import_new_stays.py [--dry] [--verbose] [--root DIR] [--today YYYY-MM-DD]
+  python3 scripts/stays/import_new_stays.py [--dry] [--verbose] [--relaxed] [--root DIR] [--today YYYY-MM-DD]
 
 --dry writes nothing. Exit code is always 0: a failure here never stops a merge (it is printed). Run from merge_found.sh
 (serialised, owner-run); the supervisor only runs --dry.
+
+--relaxed (owner, 2026-10-15, one-off "discover new stays" sweep only -- never the default, never run by
+merge_found.sh/the supervisor): accepts weaker NAME evidence when LOCATION evidence is strong (see
+booking_stays.name_problem's own docstring) and accepts a missing booking/rating signal once a row is otherwise
+fully qualified (see qualify()'s docstring). Never loosens scope, freshness, redirect, lodging-type, name-source
+or duplicate checks. Every row accepted only because of this flag is tagged "relaxed (...)" in its registry note
+and counted in the run's summary line, so the owner's 500-1000-property error budget can be tracked and the
+decision stays visible, never silent.
 """
 import datetime
 import os
@@ -117,9 +125,19 @@ def known_urls(reg_slugs):
 
 # ---------------------------------------------------------------------------------------------------- qualify
 
-def qualify(c, today):
+def qualify(c, today, relaxed=False):
     """(None, '') when the candidate may be listed, else ('held' | 'out_of_scope', reason). Also fills c['lat_f'], c['lng_f'],
-    c['city'], c['dn'] on the way."""
+    c['city'], c['dn'] on the way.
+
+    relaxed (owner, 2026-10-15, one-off "discover new stays" sweep; default False, never on for the normal
+    merge_found.sh run): loosens two checks, each noted on c['relaxed'] (a list) so the caller can tally and label
+    weak-evidence listings, and never for a row that would otherwise fail on scope, freshness, redirects, lodging
+    type or name-data-source grounds -- only the name/URL-slug match and the booking/rating signal:
+      - bs.name_problem(..., relaxed=True): see its own docstring -- a chain-brand name mismatch is accepted when
+        the page's own locality/postal independently confirms the place;
+      - the booking/rating `signals` column: verify_seen.mjs's regex for "book now"/"reserve"/a rating sometimes
+        misses an OTA chain page's exact wording even though the property is live (ltype + name_src=ld already
+        confirm it is a real, current listing page) -- accepted only once the row is otherwise fully qualified."""
     try:
         lat, lng = float(c['lat']), float(c['lng'])
         if not (math_finite(lat) and math_finite(lng)):
@@ -143,12 +161,20 @@ def qualify(c, today):
         return 'held', 'no lodging type in the page data'
     if c['name_src'] != 'ld':
         return 'held', f"name is not from the page data ({c['name_src'] or 'no evidence'})"
+    c['relaxed'] = []
     problem = bs.name_problem(c['name'], c['url'])
     if problem:
-        return 'held', problem
+        if not relaxed:
+            return 'held', problem
+        relaxed_problem = bs.name_problem(c['name'], c['url'], relaxed=True, locality=c['locality'], postal=c['postal'])
+        if relaxed_problem:
+            return 'held', relaxed_problem
+        c['relaxed'].append(f'name mismatch accepted on location evidence (strict reason: {problem})')
     sig = {s.strip() for s in c['signals'].split(',') if s.strip()}
     if not ({'bookable', 'rated'} & sig):
-        return 'held', 'no availability button or guest rating on the page (maybe closed)'
+        if not relaxed:
+            return 'held', 'no availability button or guest rating on the page (maybe closed)'
+        c['relaxed'].append('no availability/rating signal on the page')
     try:
         age = (datetime.date.fromisoformat(today) - datetime.date.fromisoformat(c['checked'])).days
     except ValueError:
@@ -236,6 +262,7 @@ def attach(row, platform, url):
 def run(argv):
     dry = '--dry' in argv
     verbose = '--verbose' in argv
+    relaxed = '--relaxed' in argv
     root = arg(argv, '--root')
     if root:
         bs.set_root(root)
@@ -248,6 +275,7 @@ def run(argv):
     counts = dict(listed=0, extra=0, held=0, duplicate=0, out=0)
     held_why = {}
     decisions = []
+    relaxed_accepted = []   # (url, name, reasons) for every row listed/extra_link only because of --relaxed
 
     # extra pages of registry stays that map_seen_pages recorded in found.tsv (it is read-only here)
     folded = 0
@@ -267,7 +295,7 @@ def run(argv):
 
     ready = []
     for c in candidates:
-        kind, why = qualify(c, today)
+        kind, why = qualify(c, today, relaxed=relaxed)
         cu = bs.canon_url(c['url'])
         if cu in reg_urls:   # already one of ours (primary or extra): a re-run changes nothing
             slug = reg_urls[cu]
@@ -320,6 +348,8 @@ def run(argv):
             if kind:
                 counts['extra'] += 1
                 decisions.append(dict(d, decision='extra_link', why=f"another site's page of {row['slug']}", slug=row['slug']))
+                if c.get('relaxed'):
+                    relaxed_accepted.append((c['url'], c['dn'], c['relaxed']))
             else:
                 counts['held'] += 1
                 held_why['same site, other page'] = held_why.get('same site, other page', 0) + 1
@@ -334,14 +364,17 @@ def run(argv):
             decisions.append(dict(d, decision='held', why='its slug would contain one of our own stays', slug=''))
             continue
         sig = ', '.join(s.strip() for s in c['signals'].split(',') if s.strip())
+        relaxed_note = f"; relaxed ({'; '.join(c['relaxed'])})" if c.get('relaxed') else ''
         row = dict(slug=slug, name=c['dn'], city=c['city'], lat=c['lat'], lng=c['lng'], type=type_, type_word=word, platform=c['platform'],
                    url=bs.clean_url(c['url'], c['platform']), extra_links='', state='listed', first_listed=today, checked=c['checked'],
-                   seen_for=c['seen_for'], note=f"ld {ltype}; pin {c['lat_f']:.4f},{c['lng_f']:.4f}; name in slug; {sig}")
+                   seen_for=c['seen_for'], note=f"ld {ltype}; pin {c['lat_f']:.4f},{c['lng_f']:.4f}; name in slug; {sig}{relaxed_note}")
         registry.append(row)
         by_slug[slug] = row
         reg_urls = bs.registry_urls(registry)
         counts['listed'] += 1
         decisions.append(dict(d, decision='listed', why=f"new stay in {c['city']}: {row['note']}", slug=slug))
+        if c.get('relaxed'):
+            relaxed_accepted.append((c['url'], c['dn'], c['relaxed']))
         if verbose:
             print(f"  listed {slug} <- {c['url']}")
 
@@ -368,10 +401,16 @@ def run(argv):
     summary = (f"import_new_stays: {counts['listed']} listed, {counts['extra']} extra links, {counts['held']} held"
                + (f" ({', '.join(f'{n} {w}' for w, n in sorted(held_why.items(), key=lambda t: (-t[1], t[0])))})" if held_why else '')
                + f", {counts['duplicate']} duplicates, {counts['out']} out of scope; registry {len(registry)}, ota rows to write {len(todo)}")
+    if relaxed:
+        summary += f"; {len(relaxed_accepted)} accepted on relaxed (weaker) evidence this run"
+        if len(relaxed_accepted) > 150:
+            summary += " -- BUDGET WATCH: pace this run alone is well past a 1000-total cap over a few more batches, check before continuing"
     if verbose:
         for d in decisions:
             if d['decision'] in ('held', 'duplicate'):
                 print(f"  {d['decision']:9} {d['name'][:38]:38} {d['why'][:100]}")
+        for url, name, reasons in relaxed_accepted:
+            print(f"  relaxed   {name[:38]:38} {'; '.join(reasons)[:100]}  <- {url}")
     if dry:
         print(summary + ' (dry run: nothing written)')
         return
