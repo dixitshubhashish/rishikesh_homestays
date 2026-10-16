@@ -93,6 +93,8 @@ test('built data: every listed registry stay is in its city\'s module, linked, a
   const mods = {
     rishikesh: (await import('../../assets/js/modules/stays-index-data.js')).STAYS_INDEX,
     haridwar: (await import('../../assets/js/modules/stays-index-data-haridwar.js')).STAYS_INDEX,
+    dehradun: (await import('../../assets/js/modules/stays-index-data-dehradun.js')).STAYS_INDEX,
+    mussoorie: (await import('../../assets/js/modules/stays-index-data-mussoorie.js')).STAYS_INDEX,
   };
   const missing = [];
   for (const r of registry.filter((x) => x.state === 'listed')) {

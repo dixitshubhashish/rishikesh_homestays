@@ -173,7 +173,10 @@ export function matchReason(name, city, title) {
   // that word gets consumed matching our own name and spare/rest never see it, so an exact, correctly
   // titled page was wrongly rejected as "town-missing". The page's head (before subtracting our own
   // name's words) still has the literal text, so check it too.
-  if (!townIn(city, rest) && !townIn(city, spare.join(' ')) && !townIn(city, head)) return { ok: false, why: 'town-missing' };
+  // ...but not when a Booking.com title names its own town ("Hotel Laxman Grand, Ayodhya (updated prices …)"):
+  // then the head's area word (Laxman) says nothing about where the property is.
+  const namesOtherTown = /\(updated prices/i.test(title) && /\p{L}/u.test(rest.replace(/\(updated prices.*$/i, ''));
+  if (!townIn(city, rest) && !townIn(city, spare.join(' ')) && !(townIn(city, head) && !namesOtherTown)) return { ok: false, why: 'town-missing' };
   const nameAll = new Set(tokens(name));
   const got = new Set(tokens(title));
   const nameUnits = tokens(coreName(name)).filter((w) => UNITS.has(w));

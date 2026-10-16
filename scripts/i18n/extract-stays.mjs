@@ -43,7 +43,7 @@ export async function vocabulary() {
   const terms = new Set(), names = new Set();
   // every city that has a built stays data module (stays-index-data.js = Rishikesh, stays-index-data-<city>.js)
   const files = readdirSync(join(ROOT, "assets/js/modules")).filter((f) => /^stays-index-data(-[a-z]+)?\.js$/.test(f)).sort();
-  const cities = files.map((f) => { const m = /-([a-z]+)\.js$/.exec(f); return m ? m[1][0].toUpperCase() + m[1].slice(1) : "Rishikesh"; });
+  const cities = files.map((f) => { const m = /^stays-index-data-([a-z]+)\.js$/.exec(f); return m ? m[1][0].toUpperCase() + m[1].slice(1) : "Rishikesh"; });
   cities.forEach((c) => terms.add(c));
   for (const f of files) {
     const m = await import(pathToFileURL(join(ROOT, "assets/js/modules", f)).href);

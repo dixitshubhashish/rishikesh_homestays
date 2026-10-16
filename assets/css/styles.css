@@ -4232,8 +4232,8 @@ html:lang(he) :is(body, h1, h2, h3, h4) {
 .stays-hub-tab:hover {
   border-color: rgba(var(--accent-rgb), 0.3);}
 .stays-hub-tab.is-active {
-  background: var(--river);
-  border-color: var(--river);
+  background: var(--river-fill);
+  border-color: var(--river-fill);
   color: var(--on-fill);}
 .stays-hub-city {
   padding: 22px 0;
