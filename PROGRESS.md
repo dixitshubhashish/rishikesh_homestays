@@ -1,4 +1,28 @@
 # Progress Tracker
+- **2026-10-16 candidate_pages browser verification + merge (Claude)**: cleared the `candidate_pages`
+  `unchecked` backlog for Agoda (3,310), Booking.com (1,023), Airbnb (1,033), OYO/EaseMyTrip/Trivago/
+  Cleartrip (63 combined) via real-browser (headed, not headless) multi-tab verification — headless had
+  previously gotten bot-blocked going fast; Goibibo/MakeMyTrip/Trip.com/Hotels.com/Expedia left `unchecked`
+  (confirmed network/auth/bot-gated, no tooling fix available). Ran `map_seen_pages.py` + `merge_found.sh`
+  twice to merge the resulting `ok` pages into live listings: ~1,215 pages mapped to existing stays (new
+  extra OTA links or filling a stay that had none), 774 brand-new properties onboarded, `ota-links.tsv`
+  now 6,250 verified links. Fixed a `process.py` gap (Dehradun/Mussoorie need their own `process.py --city`
+  run after a merge; a new property can land in their territory even though `map_seen_pages.py` itself only
+  scopes Rishikesh/Haridwar). 139+193 properties with a closed/dead candidate on one platform (no verified
+  link anywhere else) re-queued into `unfound.tsv` with a real name — either from cached Google-Maps-sweep
+  data or decoded from their slug (flagged `name decoded from slug, unverified` in `search_log`) — for the
+  next booking-link search pass to try other platforms. `npm test` 1,714/1,716; the 2 failures are a
+  pre-existing (predates this session, confirmed via `git show HEAD`) link conflict on 5 properties where a
+  newly-found Booking.com page matches an already-listed stay under a different name — flagged, not
+  resolved, needs an owner judgment call (same property vs. a genuine mix-up): Spot On Royal Hills Homestay
+  vs hills-homestay, Hotel Green Castle Mall Road vs green-n-breeze-resorts, Queen of Hills View vs
+  queen-of-hills-view, Sarins 'Mistville' 4BHK Villa vs mountain-midst-248179, The Grand Valley vs
+  resort-khyarsi-near-waterfall. Still open: ~1,526 Dehradun/Mussoorie `ok` candidates (out of
+  `map_seen_pages.py`'s current city scope), ~853 Rishikesh/Haridwar `ok` candidates on auto-listable
+  platforms that `import_new_stays.py` evaluated and declined for a fixable reason, 146 unchecked bot-gated,
+  6 held. The ~9,666 `unreadable`/4,045 `no pin` rows are mostly old plain-fetch (`verify_seen.mjs`, no JS
+  rendering) checks from Oct 6-14 on Goibibo/MakeMyTrip/Agoda -- likely recoverable with the same
+  browser-rendering fix used tonight, not confirmed dead; worth a follow-up pass before writing them off.
 - **2026-10-13 Goibibo-unreadable blind spot fixed, stuck stays routed to review (Claude)**: found that
   203 of ~3,682 `unfound.tsv` stays were stuck permanently in `retry` with the identical reason "pages
   would not load: Goibibo" — traced to `check()`'s catch block in `scripts/stays/google_ota_search.mjs`
