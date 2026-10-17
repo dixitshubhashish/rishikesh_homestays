@@ -362,6 +362,6 @@ test('the bug-report styles use tokens only and never use a bare 1fr', () => {
   const css = read('assets/css/styles.css');
   const block = css.slice(css.lastIndexOf('Report a bug (/report-a-bug'));
   assert(block.length > 100, 'the block exists');
-  assert(!/#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(block), 'no colour literals');
+  assert(!/#[0-9a-fA-F]{3,8}\b|rgba?\((?!var\()/.test(block), 'no colour literals');
   assert(!/\b1fr\b/.test(block.replace(/minmax\(0, 1fr\)/g, '')), 'no bare 1fr');
 });

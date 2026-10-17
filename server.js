@@ -11,6 +11,7 @@ import otpVerifyHandler from './api/otp-verify.js';
 import geoHandler from './api/geo.js';
 import captchaChallengeHandler from './api/captcha-challenge.js';
 import currencyRatesHandler from './api/currency-rates.js';
+import geocodeAreaHandler from './api/geocode-area.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -118,6 +119,7 @@ app.get('/api/otp-status', otpStatusHandler);
 app.get('/api/geo', geoHandler);
 app.get('/api/captcha-challenge', captchaChallengeHandler);
 app.get('/api/currency-rates', currencyRatesHandler);
+app.get('/api/geocode-area', geocodeAreaHandler);
 app.post('/api/otp-send', otpSendHandler);
 app.post('/api/otp-verify', otpVerifyHandler);
 

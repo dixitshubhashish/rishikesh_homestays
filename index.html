@@ -154,21 +154,18 @@
     <section class="search-panel" aria-label="Find a stay">
       <form class="search-grid" data-search-form>
 
-        <div class="field">
-          <label for="city">City</label>
-          <select id="city" name="city" class="city-dropdown" autocomplete="off">
+        <div class="field ota-dest-field" data-ota-destination-box>
+          <label for="area">Destination / area</label>
+          <input id="area" name="area" class="ota-dest-input" type="text" autocomplete="off"
+            placeholder="Search any area — e.g. Tapovan, Har Ki Pauri…"
+            data-ota-destination role="combobox" aria-expanded="false" aria-autocomplete="list" aria-owns="ota-dest-listbox">
+          <select id="city" name="city" class="city-dropdown" autocomplete="off" data-ota-city>
             <option value="rishikesh" selected>Rishikesh</option>
             <option value="haridwar">Haridwar</option>
             <option value="dehradun">Dehradun</option>
             <option value="mussoorie">Mussoorie</option>
           </select>
-        </div>
-
-        <div class="field">
-          <label for="area">Preferred Area</label>
-          <select id="area" name="area" class="area-dropdown">
-            <option value="">Any area</option>
-          </select>
+          <ul class="ota-dest-list" id="ota-dest-listbox" role="listbox" hidden data-ota-destination-list></ul>
         </div>
 
         <div class="field">

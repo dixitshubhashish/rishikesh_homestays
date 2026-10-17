@@ -31,7 +31,12 @@ export function setupQuickSearch() {
 function setupCityPicker(form) {
   const city = form.querySelector("#city");
   const area = form.querySelector("#area");
-  if (!city || !area) return;
+  // The homepage destination box (assets/js/modules/ota-search-box.js, FEAT-4)
+  // replaced the plain area <select> with a free-text input that sets #city
+  // itself when a visitor picks a local match or a live-geocoded place; this
+  // select-only city/area linking is only for pages that still use the
+  // original <select id="area">.
+  if (!city || !area || area.tagName !== "SELECT") return;
   [...city.options].forEach((o) => { if (o.value !== "rishikesh" && !CITY_AREAS[o.value]) o.remove(); });
   const fillAreas = () => {
     [...area.options].slice(1).forEach((o) => o.remove());

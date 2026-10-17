@@ -203,8 +203,12 @@ test('site-search: header button and panel', async (t) => {
   const saved = { window: global.window, document: global.document, fetch: global.fetch };
   global.window = window;
   global.document = window.document;
+  // The header search also tries one live /api/geocode-area call on a
+  // zero-result query (FEAT-3/4, 2026-10-17); stub it as "no match" so these
+  // tests, which only exercise the page/stay index, are unaffected.
   let fetches = 0;
   global.fetch = async (url) => {
+    if (url.startsWith('/api/geocode-area')) return { ok: true, json: async () => ({ city: null, notFound: true }) };
     fetches++;
     assert.strictEqual(url, '/assets/search/index.json');
     return { ok: true, json: async () => RAW };

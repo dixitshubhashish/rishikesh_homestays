@@ -28,6 +28,7 @@ Tests exit 0 on pass and non-zero on failure. In CI: `- run: npm test`.
 
 ## Last full run
 
+- **2026-10-17**: full `npm test`, **1,721 / 1,721 passing** (after the listing sitemap, the five duplicate-link decisions and the new translations; an earlier run the same day had two registry failures from stale slugs and one dark-theme contrast failure on `.stays-hub-tab`, all fixed).
 - **2026-10-06**: full `npm test`, **945 / 945 passing**, with the new site search (`tests/modules/site-search.test.js`, 34 tests).
 - **2026-10-05**: all tests except the visual one, **260 / 260 passing** (22 files). The visual test was not run that day because the booking-link search had browsers open (see below).
 - **2026-10-04**: full `npm test`, **413 / 413 passing**, on main after the stays guide, Haridwar, Google Maps stays, CJ links, AdSense, Driving from Delhi and Bike & Taxi Rental. The visual test then covered fewer pages (175 subtests); it now covers about 270 pages × 2 widths, so a full run today is about 800 tests.
@@ -54,6 +55,7 @@ Update this section after each full run (date + counts), not with a new file.
 | `tests/modules/rental-form.test.js`, `dom-helpers.test.js`, `stays-renderer.test.js` | 13 each | Rental form logic, DOM helpers, homestay cards |
 | `tests/modules/data.test.js` | 11 | STAYS/AREAS data: required fields, areas exist, prices read "Starting ₹X onwards" |
 | `tests/api/otp-helpers.test.js` | 10 | Email OTP helpers |
+| `tests/integration/listing-sitemap.test.js` | 5 | `sitemap-stays.xml` holds every stay of every city once with a date, none of our own, `listing_sitemap.py --check` is clean, `robots.txt`/IndexNow/workflows know both sitemaps, the stay page is `index` with no static canonical |
 | `tests/integration/stays-content.test.js` | 8 | `npm run check:stays`: every stays page has 450+ words of guide text (landmark pages 300+), its own title/`<h1>`/lede/description, 2+ FAQs, one ad slot after the lists, a working city switch, a sitemap entry |
 | `tests/scripts/ota-evidence.test.js`, `ota-match.test.js` | 7, 4 | Booking-link match rules (place evidence, name rules; real cases) |
 | `tests/modules/site-search.test.js` | 34 | Site search: tokenise, the 0.70 similarity rule and typo cases (trivn, ganag, hotal), ranking, own stays first, the header button/panel in jsdom (lazy fetch, arrows, Enter, Esc, no results), and that `assets/search/index.json` lists every root page, every `hotels/best-*` page and every stay |

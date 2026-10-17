@@ -2,10 +2,12 @@
 // This file is kept for compatibility with existing HTML that references assets/js/site.js
 
 import { AREAS, STAYS } from './modules/data.js';
+import { CITY_AREAS } from './modules/city-areas.js';
 import { qs, qsa } from './modules/dom-helpers.js';
 import { createStayCard, renderStays, hydrateFilters } from './modules/stays-renderer.js';
 import { setupNav } from './modules/nav.js';
 import { setupQuickSearch, setupAreaDropdowns, setupDatePickers } from './modules/search-form.js';
+import { setupDestinationAutocomplete } from './modules/ota-search-box.js';
 import { setupEnquiryPrefill, applyListingParams } from './modules/enquiry-prefill.js';
 import { enhanceStaticWhatsAppLinks } from './modules/whatsapp-link.js';
 import { setupPageTabs } from './modules/page-tabs.js';
@@ -42,6 +44,14 @@ document.addEventListener("DOMContentLoaded", () => {
   setupQuickSearch();
   setupAreaDropdowns();
   setupDatePickers();
+  const destBox = qs("[data-ota-destination-box]");
+  if (destBox) {
+    const entries = [
+      ...AREAS.map((name) => ({ name, city: "rishikesh" })),
+      ...Object.entries(CITY_AREAS).flatMap(([city, names]) => names.map((name) => ({ name, city })))
+    ];
+    setupDestinationAutocomplete(destBox, entries);
+  }
   hydrateFilters();
   applyListingParams();
   renderStays(qs("[data-stay-grid]")?.dataset.limit ? Number(qs("[data-stay-grid]").dataset.limit) : undefined);

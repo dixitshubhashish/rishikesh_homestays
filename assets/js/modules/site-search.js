@@ -20,6 +20,19 @@ const MATCH_MIN = MATCH_THRESHOLD - 1e-9; // 1 - 3/10 must count as 0.70 whateve
 export const PREFIX_FACTOR = 0.95; // a prefix match scores a little under a whole-word one
 export const OWN_BOOST = 0.15;
 export const INDEX_URL = '/assets/search/index.json';
+const GEOCODE_URL = '/api/geocode-area';
+
+async function geocodeAreaFallback(query) {
+  if (query.length < 3) return null;
+  try {
+    const response = await fetch(`${GEOCODE_URL}?q=${encodeURIComponent(query)}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data?.city ? data : null;
+  } catch {
+    return null;
+  }
+}
 const TYPE_RANK = { page: 0, heading: 1, stay: 2 };
 const STOP = new Set(['a', 'an', 'the', 'in', 'of', 'to', 'and', 'for', 'at', 'on', 'with', 'by', 'is', 'or']);
 const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar', dehradun: 'Dehradun', mussoorie: 'Mussoorie' };
@@ -312,8 +325,20 @@ export function setupSiteSearch(doc = document) {
     if (!docs) { status.textContent = 'Loading…'; return; }
     const n = renderResults(list, search(docs, q));
     input.setAttribute('aria-expanded', n ? 'true' : 'false');
-    if (n) status.textContent = '';
-    else status.innerHTML = `No results for “${esc(q)}”. <a href="/contact">Ask us</a> and we will help you find it.`;
+    if (n) { status.textContent = ''; return; }
+    status.innerHTML = `No results for “${esc(q)}”. <a href="/contact">Ask us</a> and we will help you find it.`;
+    // Wired-across-pages piece of FEAT-3/4 (2026-10-17): the header search
+    // exists on every page, so a zero-result query (no page/stay title
+    // matched) also gets one live-geocode try, same endpoint the homepage
+    // destination box uses, for an arbitrary real area name no page mentions.
+    geocodeAreaFallback(q).then((hit) => {
+      if (input.value.trim() !== q || !hit) return;
+      const cityName = CITY_NAMES[hit.city] || hit.city;
+      const href = hit.city === 'rishikesh'
+        ? `/homestays?area=${encodeURIComponent(q)}#stays`
+        : `/hotels/${hit.city}-accommodation?area=${encodeURIComponent(q)}`;
+      status.innerHTML = `No page mentions “${esc(q)}”, but it's in <strong>${esc(cityName)}</strong> — <a href="${href}">see stays there</a>.`;
+    }).catch(() => {});
   };
 
   const prefetch = () => loadIndex().then((d) => { docs = d; if (!panel.hidden) run(); }).catch(() => {

@@ -4,6 +4,18 @@ Read `CLAUDE.md` first (rules, where things live), then this file. Then, as need
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
 
+## Session 2026-10-17: what changed and what is open (Claude; read before the older notes below, several are stale)
+
+**Done and pushed** (`698e5ec`, `a20e055`; `npm test` 1,721/1,721): translations for all 22 languages (`docs/I18N.md` "Bulk rounds"); the **listing sitemap** `sitemap-stays.xml` and the now-indexable stay page (`docs/ARCHITECTURE.md` "Listing sitemap"; run `python3 scripts/stays/listing_sitemap.py --check`); Dehradun and Mussoorie are in BigQuery `market_properties`; the five duplicate Booking.com pairs are settled (`scripts/stays/README.md` "Duplicate pairs"); `ota-match.mjs` town fix; registry slugs renamed; dark-theme contrast on the `/hotels` active tab.
+
+**Stale in the notes below**: the literal "Data" bug and `CITY_NAME` in `ads.js` are fixed; `unfound.tsv` is empty and the search state lives in `scripts/stays/.cache/stays.db` (`candidate_pages`), not only the TSVs; the stay page is no longer `noindex`.
+
+**Open, owner to decide**: (1) AdSense "Low-value content": the roughly 6,900 JS-filled stay pages now in the sitemap add thin-page risk; options are limiting the sitemap to stays with a verified booking link, and/or `noindex` for Dehradun and Mussoorie until they have links (nothing done). (2) Sinhala spelling of Rishikesh (about 1,100 older strings). (3) Hindi/Japanese/Chinese/Turkish/German wording choices from the QA reports. **Owner to do**: `CAPTCHA_SECRET` in Vercel; Search Console/Bing; CJ link choice; OTA logos; native review of the new translations; verify live that `/sitemap-stays.xml` loads and a stay URL from it renders.
+
+**Open, work**: 7,761 `candidate_pages` rows still `unchecked` (real-browser tools only, one URL at a time); fix hidden search-browser windows; the footer sync adds indentation spaces to every page on each build (revert whitespace-only diffs with `git diff -w` before committing, or fix `footer_links.py`); docs (older notes) need a general refresh.
+
+**Decision pages**: the owner can answer a list of choices through a published Artifact with a Submit button (page declares the `db` capability, writes one document, Claude reads it with `ArtifactData`); used 2026-10-17 for the five duplicates.
+
 ## Session 2026-10-13: candidate concurrency for the booking-link search (code done, not yet live)
 
 Implemented bounded concurrency for reading booking-site candidate pages (`check()` in
