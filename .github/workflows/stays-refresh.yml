@@ -44,9 +44,9 @@ jobs:
         run: |
           git config user.name "stays-refresh bot"
           git config user.email "actions@users.noreply.github.com"
-          # the pages now live in hotels/; the build also rewrites every footer, sitemap.xml,
+          # the pages now live in hotels/; the build also rewrites every footer, sitemap.xml, sitemap-stays.xml (one entry per stay, scripts/stays/listing_sitemap.py),
           # llms.txt / llms-full.txt and the honest page dates (scripts/stays/page-dates.tsv)
-          git add -A -- scripts/stays assets/js/modules hotels sitemap.xml llms.txt llms-full.txt '*.html' i18n
+          git add -A -- scripts/stays assets/js/modules hotels sitemap.xml sitemap-stays.xml llms.txt llms-full.txt '*.html' i18n
           git diff --cached --quiet && exit 0
           git commit -m "Stays pages: scheduled refresh ($(date -u +%F))"
           git push
@@ -57,5 +57,5 @@ jobs:
         if: steps.commit.outputs.pushed == '1'
         continue-on-error: true
         run: |
-          git diff --quiet HEAD~1 HEAD -- sitemap.xml && exit 0
+          git diff --quiet HEAD~1 HEAD -- sitemap.xml sitemap-stays.xml && exit 0
           node scripts/indexnow.mjs --from HEAD~1 --wait-live

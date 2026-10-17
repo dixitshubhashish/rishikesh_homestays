@@ -78,6 +78,7 @@ def main():
         open(verified, 'w', encoding='utf8', newline='\n').write(''.join(l for l in open(guesses, encoding='utf8') if '\tverified\t' in l))
         run('merge_ota.py', verified)
     run('build_pages.py')
+    run('listing_sitemap.py')   # sitemap-stays.xml: one entry per stay, re-dated when its record changes
     # Snapshot into BigQuery (market_properties); skips itself without credentials.
     subprocess.run(['node', os.path.join(HERE, 'push_bigquery.mjs')], check=False)
     open(URLS, 'w', encoding='utf8', newline='\n').write('\n'.join(current) + '\n')

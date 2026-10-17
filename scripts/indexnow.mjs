@@ -4,7 +4,8 @@
 // take part; it reads sitemap.xml.
 //
 // The key is public by design: the engines check that /<key>.txt on the site
-// holds it, which proves we own the domain. Pages to send come from sitemap.xml:
+// holds it, which proves we own the domain. Pages to send come from sitemap.xml and
+// sitemap-stays.xml (one entry per listed stay, scripts/stays/listing_sitemap.py):
 // every URL whose <lastmod> moved (scripts/stays/page_dates.py keeps those dates
 // honest) or that was added or removed since a git ref.
 //
@@ -13,7 +14,7 @@
 //   add --wait-live to first wait until the live sitemap matches this one
 //   (so the engines find the new pages, not the old deploy), --dry-run to only list.
 //
-// .github/workflows/indexnow.yml runs it after every push to main that changes sitemap.xml.
+// .github/workflows/indexnow.yml runs it after every push to main that changes either sitemap.
 import { readFileSync, readdirSync } from 'fs';
 import { execFileSync } from 'child_process';
 import { join, dirname } from 'path';
@@ -23,6 +24,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const HOST = 'rishikeshhomestays.com';
 const ENDPOINT = 'https://api.indexnow.org/indexnow';
 const BATCH = 10000; // the protocol's limit per request
+export const SITEMAPS = ['sitemap.xml', 'sitemap-stays.xml'];
 
 export function findKey(dir = ROOT) {
   const file = readdirSync(dir).find((f) => /^[0-9a-f]{32}\.txt$/.test(f));
@@ -45,18 +47,22 @@ export function changedUrls(before, after) {
   return urls.concat([...before.keys()].filter((u) => !after.has(u)));
 }
 
-const sitemapAt = (ref) => {
-  try { return execFileSync('git', ['show', `${ref}:sitemap.xml`], { cwd: ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }); }
+const sitemapAt = (ref, file = 'sitemap.xml') => {
+  try { return execFileSync('git', ['show', `${ref}:${file}`], { cwd: ROOT, encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }); }
   catch { return ''; } // a ref without a sitemap (or the all-zero "before" of a new branch): everything is new
 };
 
-async function waitLive(local, minutes = 15) {
-  const want = parseSitemap(local);
+const localSitemap = (file) => { try { return readFileSync(join(ROOT, file), 'utf-8'); } catch { return ''; } };
+
+async function waitLive(minutes = 15) {
   for (const end = Date.now() + minutes * 60_000; Date.now() < end;) {
     try {
-      const res = await fetch(`https://${HOST}/sitemap.xml`, { headers: { 'cache-control': 'no-cache' } });
-      const live = parseSitemap(await res.text());
-      if (changedUrls(live, want).length === 0) return;
+      let same = true;
+      for (const file of SITEMAPS) {
+        const res = await fetch(`https://${HOST}/${file}`, { headers: { 'cache-control': 'no-cache' } });
+        if (changedUrls(parseSitemap(await res.text()), parseSitemap(localSitemap(file))).length) same = false;
+      }
+      if (same) return;
     } catch { /* not reachable yet: keep waiting */ }
     await new Promise((r) => setTimeout(r, 20_000));
   }
@@ -65,16 +71,17 @@ async function waitLive(local, minutes = 15) {
 
 async function main(argv) {
   const has = (f) => argv.includes(f);
-  const local = readFileSync(join(ROOT, 'sitemap.xml'), 'utf-8');
   const from = argv[argv.indexOf('--from') + 1];
   if (!has('--all') && !(has('--from') && from)) throw new Error('say --all or --from <git ref>');
-  const urls = has('--all') ? [...parseSitemap(local).keys()] : changedUrls(parseSitemap(sitemapAt(from)), parseSitemap(local));
+  const urls = SITEMAPS.flatMap((file) => (has('--all')
+    ? [...parseSitemap(localSitemap(file)).keys()]
+    : changedUrls(parseSitemap(sitemapAt(from, file)), parseSitemap(localSitemap(file)))));
   const key = findKey();
   console.log(`${urls.length} URL(s) to send${has('--dry-run') ? ' (dry run)' : ''}`);
   urls.slice(0, 20).forEach((u) => console.log(`  ${u}`));
   if (urls.length > 20) console.log(`  … and ${urls.length - 20} more`);
   if (!urls.length || has('--dry-run')) return;
-  if (has('--wait-live')) await waitLive(local);
+  if (has('--wait-live')) await waitLive();
   const keyLive = await fetch(`https://${HOST}/${key}.txt`).then((r) => (r.ok ? r.text() : ''), () => '');
   if (keyLive.trim() !== key) throw new Error(`https://${HOST}/${key}.txt is not live yet; deploy it first`);
   for (let i = 0; i < urls.length; i += BATCH) {

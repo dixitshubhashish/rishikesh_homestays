@@ -183,11 +183,29 @@ function factRows(d) {
   return rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
 }
 
+// Every listed stay is in sitemap-stays.xml (scripts/stays/listing_sitemap.py), so its page
+// is indexable and names its own URL: hotels/stay.html carries no static robots/canonical
+// rule beyond "index". A stay we can't find, and our own stays (they have their own pages),
+// are noindex. Set from here because the stay is only known once the data module is loaded.
+function setIndexing(indexable, d) {
+  let robots = document.querySelector('meta[name="robots"]');
+  if (!robots) { robots = document.createElement('meta'); robots.name = 'robots'; document.head.appendChild(robots); }
+  robots.content = (indexable ? ['index', 'follow', 'max-image-preview:large'] : ['noindex', 'follow']).join(', ');
+  let canon = document.querySelector('link[rel="canonical"]');
+  if (!indexable) { if (canon) canon.remove(); return; }
+  if (!canon) { canon = document.createElement('link'); canon.rel = 'canonical'; document.head.appendChild(canon); }
+  canon.href = `https://rishikeshhomestays.com/hotels/stay?s=${encodeURIComponent(d.id)}${CQ}`;
+  let desc = document.querySelector('meta[name="description"]');
+  if (!desc) { desc = document.createElement('meta'); desc.name = 'description'; document.head.appendChild(desc); }
+  desc.content = `${d.n}, ${d.k.toLowerCase()} in ${d.a}, ${CITY_NAME}.${d.g ? ` Guest rating ${d.g}/10.` : ''}${d.p ? ` Starting ₹${inr(d.p)} a night.` : ''} Compare it with nearby stays or book direct with us.`;
+}
+
 function render(root, d, isOwn) {
   const cat = categoryFor(d);
   const similar = STAYS_INDEX.filter((x) => x.id !== d.id && x.a === d.a && x.ks.some((k) => d.ks.includes(k))).slice(0, 6);
   const links = d.o || [];
   document.title = `${d.n} | ${d.a}, ${CITY_NAME} | Rishikesh Homestays`;
+  setIndexing(!isOwn, d);
   root.innerHTML = `
     <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span>
       <a href="/hotels/best-${cat.slug}-in-${CITY}">${cat.filter === 'all' ? `Best Hotels in ${CITY_NAME}` : `Best ${esc(cat.title)} in ${CITY_NAME}`}</a> <span aria-hidden="true">›</span> <span data-stay-name>${esc(d.n)}</span></nav>
@@ -467,6 +485,7 @@ export async function setupStayPage() {
   const stay = own || STAYS_INDEX.find((d) => d.id === id);
   if (!stay) {
     document.title = `This stay has checked out | ${CITY_NAME} | Rishikesh Homestays`;
+    setIndexing(false);
     root.innerHTML = `<h1 class="sx-title">This stay has checked out</h1>
       <p class="sx-lede">We couldn't find it in our ${CITY_NAME} listings; it may have closed or changed its name. Here are good places to look instead, or <a href="/contact">send us your dates</a> and we'll suggest a stay.</p>
       <nav class="sx-cats" aria-label="Browse stays">${STAYS_INDEX_META.categories.filter((c) => c.filter === 'all').map((c) => `<div class="sx-cats-row"><a href="/hotels/best-${c.slug}-in-${CITY}">All stays <small>${inr(c.count)}</small></a></div>`).join('')}${catGroups().map(([label, list]) => `<div class="sx-cats-row"><span class="sx-cats-label">${label}</span>${list.map((c) => `<a href="/hotels/best-${c.slug}-in-${CITY}">${esc(c.title)} <small>${inr(c.count)}</small></a>`).join('')}</div>`).join('')}</nav>

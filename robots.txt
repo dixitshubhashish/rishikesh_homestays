@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://rishikeshhomestays.com/sitemap.xml
-
+Sitemap: https://rishikeshhomestays.com/sitemap-stays.xml

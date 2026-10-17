@@ -1704,14 +1704,18 @@ def main(data_path):
     replace_between(f'{ROOT}/llms.txt', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', ll)
 
     # One shared info page for every stay (/hotels/stay?s=<id>), rendered from the
-    # data module by stay-page.js. noindex: thin per-stay pages would dilute
-    # the category pages, which carry the SEO.
+    # data module by stay-page.js. Every stay is in sitemap-stays.xml (listing_sitemap.py).
     if CITY != DEFAULT_CITY:
         print('verified booking links:', sum('o' in s for s in stays))
         print('pages:', ', '.join(f'{c[0]} ({counts[c[0]]})' for c in live))
         return
     stay_top = (top.replace('<title>Thanks | Rishikesh Homestays</title>', '<title>Stay details | Rishikesh Homestays</title>')
                    .replace(f'{SITE}/thanks', f'{SITE}/hotels/stay'))
+    # Indexable (owner, 2026-10-17): every stay is in sitemap-stays.xml. stay-page.js sets each stay's own
+    # canonical and description, and noindex for a stay it can't find; no static canonical here, or every
+    # ?s= URL would be folded into the bare /hotels/stay.
+    stay_top = (stay_top.replace('<meta name="robots" content="noindex, follow">', '<meta name="robots" content="index, follow, max-image-preview:large">')
+                        .replace('    <link rel="canonical" href="https://rishikeshhomestays.com/hotels/stay">\n', ''))
     stay_main = '''<main class="sx-page" id="main">
       <section class="section">
         <div class="container" id="sp-root">

@@ -1,4 +1,4 @@
-# After a push to main that changes sitemap.xml, wait until Vercel has the new
+# After a push to main that changes sitemap.xml or sitemap-stays.xml, wait until Vercel has the new
 # deploy live, then send IndexNow the pages that were added, re-dated or
 # removed (scripts/indexnow.mjs). Free, no account or secret: the key file
 # /<key>.txt at the site root proves we own the domain.
@@ -7,7 +7,7 @@ name: IndexNow
 on:
   push:
     branches: [main]
-    paths: [sitemap.xml]
+    paths: [sitemap.xml, sitemap-stays.xml]
   workflow_dispatch:
     inputs:
       all:
