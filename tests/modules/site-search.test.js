@@ -169,10 +169,14 @@ test('site-search: assets/search/index.json', async (t) => {
       else assert.ok(urls.has(url), `${f} missing: run npm run build:search`);
     }
   });
-  await t.test('lists every hotels/best-*.html page', () => {
+  await t.test('lists every hotels/best-*.html page (except noindex ones: RH-Q-1\'s per-page thin-content gate)', () => {
     const best = readdirSync(join(ROOT, 'hotels')).filter((n) => n.startsWith('best-') && n.endsWith('.html'));
     assert.ok(best.length > 50);
-    for (const f of best) assert.ok(urls.has(`/hotels/${f.replace(/\.html$/, '')}`), `hotels/${f} missing: run npm run build:search`);
+    for (const f of best) {
+      const url = `/hotels/${f.replace(/\.html$/, '')}`;
+      if (noindex(join(ROOT, 'hotels', f))) assert.ok(!urls.has(url), `hotels/${f} is noindex`);
+      else assert.ok(urls.has(url), `hotels/${f} missing: run npm run build:search`);
+    }
   });
   await t.test('has every stay of every city, our own stays first', async () => {
     const rk = await import('../../assets/js/modules/stays-index-data.js');

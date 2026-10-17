@@ -35,7 +35,9 @@ function discoverPages() {
       continue;
     }
     files
-      .filter((f) => f.endsWith('.html'))
+      // stay.html is a template that redirects away (stay-page.js: `if (!id) location.replace(...)`)
+      // when visited bare, without its own `?s=<slug>` query -- never a real standalone page to check.
+      .filter((f) => f.endsWith('.html') && f !== 'stay.html')
       .forEach((f) => pages.push(`/${dir}/${f}`));
   }
   return pages;

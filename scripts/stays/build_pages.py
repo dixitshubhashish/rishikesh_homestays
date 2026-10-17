@@ -1010,8 +1010,11 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             '<meta property="og:type" content="website">', '<meta property="og:locale" content="en_US">',
             f'<meta property="og:url" content="{url}">', '<meta property="og:site_name" content="Rishikesh Homestays">',
             '<meta name="twitter:card" content="summary_large_image">'])
+        # Same per-page thin-content gate as the category pages (RH-Q-1): a landmark page needs
+        # MIN_PAGE+ stays actually within its radius to be worth indexing.
+        _landmark_robots = 'index, follow, max-image-preview:large' if len(near) >= MIN_PAGE else 'noindex, follow'
         page_top = (top.replace('<title>Thanks | Rishikesh Homestays</title>', f'<title>{esc(title)}</title>\n    {head_extra}')
-                    .replace('<meta name="robots" content="noindex, follow">', '<meta name="robots" content="index, follow, max-image-preview:large">')
+                    .replace('<meta name="robots" content="noindex, follow">', f'<meta name="robots" content="{_landmark_robots}">')
                     .replace(f'{SITE}/thanks', url)
                     .replace('  </head>', '    ' + '\n    '.join(jsonld(o) for o in ld) + '\n  </head>', 1))
         others_near = ', '.join(f'<a href="/hotels/best-stays-near-{l["slug"]}">{esc(l["name"])}</a>' for l in others_all if l['slug'] != slug)
@@ -1522,9 +1525,15 @@ def main(data_path):
             '<meta property="og:site_name" content="Rishikesh Homestays">',
             '<meta name="twitter:card" content="summary_large_image">',
         ])
+        # Per-page thin-content gate (owner, 2026-10-17, RH-Q-1 "better way" than a static per-city
+        # switch): index a category page only once it actually has MIN_PAGE+ real stays for THIS city
+        # (n_here, already computed above) -- or it's the city's master "all hotels" page, which always
+        # has substantial content. A thin page stays noindex automatically and re-indexes itself the
+        # moment coverage crosses the bar on a later rebuild; no per-city manual flag to remember.
+        robots = 'index, follow, max-image-preview:large' if (is_master or n_here >= MIN_PAGE) else 'noindex, follow'
         page_top = (top
             .replace('<title>Thanks | Rishikesh Homestays</title>', f'<title>{esc(page_title)}</title>\n    {head_extra}')
-            .replace('<meta name="robots" content="noindex, follow">', '<meta name="robots" content="index, follow, max-image-preview:large">')
+            .replace('<meta name="robots" content="noindex, follow">', f'<meta name="robots" content="{robots}">')
             .replace(f'{SITE}/thanks', url)
             .replace('  </head>', '    ' + '\n    '.join(jsonld(o) for o in (ld_page, ld_breadcrumb, ld_list, ld_faq)) + '\n  </head>', 1))
 
