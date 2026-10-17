@@ -7,7 +7,6 @@ Bugs, features, chores, open questions and owner actions, one line per ticket, n
 - **RH-BUG-2** — Goibibo (4,821) and MakeMyTrip (2,540) `candidate_pages` rows still `unreadable`. The `navigator.webdriver` block is solved (Playwright over CDP to the project's own real Edge, port 9225, `scripts/stays/_scratch_recheck_via_edge.mjs`); a separate volume rate-limit remains, so the recheck runs in paced batches (≤120 rows, 2.5 s gap, cooldown between). Running 2026-10-18.
 - **RH-FEAT-1** — the 853 declined Rishikesh/Haridwar candidates: sampled 2026-10-17; the 31 placeholder-geocode rows are not recoverable (Booking.com reassigned the slugs); the 644 "no lodging type" rows wait on RH-Q-5. Nothing else to do until then.
 - **RH-FEAT-9** — more content pages: Haridwar size pages, more landmark pages, an AIIMS long-stay page, "2 BHK / 3 BHK / villas for groups". Not started.
-- **RH-FEAT-10** — per-stay JSON-LD on `/hotels/stay` (now indexable). In progress 2026-10-18.
 - **RH-FEAT-13** — titles of the 32 driving guides lead with distance and hours; meta tightened; i18n sync. Another session, active 2026-10-18.
 - **RH-FEAT-14** — guide → stays → call interlinking for user experience ("Plan the rest of your trip" card on the stay page is in). Another session, active 2026-10-18.
 - **RH-CHORE-1** — delete the ~15 untracked `_scratch_*.mjs` / prototype files once RH-BUG-2 is done with `_scratch_recheck_via_edge.mjs`.
@@ -36,6 +35,7 @@ Bugs, features, chores, open questions and owner actions, one line per ticket, n
 
 ## Closed
 
+- **RH-FEAT-10** — per-stay JSON-LD on `/hotels/stay`: closed 2026-10-18, `8a1176e2` (`assets/js/modules/stay-jsonld.js`: lodging node + BreadcrumbList per third-party stay, no aggregateRating; none for our own or missing stays).
 - **RH-Q-6** — closed 2026-10-18: no longer needed, see RH-BUG-5.
 - **RH-BUG-5** — Search Console "Why pages aren't indexed": closed 2026-10-18. (1) "Excluded by noindex" (16): correct (`404`, `thanks`, missing/own stays, and since RH-Q-1 the 14 thin category pages). (2) "Discovered – currently not indexed" (390): guide pages that are in the sitemap, linked and current; Google's crawl-budget call, not a defect. (3) "Page with redirect" (7): all 7,475 sitemap URLs answer 200 on `server.js` and none matches a `vercel.json` redirect source, so the 7 are retired URLs (`/pages/…`, root `/best-…`, `/stay`, `/stays`, http/www variants) that 301 on purpose; nothing to fix.
 - **RH-Q-1** — AdSense thin content: closed 2026-10-17, `68d71eda`. Per-page gate in `build_pages.py` (`MIN_PAGE` real stays for that city/category, or the master page; landmark pages likewise): 14 thin pages noindex, self-correcting on rebuild.

@@ -53,6 +53,7 @@ Update this section after each full run (date + counts), not with a new file.
 | `tests/api/contact-api.test.js` | 15 | `/api/contact`, incl. `rental_enquiry` (Resend and BigQuery mocked) |
 | `tests/integration/styling.test.js` | 14 | CSS: logo rule (72px height, `object-fit: contain`), design tokens (`--ink`, `--river`, `--paper`, `--leaf`, `--marigold`, `--clay`), buttons, cards, forms, media queries, balanced braces |
 | `tests/modules/rental-form.test.js`, `dom-helpers.test.js`, `stays-renderer.test.js` | 13 each | Rental form logic, DOM helpers, homestay cards |
+| `tests/modules/stay-jsonld.test.js` | 7 | Stay page JSON-LD (`stay-jsonld.js`): lodging type per category, address/geo/map/stars/price/amenities, `&c=` for other cities, sparse records leave fields out, never the booking site's rating, `<` escaped |
 | `tests/modules/data.test.js` | 11 | STAYS/AREAS data: required fields, areas exist, prices read "Starting ₹X onwards" |
 | `tests/api/otp-helpers.test.js` | 10 | Email OTP helpers |
 | `tests/integration/listing-sitemap.test.js` | 5 | `sitemap-stays.xml` holds every stay of every city once with a date, none of our own, `listing_sitemap.py --check` is clean, `robots.txt`/IndexNow/workflows know both sitemaps, the stay page is `index` with no static canonical |
