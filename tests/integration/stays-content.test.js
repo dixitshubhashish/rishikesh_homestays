@@ -112,7 +112,15 @@ test('every stays page is in sitemap.xml, and every sitemap stays URL exists', (
   for (const p of pages) {
     assert(listed.has(p.file.replace(/\.html$/, '')), `${p.file} is missing from sitemap.xml`);
   }
-  for (const stem of listed) assert(existsSync(join(hotels, `${stem}.html`)), `sitemap.xml lists /hotels/${stem}, which does not exist`);
+  for (const stem of listed) {
+    // A finalised stay's URL is a query string on the one real hotels/stay.html, not its own file
+    // (scripts/stays/listing_sitemap.py's <!-- finalised-stays:start/end --> block in sitemap.xml)
+    if (stem.startsWith('stay?s=') || stem.startsWith('stay?c=')) {
+      assert(existsSync(join(hotels, 'stay.html')), `sitemap.xml lists /hotels/${stem}, but hotels/stay.html is missing`);
+      continue;
+    }
+    assert(existsSync(join(hotels, `${stem}.html`)), `sitemap.xml lists /hotels/${stem}, which does not exist`);
+  }
 });
 
 test('every stays page is in llms.txt (index) and llms-full.txt (details with a link to act on)', () => {

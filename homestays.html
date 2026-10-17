@@ -40,24 +40,6 @@
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "VacationRental",
-          "@id": "https://rishikeshhomestays.com/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh#stay",
-          "name": "Advaitam Ganga & Hill View Luxury 3BHK Homestay",
-          "description": "Three bedroom family stay in Nirmal Bagh near the Ganges with balcony breakfast, fast Wi-Fi, and easy access to cafes and yoga studios.",
-          "url": "https://rishikeshhomestays.com/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh",
-          "image": "https://rishikeshhomestays.com/assets/images/homestays/advaitam-gallery/16.webp",
-          "telephone": "+91-80500-91290",
-          "priceRange": "₹12,800 onwards",
-          "address": { "@type": "PostalAddress", "streetAddress": "Nirmal Bagh", "addressLocality": "Rishikesh", "addressRegion": "Uttarakhand", "addressCountry": "IN" },
-          "containsPlace": { "@type": "Accommodation", "additionalType": "EntirePlace", "numberOfBedrooms": 3 },
-          "amenityFeature": [
-            { "@type": "LocationFeatureSpecification", "name": "Balcony", "value": true },
-            { "@type": "LocationFeatureSpecification", "name": "Kitchen access", "value": true },
-            { "@type": "LocationFeatureSpecification", "name": "Parking", "value": true }
-          ],
-          "parentOrganization": { "@id": "https://rishikeshhomestays.com/#organization", "@type": "Organization", "name": "Rishikesh Homestays", "url": "https://rishikeshhomestays.com/" }
-        },
-        {
           "@type": "LodgingBusiness",
           "@id": "https://rishikeshhomestays.com/homestays#yoga-retreat-at-the-ganges",
           "name": "Yoga Retreat at the Ganges",
@@ -65,13 +47,35 @@
           "url": "https://rishikeshhomestays.com/homestays",
           "telephone": "+91-80500-91290",
           "priceRange": "₹3,600 onwards",
-          "address": { "@type": "PostalAddress", "addressLocality": "Rishikesh", "addressRegion": "Uttarakhand", "addressCountry": "IN" },
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Rishikesh",
+            "addressRegion": "Uttarakhand",
+            "addressCountry": "IN"
+          },
           "amenityFeature": [
-            { "@type": "LocationFeatureSpecification", "name": "Yoga friendly", "value": true },
-            { "@type": "LocationFeatureSpecification", "name": "Self-serve kitchen", "value": true },
-            { "@type": "LocationFeatureSpecification", "name": "Quiet lane", "value": true }
+            {
+              "@type": "LocationFeatureSpecification",
+              "name": "Yoga friendly",
+              "value": true
+            },
+            {
+              "@type": "LocationFeatureSpecification",
+              "name": "Self-serve kitchen",
+              "value": true
+            },
+            {
+              "@type": "LocationFeatureSpecification",
+              "name": "Quiet lane",
+              "value": true
+            }
           ],
-          "parentOrganization": { "@id": "https://rishikeshhomestays.com/#organization", "@type": "Organization", "name": "Rishikesh Homestays", "url": "https://rishikeshhomestays.com/" }
+          "parentOrganization": {
+            "@id": "https://rishikeshhomestays.com/#organization",
+            "@type": "Organization",
+            "name": "Rishikesh Homestays",
+            "url": "https://rishikeshhomestays.com/"
+          }
         }
       ]
     }
