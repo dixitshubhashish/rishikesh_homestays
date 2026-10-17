@@ -128,8 +128,10 @@ function page(city, dest) {
     : dest === "dehradun"
     ? (exp ? "Take the Delhi–Dehradun Expressway all the way to Dehradun." : "Take the old highway (NH-334) through Muzaffarnagar and Roorkee, then the Haridwar–Dehradun road (NH-72) on to Dehradun.")
     : (exp ? "Take the Delhi–Dehradun Expressway to Dehradun, then climb Mussoorie Road, about 35 km, up to Mussoorie." : "Take the old highway (NH-334) through Muzaffarnagar and Roorkee, then the Haridwar–Dehradun road (NH-72) to Dehradun, then Mussoorie Road up the last 35 km.");
-  const title = `Driving from ${C} to ${D} | Route, Time and Tips`;
-  const desc = `Driving from ${C} to ${D}: about ${km} km by road, about ${time} on a clear run, the best route, when to leave and where to stay. Part of our Delhi NCR road-trip guides.`;
+  // Title leads with the answer (owner, 2026-10-18, from Search Console: these pages get shown for "<city> to <town>
+  // distance / how many hours" searches but rarely clicked): the km and hours first, then what the page adds.
+  const title = `${C} to ${D} by Road: ${km} km, ${time} | Route, Best Time, Where to Stay`;
+  const desc = `${C} to ${D} is about ${km} km by road, ${time} on a clear run. The best route, when to leave, what to avoid (Kanwar, weekends) and where to stay with easy parking. Part of our Delhi NCR road-trip guides.`;
   const url = `${SITE}/driving-from-${city}-to-${dest}`;
 
   const faq = [

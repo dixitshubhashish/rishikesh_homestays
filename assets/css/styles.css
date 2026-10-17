@@ -4923,3 +4923,44 @@ html select.rh-flag-select option {
 @media (max-width: 480px) {
   .ota-dest-list { max-height: 220px; }
 }
+
+/* RH-FEAT-14: "Plan the rest of your trip" at the end of every guide (guide -> stays -> call), the
+   "Best Stays near X" link on place cards, and the matching card on the property page. Tokens only. */
+.guide-next {
+  margin: 36px 0 8px;
+  padding: 28px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);}
+.guide-next h2 { margin: 0 0 6px; }
+.guide-next > .container > p { margin: 0 0 14px; color: var(--muted); }
+.guide-next-links {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;}
+.guide-next-links a {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+  color: var(--ink);
+  text-decoration: none;}
+.guide-next-links a:hover { border-color: rgba(var(--accent-rgb), 0.5); }
+.guide-next-call { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
+.place-card .place-stays {
+  display: inline-block;
+  margin: 8px 0 0 10px;
+  font-weight: 600;
+  color: var(--river);}
+.sp-plan ul { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.sp-plan li a {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;}
+.sp-plan li a:hover { border-color: rgba(var(--accent-rgb), 0.5); }

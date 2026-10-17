@@ -83,6 +83,10 @@ tests/                               see docs/TESTING.md
 
 `assets/js/index.js` imports `nav`, `search-form`, `stays-renderer` and `enquiry-prefill` and runs them on `DOMContentLoaded`, but no page loads it; pages use the `site.js` shim.
 
+## Guide to stays to call (interlinking)
+
+Every hand-made guide (and the generated rental pages, which copy the hub) ends with one shared `<aside class="guide-next">` block, "Plan the rest of your trip": three or four contextual stays links (landmark pages `hotels/best-stays-near-<slug>`, a category page, Advaitam), then WhatsApp and call buttons. It is plain HTML in each page (inserted once by a scratch script on 2026-10-18; edit it in place, keep the wording identical across pages so it stays one set of i18n strings). The place cards on `places-to-visit.html` that have a landmark page link to it. The property page (`stay-page.js`) has the same card with per-city guide links (`PLAN_LINKS`) and the call number. Link labels are the target page's `<h1>` or the header nav text, so they are already translated. Why: Search Console showed readers finishing a guide with no path to a stay or a number (RH-FEAT-14 in `PROGRESS.md`).
+
 ## Site search
 
 The magnifier button in every page's header (injected by `site-search.js` before the theme toggle, so no HTML page carries it) opens a search panel over the page: up to 8 results grouped Pages / Stays, matched words highlighted, ↑/↓/Enter/Esc, and a "No results" line linking to `/contact`.
