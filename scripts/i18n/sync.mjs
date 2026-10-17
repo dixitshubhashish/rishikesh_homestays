@@ -60,6 +60,15 @@ export function texts(en = readEn(), { stays = true } = {}) {
 export const missing = (lang, all) => { const tr = readLang(lang); return all.filter((it) => problem(it.en, tr[it.k])); };
 
 const args = process.argv.slice(2);
+// `jobs <dir>` / `merge <dir>` need a real directory name: a flag like --help used to become a folder called "--help" (RH-BUG-8)
+const dirArg = (name) => {
+  const d = args[1];
+  if (!d || d.startsWith("-")) {
+    console.error(`usage: node scripts/i18n/sync.mjs ${name} <dir>${name === "jobs" ? " [--size 45000] [--only hi,de]" : " [--dry]"}   (docs/I18N.md)`);
+    process.exit(2);
+  }
+  return resolve(d);
+};
 const flag = (f) => args.includes(f);
 const opt = (f, d) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : d; };
 
@@ -82,7 +91,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       process.exit(1);
     }
   } else if (cmd === "jobs") {
-    const dir = resolve(args[1]);
+    const dir = dirArg(cmd);
     const size = +opt("--size", 45000);
     mkdirSync(dir, { recursive: true });
     const all = texts(en);
@@ -95,7 +104,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       console.log(`${lang}: ${m.length} texts in ${part} file(s)`);
     }
   } else if (cmd === "merge") {
-    const dir = resolve(args[1]);
+    const dir = dirArg(cmd);
     const dry = flag("--dry");
     for (const f of readdirSync(dir).filter((f) => /^[a-z]{2}-\d+\.json$/.test(f)).sort()) {
       const outFile = join(dir, f.replace(/\.json$/, ".out.json"));

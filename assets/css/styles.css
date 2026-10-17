@@ -1436,6 +1436,13 @@ a.homestay-photo:hover {
   .listing-grid,
   .kumbh-plan-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));}
+  /* An odd card count (the homepage's 3 Featured Homestays, most often)
+     leaves the last card alone in a row with a wide empty gap beside it at
+     this 2-column tablet width — let it span both columns instead. */
+  .card-grid > :last-child:nth-child(odd),
+  .info-grid > :last-child:nth-child(odd),
+  .listing-grid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;}
 .filters {
     grid-template-columns: repeat(2, minmax(0, 1fr));}
 .side-panel,
@@ -4872,6 +4879,7 @@ html select.rh-flag-select option {
    a live OSM geocode fallback (FEAT-3, api/geocode-area.js) for names not in our list.
    Tokens only, matches the existing .field layout of .search-grid. */
 .ota-dest-field { position: relative; min-width: 0; }
+.ota-dest-combo { position: relative; }
 .ota-dest-input {
   width: 100%;
   box-sizing: border-box;}

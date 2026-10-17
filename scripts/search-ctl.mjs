@@ -141,16 +141,37 @@ function launchInBackground(exe, args) {
 
 // macOS: Chromium browsers ignore `open -g -j` and show themselves, so once they listen each search browser's app is hidden
 // (Cmd-H: the windows and their tabs keep running, the debugging port keeps answering) and focus goes back to what you were using.
-function hideMacBrowsers(specs) {
-  if (!MAC) return;
+// Hiding once at start is not enough (RH-BUG-6): every tab a worker opens through the debugging port can bring the app back
+// to the front. `onlyIfVisible` makes the call cheap enough to repeat (the supervisor runs `search-ctl hide` every minute):
+// it reads the app's `visible` flag first and only hides one that is showing. Returns how many it hid. Only processes whose
+// command line holds our `rh-search` profile are ever touched, never the owner's own browser.
+function hideMacBrowsers(specs, { onlyIfVisible = false } = {}) {
+  if (!MAC) return 0;
+  let hidden = 0;
   const out = execFileSync('ps', ['-axo', 'pid=,command='], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   for (const b of specs) {
     const main = out.split('\n').map((l) => l.match(/^\s*(\d+)\s+(.*)$/)).filter(Boolean)
       .find((m) => m[2].includes(`--remote-debugging-port=${b.port}`) && m[2].includes('rh-search') && !m[2].includes(' --type='));
     if (!main) continue;
-    try { execFileSync('osascript', ['-e', `tell application "System Events" to set visible of (first process whose unix id is ${main[1]}) to false`], { stdio: 'ignore', timeout: 10000 }); }
-    catch { console.log(`${b.name}: could not hide its window (allow Terminal / your editor under System Settings > Privacy & Security > Automation > System Events)`); }
+    const proc = `first process whose unix id is ${main[1]}`;
+    try {
+      if (onlyIfVisible) {
+        const shown = execFileSync('osascript', ['-e', `tell application "System Events" to get visible of (${proc})`], { encoding: 'utf8', timeout: 10000 }).trim();
+        if (shown !== 'true') continue;
+      }
+      execFileSync('osascript', ['-e', `tell application "System Events" to set visible of (${proc}) to false`], { stdio: 'ignore', timeout: 10000 });
+      hidden++;
+    } catch { console.log(`${b.name}: could not hide its window (allow Terminal / your editor under System Settings > Privacy & Security > Automation > System Events)`); }
   }
+  return hidden;
+}
+
+// `search-ctl hide`: hide every running search browser that is showing (macOS; a no-op elsewhere). Safe to run any time.
+async function hide() {
+  const excluded = excludedBrowsers();
+  const n = hideMacBrowsers(browserSpecs().filter((b) => !excluded.has(b.name)), { onlyIfVisible: true });
+  console.log(MAC ? `hide: ${n} search browser${n === 1 ? '' : 's'} hidden` : 'hide: nothing to do (macOS only)');
+  return 0;
 }
 
 async function browsers() {
@@ -303,10 +324,10 @@ async function trim(args = process.argv.slice(3)) {
 
 // ---- main -----------------------------------------------------------------------------------------------------------
 
-const COMMANDS = { browsers, start, status: async () => { await status(); return 0; }, stop, trim };
+const COMMANDS = { browsers, start, status: async () => { await status(); return 0; }, stop, trim, hide };
 const cmd = process.argv[2];
 if (!COMMANDS[cmd]) {
-  console.error('usage: node scripts/search-ctl.mjs browsers | start | status | stop | trim   (npm run search:browsers|start|status|stop)');
+  console.error('usage: node scripts/search-ctl.mjs browsers | start | status | stop | trim | hide   (npm run search:browsers|start|status|stop|hide)');
   process.exit(2);
 }
 try { process.exit(await COMMANDS[cmd]()); } catch (e) { console.error(e.message); process.exit(1); }

@@ -211,6 +211,7 @@ const PORTS = [...new Set(WORKERS.flatMap((w) => w.how.filter((a) => a.includes(
 // contributor to the disk/memory pressure the search kept hitting all session).
 const MAX_TABS_PER_PORT = 6;
 let seenBooking = new Map(); // tab id -> url, from the previous sweep
+let lastHide = 0; // last time the supervisor hid showing search browsers (macOS)
 let lastSweep = 0;
 async function sweepLeftovers() {
   const next = new Map();
@@ -331,6 +332,11 @@ for (;;) {
     start(w);
   }
   if (now - lastSweep >= 5 * 60e3) { lastSweep = now; await sweepLeftovers(); }
+  // RH-BUG-6: tabs opened by the workers bring a search browser's app back to the front; hide any that is showing (macOS only, ~1 s)
+  if (process.platform === 'darwin' && now - lastHide >= 60e3) {
+    lastHide = now;
+    try { execSync('node scripts/search-ctl.mjs hide', { cwd: ROOT, timeout: 30000, stdio: 'ignore' }); } catch { /* no permission or timeout: the next minute tries again */ }
+  }
   if (WORKERS.every((w) => w.finished)) { say('all workers finished:', counts()); break; }
   if (now - lastStatus > 30 * 60e3) {
     lastStatus = now;

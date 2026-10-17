@@ -156,16 +156,18 @@
 
         <div class="field ota-dest-field" data-ota-destination-box>
           <label for="area">Destination / area</label>
-          <input id="area" name="area" class="ota-dest-input" type="text" autocomplete="off"
-            placeholder="Search any area — e.g. Tapovan, Har Ki Pauri…"
-            data-ota-destination role="combobox" aria-expanded="false" aria-autocomplete="list" aria-owns="ota-dest-listbox">
+          <div class="ota-dest-combo">
+            <input id="area" name="area" class="ota-dest-input" type="text" autocomplete="off"
+              placeholder="Search any area — e.g. Tapovan, Har Ki Pauri…"
+              data-ota-destination role="combobox" aria-expanded="false" aria-autocomplete="list" aria-owns="ota-dest-listbox">
+            <ul class="ota-dest-list" id="ota-dest-listbox" role="listbox" hidden data-ota-destination-list></ul>
+          </div>
           <select id="city" name="city" class="city-dropdown" autocomplete="off" data-ota-city>
             <option value="rishikesh" selected>Rishikesh</option>
             <option value="haridwar">Haridwar</option>
             <option value="dehradun">Dehradun</option>
             <option value="mussoorie">Mussoorie</option>
           </select>
-          <ul class="ota-dest-list" id="ota-dest-listbox" role="listbox" hidden data-ota-destination-list></ul>
         </div>
 
         <div class="field">
@@ -460,7 +462,7 @@
         <div class="rhs-footer-bottom-inner">
 
             <div class="rhs-footer-copy">
-                © 2026 Rishikesh Homestays. <br>All Rights Reserved.
+                © 2026 Rishikesh Homestays. All Rights Reserved.
             </div>
 
             <nav class="rhs-footer-nav" aria-label="Footer Navigation">
