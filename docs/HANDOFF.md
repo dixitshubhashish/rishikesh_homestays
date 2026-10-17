@@ -1,6 +1,6 @@
 # Handoff: start here (state on 2026-10-12)
 
-Read `CLAUDE.md` first (rules, where things live), then this file. Then, as needed: `docs/ARCHITECTURE.md` (modules, API), `scripts/stays/README.md` (stays pipeline), `docs/booking-links/RULES.md` (booking-link search), `docs/TESTING.md`. `PROGRESS.md` is the dated log; `AGENTS.md` is the multi-agent ledger (Codex also works here: claim files before editing).
+Read `CLAUDE.md` first (rules, where things live), then this file. Then, as needed: `docs/ARCHITECTURE.md` (modules, API), `scripts/stays/README.md` (stays pipeline), `docs/booking-links/RULES.md` (booking-link search), `docs/TESTING.md`. `PROGRESS.md` is the ticket tracker (one line per `RH-…` ticket); `AGENTS.md` is the multi-agent ledger and the dated history (Codex also works here: claim files before editing).
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
 

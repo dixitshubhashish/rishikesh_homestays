@@ -14,9 +14,9 @@ Each topic has one home; other files link to it instead of repeating it.
 - `docs/booking-links/RULES.md`: the booking-link search (lists, match rules, workers, merge).
 - `docs/I18N.md`: the 23 languages: in-browser translation, the files (`i18n/en.json`, one flat `i18n/<lang>.json` keyed by a 64-bit SHA-256 id, `i18n/dist/`), what is never translated, and the sync steps after any English edit. House styles: `i18n/STYLE.md`.
 - `README.md` (public summary), `AGENTS.md` (rules for other agents **and the live multi-agent ledger**) and `CLAUDE.md` stay at the repo root by convention.
-- `PROGRESS.md`: dated shipped/pending log. Stays at the root while in-flight tasks listed in the `AGENTS.md` ledger read and write it; check that ledger before moving it.
+- `PROGRESS.md`: the ticket tracker only (bugs, features, chores, questions, owner actions: `RH-BUG-N`, `RH-FEAT-N`, `RH-CHORE-N`, `RH-Q-N`, `RH-OWNER-N`, one line each, Open / Blocked on the owner / Closed). Agent work (claims, session logs, verification, the write-up behind each closed ticket) goes in the `AGENTS.md` ledger, never here (owner, 2026-10-18).
 
-Keep it this way: update the doc that owns a topic, don't add new `.md` files for results or notes (test runs go in `docs/TESTING.md` "Last full run", state in `docs/HANDOFF.md`, history in `PROGRESS.md`).
+Keep it this way: update the doc that owns a topic, don't add new `.md` files for results or notes (test runs go in `docs/TESTING.md` "Last full run", state in `docs/HANDOFF.md`, ticket status in `PROGRESS.md`, history and agent notes in `AGENTS.md`).
 
 ## Multi-Agent Coordination
 

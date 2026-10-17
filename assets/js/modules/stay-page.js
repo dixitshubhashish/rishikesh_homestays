@@ -27,6 +27,7 @@ import { buildWhatsAppLink } from './whatsapp-link.js';
 import { postEnquiry, SOURCES, stayRedirectSource } from './enquiry.js';
 import { CAPTCHA_FAILED_CODE, CAPTCHA_FAILED_MESSAGE } from './captcha.js';
 import { otaLogo } from './ota-logos.js';
+import { stayJsonLd, jsonLdText } from './stay-jsonld.js';
 
 const WHATSAPP_PHONE = '918050091290';
 // Same icon as the site's other "WhatsApp" buttons (index.html etc.).
@@ -187,6 +188,15 @@ function factRows(d) {
 // is indexable and names its own URL: hotels/stay.html carries no static robots/canonical
 // rule beyond "index". A stay we can't find, and our own stays (they have their own pages),
 // are noindex. Set from here because the stay is only known once the data module is loaded.
+// Guide links per city for the "Plan the rest of your trip" card (RH-FEAT-14): a traveller who lands on a stay from
+// Google gets a way into the guides. Labels are the header nav / footer labels, so they are already translated.
+const PLAN_LINKS = {
+  rishikesh: [['/places-to-visit', 'Places'], ['/things-to-do-in-rishikesh', 'Things to do'], ['/triveni-ghat', 'Triveni Ghat'], ['/driving-from-delhi-to-rishikesh', 'Delhi to Rishikesh'], ['/kedarnath-yatra', 'Kedarnath Yatra'], ['/bike-and-taxi-rental-in-rishikesh', 'Bike &amp; Taxi Rental']],
+  haridwar: [['/haridwar-kumbh-2027', 'Kumbh 2027'], ['/driving-from-delhi-to-haridwar', 'Delhi to Haridwar'], ['/places-to-visit', 'Places'], ['/kedarnath-yatra', 'Kedarnath Yatra'], ['/bike-rental-in-haridwar', 'Bike rental in Haridwar']],
+  dehradun: [['/driving-from-delhi-to-dehradun', 'Delhi to Dehradun'], ['/places-to-visit', 'Places'], ['/things-to-do-in-rishikesh', 'Things to do'], ['/car-rental-in-dehradun', 'Car rental in Dehradun']],
+  mussoorie: [['/driving-from-delhi-to-mussoorie', 'Delhi to Mussoorie'], ['/places-to-visit', 'Places'], ['/things-to-do-in-rishikesh', 'Things to do'], ['/taxi-rental-in-mussoorie', 'Taxi rental in Mussoorie']],
+};
+
 function setIndexing(indexable, d) {
   let robots = document.querySelector('meta[name="robots"]');
   if (!robots) { robots = document.createElement('meta'); robots.name = 'robots'; document.head.appendChild(robots); }
@@ -200,12 +210,29 @@ function setIndexing(indexable, d) {
   desc.content = `${d.n}, ${d.k.toLowerCase()} in ${d.a}, ${CITY_NAME}.${d.g ? ` Guest rating ${d.g}/10.` : ''}${d.p ? ` Starting ₹${inr(d.p)} a night.` : ''} Compare it with nearby stays or book direct with us.`;
 }
 
+// Our own stays are noindex here (their own pages carry the VacationRental schema), so only a
+// third-party stay gets structured data.
+function setJsonLd(nodes) {
+  document.querySelectorAll('script[data-sp-jsonld]').forEach((s) => s.remove());
+  for (const node of nodes) {
+    const s = document.createElement('script');
+    s.type = 'application/ld+json';
+    s.dataset.spJsonld = '';
+    s.textContent = jsonLdText(node);
+    document.head.appendChild(s);
+  }
+}
+
 function render(root, d, isOwn) {
   const cat = categoryFor(d);
   const similar = STAYS_INDEX.filter((x) => x.id !== d.id && x.a === d.a && x.ks.some((k) => d.ks.includes(k))).slice(0, 6);
   const links = d.o || [];
   document.title = `${d.n} | ${d.a}, ${CITY_NAME} | Rishikesh Homestays`;
   setIndexing(!isOwn, d);
+  setJsonLd(isOwn ? [] : stayJsonLd(d, {
+    city: CITY, cityName: CITY_NAME, categorySlug: cat.slug,
+    categoryTitle: cat.filter === 'all' ? `Best Hotels in ${CITY_NAME}` : `Best ${cat.title} in ${CITY_NAME}`,
+  }));
   root.innerHTML = `
     <nav class="sx-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span aria-hidden="true">›</span>
       <a href="/hotels/best-${cat.slug}-in-${CITY}">${cat.filter === 'all' ? `Best Hotels in ${CITY_NAME}` : `Best ${esc(cat.title)} in ${CITY_NAME}`}</a> <span aria-hidden="true">›</span> <span data-stay-name>${esc(d.n)}</span></nav>
@@ -258,6 +285,11 @@ function render(root, d, isOwn) {
         </ul>
         <button type="button" class="btn btn-whatsapp" data-sp-wa-direct>${WA_ICON} Ask us on WhatsApp</button>
       </section>
+      <nav class="sp-card sp-side-card sp-plan" aria-labelledby="sp-plan-h">
+        <h2 id="sp-plan-h">Plan the rest of your trip</h2>
+        <ul>${PLAN_LINKS[CITY].map(([href, label]) => `<li><a href="${href}">${label}</a></li>`).join('')}</ul>
+        <p class="sp-small"><a href="tel:+919027212484">Call +91 90272 12484</a></p>
+      </nav>
       ${STAYS_INDEX_META.categories.length ? `<nav class="sp-card sp-side-card sp-more" aria-labelledby="sp-more-h">
         <h2 id="sp-more-h">More stays in ${CITY_NAME}</h2>
         ${STAYS_INDEX_META.categories.filter((c) => c.filter === 'all' && c.slug !== cat.slug).map((c) => `<ul><li>${catLink(c)} <span>${inr(c.count)}</span></li></ul>`).join('')}
