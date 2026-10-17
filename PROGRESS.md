@@ -6,10 +6,10 @@ Bugs, features, chores, open questions and owner actions, one line per ticket, n
 
 - **RH-BUG-2** — Goibibo (4,821) and MakeMyTrip (2,540) `candidate_pages` rows still `unreadable`. The `navigator.webdriver` block is solved (Playwright over CDP to the project's own real Edge, port 9225, `scripts/stays/_scratch_recheck_via_edge.mjs`); a separate volume rate-limit remains, so the recheck runs in paced batches (≤120 rows, 2.5 s gap, cooldown between). Running 2026-10-18.
 - **RH-FEAT-1** — the 853 declined Rishikesh/Haridwar candidates: sampled 2026-10-17; the 31 placeholder-geocode rows are not recoverable (Booking.com reassigned the slugs); the 644 "no lodging type" rows wait on RH-Q-5. Nothing else to do until then.
-- **RH-FEAT-9** — more content pages: Haridwar size pages, more landmark pages, an AIIMS long-stay page, "2 BHK / 3 BHK / villas for groups". Not started.
+- **RH-FEAT-9** — more content pages: size pages (2 BHK, 3 BHK & bigger, Studio & 1 BHK, Villas) already exist for all four cities, confirmed on disk 2026-10-18 — done, no action. Still open: more landmark pages, an AIIMS long-stay page. Needs real, verified facts (distances, coordinates) before writing — not started.
 - **RH-FEAT-13** — titles of the 32 driving guides lead with distance and hours; meta tightened; i18n sync. Another session, active 2026-10-18.
 - **RH-FEAT-14** — guide → stays → call interlinking for user experience ("Plan the rest of your trip" card on the stay page is in). Another session, active 2026-10-18.
-- **RH-CHORE-1** — delete the ~15 untracked `_scratch_*.mjs` / prototype files once RH-BUG-2 is done with `_scratch_recheck_via_edge.mjs`.
+- **RH-CHORE-1** — the ~13 finished `_scratch_*.mjs`/prototype files (Agoda, Airbnb, Booking.com, small-OTA, old-unreadable recheck, requeue-closed, placeholder-geocode, city-boundary demo) deleted 2026-10-18. `_scratch_recheck_via_edge.mjs` stays until RH-BUG-2 finishes.
 - **RH-CHORE-2** — `docs/HANDOFF.md`: live numbers are current (2026-10-17); the dated session notes below them are history and stay as written. Nothing pending unless the owner wants them pruned.
 - **RH-CHORE-4** — Windows: `npm run setup` and the search paths are untested on real Windows.
 - Permanent limitation, not a ticket: 146 `candidate_pages` rows stay `unchecked` on Trip.com (login wall), Hotels.com (no geo), Hostelworld, Expedia (bot-check). No tooling fix.
