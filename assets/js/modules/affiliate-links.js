@@ -9,7 +9,7 @@
 // Booking.com APAC must have an active relationship with us in CJ for clicks
 // to earn; the link still lands on the right page either way.
 export const CJ_PID = '101895722'; // our CJ publisher (website) ID
-export const CJ_BOOKING_LINK_ID = '17293139'; // Booking.com link approved in CJ (owner, 2026-10-07; deep linking via ?url=). The homepage search widget keeps the older link 17323528 (assets/js/ads.js).
+export const CJ_BOOKING_LINK_ID = '17293139'; // Booking.com link approved in CJ (owner, 2026-10-07; deep linking via ?url=). This is the only CJ link ID: the older 17323528 (the removed search widget) is discarded (owner, 2026-10-17).
 export const CJ_CLICK_HOST = 'https://www.kqzyfj.com';
 
 // The booking link to use for a stay: Booking.com pages through CJ, any other

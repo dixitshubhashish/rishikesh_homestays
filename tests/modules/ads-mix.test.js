@@ -18,11 +18,11 @@ test('the banner is a Sponsored CJ link that lands on our own Booking.com pages'
   assert.ok(!/Our own homestays first/.test(ads), 'the ours-first block is gone');
 });
 
-test('stays lists get breaks between rows and groups; the Booking.com widget is on rentals and 404 but never on booking or enquiry pages', () => {
+test('stays lists get breaks between rows and groups; the old Booking.com iframe widget and its link ID 17323528 are gone; the 404 page gets no ads; booking and enquiry pages never get any', () => {
   assert.match(ads, /sxbreaks\(/);
   assert.match(ads, /MAX_BREAKS = \d+/);
-  assert.match(ads, /LEAD_WIDGET = Object\.keys\(LEAD\)\.filter\(\(p\) => \/-rental-in-\/\.test\(p\)\)/);
-  assert.match(ads, /dataset\.i18nPage === '404'/);
+  assert.ok(!/17323528|jdoqocy|awltovhc|prelanding_sdk|LEAD_WIDGET|PLACE\.widget|widget\(\)/.test(ads), 'the removed widget and its CJ link ID are not back');
+  assert.match(ads, /dataset\.i18nPage === '404'\) return null/);
   const lead = ads.slice(ads.indexOf('const LEAD = {'), ads.indexOf('function pageType'));
   assert.ok(lead.includes("'/homestays': 'article'"));
   for (const page of ['/contact', '/thanks', '/list-your-homestay', '/report-a-bug', '/hotels/stay']) assert.ok(!lead.includes(`'${page}'`), page);

@@ -116,5 +116,10 @@
       "destination": "/places-to-visit",
       "permanent": false
     }
-  ]
+  ],
+  "functions": {
+    "api/geocode-area.js": {
+      "includeFiles": "scripts/stays/city-boundaries/**"
+    }
+  }
 }

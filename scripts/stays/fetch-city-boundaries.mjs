@@ -1,7 +1,7 @@
 // Prototype/demo tool (not wired into the live site). Fetches a real city-limit
 // boundary polygon for each of the 4 cities in cities.py from Nominatim (free,
 // OpenStreetMap), with an Overpass fallback for coarse/wrong matches. Caches
-// GeoJSON to scripts/stays/.cache/city-boundaries/<city-key>.geojson so we never
+// GeoJSON to scripts/stays/city-boundaries/<city-key>.geojson (committed: the live geocode API needs them) so we never
 // re-fetch the same city twice. Respects Nominatim's 1 req/sec policy.
 //
 // Usage: node scripts/stays/fetch-city-boundaries.mjs [--force]
@@ -11,7 +11,7 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.join(HERE, '.cache', 'city-boundaries');
+const CACHE_DIR = path.join(HERE, 'city-boundaries');
 mkdirSync(CACHE_DIR, { recursive: true });
 
 const USER_AGENT =

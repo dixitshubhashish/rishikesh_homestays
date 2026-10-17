@@ -13,15 +13,14 @@ Each topic has one home; other files link to it instead of repeating it.
 - `scripts/stays/README.md`: the stays pipeline (crawl, process, build, page rules, listing ids, BigQuery, Google Maps places).
 - `docs/booking-links/RULES.md`: the booking-link search (lists, match rules, workers, merge).
 - `docs/I18N.md`: the 23 languages: in-browser translation, the files (`i18n/en.json`, one flat `i18n/<lang>.json` keyed by a 64-bit SHA-256 id, `i18n/dist/`), what is never translated, and the sync steps after any English edit. House styles: `i18n/STYLE.md`.
-- `README.md` (public summary), `AGENTS.md` (rules for other agents) and `CLAUDE.md` stay at the repo root by convention.
-- `PROGRESS.md`: dated shipped/pending log. Stays at the root while in-flight tasks in `.agents/coordination.md` read and write it; check that file before moving it.
-- `.agents/coordination.md`: the live multi-agent ledger.
+- `README.md` (public summary), `AGENTS.md` (rules for other agents **and the live multi-agent ledger**) and `CLAUDE.md` stay at the repo root by convention.
+- `PROGRESS.md`: dated shipped/pending log. Stays at the root while in-flight tasks listed in the `AGENTS.md` ledger read and write it; check that ledger before moving it.
 
 Keep it this way: update the doc that owns a topic, don't add new `.md` files for results or notes (test runs go in `docs/TESTING.md` "Last full run", state in `docs/HANDOFF.md`, history in `PROGRESS.md`).
 
 ## Multi-Agent Coordination
 
-Codex and other agents work here too. Follow `AGENTS.md`: read `.agents/coordination.md` before editing, claim your files or task, avoid active claims, and record changes, verification and handoff notes when done. It is file-based, not live messaging. As of 2026-10-05 only Claude holds claims (the owner released every Codex and other-agent claim); another agent starts with a new claim.
+Codex and other agents work here too. Follow `AGENTS.md`: read the ledger at the bottom of `AGENTS.md` (the old `.agents/coordination.md`, merged into it 2026-10-17) before editing, claim your files or task, avoid active claims, and record changes, verification and handoff notes when done. It is file-based, not live messaging. As of 2026-10-05 only Claude holds claims (the owner released every Codex and other-agent claim); another agent starts with a new claim.
 
 ## 🏗️ Where things live
 
@@ -60,7 +59,7 @@ Full map in `docs/ARCHITECTURE.md`. The rules:
 - Vendor libraries in `assets/vendor/` (flatpickr, libphonenumber, leaflet) are self-hosted (no CDN) and loaded as classic `<script src>` **before** the module scripts that use their globals.
 
 **Affiliate links**
-- `assets/js/modules/affiliate-links.js` is the single place for affiliate IDs (CJ publisher `CJ_PID` 101895722, Booking.com link `CJ_BOOKING_LINK_ID` 17293139, approved by Booking.com in CJ on 2026-10-07, host `kqzyfj.com`) and `affiliateLink(site, url)`. Every Booking.com link (site, BigQuery `booking_link`, `stays_sheet`) is a CJ deep link to the same property page. The homepage Booking.com search widget (`BOOKING` in `assets/js/ads.js`, placed by the same rules as the ads: home, guides and stays lists, none on lead pages) keeps CJ link 17323528 and its own tracking pixel. Never append `?aid=` (7854081 was Booking.com APAC's CJ advertiser ID, not ours).
+- `assets/js/modules/affiliate-links.js` is the single place for affiliate IDs (CJ publisher `CJ_PID` 101895722, Booking.com link `CJ_BOOKING_LINK_ID` 17293139, approved by Booking.com in CJ on 2026-10-07, host `kqzyfj.com`) and `affiliateLink(site, url)`. Every Booking.com link (site, BigQuery `booking_link`, `stays_sheet`) is a CJ deep link to the same property page. The only CJ link ID in use is 17293139: the old Booking.com iframe search widget and its separate link (17323528) were removed on 2026-10-17 (owner), so never reintroduce that ID. The Booking.com banners in `assets/js/ads.js` use `CJ_DEEP`, the same link. Never append `?aid=` (7854081 was Booking.com APAC's CJ advertiser ID, not ours).
 - Booking.com's old affiliate widgets (`flexiproduct.js`) are retired (every product redirects to a 400): don't use them.
 
 **Backend** (contracts in `docs/ARCHITECTURE.md`)

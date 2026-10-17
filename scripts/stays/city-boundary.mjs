@@ -2,14 +2,15 @@
 // fetch-city-boundaries.mjs and city-boundary-demo.mjs). Reads the cached
 // Nominatim/Overpass GeoJSON polygons and does a plain ray-casting
 // point-in-polygon test. No new dependency; ESM, same style as the rest of
-// scripts/stays/*.mjs. Not wired into the live site.
+// scripts/stays/*.mjs. Used live by api/geocode-area.js.
 
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const CACHE_DIR = path.join(HERE, '.cache', 'city-boundaries');
+// Committed (not in the git-ignored .cache): api/geocode-area.js reads these on Vercel too.
+const CACHE_DIR = path.join(HERE, 'city-boundaries');
 
 // Mussoorie checked first: it has no real OSM polygon (falls back to a small
 // radius, see below) and sits inside Dehradun's coarse tehsil-level boundary,

@@ -20,8 +20,18 @@ const CACHE_TTL_MS = 60 * 60 * 1000; // 1h: repeat queries within the function i
 // city-boundary.mjs and CLAUDE.md. Matched case-insensitively against the
 // query and against Nominatim's returned display name. Add more rows here as
 // further gaps are confirmed; never guess one without checking the polygon.
+// Confirmed 2026-10-17 by running each place's Nominatim point through
+// cityContaining(): all of these returned null (they sit in Narendra Nagar
+// tehsil, Tehri Garhwal, or Yamkeshwar block, Pauri Garhwal) though they are
+// Rishikesh to every traveller.
 const NEIGHBORHOOD_OVERRIDES = [
-  { pattern: /\btapovan\b/i, city: 'rishikesh' }
+  { pattern: /\btapovan\b/i, city: 'rishikesh' },
+  { pattern: /\b(?:lak?shman|laxman)\s*jh(?:u|oo)la\b/i, city: 'rishikesh' },
+  { pattern: /\bram\s*jhula\b/i, city: 'rishikesh' },
+  { pattern: /\bmuni\s*ki\s*reti\b/i, city: 'rishikesh' },
+  { pattern: /\bswarg\s*-?\s*ashram\b/i, city: 'rishikesh' },
+  { pattern: /\bshivpuri\b/i, city: 'rishikesh' },
+  { pattern: /\bneelkanth\b/i, city: 'rishikesh' }
 ];
 
 let lastRequestAt = 0;

@@ -149,7 +149,9 @@ def write_footers():
     m = FOOTER_RE.search(open(os.path.join(ROOT, 'thanks.html'), encoding='utf8').read())
     footer_changed = 0
     if m:
-        canon = m.group(0).lstrip('\n')
+        # lstrip() all leading whitespace: group(0) starts with thanks.html's own indentation, and each page's
+        # own indentation is kept by mm.group(1) below; keeping both added thanks.html's indent again on every run.
+        canon = m.group(0).lstrip()
         for path in pages:
             if path.endswith(f'{os.sep}thanks.html') or path.endswith('/thanks.html'):
                 continue

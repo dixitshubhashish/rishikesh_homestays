@@ -2109,7 +2109,7 @@ a.homestay-photo:hover {
     color:#6ee7b7;
 }
 .rhs-footer-stays-all{
-    margin:0;
+    margin:0 0 28px; /* clear air before the next block (Rentals in …) */
 }
 .rhs-footer-stays .rhs-footer-stays-all a{
     display:inline-flex;

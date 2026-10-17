@@ -29,7 +29,7 @@
 //                block under the filters from 901px wide; a minor break after every ~15-20 stays (owner, 2026-10-08:
 //                "after 15 or 20 listings", across every category group) that alternates a text in-feed
 //                AdSense unit with a Booking.com banner (never beside a View property button: it sits between
-//                two rows or two groups, full width, with its own divider); the Booking.com search widget and
+//                two rows or two groups, full width, with its own divider); and
 //                the grid above the footer. The mix: a fair coin per page view (SIDEBAR_BOOKING) decides whether the
 //                sidebar holds AdSense and the breaks start with Booking.com, or the other way round. Wide windows (≥ 1860px, a
 //                300px margin each side) also get a right rail with the other kind than the sidebar's; landmark
@@ -59,8 +59,8 @@ const LEAD = {
   '/taxi-rental-in-dehradun': 'article', '/taxi-rental-in-mussoorie': 'article',
 };
 function pageType(path) {
-  // 404.html answers any unknown address (even /hotels/nothing): the Booking.com widget only, a dead end with nothing to book here, no AdSense
-  if (document.documentElement.dataset.i18nPage === '404') return 'widget';
+  // 404.html answers any unknown address (even /hotels/nothing): a dead end with nothing to book here, so no ads at all
+  if (document.documentElement.dataset.i18nPage === '404') return null;
   if (GUIDES.includes(path)) return 'guide';
   if (path === '') return 'home';
   if (path in LEAD) return 'lead';
@@ -70,33 +70,15 @@ function pageType(path) {
 }
 const PATH = window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
 const PLAN = {
-  home: ['slots', 'widget', 'grid', 'rails'], // grid before rails, so the rails can watch it
-  guide: ['feed', 'slots', 'sidebar', 'widget', 'grid', 'rails'],
-  stays: ['side', 'slots', 'feed', 'widget', 'grid', 'rails'],
+  home: ['slots', 'grid', 'rails'], // grid before rails, so the rails can watch it
+  guide: ['feed', 'slots', 'sidebar', 'grid', 'rails'],
+  stays: ['side', 'slots', 'feed', 'grid', 'rails'],
   lead: ['lead'],
-  widget: ['widget'],
-};
-// lead pages that also get the Booking.com widget above the footer (travellers renting a bike or car need a bed too);
-// /homestays, contact, thanks, list-your-homestay, report-a-bug, /hotels/stay and our own listing never do (owner, 2026-10-06:
-// no rival hotels where guests book or enquire with us)
-const LEAD_WIDGET = Object.keys(LEAD).filter((p) => /-rental-in-/.test(p));
-
-// The Booking.com search widget (owner, 2026-10-07: "place it like the ads"). Not an AdSense unit, but it is placed
-// by the same rules and in the same page types: below the first screen, never on lead pages, our own listing,
-// contact, report-a-bug, thanks or 404, never in the owner's opt-out browser (no self-clicks), nothing in automated
-// tests, a labelled box on localhost. Home: the page's own <div data-booking-widget> (below the homestay sections);
-// guides and stays lists: a section just above the footer (before the Multiplex grid). Same CJ link and pixel as
-// CJ_PID / CJ_BOOKING_LINK_ID in assets/js/modules/affiliate-links.js (this file is not a module: keep them in step).
-const BOOKING = {
-  id: 'bookingAffiliateWidget_386d39d7-2d08-41b5-af0f-0fc2c536b862',
-  link: 'http://www.jdoqocy.com/click-101895722-17323528?sid=',
-  pixel: 'https://www.awltovhc.com/image-101895722-17323528',
-  sdk: 'https://www.booking.com/affiliate/prelanding_sdk',
 };
 
 // The Booking.com banner (owner, 2026-10-08: mix Booking.com in with the ads): our own HTML, one CJ deep link (same CJ_PID / CJ_BOOKING_LINK_ID as assets/js/modules/affiliate-links.js: a test keeps them
 // equal), shown wherever an AdSense unit may go, labelled "Sponsored". Not an iframe: no sizing surprises, it follows the theme,
-// and any number of them can sit on a page (the iframe widget above is one instance per page).
+// and any number of them can sit on a page (the old iframe search widget, removed 2026-10-17, was one instance per page).
 const CJ_DEEP = 'https://www.kqzyfj.com/click-101895722-17293139?url=';
 const CITY_NAMES = { rishikesh: 'Rishikesh', haridwar: 'Haridwar', dehradun: 'Dehradun', mussoorie: 'Mussoorie' };
 const PAGE_CITY = (() => {
@@ -296,31 +278,6 @@ const PLACE = {
     if (!belowFold(ad)) { col.replaceWith(aside); return; } // first-screen rule
     push();
   },
-  // the Booking.com widget: the home page's own anchor, else a section above the footer (long pages only)
-  widget() {
-    const anchor = document.querySelector('[data-booking-widget]');
-    let host = anchor;
-    if (!host) {
-      const footer = document.querySelector('footer.rhs-footer');
-      if (pageType(PATH) === 'home' || !footer || docTop(footer) < window.innerHeight * 1.5) return;
-      const sec = document.createElement('section');
-      sec.className = 'section booking-widget';
-      sec.innerHTML = '<div class="container"></div>';
-      footer.before(sec);
-      host = sec.firstChild;
-    }
-    if (PREVIEW) { host.innerHTML = '<div class="rh-ad-preview" style="display:block;min-height:200px">Booking.com search widget</div>'; return; }
-    host.innerHTML = `<div id="${BOOKING.id}">&nbsp;</div>`;
-    const px = new Image(1, 1); px.alt = ''; px.src = BOOKING.pixel; host.append(px);
-    const start = () => new window.Booking.AffiliateWidget({
-      iframeSettings: { selector: BOOKING.id, responsive: true },
-      widgetSettings: { destinationurloverride: BOOKING.link },
-    });
-    if (window.Booking) { start(); return; }
-    const s = document.createElement('script');
-    s.async = true; s.src = BOOKING.sdk; s.onload = start;
-    document.head.append(s);
-  },
   // after all the content, just above the footer
   grid() {
     const footer = document.querySelector('footer.rhs-footer');
@@ -418,7 +375,7 @@ const PLACE = {
   if (!PREVIEW) {
     try { if (localStorage.getItem('rh-analytics-opt-out') === '1') return; } catch { /* storage blocked: still show ads */ }
   }
-  if (!PREVIEW && type !== 'widget') {
+  if (!PREVIEW) {
     const s = document.createElement('script');
     s.async = true;
     s.crossOrigin = 'anonymous';
@@ -426,7 +383,7 @@ const PLACE = {
     document.head.appendChild(s);
   }
   // this script loads async from <head>: wait for the page before placing units
-  const plan = type === 'lead' && LEAD_WIDGET.includes(PATH) ? [...PLAN.lead, 'widget'] : PLAN[type];
+  const plan = PLAN[type];
   const place = () => plan.forEach((p) => PLACE[p]());
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', place);
   else place();
