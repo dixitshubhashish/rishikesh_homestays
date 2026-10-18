@@ -94,6 +94,7 @@ async function worker(id) {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
       await page.waitForFunction(READY[platform], { timeout: 12000 }).catch(() => {});
       await page.waitForTimeout(600);
+      try { await page.mouse.move(80 + Math.random() * 500, 120 + Math.random() * 400, { steps: 6 }); await page.mouse.wheel(0, 200 + Math.random() * 500); } catch {}
       ev = await page.evaluate(extractFn);
       pin = ev.pin && ev.pin.every(Number.isFinite) ? ev.pin : null;
       town = pin ? townOf(pin) : '';
@@ -116,7 +117,7 @@ async function worker(id) {
     updStmt.run(clean(ev.name), pin?.[0] ?? null, pin?.[1] ?? null, town || null, state,
       new Date().toISOString().slice(0, 10), 'via real Edge (CDP, no automation flag) 2026-10-17', url);
     console.log(`[tab${id} ${n}/${allRows.length}] ${platform.padEnd(12)} ${state.padEnd(10)} ${url}`);
-    try { await page.waitForTimeout(GAP_MS); } catch {}
+    try { await page.waitForTimeout(GAP_MS * (0.6 + Math.random() * 1.2)); } catch {}
   }
   await page.close().catch(() => {});
 }
