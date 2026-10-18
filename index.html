@@ -159,14 +159,14 @@
       <form class="search-grid" data-search-form>
 
         <div class="field ota-dest-field" data-ota-destination-box>
-          <label for="area">Destination / area</label>
+          <label for="area" id="area-label">Destination / area</label>
           <div class="ota-dest-combo">
             <input id="area" name="area" class="ota-dest-input" type="text" autocomplete="off"
               placeholder="Search any area — e.g. Tapovan, Har Ki Pauri…"
               data-ota-destination role="combobox" aria-expanded="false" aria-autocomplete="list" aria-owns="ota-dest-listbox">
             <ul class="ota-dest-list" id="ota-dest-listbox" role="listbox" hidden data-ota-destination-list></ul>
           </div>
-          <select id="city" name="city" class="city-dropdown" autocomplete="off" data-ota-city>
+          <select id="city" name="city" class="city-dropdown" autocomplete="off" data-ota-city aria-labelledby="area-label">
             <option value="rishikesh" selected>Rishikesh</option>
             <option value="haridwar">Haridwar</option>
             <option value="dehradun">Dehradun</option>

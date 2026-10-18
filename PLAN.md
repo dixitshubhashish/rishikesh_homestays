@@ -2,19 +2,15 @@
 
 Working plan for the task in progress. Rule (owner, 2026-10-18): plan here first, then execute, so each step costs the fewest tokens. Overwrite this file for every new task; ticket status stays in `TICKETS.md`, results in the `AGENTS.md` ledger.
 
-## Task: RH-BUG-11 third pass (every other page type), with mobile and laptop checks
+## Task: RH-BUG-12 accessibility (from the same PageSpeed report)
 
-Measured 2026-10-18 (Playwright, throttled Pixel 5, local server). Guide `/things-to-do-in-rishikesh`: LCP 6.9 s, 1.56 MB (hero 447 KB, a below-the-fold photo 529 KB). Rental page: LCP 5.0 s, hero 265 KB, `libphonenumber` 179 KB. Stays list: 0.9 MB, LCP 2.3 s (the list HTML itself is 331 KB). 72 images over 150 KB weigh 23.5 MB in total; nearly every page loads one or two of them.
-
-Biggest win for the least work: shrink those images **in place** (same file names), so no HTML, generator, sitemap or translation changes are needed.
+Findings to fix: select without a label, colour contrast, `tabindex` above 0, "accessibility tree not well-formed" (mobile 89, desktop 92).
 
 | # | Step | Files | Risk | Check | Est. cost |
 |---|------|-------|------|-------|-----------|
-| 1 | **Done.** Baseline screenshots, 8 pages at phone 390 px and laptop 1440 px | scratchpad only | none | `node tests/visual/screens.js shoot` | small |
-| 2 | **Done** (63 of 72 files replaced, 21.0 MB to 11.9 MB, 9 kept). Re-encode every WebP over 150 KB: max 1600 px wide (1400 for `*-mobile*`), quality 68, keep only if at least 15% smaller; PNG/JPG over 100 KB left alone (listed for the owner) | `assets/images/**` | Low: same picture, softer detail | file-size table | small |
-| 3 | **Done** (under 0.07% of pixels differ, hero crops identical by eye on phone and laptop). Compare screenshots with step 1, look at the guide, rental and stays pages by eye on phone and laptop | scratchpad | none | `screens.js compare` + view 4 images | small |
-| 4 | **Done**, `npm test` 1,726 of 1,726. Re-measure bytes and LCP on guide, rental, stays list (phone and laptop); run the visual tests for overflow and theme (`tests/visual/*`, part of `npm test`) | none | none | Playwright numbers, `npm test` | small |
-| 5 | **Changed and done.** The vendor scripts are already at the end of `<body>`; what slowed rental and guide pages was a hero found only after the CSS arrived, so a hero `<link rel="preload">` went into the 6 master pages (guide, about, Kumbh, Kedarnath, delhi driving guide, rental hub) and the rental and driving build scripts regenerated their copies | 6 master pages, generated copies | Low | measured, `npm test` | done |
-| 6 | **Done.** Close out: `TICKETS.md`, `AGENTS.md` ledger, one line in `docs/ARCHITECTURE.md` (image sizes, headers, deferred third parties) | docs | none | `npm test` | small |
+| 0 | Dropped from RH-BUG-11: the 331 KB stays-list HTML is only 35 KB gzipped on the wire, so no generator change is worth it | none | none | `gzip -c` | done |
+| 1 | Name the home page `#city` select with `aria-labelledby` pointing at the existing, already translated "Destination / area" label (no new string, so no 22-language translation) | `index.html` | Low | attribute present, home screenshots unchanged, `npm test` | small |
+| 2 | `tabindex` above 0: searched every root page, `hotels/stay.html` and `assets/js`: none in our code, so it comes from a third-party script (ads or a library) | none | none | grep | done |
+| 3 | Contrast and "tree not well-formed": the report did not show which elements; finding them without axe-core or Lighthouse needs a new dev dependency (owner's OK) or the expanded rows of the report | none until known | none | ask the owner | blocked |
 
-Not in this plan: the 331 KB stays-list HTML (generator change, bigger), minify (new dependency), Lighthouse install (needs the owner's OK), accessibility (RH-BUG-12). Nothing is committed until asked.
+Not in this plan: Lighthouse install (owner's OK). Nothing committed until step 1 passes `npm test`.
