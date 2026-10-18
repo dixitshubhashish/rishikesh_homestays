@@ -14,9 +14,10 @@ Each topic has one home; other files link to it instead of repeating it.
 - `docs/booking-links/RULES.md`: the booking-link search (lists, match rules, workers, merge).
 - `docs/I18N.md`: the 23 languages: in-browser translation, the files (`i18n/en.json`, one flat `i18n/<lang>.json` keyed by a 64-bit SHA-256 id, `i18n/dist/`), what is never translated, and the sync steps after any English edit. House styles: `i18n/STYLE.md`.
 - `README.md` (public summary), `AGENTS.md` (rules for other agents **and the live multi-agent ledger**) and `CLAUDE.md` stay at the repo root by convention.
-- `PROGRESS.md`: the ticket tracker only (bugs, features, chores, questions, owner actions: `RH-BUG-N`, `RH-FEAT-N`, `RH-CHORE-N`, `RH-Q-N`, `RH-OWNER-N`, one line each, Open / Blocked on the owner / Closed). Agent work (claims, session logs, verification, the write-up behind each closed ticket) goes in the `AGENTS.md` ledger, never here (owner, 2026-10-18).
+- `PLAN.md`: the plan for the task in hand. **Always plan first, then execute** (owner, 2026-10-18): write the goal, steps, files, checks and rough cost there before starting, to save cost and tokens.
+- `TICKETS.md`: the ticket tracker only (bugs, features, chores, questions, owner actions: `RH-BUG-N`, `RH-FEAT-N`, `RH-CHORE-N`, `RH-Q-N`, `RH-OWNER-N`, one line each, Open / Blocked on the owner / Closed). Agent work (claims, session logs, verification, the write-up behind each closed ticket) goes in the `AGENTS.md` ledger, never here (owner, 2026-10-18).
 
-Keep it this way: update the doc that owns a topic, don't add new `.md` files for results or notes (test runs go in `docs/TESTING.md` "Last full run", state in `docs/HANDOFF.md`, ticket status in `PROGRESS.md`, history and agent notes in `AGENTS.md`).
+Keep it this way: update the doc that owns a topic, don't add new `.md` files for results or notes (test runs go in `docs/TESTING.md` "Last full run", state in `docs/HANDOFF.md`, ticket status in `TICKETS.md`, history and agent notes in `AGENTS.md`).
 
 ## Multi-Agent Coordination
 

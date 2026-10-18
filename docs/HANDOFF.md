@@ -1,6 +1,6 @@
 # Handoff: start here (state on 2026-10-12)
 
-Read `CLAUDE.md` first (rules, where things live), then this file. Then, as needed: `docs/ARCHITECTURE.md` (modules, API), `scripts/stays/README.md` (stays pipeline), `docs/booking-links/RULES.md` (booking-link search), `docs/TESTING.md`. `PROGRESS.md` is the ticket tracker (one line per `RH-…` ticket); `AGENTS.md` is the multi-agent ledger and the dated history (Codex also works here: claim files before editing).
+Read `CLAUDE.md` first (rules, where things live), then this file. Then, as needed: `docs/ARCHITECTURE.md` (modules, API), `scripts/stays/README.md` (stays pipeline), `docs/booking-links/RULES.md` (booking-link search), `docs/TESTING.md`. `TICKETS.md` is the ticket tracker (one line per `RH-…` ticket); `AGENTS.md` is the multi-agent ledger and the dated history (Codex also works here: claim files before editing).
 
 This file is the one home for live numbers and owner to-dos. Other docs point here instead of repeating them.
 
@@ -39,7 +39,7 @@ uniqueness-check gate first. See the `AGENTS.md` ledger (Active Claims) for the 
 
 ## Session 2026-10-12: AdSense "Low-value content" diagnosis (quantified, no template edit yet)
 
-Investigated the rejection (item 0 below). Read `scripts/stays/build_pages.py` (`CATEGORIES`, `CITY_COPY`, `city_copy()`, `render()`) and the live data modules. Did **not** edit `build_pages.py` or rebuild: it already has four active/uncommitted claims tonight (cities subagent, OTA choice-screen subagent, dedupe subagent, Copilot's URL-ownership/translation work) and the ledger explicitly warns a contaminated rebuild was discarded earlier this session — adding a fifth uncommitted hand into the same generator risked exactly that. This session's own change is docs-only (this file + `docs/ARCHITECTURE.md` + a `PROGRESS.md` line + a coordination row), so there is nothing to rebuild or test.
+Investigated the rejection (item 0 below). Read `scripts/stays/build_pages.py` (`CATEGORIES`, `CITY_COPY`, `city_copy()`, `render()`) and the live data modules. Did **not** edit `build_pages.py` or rebuild: it already has four active/uncommitted claims tonight (cities subagent, OTA choice-screen subagent, dedupe subagent, Copilot's URL-ownership/translation work) and the ledger explicitly warns a contaminated rebuild was discarded earlier this session — adding a fifth uncommitted hand into the same generator risked exactly that. This session's own change is docs-only (this file + `docs/ARCHITECTURE.md` + a `TICKETS.md` line + a coordination row), so there is nothing to rebuild or test.
 
 **Quantified findings** (478 `hotels/*.html` pages total, 15 hand-made root guides separate):
 
