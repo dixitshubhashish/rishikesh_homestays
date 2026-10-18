@@ -34,3 +34,11 @@ export const setAttr = (el, attr, value) => {
 export const getAttr = (el, attr) => {
   return el ? el.getAttribute(attr) : null;
 };
+
+// flatpickr copies the input's tabindex onto its altInput; Lighthouse flags
+// positive values, so drop them (flatpickr `onReady` hook).
+export function dropPositiveTabindex(_dates, _str, fp) {
+  for (const el of [fp.input, fp.altInput]) {
+    if (el && el.tabIndex > 0) el.removeAttribute('tabindex');
+  }
+}

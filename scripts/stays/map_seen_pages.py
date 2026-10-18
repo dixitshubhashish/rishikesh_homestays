@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Maps the pages the search harvested (verify_seen.mjs -> the DB's candidate_pages table, scripts/stays/db.py) across to
 our stays (owner, 2026-10-06: "if you get 2 or 4 different properties you can map them across, the city must be
-Rishikesh or Haridwar").
+Rishikesh or Haridwar"; extended to Dehradun and Mussoorie, RH-FEAT-2).
 
-A checked page counts when its pin is in Rishikesh or Haridwar (state `ok`, or `elsewhere` under the old centres but
+A checked page counts when its pin is in a cities.py city (Rishikesh, Haridwar, Dehradun, Mussoorie) (state `ok`, or `elsewhere` under the old centres but
 within 25 km of a cities.py centre). It maps to the stay without a link that sits within 200 m of the page's pin in
 the same city and reads as the same place: the same words and numbers in the name (organise_found.same_name; a
 different size, 1BHK / 2BHK, is another place), or the only stay without a link within 200 m. A mapped page is
@@ -73,7 +73,7 @@ def main():
         for k, s in src.items():
             if k in linked_keys or not s.get('ll') or s['ll'][0] in ('', None):
                 continue
-            stays[k] = dict(key=k, name=s.get('n', ''), city=s.get('cy') or ('haridwar' if 'haridwar' in (s.get('ad', '') or '').lower() else 'rishikesh'),
+            stays[k] = dict(key=k, name=s.get('n', ''), city=s.get('cy') or bs.city_of(float(s['ll'][0]), float(s['ll'][1])) or 'rishikesh',
                             ll=(s['ll'][0], s['ll'][1]))
     for s in stays.values():
         s['tok'], s['unit'] = of.tokens(s['name']), of.unit(s['name'])
@@ -83,7 +83,7 @@ def main():
     for src in (places, processed, index):
         for k, s_ in src.items():
             if s_.get('ll') and s_['ll'][0] not in ('', None):
-                everyone[k] = dict(key=k, name=s_.get('n', ''), city=s_.get('cy') or ('haridwar' if 'haridwar' in (s_.get('ad', '') or '').lower() else 'rishikesh'),
+                everyone[k] = dict(key=k, name=s_.get('n', ''), city=s_.get('cy') or bs.city_of(float(s_['ll'][0]), float(s_['ll'][1])) or 'rishikesh',
                                    ll=(s_['ll'][0], s_['ll'][1]), tok=of.tokens(s_.get('n', '')), unit=of.unit(s_.get('n', '')))
     for k, s_ in bs.own_stays().items():   # our own stays, and the auto-listed ones (until the next build puts them in the index)
         if k not in everyone and s_.get('ll'):
@@ -138,7 +138,7 @@ def main():
                 # transient, per-run conflict, not a permanent one -- left `checked`, re-examined next run
             else:
                 new_rows.append(r)
-    print(f'map_seen_pages: {len(checked)} checked page(s) in Rishikesh/Haridwar: {len(found_rows)} mapped to a stay without a link, {len(extra_rows)} extra links for listed stays, {len(redundant_rows)} already linked under another page, {len(new_rows)} new properties')
+    print(f'map_seen_pages: {len(checked)} checked page(s) in the four cities: {len(found_rows)} mapped to a stay without a link, {len(extra_rows)} extra links for listed stays, {len(redundant_rows)} already linked under another page, {len(new_rows)} new properties')
     if DRY:
         for f in found_rows[:6]:
             print('  ', f['name'][:40], '<-', f['note'][:110])

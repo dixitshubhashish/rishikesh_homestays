@@ -308,9 +308,9 @@ textarea {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #25D366;
+  background: #0e7f3f;
   color: #fff;
-  border: 2px solid #25D366;
+  border: 2px solid #0e7f3f;
   transition: all 0.3s ease;}
 .whatsapp-inline-icon {
   width: 1.15em;
@@ -319,8 +319,8 @@ textarea {
   fill: currentColor;
   vertical-align: -0.16em;}
 .btn-whatsapp:hover {
-  background: #1ebe5d;
-  border-color: #1ebe5d;
+  background: #0b6e36;
+  border-color: #0b6e36;
   color: #fff;
   transform: translateY(-2px);}
 .eyebrow {

@@ -114,16 +114,16 @@
     border-color: #050505;
   }
   50% {
-    background: #25d366;
-    border-color: #25d366;
+    background: #0e7f3f;
+    border-color: #0e7f3f;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .whatsapp-btn-attention {
     animation: none;
-    background: #25d366;
-    border-color: #25d366;
+    background: #0e7f3f;
+    border-color: #0e7f3f;
   }
 }
 

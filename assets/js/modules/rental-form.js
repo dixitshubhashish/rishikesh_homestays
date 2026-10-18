@@ -8,6 +8,7 @@
 // service, dates, pickup point, people and the guest's own notes are all
 // folded into `details` as well as sent as their own fields, so nothing is
 // lost whatever the API stores.
+import { dropPositiveTabindex } from './dom-helpers.js';
 import { validatePhone, validateRentalDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
@@ -116,10 +117,12 @@ export function setupRentalDatePickers() {
 
   const base = { dateFormat: 'Y-m-d', altInput: true, altFormat: 'd M Y', minDate: 'today' };
   endPicker = window.flatpickr(endInput, {
+    onReady: dropPositiveTabindex,
     ...base,
     onChange: () => { if (datesError) datesError.hidden = true; }
   });
   startPicker = window.flatpickr(startInput, {
+    onReady: dropPositiveTabindex,
     ...base,
     onChange: (selectedDates) => {
       if (datesError) datesError.hidden = true;

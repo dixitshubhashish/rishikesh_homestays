@@ -23,7 +23,7 @@
     <link rel="icon" href="/assets/images/logo.ico" type="image/x-icon">
     <link rel="manifest" href="/site.webmanifest">
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="stylesheet" href="/assets/css/whatsapp-widget.css">
+    <link rel="stylesheet" href="/assets/css/whatsapp-widget.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/assets/css/whatsapp-widget.css"></noscript>
     <link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css">
     <script type="application/ld+json">
     {
@@ -357,7 +357,7 @@
 
     </div>
     </footer>
-    <script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
+    <script defer src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/assets/vendor/libphonenumber/libphonenumber-min.js"></script>
     <script type="module" src="/assets/js/contact.js"></script>
     <script type="module" src="/assets/js/site.js"></script>

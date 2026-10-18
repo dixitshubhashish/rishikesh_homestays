@@ -1,5 +1,5 @@
 // Search form and area dropdown functionality
-import { qs, qsa } from './dom-helpers.js';
+import { qs, qsa , dropPositiveTabindex } from './dom-helpers.js';
 import { AREAS } from './data.js';
 import { CITY_AREAS } from './city-areas.js';
 
@@ -85,6 +85,8 @@ export function setupDatePickers() {
   if (!checkinInput || !checkoutInput) return;
 
   const checkoutPicker = window.flatpickr(checkoutInput, {
+
+    onReady: dropPositiveTabindex,
     dateFormat: 'Y-m-d',
     altInput: true,
     altFormat: 'd M Y',
@@ -92,6 +94,8 @@ export function setupDatePickers() {
   });
 
   window.flatpickr(checkinInput, {
+
+    onReady: dropPositiveTabindex,
     dateFormat: 'Y-m-d',
     altInput: true,
     altFormat: 'd M Y',

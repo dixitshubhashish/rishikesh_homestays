@@ -24,7 +24,7 @@
     <link rel="manifest" href="/site.webmanifest">
     <link rel="preload" as="image" href="/assets/images/rentals/tempo-traveller-hill-road.webp" type="image/webp" fetchpriority="high">
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="stylesheet" href="/assets/css/whatsapp-widget.css">
+    <link rel="stylesheet" href="/assets/css/whatsapp-widget.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/assets/css/whatsapp-widget.css"></noscript>
     <link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css">
     <script type="application/ld+json">
     {
@@ -493,7 +493,7 @@
 
     </div>
     </footer>
-    <script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
+    <script defer src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
     <script src="/assets/vendor/libphonenumber/libphonenumber-min.js"></script>
     <script type="module" src="/assets/js/site.js"></script>
 <script type="module">

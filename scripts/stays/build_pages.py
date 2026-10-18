@@ -474,7 +474,7 @@ def item_html(d, city=None):
     # city: a stay of another city (the "nearest in ..." lists on a thin page).
     qs = city_qs() if city is None else ('' if city == DEFAULT_CITY else f'&c={city}')
     return (f'<li class="sx-item"><span class="sx-name">{esc(d["n"])}</span><span class="sx-meta">{meta_html(d)}</span>'
-            f'<a class="sx-go" href="/hotels/stay?s={esc(d["id"])}{qs}" aria-label="View {esc(d["n"])}">View property</a></li>')
+            f'<a class="sx-go" href="/hotels/stay?s={esc(d["id"])}{qs}" aria-label="View property: {esc(d["n"])}">View property</a></li>')
 
 
 # ---- the /homestays page: our three stays on top (data.js, no special mention), then these picks --------------------

@@ -309,6 +309,8 @@ export function setupDatePickers() {
   if (!checkinInput || !checkoutInput) return;
 
   const checkoutPicker = window.flatpickr(checkoutInput, {
+
+    onReady: dropPositiveTabindex,
     dateFormat: 'Y-m-d',
     altInput: true,
     altFormat: 'd M Y',
@@ -316,6 +318,8 @@ export function setupDatePickers() {
   });
 
   window.flatpickr(checkinInput, {
+
+    onReady: dropPositiveTabindex,
     dateFormat: 'Y-m-d',
     altInput: true,
     altFormat: 'd M Y',
@@ -333,4 +337,11 @@ export function setupDatePickers() {
       }
     }
   });
+}
+
+// Standalone module (no imports): same as dropPositiveTabindex in dom-helpers.js.
+function dropPositiveTabindex(_dates, _str, fp) {
+  for (const el of [fp.input, fp.altInput]) {
+    if (el && el.tabIndex > 0) el.removeAttribute('tabindex');
+  }
 }

@@ -238,18 +238,4 @@ g-ChIJJwlUBAA9CTkRnDHaU2mWFNY	Vacation rental NAND BHAWAN	rishikesh			retry
 g-ChIJkyhiIgAVCTkRkGnTq-8_dRc	Satyawati Homestay	rishikesh			retry
 oyo-5248-surbee-resorts	Oyo 5248 Surbee Resorts	mussoorie		review re-check: not this stay (core-word-missing (surbee); name too different (shared [] of [surbee])): https://www.airbnb.com/rooms/825421576382726976	retry
 g-ChIJvQfnlTYUCTkRzdvlAdOHTMY	Anandvan Jungle Resort: Where Nature Meets Luxury	rishikesh		review re-check: not this stay (already the page of ANANDVAN, 3.4 km from this stay): https://www.hostelworld.com/hostels/p/328504/anandvan-jungle-resort-by-dev-group-of-hotels/	retry
-g-ChIJQZv4V9k9CTkR3vVdC2piWKA	The Vasudeva Luxury Villas	rishikesh		deep pass: 8 search(es); pages would not load: MakeMyTrip [unreadable-retries:MakeMyTrip=1]	retry
 hotel-dehradun	Hotel Dehradun			name too generic to identify on a booking site (core "Hotel Dehradun"); check by hand	manual
-ganga-tapovan-room	Ganga Tapovan Room	rishikesh		deep pass: 9 search(es); pages would not load: Booking.com, MakeMyTrip [unreadable-retries:Booking.com=1;MakeMyTrip=1]	retry
-g-ChIJ3W-YYMYTCTkRXlukO9UjyFA	The Rock project By Qintara living	rishikesh		deep pass: 9 search(es); pages would not load: Airbnb [unreadable-retries:Airbnb=1]	retry
-stayvista-at-zen-cottage-with-bathtub	Stayvista At Zen Cottage With Bathtub	mussoorie		deep pass: 8 search(es); pages would not load: MakeMyTrip, Goibibo [unreadable-retries:MakeMyTrip=1;Goibibo=1]	retry
-g-ChIJe_lYGAA_CTkRWRxCV0eETTw	Light House Service apartment	rishikesh		deep pass: 7 search(es); pages would not load: MakeMyTrip, Goibibo, Airbnb [unreadable-retries:MakeMyTrip=1;Goibibo=1;Airbnb=1]	retry
-g-ChIJuXEjqiwXCTkRR8wP3xnR7wI	Camp monal stay	rishikesh		deep pass: 7 search(es); pages would not load: Agoda, MakeMyTrip, Goibibo [unreadable-retries:Agoda=1;MakeMyTrip=1;Goibibo=1]	retry
-g-ChIJ6dtVrdAVCTkRgq7mJ_0iYAY	Gattu ghat	rishikesh		deep pass: 9 search(es); pages would not load: Trip.com [unreadable-retries:Trip.com=1]	retry
-g-ChIJf62MzBcVCTkRJe66hzA_7V8	U.K. Royal Resort & Camping	rishikesh		deep pass: 7 search(es); pages would not load: Goibibo [unreadable-retries:Goibibo=1]	retry
-g-ChIJSd4Z1OY_CTkRtAZZ2XxnZIk	Modern Hill View Hideout	rishikesh		deep pass: 8 search(es); pages would not load: MakeMyTrip, Agoda, Goibibo [unreadable-retries:MakeMyTrip=1;Agoda=1;Goibibo=1]	retry
-himalayan-stayz	Himalayan Stayz	rishikesh		deep pass: 9 search(es); pages would not load: MakeMyTrip, Agoda, Goibibo [unreadable-retries:MakeMyTrip=1;Agoda=1;Goibibo=1]	retry
-g-ChIJMxwr0RMXCTkRN1CfAhxfBh0	ShreeJee HOMESTAY	rishikesh		deep pass: 8 search(es); pages would not load: Agoda, MakeMyTrip, EaseMyTrip, Goibibo [unreadable-retries:Agoda=1;MakeMyTrip=1;EaseMyTrip=1;Goibibo=1]	retry
-hotel-mussoorie-169	Hotel Mussoorie 169	mussoorie		deep pass: 8 search(es); pages would not load: MakeMyTrip, Booking.com, Agoda [unreadable-retries:MakeMyTrip=2;Booking.com=1;Agoda=1]	retry
-g-ChIJl18azv49CTkRPnGE2vv49yM	Govind nagar	rishikesh		deep pass: 9 search(es); pages would not load: Expedia [unreadable-retries:Expedia=2]	retry
-g-ChIJOwD78y4XCTkRNAkCAricriQ	Hotel Royal King	rishikesh		deep pass: 8 search(es); pages would not load: Booking.com, Goibibo [unreadable-retries:Booking.com=1;Goibibo=1]	retry

@@ -1,3 +1,4 @@
+import { dropPositiveTabindex } from './dom-helpers.js';
 import { validatePhone, validateDateRange } from './validators.js';
 import { setupCountryPhoneField } from './country-select.js';
 import { buildWhatsAppLink } from './whatsapp-link.js';
@@ -64,6 +65,8 @@ export function setupContactDatePickers() {
   if (!checkinInput || !checkoutInput) return;
 
   checkoutPicker = window.flatpickr(checkoutInput, {
+
+    onReady: dropPositiveTabindex,
     dateFormat: 'Y-m-d',
     altInput: true,
     altFormat: 'd M Y',
@@ -71,6 +74,8 @@ export function setupContactDatePickers() {
   });
 
   checkinPicker = window.flatpickr(checkinInput, {
+
+    onReady: dropPositiveTabindex,
     dateFormat: 'Y-m-d',
     altInput: true,
     altFormat: 'd M Y',

@@ -133,7 +133,7 @@ function itemHtml(d) {
   if (d.g) parts.push(`<span>Guests ${d.g}/10${d.c ? ` · ${d.c} reviews` : ''}</span>`);
   if (d.p) parts.push(`<span>Starting ₹${inr(d.p)} onwards</span>`);
   return `<li class="sx-item"><span class="sx-name">${esc(d.n)}</span><span class="sx-meta">${parts.join('')}${distNote(d)}</span>` +
-    `<a class="sx-go" href="/hotels/stay?s=${esc(d.id)}${d.cq ?? CQ}" aria-label="View ${esc(d.n)}">View property</a></li>`;
+    `<a class="sx-go" href="/hotels/stay?s=${esc(d.id)}${d.cq ?? CQ}" aria-label="View property: ${esc(d.n)}">View property</a></li>`;
 }
 
 export function setupStaysIndex() {

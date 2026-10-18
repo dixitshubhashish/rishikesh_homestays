@@ -31,7 +31,7 @@
   <link rel="preload" as="image" href="/assets/images/rishikesh-things-to-do-v2.webp" type="image/webp" media="(min-width: 681px)" fetchpriority="high">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <link rel="stylesheet" href="/assets/css/whatsapp-widget.css" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="/assets/css/whatsapp-widget.css"></noscript>
+  <noscript><link rel="stylesheet" href="/assets/css/whatsapp-widget.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="/assets/css/whatsapp-widget.css"></noscript></noscript>
   <link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css" media="print" onload="this.media='all'">
   <noscript><link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css"></noscript>
   <script type="application/ld+json">
@@ -519,7 +519,7 @@
 
     </div>
     </footer>
-<script src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
+<script defer src="/assets/vendor/flatpickr/flatpickr.min.js"></script>
 <script type="module" src="/assets/js/site.js"></script>
 <script type="module">
   import { setupWhatsAppWidget } from '/assets/js/modules/whatsapp-widget.js';
