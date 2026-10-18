@@ -12,8 +12,9 @@
 // (the new pages are in PAGES of scripts/i18n/extract.mjs), then the sync steps of docs/I18N.md, and
 // node scripts/py.mjs scripts/stays/footer_links.py (the footer finds these pages by file name: FAMILIES there)
 //
-// Copy rules (docs/HANDOFF.md): guide voice, no invented facts, no dates, no "official". The ₹700 line exists for
-// Rishikesh bikes only (the owner's own figure); Haridwar pages promise no price.
+// Copy rules (docs/HANDOFF.md): guide voice, no invented facts, no dates, no "official". No price is promised on any page (the ₹700 line was
+// removed 2026-10-19, RH-BUG-13, until the owner confirms a figure). Car and taxi pages and every Dehradun and Mussoorie
+// page are noindex (RH-BUG-13); see `indexable`.
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -32,7 +33,7 @@ export const slugOf = (kind, city) => `${kind}-rental-in-${city}`;
 // ---- per-city text that replaces a region of the hub (Rishikesh keeps the hub's own text) --------------------
 const HARIDWAR = {
   bikeIntro: `<h2>Bike &amp; scooty rental in Haridwar</h2>
-            <p>Two wheels slip through where cars crawl: Haridwar jams solid around the evening aarti and the big snan days, and the ghats, Mansa Devi and Chandi Devi sit far enough apart to make walking tiring. Tell us the days you need a scooty or a bike and we arrange it with trusted local partners; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
+            <p>Two wheels slip through where cars crawl: Haridwar jams solid around the evening aarti and the big snan days, and the ghats, Mansa Devi and Chandi Devi sit far enough apart to make walking tiring. Tell us the days you need a scooty or a bike and we ask local operators for a quote; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
   traffic: `<li><strong>Traffic:</strong> the roads around Har Ki Pauri and the railway station get packed on aarti evenings, weekends and snan days. Ride slow, honk at blind corners, and park where the locals park instead of at the ghat itself.</li>`,
   ridesHead: `<h2>Ride ideas from Haridwar</h2>`,
   rides: `<article class="info-card"><h3>Har Ki Pauri &amp; the ghats</h3><p>The heart of town. Go early in the morning, or after the aarti crowd thins, and walk the last stretch.</p></article>
@@ -47,7 +48,7 @@ const HARIDWAR = {
 
 const DEHRADUN = {
   bikeIntro: `<h2>Bike &amp; scooty rental in Dehradun</h2>
-            <p>Dehradun is spread out, Clock Tower, Rajpur Road, the Forest Research Institute and Sahastradhara all sit a fair ride apart, and the hill road up to Mussoorie starts right at the edge of town. Tell us the days you need a scooty or a bike and we arrange it with trusted local partners; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
+            <p>Dehradun is spread out, Clock Tower, Rajpur Road, the Forest Research Institute and Sahastradhara all sit a fair ride apart, and the hill road up to Mussoorie starts right at the edge of town. Tell us the days you need a scooty or a bike and we ask local operators for a quote; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
   traffic: `<li><strong>Traffic:</strong> Rajpur Road, Clock Tower and the Araghar stretch jam up at office hours and on weekends when the hill crowd heads up to Mussoorie. Ride slow through the bazaar lanes and park where the shopkeepers point you to, not on the road itself.</li>`,
   ridesHead: `<h2>Ride ideas from Dehradun</h2>`,
   rides: `<article class="info-card"><h3>Forest Research Institute</h3><p>The grand colonial building and museum, a short ride from the Clock Tower.</p></article>
@@ -62,7 +63,7 @@ const DEHRADUN = {
 
 const MUSSOORIE = {
   bikeIntro: `<h2>Bike &amp; scooty rental in Mussoorie</h2>
-            <p>Mussoorie's own Mall Road closes to vehicles every evening (4 pm to 11:30 pm), so a bike mostly earns its keep on the day trips out, Kempty Falls, Lal Tibba, Dhanaulti, and on the climb back up from Dehradun. Tell us the days you need a scooty or a bike and we arrange it with trusted local partners; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
+            <p>Mussoorie's own Mall Road closes to vehicles every evening (4 pm to 11:30 pm), so a bike mostly earns its keep on the day trips out, Kempty Falls, Lal Tibba, Dhanaulti, and on the climb back up from Dehradun. Tell us the days you need a scooty or a bike and we ask local operators for a quote; the price depends on the bike, the season and how many days you keep it, and we confirm it before anything is booked.</p>`,
   traffic: `<li><strong>Traffic:</strong> the Mall Road is shut to vehicles from 4 pm to 11:30 pm daily, and taxis are barred from it round the clock, so plan to park at Library Chowk or Picture Palace and walk in. The hill road up from Dehradun is narrow and busy on weekends; ride slow on the bends and check for fog or landslide closures in the monsoon before you leave.</li>`,
   ridesHead: `<h2>Ride ideas from Mussoorie</h2>`,
   rides: `<article class="info-card"><h3>Kempty Falls</h3><p>About 15 km out on the Yamunotri road, a popular waterfall stop.</p></article>
@@ -80,43 +81,42 @@ const CITY_TEXT = { haridwar: HARIDWAR, dehradun: DEHRADUN, mussoorie: MUSSOORIE
 const PAGE = {
   "bike/rishikesh": {
     title: "Bike Rental in Rishikesh | Scooty, 150cc and Royal Enfield",
-    description: "Rent a scooty, 150cc bike or Royal Enfield in Rishikesh (starting ₹700 onwards per day). Tell us your days and we arrange it with trusted local partners and quote on WhatsApp.",
-    ogDescription: "Scooty, bike and Royal Enfield rentals in Rishikesh, starting ₹700 onwards per day, arranged with trusted local partners.",
+    description: "Rent a scooty, 150cc bike or Royal Enfield in Rishikesh. Tell us your days and we ask local operators for a quote and confirm the price before anything is booked.",
+    ogDescription: "Scooty, bike and Royal Enfield rentals in Rishikesh, quoted through local operators.",
     eyebrow: "Bikes &amp; scooties",
     h1: "Bike rental in Rishikesh, sorted over one chai.",
-    hero: "Rent a scooty, a 150cc bike or a Royal Enfield. Tell us the days you need it and we arrange it with trusted local partners, so you skip the haggling at the rental shop.",
+    hero: "Rent a scooty, a 150cc bike or a Royal Enfield. Tell us the days you need it and we ask local operators for a quote, so you skip the haggling at the rental shop.",
     leadH2: "Wheels for Rishikesh, minus the guesswork",
     lead: "Rishikesh is a town of steep lanes, river bridges and temples up winding hill roads. A scooty gets you to Tapovan cafes and Neelkanth on your own clock.",
-    price: true,
   },
   "bike/haridwar": {
     title: "Bike Rental in Haridwar | Scooty and Bikes",
-    description: "Rent a scooty or a bike in Haridwar for Har Ki Pauri, Mansa Devi, Chandi Devi and the run up to Rishikesh. Tell us your days and we arrange it with trusted local partners.",
-    ogDescription: "Scooty and bike rentals in Haridwar, arranged with trusted local partners. Tell us your days and we quote.",
+    description: "Rent a scooty or a bike in Haridwar for Har Ki Pauri, Mansa Devi, Chandi Devi and the run up to Rishikesh. Tell us your days and we ask local operators for a quote.",
+    ogDescription: "Scooty and bike rentals in Haridwar, quoted through local operators. Tell us your days and we quote.",
     eyebrow: "Bikes &amp; scooties",
     h1: "Bike rental in Haridwar, sorted over one chai.",
-    hero: "Rent a scooty or a bike for the ghats, the hill temples and the road to Rishikesh. Tell us the days you need it and we arrange it with trusted local partners.",
+    hero: "Rent a scooty or a bike for the ghats, the hill temples and the road to Rishikesh. Tell us the days you need it and we ask local operators for a quote.",
     leadH2: "Wheels for Haridwar, minus the guesswork",
     lead: "Haridwar is a town of ghats, crowded bazaars and hill temples on both sides of the Ganga. Two wheels get you between them on your own clock.",
     pickup: "Har Ki Pauri, station, hotel...",
   },
   "car/rishikesh": {
     title: "Car Rental in Rishikesh | Self-Drive Cars",
-    description: "Rent a self-drive car in Rishikesh for the hills, Haridwar and day trips. Tell us your dates and the car you want and we arrange it with trusted local partners and quote.",
-    ogDescription: "Self-drive car rental in Rishikesh, arranged with trusted local partners.",
+    description: "Rent a self-drive car in Rishikesh for the hills, Haridwar and day trips. Tell us your dates and the car you want and we ask local operators for a quote.",
+    ogDescription: "Self-drive car rental in Rishikesh, quoted through local operators.",
     eyebrow: "Self-drive cars",
     h1: "Car rental in Rishikesh, keys in your hand.",
-    hero: "Rent a self-drive car and take the hill roads at your own pace. Tell us the dates and the car you want and we arrange it with trusted local partners.",
+    hero: "Rent a self-drive car and take the hill roads at your own pace. Tell us the dates and the car you want and we ask local operators for a quote.",
     leadH2: "A car for Rishikesh, minus the guesswork",
     lead: "A self-drive car lets you stop wherever the view does, from Neelkanth to the Haridwar ghats.",
   },
   "car/haridwar": {
     title: "Car Rental in Haridwar | Self-Drive Cars",
-    description: "Rent a self-drive car in Haridwar for Rishikesh, the hills and day trips. Tell us your dates and the car you want and we arrange it with trusted local partners and quote.",
-    ogDescription: "Self-drive car rental in Haridwar, arranged with trusted local partners.",
+    description: "Rent a self-drive car in Haridwar for Rishikesh, the hills and day trips. Tell us your dates and the car you want and we ask local operators for a quote.",
+    ogDescription: "Self-drive car rental in Haridwar, quoted through local operators.",
     eyebrow: "Self-drive cars",
     h1: "Car rental in Haridwar, keys in your hand.",
-    hero: "Rent a self-drive car for Rishikesh, the hills and day trips. Tell us the dates and the car you want and we arrange it with trusted local partners.",
+    hero: "Rent a self-drive car for Rishikesh, the hills and day trips. Tell us the dates and the car you want and we ask local operators for a quote.",
     leadH2: "A car for Haridwar, minus the guesswork",
     lead: "A self-drive car lets you stop wherever the view does, from Har Ki Pauri to Rishikesh and the hills.",
     pickup: "Har Ki Pauri, station, hotel...",
@@ -124,7 +124,7 @@ const PAGE = {
   "taxi/rishikesh": {
     title: "Taxi Rental in Rishikesh | Local, Airport and Outstation Cabs",
     description: "Book a taxi in Rishikesh for local sightseeing, Jolly Grant airport and railway pickups, Haridwar and Kedarnath. Drivers who know the hill roads. Tell us your plan and we quote.",
-    ogDescription: "Local, airport and outstation taxis in Rishikesh, arranged with trusted local partners.",
+    ogDescription: "Local, airport and outstation taxis in Rishikesh, quoted through local operators.",
     eyebrow: "Taxis &amp; cabs",
     h1: "Taxi rental in Rishikesh, from the airport to the hills.",
     hero: "Local sightseeing, airport and railway pickups, Haridwar transfers and outstation trips with drivers who know the hill roads. Tell us your plan and we quote.",
@@ -134,7 +134,7 @@ const PAGE = {
   "taxi/haridwar": {
     title: "Taxi Rental in Haridwar | Local, Station and Outstation Cabs",
     description: "Book a taxi in Haridwar for local sightseeing, railway station and Jolly Grant airport pickups, Rishikesh and Kedarnath. Drivers who know the hill roads. Tell us your plan and we quote.",
-    ogDescription: "Local, station and outstation taxis in Haridwar, arranged with trusted local partners.",
+    ogDescription: "Local, station and outstation taxis in Haridwar, quoted through local operators.",
     eyebrow: "Taxis &amp; cabs",
     h1: "Taxi rental in Haridwar, from the station to the hills.",
     hero: "Local sightseeing, railway station and airport pickups, Rishikesh transfers and outstation trips with drivers who know the hill roads. Tell us your plan and we quote.",
@@ -144,44 +144,44 @@ const PAGE = {
   },
   "bike/dehradun": {
     title: "Bike Rental in Dehradun | Scooty and Bikes",
-    description: "Rent a scooty or a bike in Dehradun for FRI, Robber's Cave, Sahastradhara and the run up to Mussoorie. Tell us your days and we arrange it with trusted local partners.",
-    ogDescription: "Scooty and bike rentals in Dehradun, arranged with trusted local partners. Tell us your days and we quote.",
+    description: "Rent a scooty or a bike in Dehradun for FRI, Robber's Cave, Sahastradhara and the run up to Mussoorie. Tell us your days and we ask local operators for a quote.",
+    ogDescription: "Scooty and bike rentals in Dehradun, quoted through local operators. Tell us your days and we quote.",
     eyebrow: "Bikes &amp; scooties",
     h1: "Bike rental in Dehradun, sorted over one chai.",
-    hero: "Rent a scooty or a bike for FRI, Robber's Cave, Sahastradhara and the climb up to Mussoorie. Tell us the days you need it and we arrange it with trusted local partners.",
+    hero: "Rent a scooty or a bike for FRI, Robber's Cave, Sahastradhara and the climb up to Mussoorie. Tell us the days you need it and we ask local operators for a quote.",
     leadH2: "Wheels for Dehradun, minus the guesswork",
     lead: "Dehradun is spread out and the hills start right at its edge. Two wheels get you between the city sights and up towards Mussoorie on your own clock.",
     pickup: "Clock Tower, station, hotel...",
   },
   "bike/mussoorie": {
     title: "Bike Rental in Mussoorie | Scooty and Bikes",
-    description: "Rent a scooty or a bike in Mussoorie for Kempty Falls, Lal Tibba and day trips down to Dehradun. Tell us your days and we arrange it with trusted local partners.",
-    ogDescription: "Scooty and bike rentals in Mussoorie, arranged with trusted local partners. Tell us your days and we quote.",
+    description: "Rent a scooty or a bike in Mussoorie for Kempty Falls, Lal Tibba and day trips down to Dehradun. Tell us your days and we ask local operators for a quote.",
+    ogDescription: "Scooty and bike rentals in Mussoorie, quoted through local operators. Tell us your days and we quote.",
     eyebrow: "Bikes &amp; scooties",
     h1: "Bike rental in Mussoorie, sorted over one chai.",
-    hero: "Rent a scooty or a bike for Kempty Falls, Lal Tibba and the day trips down to Dehradun. Tell us the days you need it and we arrange it with trusted local partners.",
+    hero: "Rent a scooty or a bike for Kempty Falls, Lal Tibba and the day trips down to Dehradun. Tell us the days you need it and we ask local operators for a quote.",
     leadH2: "Wheels for Mussoorie, minus the guesswork",
     lead: "Mussoorie's Mall Road shuts to vehicles every evening, so a bike earns its keep on the day trips out, Kempty Falls to Dhanaulti, on your own clock.",
     pickup: "Library Chowk, Picture Palace, hotel...",
   },
   "car/dehradun": {
     title: "Car Rental in Dehradun | Self-Drive Cars",
-    description: "Rent a self-drive car in Dehradun for Mussoorie, the valley sights and day trips. Tell us your dates and the car you want and we arrange it with trusted local partners and quote.",
-    ogDescription: "Self-drive car rental in Dehradun, arranged with trusted local partners.",
+    description: "Rent a self-drive car in Dehradun for Mussoorie, the valley sights and day trips. Tell us your dates and the car you want and we ask local operators for a quote.",
+    ogDescription: "Self-drive car rental in Dehradun, quoted through local operators.",
     eyebrow: "Self-drive cars",
     h1: "Car rental in Dehradun, keys in your hand.",
-    hero: "Rent a self-drive car for Mussoorie, the valley sights and day trips. Tell us the dates and the car you want and we arrange it with trusted local partners.",
+    hero: "Rent a self-drive car for Mussoorie, the valley sights and day trips. Tell us the dates and the car you want and we ask local operators for a quote.",
     leadH2: "A car for Dehradun, minus the guesswork",
     lead: "A self-drive car lets you stop wherever the view does, from the Forest Research Institute to the climb up to Mussoorie.",
     pickup: "Clock Tower, station, hotel...",
   },
   "car/mussoorie": {
     title: "Car Rental in Mussoorie | Self-Drive Cars",
-    description: "Rent a self-drive car in Mussoorie for Kempty Falls, Dhanaulti and day trips down to Dehradun. Tell us your dates and the car you want and we arrange it with trusted local partners and quote.",
-    ogDescription: "Self-drive car rental in Mussoorie, arranged with trusted local partners.",
+    description: "Rent a self-drive car in Mussoorie for Kempty Falls, Dhanaulti and day trips down to Dehradun. Tell us your dates and the car you want and we ask local operators for a quote.",
+    ogDescription: "Self-drive car rental in Mussoorie, quoted through local operators.",
     eyebrow: "Self-drive cars",
     h1: "Car rental in Mussoorie, keys in your hand.",
-    hero: "Rent a self-drive car for Kempty Falls, Dhanaulti and the run down to Dehradun. Tell us the dates and the car you want and we arrange it with trusted local partners.",
+    hero: "Rent a self-drive car for Kempty Falls, Dhanaulti and the run down to Dehradun. Tell us the dates and the car you want and we ask local operators for a quote.",
     leadH2: "A car for Mussoorie, minus the guesswork",
     lead: "A self-drive car lets you stop wherever the view does, mind the Mall Road's evening vehicle hours when you plan your return.",
     pickup: "Library Chowk, Picture Palace, hotel...",
@@ -189,7 +189,7 @@ const PAGE = {
   "taxi/dehradun": {
     title: "Taxi Rental in Dehradun | Local, Airport and Outstation Cabs",
     description: "Book a taxi in Dehradun for local sightseeing, Jolly Grant airport and railway pickups, Mussoorie and Kedarnath. Drivers who know the hill roads. Tell us your plan and we quote.",
-    ogDescription: "Local, airport and outstation taxis in Dehradun, arranged with trusted local partners.",
+    ogDescription: "Local, airport and outstation taxis in Dehradun, quoted through local operators.",
     eyebrow: "Taxis &amp; cabs",
     h1: "Taxi rental in Dehradun, from the airport to the hills.",
     hero: "Local sightseeing, airport and railway pickups, Mussoorie transfers and outstation trips with drivers who know the hill roads. Tell us your plan and we quote.",
@@ -200,7 +200,7 @@ const PAGE = {
   "taxi/mussoorie": {
     title: "Taxi Rental in Mussoorie | Local, Station and Outstation Cabs",
     description: "Book a taxi in Mussoorie for local sightseeing, Dehradun railway station and Jolly Grant airport pickups, Rishikesh and Kedarnath. Drivers who know the hill roads. Tell us your plan and we quote.",
-    ogDescription: "Local, station and outstation taxis in Mussoorie, arranged with trusted local partners.",
+    ogDescription: "Local, station and outstation taxis in Mussoorie, quoted through local operators.",
     eyebrow: "Taxis &amp; cabs",
     h1: "Taxi rental in Mussoorie, from the station to the hills.",
     hero: "Local sightseeing, Dehradun railway station and airport pickups, Rishikesh transfers and outstation trips with drivers who know the hill roads. Tell us your plan and we quote.",
@@ -229,7 +229,7 @@ const OPTIONS = {
 };
 // The car page's own section (the hub only has a card and a FAQ for self-drive).
 const carSection = (city) => `<h2>Self-drive car rental in ${city}</h2>
-            <p>Self-drive cars are available on request, depending on dates. Tell us the dates, the kind of car you want and where you will pick it up, and we check with trusted local partners and send you a quote. No payment is needed to enquire.</p>
+            <p>Self-drive cars are available on request, depending on dates. Tell us the dates, the kind of car you want and where you will pick it up, and we check with local operators and send you a quote. No payment is needed to enquire.</p>
             <div class="info-grid">
               <article class="info-card"><h3>Licence and ID</h3><p>A valid car driving licence and an original photo ID. Visitors from outside India should bring an International Driving Permit along with their home licence.</p></article>
               <article class="info-card"><h3>Security deposit</h3><p>There is usually a refundable deposit, and it varies by car and partner. We will tell you the amount with the quote.</p></article>
@@ -250,8 +250,8 @@ const faqFor = ({ kind, city }) => {
   const list = [];
   if (kind === "bike") {
     list.push(R
-      ? ["How much does a bike or scooty rental cost in Rishikesh?", "Bike and scooty rentals are starting ₹700 onwards per day. The final price depends on the bike, the season and how many days you keep it, and we confirm it with you before anything is booked."]
-      : [`How does bike or scooty rental work in ${CITIES[city]}?`, "Tell us the dates and the kind of bike. We check with trusted local partners and send you the options and a price on WhatsApp or a call, and nothing is booked until you confirm."]);
+      ? ["How much does a bike or scooty rental cost in Rishikesh?", "Tell us the bike and the days and we ask local operators for a quote. The final price depends on the bike, the season and how many days you keep it, and we confirm it with you before anything is booked."]
+      : [`How does bike or scooty rental work in ${CITIES[city]}?`, "Tell us the dates and the kind of bike. We check with local operators and send you the options and a price on WhatsApp or a call, and nothing is booked until you confirm."]);
     list.push(["What do I need to rent a bike or scooty?", "A valid two-wheeler driving licence and an original photo ID. Visitors from outside India should carry an International Driving Permit along with their home licence. Most partners also take a refundable security deposit, which varies by bike. Helmets are a must for rider and pillion, so ask for two."]);
   } else if (kind === "car") {
     list.push([`Can I rent a self-drive car in ${CITIES[city]}?`, "Self-drive cars are available on request, depending on dates. You will need a valid car driving licence and ID, and there is usually a security deposit. Tell us the dates and the kind of car you want."]);
@@ -285,9 +285,15 @@ const stripMarkers = (html) => html.replace(/<!--\/?rent:[a-z-]+-->/g, "");
 const ldScript = (obj) => `<script type="application/ld+json">\n    ${JSON.stringify(obj, null, 2).replace(/\n/g, "\n    ")}\n    </script>`;
 const replaceLd = (html, type, obj) => html.replace(/<script type="application\/ld\+json">[^]*?<\/script>/g, (block) => (block.includes(`"@type": "${type}"`) ? ldScript(obj) : block));
 
+// Indexable pages (RH-BUG-13, AdSense "low-value content"): the hub and the bike pages of Rishikesh and Haridwar.
+// Every other generated page carries `noindex, follow` and is left out of sitemap.xml (hand-maintained, no script writes it).
+export const indexable = (r) => r.kind === "bike" && (r.city === "rishikesh" || r.city === "haridwar");
+
+// Same-city siblings only (the switch above already links the other cities).
 function relatedLinks(selfSlug) {
   const label = (r) => `${KINDS[r.kind]} rental in ${CITIES[r.city]}`;
-  const links = RENTALS.filter((r) => r.slug !== selfSlug).map((r) => `<a href="${r.url}">${label(r)}</a>`);
+  const selfCity = selfSlug === HUB ? "rishikesh" : RENTALS.find((r) => r.slug === selfSlug).city;
+  const links = RENTALS.filter((r) => r.slug !== selfSlug && r.city === selfCity).map((r) => `<a href="${r.url}">${label(r)}</a>`);
   if (selfSlug !== HUB) links.unshift(`<a href="/${HUB}">Bike &amp; Taxi Rental in Rishikesh</a>`);
   return `<h2>More rentals</h2>\n            ${links.join("\n            ")}`;
 }
@@ -315,6 +321,7 @@ export function buildPage(hub, r) {
     .replace(/(<meta name="description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(r.description)}${b}`)
     .replace(/(<meta property="og:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(r.title)}${b}`)
     .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(r.ogDescription)}${b}`);
+  if (!indexable(r)) head = head.replace(/(<meta name="description" content="[^"]*">)/, '$1\n    <meta name="robots" content="noindex, follow">');
   h = head + h.slice(headEnd);
 
   // schema: breadcrumb, service, faq (the hub's own are for the combined page)
@@ -330,7 +337,6 @@ export function buildPage(hub, r) {
     image: `${SITE}/assets/images/rentals/${r.kind === "bike" ? "bike-rental-hero" : "tempo-traveller-hill-road"}.webp`,
     areaServed: [{ "@type": "City", name: city }],
     provider: { "@type": "Organization", name: "Rishikesh Homestays", url: `${SITE}/`, telephone: "+91-9027212484", email: "hello@rishikeshhomestays.com" },
-    ...(r.price ? { offers: { "@type": "Offer", name: "Bike / scooty rental", priceCurrency: "INR", priceSpecification: { "@type": "UnitPriceSpecification", minPrice: 700, priceCurrency: "INR", unitText: "per day" } } } : {}),
   });
   h = replaceLd(h, "FAQPage", {
     "@context": "https://schema.org", "@type": "FAQPage",
@@ -347,8 +353,7 @@ export function buildPage(hub, r) {
   h = setRegion(h, "hero-head", `<p class="eyebrow">${r.eyebrow}</p>\n          <h1>${r.h1}</h1>`);
   h = setRegion(h, "hero-text", `<p>${r.hero}</p>`);
   h = setRegion(h, "lead", `<h2>${r.leadH2}</h2>
-            <p class="lead">${r.lead}</p>${r.price ? `
-            <p class="rental-price"><strong>Starting ₹700 onwards</strong> <span>per day for bikes &amp; scooties</span></p>` : ""}`);
+            <p class="lead">${r.lead}</p>`);
 
   const lis = h.match(/<!--rent:how-->[^]*?<\/ul><!--\/rent:how-->/)[0].match(/<li>[^]*?<\/li>/g);
   h = setRegion(h, "how", `<ul class="check-list">\n              <li>${HOW[r.kind][0]}</li>\n              ${lis[1]}\n              ${lis[2]}\n              <li>${HOW[r.kind][1]}</li>\n            </ul>`);
@@ -370,7 +375,7 @@ export function buildPage(hub, r) {
     h = setRegion(h, "cab", carSection(city));
   } else {
     h = dropRegion(h, "bike");
-    h = setRegion(h, "cab-intro", "<p>Hand the wheel to someone who knows the roads. We book cars with drivers through trusted local partners, from small hatchbacks for a couple to SUVs and tempo travellers for families and groups.</p>");
+    h = setRegion(h, "cab-intro", "<p>Hand the wheel to someone who knows the roads. We ask local operators for cars with drivers, from small hatchbacks for a couple to SUVs and tempo travellers for families and groups.</p>");
     if (!R) h = setRegion(h, "cab-cards", cityText.cabCards);
     h = dropRegion(h, "selfdrive");
     h = h.replace("<h2>Taxi &amp; cab bookings</h2>", `<h2>Taxi &amp; cab bookings in ${city}</h2>`);

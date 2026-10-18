@@ -69,6 +69,22 @@ def marker(city=None):
     city = city or CITY
     return 'stays-pages' if city == DEFAULT_CITY else f'stays-pages-{city}'
 SITE = 'https://rishikeshhomestays.com'
+# RH-BUG-13 (AdSense "low-value content", 2026-10-19): the weakest generated pages are noindex and
+# left out of sitemap.xml. A best-* page (category or landmark) needs MIN_INDEX listings to be indexed;
+# Dehradun and Mussoorie are not on the Ganga and have no ashram scene, so their Ganga-view / ashram
+# pages go; a search phrase that is a doorway (no such thing as a 7-star hotel; OYO is a brand, not a
+# place; aparthotels) never gets indexed. The pages still exist and work for visitors.
+MIN_INDEX = 8
+NOT_GANGA_CITIES = ('dehradun', 'mussoorie')
+NOT_GANGA_SLUGS = ('ganga-view-stays', 'ashram-stays')
+DOORWAY_PHRASE = re.compile(r'\b7 star\b|\boyo\b|aparthotel', re.I)
+NOT_GANGA_PHRASE = re.compile(r'ganga|ashram|river', re.I)
+NOINDEX_STEMS = set()   # stems of this city's pages written noindex; kept out of sitemap.xml
+HOW_LISTED = ('How we list stays: our own homestays come first, then stays with a verified booking page, then the rest. '
+              'This is a guide to compare options, not a ranked review. Some booking links earn us a commission at no extra cost to you. '
+              '<a href="/about-us">How we work</a>')
+HOW_LISTED_TOP10 = ('How we list stays: our own homestays come first, then these stays in order of guest score. '
+                    'Some booking links earn us a commission at no extra cost to you. <a href="/about-us">How we work</a>')
 MIN_PAGE = 5          # skip categories too thin to be worth a page
 MASTER_SECTION = 20   # rows per section on the master page before "view all"
 OG_IMAGE = f'{SITE}/assets/images/rishikesh-homestay-hero.webp'
@@ -1012,7 +1028,9 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             '<meta name="twitter:card" content="summary_large_image">'])
         # Same per-page thin-content gate as the category pages (RH-Q-1): a landmark page needs
         # MIN_PAGE+ stays actually within its radius to be worth indexing.
-        _landmark_robots = 'index, follow, max-image-preview:large' if len(near) >= MIN_PAGE else 'noindex, follow'
+        _landmark_robots = 'index, follow, max-image-preview:large' if len(near) >= MIN_INDEX else 'noindex, follow'
+        if len(near) < MIN_INDEX:
+            NOINDEX_STEMS.add(f'best-stays-near-{slug}')
         page_top = (top.replace('<title>Thanks | Rishikesh Homestays</title>', f'<title>{esc(title)}</title>\n    {head_extra}')
                     .replace('<meta name="robots" content="noindex, follow">', f'<meta name="robots" content="{_landmark_robots}">')
                     .replace(f'{SITE}/thanks', url)
@@ -1035,6 +1053,7 @@ def build_landmark_pages(stays, own, landmarks, top, bottom, today):
             f'          <h1 class="sx-title">{esc(h1)}</h1>\n'
             f'          <p class="sx-lede">Every stay within {radius:g} km of {esc(name)}, sorted by distance. {within1:,} are within 1 km{lede_closest}.</p>\n'
             f'          <p class="sx-cities">{guide}<a href="/hotels/best-hotels-in-{CITY}">All stays in {CN}</a></p>\n'
+            f'          <p class="sx-how-listed sx-updated">{HOW_LISTED}</p>\n'
             f'          {facts_html(qf, f"Stays near {name}")}\n'
             f'          {own_block}\n'
             '          <section class="sp-map" aria-labelledby="lm-map-h">\n            <h2 id="lm-map-h">On the map</h2>\n'
@@ -1530,7 +1549,12 @@ def main(data_path):
         # (n_here, already computed above) -- or it's the city's master "all hotels" page, which always
         # has substantial content. A thin page stays noindex automatically and re-indexes itself the
         # moment coverage crosses the bar on a later rebuild; no per-city manual flag to remember.
-        robots = 'index, follow, max-image-preview:large' if (is_master or n_here >= MIN_PAGE) else 'noindex, follow'
+        weak = (not is_master and not search and n_here < MIN_INDEX) or \
+               (not search and slug in NOT_GANGA_SLUGS and CITY in NOT_GANGA_CITIES) or \
+               (bool(search) and (DOORWAY_PHRASE.search(title) or (CITY in NOT_GANGA_CITIES and NOT_GANGA_PHRASE.search(title))))
+        robots = 'index, follow, max-image-preview:large' if (not weak and (is_master or n_here >= MIN_PAGE)) else 'noindex, follow'
+        if robots.startswith('noindex'):
+            NOINDEX_STEMS.add(stem)
         page_top = (top
             .replace('<title>Thanks | Rishikesh Homestays</title>', f'<title>{esc(page_title)}</title>\n    {head_extra}')
             .replace('<meta name="robots" content="noindex, follow">', f'<meta name="robots" content="{robots}">')
@@ -1593,6 +1617,7 @@ def main(data_path):
           <h1 class="sx-title">{esc(h1)}</h1>
           <p class="sx-lede">{esc(intro)}</p>
           <p class="sx-updated">{updated}</p>
+          <p class="sx-how-listed sx-updated">{HOW_LISTED_TOP10 if top10 else HOW_LISTED}</p>
           {facts_html(qf, (lambda t: t[:1].upper() + t[1:])(f'{plural} in {CN}' if not is_master else f'stays in {CN}'))}
           <div class="sx-layout">
           <aside class="sx-side">{filters}</aside>
@@ -1682,19 +1707,19 @@ def main(data_path):
     <lastmod>{LASTMOD[f"best-{c[0]}-in-{CITY}"]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>{"0.8" if c[3] == "all" else "0.6"}</priority>
-  </url>''' for c in live) + ''.join(f'''
+  </url>''' for c in live if f'best-{c[0]}-in-{CITY}' not in NOINDEX_STEMS) + ''.join(f'''
   <url>
     <loc>{SITE}/hotels/best-stays-near-{np['slug']}</loc>
     <lastmod>{LASTMOD[f"best-stays-near-{np['slug']}"]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
-  </url>''' for np in near_pages) + ''.join(f'''
+  </url>''' for np in near_pages if f"best-stays-near-{np['slug']}" not in NOINDEX_STEMS) + ''.join(f'''
   <url>
     <loc>{SITE}/hotels/{sp['stem']}</loc>
     <lastmod>{LASTMOD[sp['stem']]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
-  </url>''' for sp in searches)
+  </url>''' for sp in searches if sp['stem'] not in NOINDEX_STEMS)
     ensure_markers(f'{ROOT}/sitemap.xml', '</urlset>', '  ')
     replace_between(f'{ROOT}/sitemap.xml', f'<!-- {marker()}:start -->', f'<!-- {marker()}:end -->', sm + '\n  ')
     for path in [p for p in DATES if p.startswith('/hotels/') and not os.path.exists(f'{ROOT}{p}.html')]:

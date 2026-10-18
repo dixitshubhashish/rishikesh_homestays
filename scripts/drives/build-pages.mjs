@@ -199,6 +199,7 @@ function page(city, dest) {
             <p>Tolls and FASTag, food stops, the Kanwar Yatra and Kumbh rush, and parking: all in our <a href="/${MASTER}">Delhi to Rishikesh and Haridwar driving guide</a>.</p>
 
             ${stay}
+            <p>Some booking links on our stays pages earn us a commission at no extra cost to you. <a href="/about-us">About us</a>.</p>
 
             <div class="rh-ad-slot" data-ad="article"></div>
             <section class="sx-faq" aria-labelledby="drive-faq-h">
@@ -239,10 +240,13 @@ export function buildPage(master, city, dest) {
   const masterUrl = `${SITE}/${MASTER}`;
   const headEnd = master.indexOf("</head>");
   let head = master.slice(0, headEnd).split(masterUrl).join(p.url);
+  // RH-BUG-13 (AdSense "low-value content"): the generated per-city guides are noindex, follow and not in sitemap.xml
+  // (hand-maintained; no script writes it). The hand-made master guide stays indexable.
   head = head.replace(/<title>[^<]*<\/title>/, () => `<title>${esc(p.title)}</title>`)
     .replace(/(<meta name="description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.desc)}${b}`)
     .replace(/(<meta property="og:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.title)}${b}`)
-    .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.desc)}${b}`);
+    .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.desc)}${b}`)
+    .replace(/(<meta name="description" content="[^"]*">)/, (m) => `${m}\n    <meta name="robots" content="noindex, follow">`);
   // the master's structured data (breadcrumb, article, FAQ) is replaced by this page's
   let n = 0;
   head = head.replace(/<script type="application\/ld\+json">[^]*?<\/script>/g, () => p.jsonld[n++] || "");
@@ -252,11 +256,10 @@ export function buildPage(master, city, dest) {
 
 // The master guide's "other starting points" list, between <!--drive:cities--> markers.
 export function otherStarts() {
-  const links = [];
-  for (const [city, c] of Object.entries(CITIES)) for (const dest of Object.keys(DESTS)) {
-    if (city === "delhi" && dest === "rishikesh") continue;
-    links.push(`<a href="${pageUrl(city, dest)}">${c.name} to ${DESTS[dest]}</a>`);
-  }
+  // the 4 destination groups only (RH-BUG-13): each links the Delhi page; the page's own switch lists the other cities
+  const links = Object.keys(DESTS)
+    .filter((dest) => dest !== "rishikesh")
+    .map((dest) => `<a href="${pageUrl("delhi", dest)}">Delhi to ${DESTS[dest]}</a>`);
   return `<h2>Starting from elsewhere?</h2>\n            ${links.join("\n            ")}`;
 }
 

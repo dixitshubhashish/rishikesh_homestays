@@ -110,7 +110,11 @@ test('every stays page is in sitemap.xml, and every sitemap stays URL exists', (
   const sitemap = readFileSync(join(root, 'sitemap.xml'), 'utf-8');
   const listed = new Set([...sitemap.matchAll(/<loc>https:\/\/rishikeshhomestays\.com\/hotels\/([^<]+)<\/loc>/g)].map((m) => m[1]));
   for (const p of pages) {
-    assert(listed.has(p.file.replace(/\.html$/, '')), `${p.file} is missing from sitemap.xml`);
+    // thin pages are noindex (RH-BUG-13, AdSense low-value content): kept for visitors, kept out of the sitemap
+    const noindex = /<meta name="robots" content="noindex/i.test(readFileSync(join(hotels, p.file), 'utf-8'));
+    const stem = p.file.replace(/\.html$/, '');
+    if (noindex) assert(!listed.has(stem), `${p.file} is noindex but is listed in sitemap.xml`);
+    else assert(listed.has(stem), `${p.file} is missing from sitemap.xml`);
   }
   for (const stem of listed) {
     // A finalised stay's URL is a query string on the one real hotels/stay.html, not its own file

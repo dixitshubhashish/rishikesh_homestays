@@ -24,7 +24,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from cities import CITIES, DEFAULT_CITY  # noqa: E402
 import build_hotels_hub  # noqa: E402
 
-TOP_N = 20  # categories shown inline per city in the footer teaser
 # Single source of truth for the "Made with..." footer line (owner, 2026-10-08: stop hand-editing
 # this across 538 files for one line of text — change it here, then re-run this script, same as
 # every other footer piece). Swept into every root and hotels/ page's existing
@@ -69,38 +68,21 @@ def family_sections(fam):
 
 
 def block():
-    parts = [START, '    <div class="rhs-footer-stays">']
-    lis = lambda links: ''.join(f'<li><a href="{h}">{html.escape(t)}</a></li>' for h, t in links)
-    # a short teaser: city name + its top categories by listing count, one line each, then one link to /hotels
-    # for the full depth (every category, every city, filterable) instead of the old all-category dump here
-    teaser_lines = []
+    """Slim footer block (RH-BUG-13, 2026-10-19): the trust pages, one link per city hub and the
+    'All stays' hub. The full category list and the generated families (rentals, driving guides)
+    live on /hotels (build_hotels_hub.py), not on every page."""
+    links = [('/hotels', 'All stays')]
     for city in CITIES:
-        top = build_hotels_hub.top_categories(city, TOP_N)
-        if not top:
-            continue
-        name = html.escape(CITIES[city]['name'])
-        hub_url = '/homestays' if city == DEFAULT_CITY else f'/hotels/{city}-accommodation'
-        cats = ', '.join(f'<a href="/hotels/best-{slug}-in-{city}">Best {html.escape(title)} in {name}</a>' for slug, title in top)
-        teaser_lines.append(f'<li><a href="{hub_url}"><strong>{name}</strong></a>: {cats}</li>')
-    if teaser_lines:
-        parts.append('      <div class="rhs-footer-city-links">\n      <h3>Stays</h3>')
-        parts.append(f'      <ul class="rhs-footer-stays-teaser">{"".join(teaser_lines)}</ul>')
-        parts.append('      <p class="rhs-footer-stays-all"><a href="/hotels">Browse all hotels by category and city &rarr;</a></p>')
-        parts.append('      </div>')
-    # then every page family found on disk (rentals, driving guides): one section per group
-    for fam in FAMILIES:
-        for g, heading, links in family_sections(fam):
-            parts.append(f'      <div class="rhs-footer-city-links">\n      <h3>{html.escape(heading)}</h3>')
-            shown, more = links[:FOLD_AFTER], links[FOLD_AFTER:]
-            parts.append(f'      <ul>{lis(shown)}</ul>')
-            if more:
-                tid = f'rhs-more-{fam["key"]}-{g}'
-                parts.append(f'      <input type="checkbox" id="{tid}" class="rhs-more-toggle">'
-                             f'<label for="{tid}" class="rhs-more-label">More ({len(more)})</label>')
-                parts.append(f'      <ul class="rhs-more">{lis(more)}</ul>')
-            parts.append('      </div>')
-    parts += ['    </div>', '    ' + END]
-    return '\n'.join(parts)
+        if build_hotels_hub.top_categories(city, 1):
+            hub_url = '/homestays' if city == DEFAULT_CITY else f'/hotels/{city}-accommodation'
+            links.append((hub_url, f'Stays in {CITIES[city]["name"]}'))
+    links += [('/about-us', 'About us'), ('/contact', 'Contact'), ('/privacy-policy', 'Privacy policy'), ('/terms', 'Terms')]
+    lis = ''.join(f'<li><a href="{h}">{html.escape(t)}</a></li>' for h, t in links)
+    return '\n'.join([START, '    <div class="rhs-footer-stays">',
+                      '      <div class="rhs-footer-city-links">',
+                      '      <h3>Stays and site</h3>',
+                      f'      <ul>{lis}</ul>',
+                      '      </div>', '    </div>', '    ' + END])
 
 
 def grid_end(s):

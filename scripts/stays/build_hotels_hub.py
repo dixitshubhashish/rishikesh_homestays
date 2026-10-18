@@ -22,6 +22,21 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
 esc = html.escape
 
 
+ABOUT_HTML = (
+    '      <section class="stays-hub-about">\n'
+    '        <h2>How to use this hotel directory</h2>\n'
+    '        <p>This page lists every stay category we cover for Rishikesh, Haridwar, Dehradun and Mussoorie. Each category page, such as homestays, apartments, resorts, guest houses or Ganga view stays, opens a list of places with a short description and a link to a booking page we have checked. The counts next to each name show how many stays sit in that category today.</p>\n'
+    '        <p>We run three stays ourselves, and they are shown first on the Rishikesh and Haridwar lists. Advaitam is a three bedroom family stay in Nirmal Bagh near the Ganges, with a balcony, a kitchen, parking and cafes within walking distance. Elysium is a villa in Nirmal Bagh with Himalayan and Ganga views, a kitchen, parking and room for morning yoga. Yoga Retreat at the Ganges is a quiet stay near the Veerbhadra Temple and AIIMS with private rooms, vegetarian meals and spaces for sunrise practice. After our own stays come the other stays that have a verified booking page. The order is not a review ranking, and some booking links earn us a commission at no extra cost to you. You can read how this works on our <a href="/about-us">About us</a> page.</p>\n'
+    '        <p>Rishikesh stays on this site cover areas such as Tapovan, Ganga Barrage, Veerbhadra Temple, Nirmal Bagh near the Ganges, AIIMS Rishikesh, Triveni Ghat, Neelkanth Road, Bypass Road, Nepali Farm, Muni Ki Reti and Swarg Ashram, so you can pick the part of town that suits your plans. Haridwar is about 25 km downstream, and many guests combine the two towns.</p>\n'
+    '        <p>Not sure which category fits? Tell us your dates, group size and what matters most, whether that is a view, a kitchen, parking or a quiet lane, and we will suggest suitable stays. Use the <a href="/contact">contact page</a> or read our <a href="/places-to-visit">places to visit</a> and <a href="/things-to-do-in-rishikesh">things to do</a> guides first. Our <a href="/privacy-policy">privacy policy</a> and <a href="/terms">terms</a> explain how we handle your details and what we are responsible for.</p>\n'
+    '      </section>\n'
+)
+
+# Popular searches shown on the hub: only these cities, only these phrase pages (RH-BUG-13)
+POPULAR = {'rishikesh': ['{c}-accommodation', 'cheap-homestays-in-{c}', 'luxury-stays-in-{c}', 'place-to-stay-in-{c}'],
+           'haridwar': ['{c}-accommodation', 'cheap-homestays-in-{c}', 'luxury-stays-in-{c}', 'place-to-stay-in-{c}']}
+
+
 def city_data(city):
     """None, or (total_count, [(group_key, group_label, [cat...])], [search...]) for one city."""
     module = 'stays-index-data.js' if city == DEFAULT_CITY else f'stays-index-data-{city}.js'
@@ -72,11 +87,27 @@ def city_section(city):
             f'<li><a href="/hotels/best-{c["slug"]}-in-{city}">{esc("Hotels" if c["filter"] == "all" else c["title"])} '
             f'<span class="stays-hub-n">({c["count"]:,})</span></a></li>' for c in cats)
         parts.append(f'        <div class="stays-hub-group"><h3>{esc(label)}</h3><ul>{items}</ul></div>')
+    want = [w.format(c=city) for w in POPULAR.get(city, [])]
+    searches = [x for w in want for x in searches if x['stem'] == w]
     if searches:
         items = ''.join(f'<li><a href="/hotels/{x["stem"]}">{esc(x["h1"])}</a></li>' for x in searches)
         parts.append(f'        <div class="stays-hub-group"><h3>Popular searches</h3><ul>{items}</ul></div>')
     parts.append('      </section>')
     return '\n'.join(parts)
+
+
+def families_html():
+    """Rentals and driving guides found on disk by file name (footer_links.FAMILIES): shown here only."""
+    from footer_links import FAMILIES, family_sections
+    parts = []
+    for fam in FAMILIES:
+        for _g, heading, links in family_sections(fam):
+            items = ''.join(f'<li><a href="{h}">{esc(t)}</a></li>' for h, t in links)
+            parts.append(f'        <div class="stays-hub-group"><h3>{esc(heading)}</h3><ul>{items}</ul></div>')
+    if not parts:
+        return ''
+    return ('      <section class="stays-hub-more">\n        <h2>Getting around</h2>\n'
+            + '\n'.join(parts) + '\n      </section>\n')
 
 
 def main_html():
@@ -91,8 +122,10 @@ def main_html():
         '      <h1>All Hotels</h1>\n'
         '      <p class="stays-hub-intro">Every hotel, homestay and stay category across Rishikesh, Haridwar, '
         'Dehradun and Mussoorie on one page. Browse all of it, or filter to one city.</p>\n'
+        + ABOUT_HTML +
         f'      <div class="stays-hub-filter" role="tablist" aria-label="Filter by city">{"".join(buttons)}</div>\n'
         '      <div class="stays-hub-cities">\n' + '\n'.join(sections) + '\n      </div>\n'
+        + families_html()
     )
 
 
@@ -101,7 +134,7 @@ def write_hub():
     top, rest = shell.split('<main>', 1)
     bottom = rest.split('</main>', 1)[1]
     desc = 'Browse every hotel, homestay and stay category across Rishikesh, Haridwar, Dehradun and Mussoorie on one page, filterable by city.'
-    top = (top.replace('<meta name="robots" content="noindex, follow">\n    ', '')
+    top = (re.sub(r'<meta name="robots" content="noindex,\s*follow">\n\s*', '', top)
               .replace('<title>Thanks | Rishikesh Homestays</title>',
                         f'<title>All Hotels in Rishikesh, Haridwar, Dehradun &amp; Mussoorie</title>\n'
                         f'    <meta name="description" content="{esc(desc)}">')

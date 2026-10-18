@@ -52,14 +52,16 @@ test('the switch links to the other destination and every city, itself marked cu
 test('the master guide, the sitemap and the ad plan know every page', () => {
   const sitemap = read('sitemap.xml'), ads = read('assets/js/ads.js');
   for (const { slug, url } of PAGES) {
-    assert(master.includes(`href="${url}"`), `master links ${slug}`);
-    assert(sitemap.includes(`<loc>https://rishikeshhomestays.com${url}</loc>`), `sitemap ${slug}`);
-    assert(ads.includes(`'${url}'`), `ads ${slug}`);
+    if (slug.startsWith('driving-from-delhi-')) assert(master.includes(`href="${url}"`), `master links ${slug}`);
+    // RH-BUG-13: the generated children are noindex, follow and stay out of the sitemap
+    assert(read(`${slug}.html`).includes('<meta name="robots" content="noindex, follow">'), `noindex ${slug}`);
+    assert(!sitemap.includes(`<loc>https://rishikeshhomestays.com${url}</loc>`), `sitemap ${slug}`);
+    if (url !== '/driving-from-delhi-to-rishikesh') assert(!ads.includes(`'${url}'`), `ads ${slug} (RH-BUG-13: no ads on generated driving pages)`);
   }
 });
 
 test('the footer lists every driving guide under "Driving to <town>" (found on disk by file name, scripts/stays/footer_links.py)', () => {
-  const footer = read('thanks.html');
+  const footer = read('hotels.html'); // generated families are listed on the /hotels hub only (RH-BUG-13)
   for (const dest of Object.keys(DESTS)) assert(footer.includes(`<h3>Driving to ${DESTS[dest]}</h3>`), dest);
   for (const { slug, url } of PAGES) assert(footer.includes(`<a href="${url}">`), `footer ${slug}`);
   assert(footer.includes(`<a href="/${'driving-from-delhi-to-rishikesh'}">Delhi to Rishikesh</a>`));

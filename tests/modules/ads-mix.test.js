@@ -24,7 +24,8 @@ test('stays lists get breaks between rows and groups; the old Booking.com iframe
   assert.ok(!/17323528|jdoqocy|awltovhc|prelanding_sdk|LEAD_WIDGET|PLACE\.widget|widget\(\)/.test(ads), 'the removed widget and its CJ link ID are not back');
   assert.match(ads, /dataset\.i18nPage === '404'\) return null/);
   const lead = ads.slice(ads.indexOf('const LEAD = {'), ads.indexOf('function pageType'));
-  assert.ok(lead.includes("'/homestays': 'article'"));
+  assert.ok(!lead.includes("'/homestays'"), 'RH-BUG-13: no ads on /homestays');
+  assert.match(ads, /MAX_BREAKS = 2;/);
   for (const page of ['/contact', '/thanks', '/list-your-homestay', '/report-a-bug', '/hotels/stay']) assert.ok(!lead.includes(`'${page}'`), page);
 });
 

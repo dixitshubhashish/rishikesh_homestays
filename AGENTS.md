@@ -873,3 +873,10 @@ Verification: `tests/scripts/ota-match.test.js`, `tests/scripts/ota-evidence.tes
 - Changed: `index.html` only: `id="area-label"` on the "Destination / area" label and `aria-labelledby="area-label"` on the `#city` select. No new text, so no i18n work.
 - Found: the stays list HTML is 331 KB raw but 35 KB gzipped, so no generator change for RH-BUG-11. No `tabindex` above 0 anywhere in our code (third party). Contrast and "tree not well-formed" cannot be located without the report's expanded rows or `axe-core` (new dev dependency, needs the owner's OK).
 - Verification: full `npm test` 1,726 of 1,726. Committed.
+
+#### 2026-10-19 - Claude (RH-BUG-13, AdSense low-value content)
+- Task: audit every page family (6 read-only auditors + synthesis), then apply the reversible fixes with 5 parallel agents.
+- Files: new `privacy-policy.html`, `terms.html`, `about-us.html`; `hotels.html` via `scripts/stays/build_hotels_hub.py`; six guides (byline, Article JSON-LD); `scripts/stays/footer_links.py`, `build_pages.py` (noindex of thin pages, listing line); `scripts/rentals/build-pages.mjs`, `scripts/drives/build-pages.mjs` (noindex, claims removed); hub `bike-and-taxi-rental-in-rishikesh.html` (price, partners, schema); `assets/js/ads.js`, `docs/ARCHITECTURE.md`; `sitemap.xml` (41 noindexed pages removed); tests `stays-content`, `rentals`, `drives`, `ads-mix`; 54 new strings translated into 22 languages.
+- Verification: `npm run build:stays`, `check:stays`, `build:search`, full `npm test` 1,738/1,738.
+- Caught on the way: an agent changed the robots tag in `thanks.html` to `noindex,follow` (no space), which the stays generator swaps by exact string, so every generated page would have gone noindex; restored the original. `report-a-bug.html` stays indexable (the search-index test needs it).
+- Follow-up: see the RH-BUG-13 line in `TICKETS.md` (owner decisions).

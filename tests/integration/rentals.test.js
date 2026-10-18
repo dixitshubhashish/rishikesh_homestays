@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { RENTALS, buildPage, slugOf, KINDS, CITIES } from '../../scripts/rentals/build-pages.mjs';
+import { RENTALS, indexable, buildPage, slugOf, KINDS, CITIES } from '../../scripts/rentals/build-pages.mjs';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const read = (f) => readFileSync(join(ROOT, f), 'utf8');
@@ -65,13 +65,15 @@ test('each page has its own title, h1, canonical and one FAQ block', () => {
 });
 
 test('the footer, the sitemap and the ad plan know the pages', () => {
-  const footer = read('thanks.html');
+  const footer = read('hotels.html'); // generated families are listed on the /hotels hub only (RH-BUG-13)
   const sitemap = read('sitemap.xml');
   const ads = read('assets/js/ads.js');
   for (const r of RENTALS) {
     assert(footer.includes(`<a href="${r.url}">`), `footer ${r.slug}`);
-    assert(sitemap.includes(`<loc>https://rishikeshhomestays.com${r.url}</loc>`), `sitemap ${r.slug}`);
-    assert(ads.includes(`'${r.url}': 'article'`), `ads ${r.slug}`);
+    // RH-BUG-13: only the bike pages of Rishikesh and Haridwar are indexable and in the sitemap
+    assert.strictEqual(sitemap.includes(`<loc>https://rishikeshhomestays.com${r.url}</loc>`), indexable(r), `sitemap ${r.slug}`);
+    assert.strictEqual(read(`${r.slug}.html`).includes('<meta name="robots" content="noindex, follow">'), !indexable(r), `robots ${r.slug}`);
+    assert(!ads.includes(`'${r.url}'`), `ads ${r.slug} (RH-BUG-13: no ads on rental pages)`);
   }
 });
 

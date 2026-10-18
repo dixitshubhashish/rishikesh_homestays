@@ -14,55 +14,34 @@
 // Every placement checks it starts below the first screen (belowFold); the grid needs the footer to be
 // at least 1.5 screens down. Nothing is re-placed on resize or re-render, so ads never refresh.
 //
-// What each kind of page gets:
-//   homepage     nothing above "Plan beyond the room": an in-feed card in the middle of that section's second row of guide cards
-//                (<div class="rh-ad-slot" data-ad="infeed">), the Multiplex grid above the footer, and on
-//                ≥ 1580×900 windows side rails shown only once that section reaches the top, and only when
-//                there's at least half a screen of scrolling before the grid (not the case today: no rails).
-//   guide pages  in-article ads at the page's own anchors (<div class="rh-ad-slot" data-ad="article"
-//                [data-min-width="N"]>, placed by hand where the copy has a natural break); an in-feed card
+// What each kind of page gets (RH-BUG-13, 2026-10-19: AdSense rejected the site as "Low-value content"; ads must not outweigh content
+// or sit on thin / templated pages):
+//   guide pages  only the hand-made guides (GUIDES: about-rishikesh, places-to-visit, things-to-do-in-rishikesh, triveni-ghat,
+//                kedarnath-yatra, haridwar-kumbh-2027 and the master driving-from-delhi-to-rishikesh): in-article ads at the
+//                page's own anchors (<div class="rh-ad-slot" data-ad="article" [data-min-width="N"]>); an in-feed card
 //                in the first card list of 5+ cards (not one marked data-no-ad) at a row boundary, a second
-//                one in lists of 12+ (places-to-visit); a sticky 300×600 under the side panel at 1381–1579px;
-//                the grid; side rails at ≥ 1580×900.
-//   stays lists  (category, search-phrase and landmark pages in hotels/) one in-article ad after the lists at
-//                the page's <div class="rh-ad-slot" data-ad="display"> (before the tips and FAQs); a sticky
-//                block under the filters from 901px wide; a minor break after every ~15-20 stays (owner, 2026-10-08:
-//                "after 15 or 20 listings", across every category group) that alternates a text in-feed
-//                AdSense unit with a Booking.com banner (never beside a View property button: it sits between
-//                two rows or two groups, full width, with its own divider); and
-//                the grid above the footer. The mix: a fair coin per page view (SIDEBAR_BOOKING) decides whether the
-//                sidebar holds AdSense and the breaks start with Booking.com, or the other way round. Wide windows (≥ 1860px, a
-//                300px margin each side) also get a right rail with the other kind than the sidebar's; landmark
-//                pages (no sidebar) get an AdSense left rail from ≥ 1580×900 and the Booking.com right rail from ≥ 1860.
-//   lead pages   at most one ad, well below the main action: /homestays' in-article anchor between the top-brand
-//                and the Nirmal Bagh lists (below the form on every screen); the rental pages' anchor before their FAQ.
-//   no ads       /hotels/stay and our own listing (no rival hotels under our booking buttons), contact,
-//                list-your-homestay, report-a-bug, thanks and 404: that's where guests book, enquire and report problems.
+//                one in lists of 12+ (places-to-visit); a sticky 300x600 under the side panel at 1381-1579px;
+//                the grid; side rails at >= 1580x900.
+//   stays lists  (category, search-phrase and landmark pages in hotels/) at most MAX_BREAKS (2) AdSense in-feed breaks between
+//                rows or groups, about every 15-20 stays (never beside a View property button). No sidebar, no 300x600, no rails,
+//                no grid, no Booking.com banners (they duplicated the OTA exits).
+//   no ads       the home page, /hotels, /homestays, the rental hub and all generated rental pages, every generated
+//                driving-from-<city>-to-<dest> child, /hotels/stay and our own listing, contact, list-your-homestay,
+//                report-a-bug, thanks and 404: thin, templated or where guests book and enquire.
 // Fixed rails sit in the empty margins beside the 1180px content (≥ 1580px wide and ≥ 900px tall, so they
 // never run under the WhatsApp button), never with a sidebar ad, and hide over the grid/footer, while in-content
 // ads in view would make more than 3 on screen, while the WhatsApp drawer is open (body.whatsapp-drawer-open),
 // and (right rail) wherever it would cover the WhatsApp hint bubble.
 const ADSENSE_CLIENT = 'ca-pub-7016219170450293';
-const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027', '/driving-from-delhi-to-rishikesh',
-  '/driving-from-delhi-to-haridwar', '/driving-from-gurugram-to-rishikesh', '/driving-from-gurugram-to-haridwar', '/driving-from-noida-to-rishikesh', '/driving-from-noida-to-haridwar', '/driving-from-greater-noida-to-rishikesh', '/driving-from-greater-noida-to-haridwar', '/driving-from-ghaziabad-to-rishikesh', '/driving-from-ghaziabad-to-haridwar', '/driving-from-faridabad-to-rishikesh', '/driving-from-faridabad-to-haridwar', '/driving-from-sonipat-to-rishikesh', '/driving-from-sonipat-to-haridwar', '/driving-from-meerut-to-rishikesh', '/driving-from-meerut-to-haridwar',
-  '/driving-from-delhi-to-dehradun', '/driving-from-delhi-to-mussoorie', '/driving-from-gurugram-to-dehradun', '/driving-from-gurugram-to-mussoorie', '/driving-from-noida-to-dehradun', '/driving-from-noida-to-mussoorie', '/driving-from-greater-noida-to-dehradun', '/driving-from-greater-noida-to-mussoorie', '/driving-from-ghaziabad-to-dehradun', '/driving-from-ghaziabad-to-mussoorie', '/driving-from-faridabad-to-dehradun', '/driving-from-faridabad-to-mussoorie', '/driving-from-sonipat-to-dehradun', '/driving-from-sonipat-to-mussoorie', '/driving-from-meerut-to-dehradun', '/driving-from-meerut-to-mussoorie'];
-// lead pages and the one unit each may get; contact, list-your-homestay, report-a-bug, thanks and 404 are deliberately absent
-// /hotels/stay and our own listing get none (owner, 2026-10-06: no rival hotels under our booking buttons)
-const LEAD = {
-  '/homestays': 'article', // the anchor between the top brands and the Nirmal Bagh homes (generated, build_pages.py)
-  '/bike-and-taxi-rental-in-rishikesh': 'article',
-  '/bike-rental-in-rishikesh': 'article', '/bike-rental-in-haridwar': 'article',
-  '/car-rental-in-rishikesh': 'article', '/car-rental-in-haridwar': 'article',
-  '/taxi-rental-in-rishikesh': 'article', '/taxi-rental-in-haridwar': 'article',
-  '/bike-rental-in-dehradun': 'article', '/bike-rental-in-mussoorie': 'article',
-  '/car-rental-in-dehradun': 'article', '/car-rental-in-mussoorie': 'article',
-  '/taxi-rental-in-dehradun': 'article', '/taxi-rental-in-mussoorie': 'article',
-};
+const GUIDES = ['/about-rishikesh', '/places-to-visit', '/things-to-do-in-rishikesh', '/triveni-ghat', '/kedarnath-yatra', '/haridwar-kumbh-2027', '/driving-from-delhi-to-rishikesh'];
+// RH-BUG-13 (AdSense "Low-value content", 2026-10-19): no ads on templated or thin pages, so none on the home page, /hotels, /homestays,
+// the rental hub and its generated rental pages, or the generated driving-from-<city>-to-<dest> children (only the hand-made master
+// driving guide above keeps ads). LEAD is empty on purpose: contact, list-your-homestay, report-a-bug, thanks, 404, /hotels/stay and our own listing are absent too.
+const LEAD = {};
 function pageType(path) {
   // 404.html answers any unknown address (even /hotels/nothing): a dead end with nothing to book here, so no ads at all
   if (document.documentElement.dataset.i18nPage === '404') return null;
   if (GUIDES.includes(path)) return 'guide';
-  if (path === '') return 'home';
   if (path in LEAD) return 'lead';
   // stays lists: best-*, landmark and search-phrase pages; not the stay page or our own listing
   if (/^\/hotels\/(?!stay$)(?!advaitam-)[a-z0-9-]+$/.test(path)) return 'stays';
@@ -70,9 +49,8 @@ function pageType(path) {
 }
 const PATH = window.location.pathname.replace(/\.html$/, '').replace(/\/$/, '');
 const PLAN = {
-  home: ['slots', 'grid', 'rails'], // grid before rails, so the rails can watch it
   guide: ['feed', 'slots', 'sidebar', 'grid', 'rails'],
-  stays: ['side', 'slots', 'feed', 'grid', 'rails'],
+  stays: ['feed'], // two AdSense breaks at most: no sidebar, no rails, no grid, no Booking.com banners (RH-BUG-13)
   lead: ['lead'],
 };
 
@@ -129,7 +107,7 @@ const UNITS = {
 // URL asks for the preview with ?adpreview=1 (tests that check where the ads go).
 const PREVIEW = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
 const FORCE_PREVIEW = PREVIEW && /[?&]adpreview=1\b/.test(window.location.search);
-const MAX_BREAKS = 8; // stays lists: at most this many mid-list breaks on a page
+const MAX_BREAKS = 2; // stays lists: at most this many mid-list breaks on a page
 const MAX_BREAK_ADS = 6; // and at most this many AdSense requests for them in one page view (re-draws included)
 const FEED_AFTER = 4; // guide in-feed: lists of 5+ cards, never before the 4th card
 const CONTENT = 1180; // --max in styles.css
@@ -226,12 +204,12 @@ const PLACE = {
     const rowH = Math.max(first.offsetHeight, 48);
     const every = Math.min(24, Math.max(15, Math.ceil((window.innerHeight + 120) / rowH)));
     let count = 0, n = 0;
-    const kind = () => ((n % 2 === 0) === SIDEBAR_BOOKING ? 'ad' : 'booking'); // the first break is the opposite of the first slot's kind
-    const make = () => (kind() === 'ad' && mayRequestAd() ? block('sxfeed', ins(UNITS.infeedText)) : bookingBlock('sxfeed'));
+        const make = () => (mayRequestAd() ? block('sxfeed', ins(UNITS.infeedText)) : null); // AdSense only: Booking.com banners duplicated the OTA exits
     // between two rows (a full-width <li> after `anchor`) or before `anchor`, a whole group
     const put = (anchor, betweenRows) => {
       if (n >= MAX_BREAKS || !belowFold(anchor) || !spaced(docTop(anchor) + (betweenRows ? anchor.offsetHeight : 0))) return;
       const b = make();
+      if (!b) return;
       if (betweenRows) { const li = document.createElement('li'); li.className = 'sx-break'; li.append(b); anchor.after(li); } else anchor.before(b);
       if (b.querySelector('ins.adsbygoogle')) push();
       n++; count = 0;
