@@ -27,6 +27,8 @@ sitemap.xml, sitemap-stays.xml, llms.txt, llms-full.txt, robots.txt, ads.txt
 tests/                               see docs/TESTING.md
 ```
 
+**Page speed rules** (RH-BUG-11, 2026-10-18): hero images are WebP, at most 1600 px wide (1400 for `*-mobile*`), quality about 68, ideally under 150 KB; re-encode in place (same file name) when only shrinking, use a new name (`-v2`, `-card`, `-panel`) when the crop or purpose changes. The first screen's image is found while parsing: the home page sets its first slide in CSS (`.hero-slide-first`), and every hero page has a `<link rel="preload" as="image" fetchpriority="high">` before `styles.css` (rental and driving pages get it from their master page through the build scripts). On the home page `whatsapp-widget.css` and the flatpickr CSS load with the `media="print"` swap. GA4 (`analytics.js`) and AdSense (`ads.js`) inject their large scripts after the `load` event, on idle. `vercel.json` sets `Cache-Control`: images and vendor 30 days, css/js/i18n dist 1 day (plus stale-while-revalidate). Don't add a blocking script or stylesheet to a page's `<head>` without a reason.
+
 `assets/js/abc.html` and `assets/css/abc.html` are empty tracked files with no purpose (safe to delete).
 
 ## Pages
@@ -85,7 +87,7 @@ tests/                               see docs/TESTING.md
 
 ## Guide to stays to call (interlinking)
 
-Every hand-made guide (and the generated rental pages, which copy the hub) ends with one shared `<aside class="guide-next">` block, "Plan the rest of your trip": three or four contextual stays links (landmark pages `hotels/best-stays-near-<slug>`, a category page, Advaitam), then WhatsApp and call buttons. It is plain HTML in each page (inserted once by a scratch script on 2026-10-18; edit it in place, keep the wording identical across pages so it stays one set of i18n strings). The place cards on `places-to-visit.html` that have a landmark page link to it. The property page (`stay-page.js`) has the same card with per-city guide links (`PLAN_LINKS`) and the call number. Link labels are the target page's `<h1>` or the header nav text, so they are already translated. Why: Search Console showed readers finishing a guide with no path to a stay or a number (RH-FEAT-14 in `PROGRESS.md`).
+Every hand-made guide (and the generated rental pages, which copy the hub) ends with one shared `<aside class="guide-next">` block, "Plan the rest of your trip": three or four contextual stays links (landmark pages `hotels/best-stays-near-<slug>`, a category page, Advaitam), then WhatsApp and call buttons. It is plain HTML in each page (inserted once by a scratch script on 2026-10-18; edit it in place, keep the wording identical across pages so it stays one set of i18n strings). The place cards on `places-to-visit.html` that have a landmark page link to it. The property page (`stay-page.js`) has the same card with per-city guide links (`PLAN_LINKS`) and the call number. Link labels are the target page's `<h1>` or the header nav text, so they are already translated. Why: Search Console showed readers finishing a guide with no path to a stay or a number (RH-FEAT-14 in `TICKETS.md`).
 
 ## Site search
 

@@ -52,5 +52,9 @@ function loadGoogleAnalytics() {
   const tag = document.createElement('script');
   tag.async = true;
   tag.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_MEASUREMENT_ID;
-  document.head.appendChild(tag);
+  // Fetched after the page has loaded and the browser is idle (gtag.js is ~180 KB), so it never competes with the
+  // first paint; hits queue in dataLayer and are sent once it arrives.
+  const inject = () => (window.requestIdleCallback ? window.requestIdleCallback(() => document.head.appendChild(tag), { timeout: 3000 }) : setTimeout(() => document.head.appendChild(tag), 1500));
+  if (document.readyState === 'complete') inject();
+  else window.addEventListener('load', inject, { once: true });
 }

@@ -380,7 +380,11 @@ const PLACE = {
     s.async = true;
     s.crossOrigin = 'anonymous';
     s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
-    document.head.appendChild(s);
+    // After the page has loaded and the browser is idle, so AdSense's large script never competes with the first
+    // paint; units placed meanwhile wait in the adsbygoogle queue and fill once it arrives.
+    const inject = () => (window.requestIdleCallback ? window.requestIdleCallback(() => document.head.appendChild(s), { timeout: 3000 }) : setTimeout(() => document.head.appendChild(s), 1500));
+    if (document.readyState === 'complete') inject();
+    else window.addEventListener('load', inject, { once: true });
   }
   // this script loads async from <head>: wait for the page before placing units
   const plan = PLAN[type];

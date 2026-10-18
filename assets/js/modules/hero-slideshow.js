@@ -34,17 +34,31 @@ function fadeSwap(el, nextText) {
 // shrank with each slide. Each text box is given the height of its longest
 // variant at the current width; re-measured on resize and when the texts
 // change (the in-browser translation rewrites the data-* lists).
-function reserveHeight(el, texts) {
-  if (!el || texts.length < 2) return;
-  const shown = el.textContent;
-  el.style.minHeight = '';
-  let tallest = 0;
-  for (const text of texts) {
-    el.textContent = text;
-    tallest = Math.max(tallest, el.getBoundingClientRect().height);
-  }
-  el.textContent = shown;
-  if (tallest) el.style.minHeight = `${Math.ceil(tallest)}px`;
+// Measured in three batched steps (reads, then writes into hidden probes, then
+// one layout read) so the page lays out once instead of once per variant.
+function reserveHeights(items) {
+  const jobs = items.filter(([el, texts]) => el && texts.length > 1).map(([el, texts]) => ({ el, texts }));
+  jobs.forEach((j) => { j.el.style.minHeight = ''; });
+  jobs.forEach((j) => { j.width = j.el.getBoundingClientRect().width; });
+  jobs.forEach((j) => {
+    const box = document.createElement('div');
+    box.setAttribute('aria-hidden', 'true');
+    box.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;width:${j.width}px;`;
+    for (const text of j.texts) {
+      const probe = j.el.cloneNode(false);
+      probe.removeAttribute('id');
+      probe.classList.remove('is-fading');
+      probe.textContent = text;
+      box.appendChild(probe);
+    }
+    j.el.parentNode.insertBefore(box, j.el);
+    j.box = box;
+  });
+  jobs.forEach((j) => { j.tallest = Math.max(0, ...Array.from(j.box.children, (c) => c.getBoundingClientRect().height)); });
+  jobs.forEach((j) => {
+    j.box.remove();
+    if (j.tallest) j.el.style.minHeight = `${Math.ceil(j.tallest)}px`;
+  });
 }
 
 function pickBg(slide) {
@@ -103,14 +117,13 @@ export function setupHeroSlideshow() {
 
   const scheduleIdle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
   let activeIndex = slides.indexOf(activeSlide);
-  scheduleIdle(() => preload(slides[(activeIndex + 1) % slides.length]));
+  // Next slide's image (~400 KB) is fetched just before it is due (SLIDE_INTERVAL_MS), not during the first paint.
+  setTimeout(() => scheduleIdle(() => preload(slides[(activeIndex + 1) % slides.length])), SLIDE_INTERVAL_MS - 1500);
 
   if (prefersReducedMotion) return;
 
   const reserveAll = () => {
-    reserveHeight(caption, captions);
-    reserveHeight(headline, headlines);
-    reserveHeight(copy, copies);
+    reserveHeights([[caption, captions], [headline, headlines], [copy, copies]]);
   };
   reserveAll();
   // Web fonts change line breaks once they arrive.

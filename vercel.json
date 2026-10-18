@@ -117,6 +117,20 @@
       "permanent": false
     }
   ],
+  "headers": [
+    {
+      "source": "/assets/(images|vendor)/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000, stale-while-revalidate=86400" }]
+    },
+    {
+      "source": "/assets/(css|js)/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
+    },
+    {
+      "source": "/i18n/dist/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }]
+    }
+  ],
   "functions": {
     "api/geocode-area.js": {
       "includeFiles": "scripts/stays/city-boundaries/**"

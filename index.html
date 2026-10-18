@@ -27,9 +27,13 @@
   <link rel="canonical" href="https://rishikeshhomestays.com/">
   <link rel="icon" href="/assets/images/logo.ico" type="image/x-icon">
   <link rel="manifest" href="/site.webmanifest">
+  <link rel="preload" as="image" href="/assets/images/rishikesh-homestay-hero-mobile-v2.webp" type="image/webp" media="(max-width: 680px)" fetchpriority="high">
+  <link rel="preload" as="image" href="/assets/images/rishikesh-things-to-do-v2.webp" type="image/webp" media="(min-width: 681px)" fetchpriority="high">
   <link rel="stylesheet" href="/assets/css/styles.css">
-  <link rel="stylesheet" href="/assets/css/whatsapp-widget.css">
-  <link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css">
+  <link rel="stylesheet" href="/assets/css/whatsapp-widget.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/assets/css/whatsapp-widget.css"></noscript>
+  <link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="/assets/vendor/flatpickr/flatpickr.min.css"></noscript>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -119,13 +123,13 @@
            lazy-loads each of the rest just ahead of when it's due to show,
            since a slideshow only ever shows one of these seven at a time. -->
       <div class="hero-slideshow" aria-hidden="true">
-        <div class="hero-slide is-active" data-bg="/assets/images/rishikesh-things-to-do.webp" data-bg-mobile="/assets/images/rishikesh-homestay-hero-mobile.webp"></div>
-        <div class="hero-slide" data-bg="/assets/images/page-heroes/things-to-do-hero.webp" data-bg-mobile="/assets/images/page-heroes/things-to-do-hero-mobile.webp"></div>
-        <div class="hero-slide" data-bg="/assets/images/things-to-do/triveni-ghat-aarti-v2.webp" data-bg-mobile="/assets/images/things-to-do/triveni-ghat-aarti-v2-mobile.webp"></div>
-        <div class="hero-slide" data-bg="/assets/images/things-to-do/kunjapuri-devi-temple.webp" data-bg-mobile="/assets/images/things-to-do/kunjapuri-devi-temple-mobile.webp"></div>
-        <div class="hero-slide" data-bg="/assets/images/things-to-do/ai-river-rafting.webp" data-bg-mobile="/assets/images/things-to-do/neer-garh-waterfall-mobile.webp" style="background-position: center bottom;"></div>
-        <div class="hero-slide" data-bg="/assets/images/things-to-do/tera-manzil-temple.png" data-bg-mobile="/assets/images/things-to-do/tera-manzil-temple-mobile.png"></div>
-        <div class="hero-slide" data-bg="/assets/images/things-to-do/beatles-ashram-refined.webp" data-bg-mobile="/assets/images/things-to-do/beatles-ashram-refined-mobile.webp"></div>
+        <div class="hero-slide hero-slide-first is-active" data-bg="/assets/images/rishikesh-things-to-do-v2.webp" data-bg-mobile="/assets/images/rishikesh-homestay-hero-mobile-v2.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/page-heroes/things-to-do-hero-lh.webp" data-bg-mobile="/assets/images/page-heroes/things-to-do-hero-mobile-lh.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/triveni-ghat-aarti-v2-lh.webp" data-bg-mobile="/assets/images/things-to-do/triveni-ghat-aarti-v2-mobile-lh.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/kunjapuri-devi-temple-lh.webp" data-bg-mobile="/assets/images/things-to-do/kunjapuri-devi-temple-mobile-lh.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/ai-river-rafting-lh.webp" data-bg-mobile="/assets/images/things-to-do/neer-garh-waterfall-mobile-lh.webp" style="background-position: center bottom;"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/tera-manzil-temple-lh.webp" data-bg-mobile="/assets/images/things-to-do/tera-manzil-temple-mobile-lh.webp"></div>
+        <div class="hero-slide" data-bg="/assets/images/things-to-do/beatles-ashram-refined-lh.webp" data-bg-mobile="/assets/images/things-to-do/beatles-ashram-refined-mobile-lh.webp"></div>
       </div>
       <div class="hero-inner">
         <p class="eyebrow hero-caption" data-captions='["Local Homestays for real Rishikesh trips","White-Water Adventure","Ganga Aarti &amp; Local Culture","Golden Hour Views","Nature’s Escape","Temples on the Water","Where Legends Stayed"]'>Local Homestays for real Rishikesh trips</p>

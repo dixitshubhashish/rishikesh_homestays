@@ -253,7 +253,7 @@ textarea {
   color: #fff;
   overflow: hidden;
   --hero-panel-bg: #123f38;
-  background: #102c28 url("../images/things-to-do/kunjapuri-devi-temple-mobile.webp") center 24% / cover no-repeat;}
+  background: #102c28;}
 .hero::before {
   content: "";
   position: absolute;
@@ -277,6 +277,15 @@ textarea {
   transition: opacity 1.2s ease;}
 .hero-slide.is-active {
   opacity: 1;}
+/* First slide: set in CSS (not only by hero-slideshow.js) so the browser finds
+   the LCP image while parsing; keep these URLs equal to its data-bg values
+   and to the two preload links in index.html. */
+.hero-slide-first {
+  background-image: url("../images/rishikesh-things-to-do-v2.webp");}
+@media (max-width: 680px) {
+  .hero-slide-first {
+    background-image: url("../images/rishikesh-homestay-hero-mobile-v2.webp");}
+}
 @media (prefers-reduced-motion: reduce) {
   .hero-slide {
     transition: none;}
@@ -813,15 +822,15 @@ main > section:last-child {
   background-size: cover;
   background-position: center;}
 .homestay-card:nth-child(2) .homestay-photo {
-  background-image: url("../images/rishikesh-things-to-do.webp");}
+  background-image: url("../images/rishikesh-things-to-do-card.webp");}
 .homestay-card:nth-child(3) .homestay-photo {
-  background-image: url("../images/triveni-ghat-aarti.webp");}
+  background-image: url("../images/triveni-ghat-aarti-card.webp");}
 .homestay-photo.two {
-  background-image: url("../images/rishikesh-things-to-do.webp");}
+  background-image: url("../images/rishikesh-things-to-do-card.webp");}
 .homestay-photo.three {
-  background-image: url("../images/triveni-ghat-aarti.webp");}
+  background-image: url("../images/triveni-ghat-aarti-card.webp");}
 .homestay-photo.advaitam-ganga {
-  background-image: url("../images/homestays/advaitam-ganga-hill-view.webp");}
+  background-image: url("../images/homestays/advaitam-ganga-hill-view-720.webp");}
 .place-photo {
   display: block;
   width: 100%;
@@ -895,7 +904,7 @@ a.homestay-photo:hover {
 .image-panel {
   min-height: 460px;
   border-radius: var(--radius);
-  background-image: url("../images/rishikesh-things-to-do.webp");
+  background-image: url("../images/rishikesh-things-to-do-panel.webp");
   background-size: cover;
   background-position: center;
   box-shadow: var(--shadow);}
@@ -987,7 +996,7 @@ a.homestay-photo:hover {
   inset: 0;
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.84), rgba(8, 26, 24, 0.2)),
-    url("../images/rishikesh-things-to-do.webp");
+    url("../images/rishikesh-things-to-do-v2.webp");
   background-size: cover;
   background-position: center;}
 .page-hero.things-to-do::before {
@@ -1008,7 +1017,7 @@ a.homestay-photo:hover {
 .page-hero.triveni::before {
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.82), rgba(8, 26, 24, 0.16)),
-    url("../images/triveni-ghat-aarti.webp");}
+    url("../images/triveni-ghat-aarti-v2.webp");}
 .page-hero.kedarnath-hero::before {
   background-image:
     linear-gradient(90deg, rgba(8, 26, 24, 0.82), rgba(8, 26, 24, 0.16)),
