@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { PAGES, CITIES, DESTS, buildPage, pageUrl } from '../../scripts/drives/build-pages.mjs';
+import { PAGES, CITIES, DESTS, buildPage, pageUrl, isIndexable } from '../../scripts/drives/build-pages.mjs';
 
 const DEST_INDEX = Object.fromEntries(Object.keys(DESTS).map((d, i) => [d, i]));
 
@@ -51,11 +51,18 @@ test('the switch links to the other destination and every city, itself marked cu
 
 test('the master guide, the sitemap and the ad plan know every page', () => {
   const sitemap = read('sitemap.xml'), ads = read('assets/js/ads.js');
-  for (const { slug, url } of PAGES) {
+  for (const { city, dest, slug, url } of PAGES) {
     if (slug.startsWith('driving-from-delhi-')) assert(master.includes(`href="${url}"`), `master links ${slug}`);
-    // RH-BUG-13: the generated children are noindex, follow and stay out of the sitemap
-    assert(read(`${slug}.html`).includes('<meta name="robots" content="noindex, follow">'), `noindex ${slug}`);
-    assert(!sitemap.includes(`<loc>https://rishikeshhomestays.com${url}</loc>`), `sitemap ${slug}`);
+    // RH-BUG-13: a generated child is indexable (no noindex, listed in sitemap.xml) only when isIndexable(city, dest);
+    // the others are noindex, follow and stay out of the sitemap
+    const html = read(`${slug}.html`), listed = sitemap.includes(`<loc>https://rishikeshhomestays.com${url}</loc>`);
+    if (isIndexable(city, dest)) {
+      assert(!/<meta name="robots"/.test(html), `indexable ${slug} has a robots meta`);
+      assert(listed, `sitemap lists ${slug}`);
+    } else {
+      assert(html.includes('<meta name="robots" content="noindex, follow">'), `noindex ${slug}`);
+      assert(!listed, `sitemap ${slug}`);
+    }
     if (url !== '/driving-from-delhi-to-rishikesh') assert(!ads.includes(`'${url}'`), `ads ${slug} (RH-BUG-13: no ads on generated driving pages)`);
   }
 });

@@ -1089,7 +1089,7 @@ def jsonld(obj):
     return '<script type="application/ld+json">\n' + json.dumps(obj, ensure_ascii=False, indent=2).replace('</', '<\\/') + '\n</script>'
 
 
-# ---------- llms-full.txt: the detailed companion to llms.txt for AI assistants ----------
+# ---------- llms-full.txt: the detailed companion to llms.txt ----------
 # llms.txt is the short index; llms-full.txt gives every stays page's summary, prices, areas,
 # top picks (each with a link to its page here), tips, FAQs and a one-tap WhatsApp link, so an
 # assistant can answer and send the traveller straight to an action. Each city's build rewrites
@@ -1146,7 +1146,7 @@ def write_llms_full(section, own):
         secs[k] = m.group(1) if m else ''
     secs[CITY] = section
     llms = open(f'{ROOT}/llms.txt', encoding='utf8').read()
-    head = re.sub(r'Full details for AI assistants.*?\n\n', '', llms[:llms.index('## Key pages')], flags=re.S)
+    head = re.sub(r'Full details \(.*?\n\n', '', llms[:llms.index('## Key pages')], flags=re.S)
     key_pages = llms[llms.index('## Key pages'):llms.index('## Where to stay')]   # key pages + the Kumbh section
     tail = llms[llms.index('## Contact'):]
     own_lines = '\n'.join(f'- {o["n"]}: {re.sub(r"^.* · ", "", o["a"])}, {CITIES[DEFAULT_CITY]["name"]}' + (f' · guests {o["g"]:g}/10' if o.get('g') else '') + f' · {SITE}{o["u"]}' for o in own)

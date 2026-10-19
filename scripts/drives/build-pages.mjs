@@ -21,6 +21,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { ORIGIN_FACTS, DEST_FACTS } from "./route-facts.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SITE = "https://rishikeshhomestays.com";
@@ -109,6 +110,27 @@ export function switchHtml(city, dest) {
   return `<nav class="rental-switch drive-switch" aria-label="Destination and starting city">${row("Planning to:", destTabs)}${row("From city:", cityTabs)}</nav>`;
 }
 
+// The facts a page shows (route-facts.mjs): origin items for this destination, and the destination's items.
+export function factsFor(city, dest) {
+  const pick = (list) => (list || []).filter((i) => !i.to || i.to.includes(dest)).map((i) => i.t);
+  const o = ORIGIN_FACTS[city] || {}, d = DEST_FACTS[dest] || {};
+  return { ways: pick(o.ways), bottlenecks: pick(o.bottlenecks), avoid: pick(o.avoid),
+    last: pick(d.last), restrictions: pick(d.restrictions), parking: pick(d.parking), timing: pick(d.timing) };
+}
+const originCount = (f) => f.ways.length + f.bottlenecks.length + f.avoid.length;
+const destCount = (f) => f.last.length + f.restrictions.length + f.parking.length + f.timing.length;
+// RH-BUG-13: a page is indexable only when it carries at least 2 origin facts and 2 destination facts of its own.
+// Everything else stays noindex, follow (and out of sitemap.xml, which is hand-maintained).
+// Owner decision (2026-10-19): index every child that has enough verified facts, as they are (the facts are shared
+// by every page of one origin or one destination, so pages are close in word count; AdSense risk accepted by the
+// owner). Set to false to make every child noindex again.
+const INDEX_CHILDREN = true;
+export function isIndexable(city, dest) {
+  if (!INDEX_CHILDREN) return false;
+  const f = factsFor(city, dest);
+  return originCount(f) >= 2 && destCount(f) >= 2;
+}
+
 const DEST_INDEX = { rishikesh: 0, haridwar: 1, dehradun: 2, mussoorie: 3 };
 
 function page(city, dest) {
@@ -140,6 +162,14 @@ function page(city, dest) {
     [`When is the best time to leave for ${D}?`, "Before 6 am, and never on a Friday evening if you can help it. Avoid the last week of the Kanwar Yatra in the month of Sawan, roughly July to August, and the main Kumbh 2027 bathing days."],
   ];
 
+  const F = factsFor(city, dest);
+  const sentence = (t) => (/[.!?]$/.test(t) ? t : t + ".");
+  if (F.avoid.length || F.restrictions.length) {
+    faq[2][1] += ` ${[F.avoid[0], F.restrictions[0]].filter(Boolean).map(sentence).join(" ")}`;
+  }
+  if (F.ways.length) faq.push([`What is the way out of ${C} towards ${D}?`, [F.ways[0], F.bottlenecks[0]].filter(Boolean).map(sentence).join(" ")]);
+  if (F.last.length || F.parking.length || F.timing.length) faq.push([`What should I know about the last stretch into ${D}?`, [F.last[0], F.parking[0], F.timing[0]].filter(Boolean).map(sentence).join(" ")]);
+
   const ld = (o) => `<script type="application/ld+json">\n    ${JSON.stringify(o, null, 2).replace(/\n/g, "\n    ")}\n    </script>`;
   const jsonld = [
     ld({ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
@@ -164,6 +194,20 @@ function page(city, dest) {
             <p>Compare <a href="/hotels/best-hotels-in-haridwar">stays in Haridwar</a>, or base yourself 25 km up the river in Rishikesh, which is calmer, especially around the big Kumbh days: our own <a href="/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh">Advaitam Ganga &amp; Hill View homestay</a> has easy parking and a short walk to the ghat. <a href="/contact">Tell us your dates</a> and we will suggest a few.</p>`
     : `<h2>Where to stay</h2>
             <p>Compare <a href="/hotels/best-hotels-in-${dest}">stays in ${D}</a>, or come down to Rishikesh by the river, about ${M ? "80" : "45"} km away: our own <a href="/hotels/advaitam-ganga-hill-view-luxury-3bhk-homestay-in-rishikesh">Advaitam Ganga &amp; Hill View homestay</a> has easy parking and a short walk to the ghat. <a href="/contact">Tell us your dates</a> and we will suggest a few.</p>`;
+
+  const list = (items) => `<ul>${items.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>`;
+  const avoidItems = [...F.avoid, ...F.restrictions];
+  const arriveItems = [...F.last, ...F.parking, ...F.timing];
+  const sections = [
+    F.ways.length + F.bottlenecks.length ? `<h2>Getting out of ${C}: the options</h2>
+            <p>These are the roads and junctions that matter on the ${km} km from ${C} to ${D}.</p>
+            ${list([...F.ways, ...F.bottlenecks])}` : "",
+    avoidItems.length ? `<h2>What to avoid</h2>
+            <p>Closures and rules change, so check live traffic and the day's notice before you go to ${D} from ${C}.</p>
+            ${list(avoidItems)}` : "",
+    arriveItems.length ? `<h2>Arriving in ${D}</h2>
+            ${list(arriveItems)}` : "",
+  ].filter(Boolean).join("\n\n            ");
 
   const main = `<main>
       <section class="page-hero delhi-drive">
@@ -197,8 +241,9 @@ function page(city, dest) {
             <h2>The route</h2>
             <p>${route}${R && !c.oldOnly ? " Navigation apps sometimes send you towards Roorkee and Haridwar instead; let live traffic decide on the day." : ""}${H ? " A new link from the expressway to Haridwar's ring road is being built, so check whether it has opened before you plan around it." : ""}</p>
             <p>Tolls and FASTag, food stops, the Kanwar Yatra and Kumbh rush, and parking: all in our <a href="/${MASTER}">Delhi to Rishikesh and Haridwar driving guide</a>.</p>
+            ${sections}
 
-            ${stay}
+${stay}
             <p>Some booking links on our stays pages earn us a commission at no extra cost to you. <a href="/about-us">About us</a>.</p>
 
             <div class="rh-ad-slot" data-ad="article"></div>
@@ -240,13 +285,14 @@ export function buildPage(master, city, dest) {
   const masterUrl = `${SITE}/${MASTER}`;
   const headEnd = master.indexOf("</head>");
   let head = master.slice(0, headEnd).split(masterUrl).join(p.url);
-  // RH-BUG-13 (AdSense "low-value content"): the generated per-city guides are noindex, follow and not in sitemap.xml
-  // (hand-maintained; no script writes it). The hand-made master guide stays indexable.
+  // RH-BUG-13 (AdSense "low-value content"): a generated guide is indexable only when isIndexable() says so (enough own
+  // route facts); the rest are noindex, follow. sitemap.xml is hand-maintained (no script writes it).
   head = head.replace(/<title>[^<]*<\/title>/, () => `<title>${esc(p.title)}</title>`)
     .replace(/(<meta name="description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.desc)}${b}`)
     .replace(/(<meta property="og:title" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.title)}${b}`)
     .replace(/(<meta property="og:description" content=")[^"]*(")/, (_, a, b) => `${a}${esc(p.desc)}${b}`)
-    .replace(/(<meta name="description" content="[^"]*">)/, (m) => `${m}\n    <meta name="robots" content="noindex, follow">`);
+    ;
+  if (!isIndexable(city, dest)) head = head.replace(/(<meta name="description" content="[^"]*">)/, (m) => `${m}\n    <meta name="robots" content="noindex, follow">`);
   // the master's structured data (breadcrumb, article, FAQ) is replaced by this page's
   let n = 0;
   head = head.replace(/<script type="application\/ld\+json">[^]*?<\/script>/g, () => p.jsonld[n++] || "");

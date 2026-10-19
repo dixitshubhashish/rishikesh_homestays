@@ -880,3 +880,9 @@ Verification: `tests/scripts/ota-match.test.js`, `tests/scripts/ota-evidence.tes
 - Verification: `npm run build:stays`, `check:stays`, `build:search`, full `npm test` 1,738/1,738.
 - Caught on the way: an agent changed the robots tag in `thanks.html` to `noindex,follow` (no space), which the stays generator swaps by exact string, so every generated page would have gone noindex; restored the original. `report-a-bug.html` stays indexable (the search-index test needs it).
 - Follow-up: see the RH-BUG-13 line in `TICKETS.md` (owner decisions).
+
+#### 2026-10-19 (later) - Claude (RH-BUG-13 step 2: driving guides, internal files, AI wording)
+- Task: make the generated driving guides worth indexing (owner: index all that qualify), keep internal notes off the live site, remove AI wording from public files.
+- Files: `scripts/drives/route-facts.mjs` (new, verified facts only), `scripts/drives/build-pages.mjs` (`INDEX_CHILDREN`, `isIndexable`, 3 new sections), `tests/integration/drives.test.js`; `sitemap.xml` (28 driving URLs; repaired: a mis-indented insert made `listing_sitemap.py` duplicate the finalised block, check it with `node scripts/py.mjs scripts/stays/listing_sitemap.py --check`); `.vercelignore`, `_redirects`; `robots.txt`; `llms.txt` + `scripts/stays/build_pages.py` (regex for the llms-full head); 15 images in `assets/images/things-to-do/` renamed; 201 strings merged in 22 languages.
+- Verification: `build:stays`, `check:stays`, `build:search`, `listing_sitemap.py --check`, full `npm test` 1,738/1,738 (501 non-visual + 1,237 visual). The Playwright browser cache (`~/Library/Caches/ms-playwright`) had vanished, which makes the visual test fail at once and hang; fixed with `npx playwright install chromium` (documented in docs/TESTING.md).
+- Follow-up: the pages share their origin and destination blocks, so they stay near-duplicates by word count (owner accepted the risk, option 3); `INDEX_CHILDREN = false` makes them noindex again.

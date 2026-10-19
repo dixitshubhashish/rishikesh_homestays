@@ -14966,7 +14966,7 @@ Ask us about this: https://wa.me/918050091290?text=Hi%2C%20I%20am%20looking%20at
 - Email: hello@rishikeshhomestays.com
 - Instagram: https://www.instagram.com/rishikesh.homestays
 
-## Notes for AI assistants and crawlers
+## Notes
 
 - Prices, availability, and the specific homestays listed change over time — always point users to the live [Homestays page](https://rishikeshhomestays.com/homestays) or the [Contact page](https://rishikeshhomestays.com/contact) rather than quoting a fixed price from a cached copy of this site.
 - The fastest way for a real traveller to get a response is the [Contact form](https://rishikeshhomestays.com/contact) or WhatsApp — both go to the same inbox and are answered by a human, not an automated booking engine.

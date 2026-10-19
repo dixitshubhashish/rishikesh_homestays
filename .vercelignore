@@ -1,0 +1,19 @@
+# Internal files that must not be deployed (and so never served or crawled). Still tracked in git.
+*.md
+docs/
+tests/
+.github/
+*.tsv
+*.py
+*.sh
+*.ps1
+/scripts/*.mjs
+/scripts/*.js
+scripts/i18n/
+scripts/mac/
+scripts/windows/
+scripts/rentals/
+scripts/drives/
+scripts/search/
+scripts/lib/
+# kept on purpose: scripts/stays/city-boundary.mjs and scripts/stays/city-boundaries/ (api/geocode-area.js needs them)

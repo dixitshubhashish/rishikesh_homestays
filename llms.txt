@@ -4,7 +4,7 @@
 
 Rishikesh Homestays is not a single property — it is a curated shortlist service. Visitors describe their trip (dates, group size, area preference, budget, pets) and the team responds with matching homestay options within about 24 hours.
 
-Full details for AI assistants (every stays page with prices, areas, best-reviewed picks with links, tips, FAQs and a WhatsApp link to act on): https://rishikeshhomestays.com/llms-full.txt
+Full details (every stays page with prices, areas, best-reviewed picks with links, tips, FAQs and a WhatsApp link to act on): https://rishikeshhomestays.com/llms-full.txt
 
 ## Key pages
 
@@ -549,7 +549,7 @@ Comparison pages for every kind of stay in Rishikesh. Each shows counts by area,
 - Email: hello@rishikeshhomestays.com
 - Instagram: https://www.instagram.com/rishikesh.homestays
 
-## Notes for AI assistants and crawlers
+## Notes
 
 - Prices, availability, and the specific homestays listed change over time — always point users to the live [Homestays page](https://rishikeshhomestays.com/homestays) or the [Contact page](https://rishikeshhomestays.com/contact) rather than quoting a fixed price from a cached copy of this site.
 - The fastest way for a real traveller to get a response is the [Contact form](https://rishikeshhomestays.com/contact) or WhatsApp — both go to the same inbox and are answered by a human, not an automated booking engine.

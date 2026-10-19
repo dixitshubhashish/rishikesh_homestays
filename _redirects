@@ -1,3 +1,8 @@
+# internal files are never served (kept in sync with .vercelignore)
+/*.md /404.html 404
+/docs/* /404.html 404
+/tests/* /404.html 404
+/*.tsv /404.html 404
 # These guide/content pages live at the repo root (e.g. contact.html) —
 # canonical URLs match the filename directly, with no /pages/ segment.
 
