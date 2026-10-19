@@ -4735,6 +4735,49 @@ html.site-search-open {
   margin-top: 14px;
 }
 
+/* Footer link groups (footer_links.py): Stays, Rentals, Driving guides as collapsible <details>, so the
+   footer stays short while every link is still in the HTML. */
+.rhs-footer-group{
+  border-top:1px solid rgba(255,255,255,.12);
+  padding:10px 0;}
+.rhs-footer-group > summary{
+  cursor:pointer;
+  color:#e7ece9;
+  font-weight:700;
+  font-size:15px;
+  padding:6px 0;
+  list-style:none;}
+.rhs-footer-group > summary::-webkit-details-marker{
+  display:none;}
+.rhs-footer-group > summary::after{
+  content:" \25BE";
+  color:#6ee7b7;}
+.rhs-footer-group[open] > summary::after{
+  content:" \25B4";}
+.rhs-footer-group > summary:focus-visible{
+  outline:2px solid #6ee7b7;
+  outline-offset:2px;}
+.rhs-footer-group-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap:6px 28px;
+  padding-top:8px;}
+.rhs-footer-group-grid ul{
+  display:block;}
+.rhs-footer-group-grid li{
+  display:block;}
+.rhs-footer-group-grid li::after{
+  content:none;}
+.rhs-footer-site{
+  list-style:none;
+  margin:0;
+  padding:12px 0 0;
+  border-top:1px solid rgba(255,255,255,.12);}
+
+.sp-plan li a:hover { border-color: rgba(var(--accent-rgb), 0.5); }
+
+  text-decoration: none;}
+
 /* ============================================================
    Report a bug (/report-a-bug, assets/js/modules/bug-report-form.js).
    Colours are theme tokens only, so dark needs no extra rules.
@@ -4971,5 +5014,3 @@ html select.rh-flag-select option {
   border: 1px solid var(--line);
   border-radius: 999px;
   color: var(--ink);
-  text-decoration: none;}
-.sp-plan li a:hover { border-color: rgba(var(--accent-rgb), 0.5); }

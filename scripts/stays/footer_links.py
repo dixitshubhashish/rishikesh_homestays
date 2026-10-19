@@ -6,9 +6,7 @@ to /hotels (scripts/stays/build_hotels_hub.py), which has the full depth with a
 city filter. Then one section per generated page family (FAMILIES below:
 rentals, driving guides), found on disk by file name: a new page of a known
 family (a new city, a new vehicle) shows in every footer by itself; a new kind
-of family is one more FAMILIES entry. A section longer than FOLD_AFTER links
-folds its tail behind a "More" toggle (CSS-only, so phones stay short and
-crawlers still see every link). The block sits between <!-- footer-stays -->
+of family is one more FAMILIES entry. Each group is a <details> (owner, 2026-10-19). The block sits between <!-- footer-stays -->
 markers in every root and hotels/ page.
 build_pages.py runs this after every build, so a new category shows up in
 every footer and in /hotels. Usage: python3 scripts/stays/footer_links.py
@@ -32,14 +30,14 @@ FOOTER_MADE = 'Made with ❤️ (and a little chai) in India, from the \U0001f9d
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 START, END = '<!-- footer-stays -->', '<!-- /footer-stays -->'
-FOLD_AFTER = 12  # links a section shows before "More"
+TOP_N = 20  # categories shown inline per city in the Stays group
 # Generated page families found by file name (root *.html). `files` has named groups; `group` names the one
 # that splits the family into sections, `heading`/`label` are formatted from the groups (slugs title-cased),
 # `order` lists a group's values in the order they should appear (the rest follow alphabetically).
 FAMILIES = [
-    dict(key='rentals', files=r'(?P<kind>bike|car|taxi)-rental-in-(?P<place>[a-z-]+)', group='place',
+    dict(key='rentals', group_title='Rentals', files=r'(?P<kind>bike|car|taxi)-rental-in-(?P<place>[a-z-]+)', group='place',
          heading='Rentals in {place}', label='{kind} rental in {place}', order={'kind': ['bike', 'car', 'taxi']}),
-    dict(key='drives', files=r'driving-from-(?P<city>[a-z-]+)-to-(?P<dest>[a-z-]+)', group='dest',
+    dict(key='drives', group_title='Driving guides', files=r'driving-from-(?P<city>[a-z-]+)-to-(?P<dest>[a-z-]+)', group='dest',
          heading='Driving to {dest}', label='{city} to {dest}', order={'city': ['delhi']}),
 ]
 
@@ -68,21 +66,41 @@ def family_sections(fam):
 
 
 def block():
-    """Slim footer block (RH-BUG-13, 2026-10-19): the trust pages, one link per city hub and the
-    'All stays' hub. The full category list and the generated families (rentals, driving guides)
-    live on /hotels (build_hotels_hub.py), not on every page."""
-    links = [('/hotels', 'All stays')]
+    """Footer link block, organised in collapsible groups (owner, 2026-10-19: organise, never remove).
+    Stays (each city's top categories), Rentals and Driving guides (every page found on disk, one
+    section per city), then the site links (about, contact, privacy, terms). Groups are <details>, so
+    the footer stays short but every link is in the HTML. RH-BUG-13 had cut this to one list; restored."""
+    lis = lambda links: ''.join(f'<li><a href="{h}">{html.escape(t)}</a></li>' for h, t in links)
+    parts = [START, '    <div class="rhs-footer-stays">']
+    teaser_lines = []
     for city in CITIES:
-        if build_hotels_hub.top_categories(city, 1):
-            hub_url = '/homestays' if city == DEFAULT_CITY else f'/hotels/{city}-accommodation'
-            links.append((hub_url, f'Stays in {CITIES[city]["name"]}'))
-    links += [('/about-us', 'About us'), ('/contact', 'Contact'), ('/privacy-policy', 'Privacy policy'), ('/terms', 'Terms')]
-    lis = ''.join(f'<li><a href="{h}">{html.escape(t)}</a></li>' for h, t in links)
-    return '\n'.join([START, '    <div class="rhs-footer-stays">',
-                      '      <div class="rhs-footer-city-links">',
-                      '      <h3>Stays and site</h3>',
-                      f'      <ul>{lis}</ul>',
-                      '      </div>', '    </div>', '    ' + END])
+        top = build_hotels_hub.top_categories(city, TOP_N)
+        if not top:
+            continue
+        name = html.escape(CITIES[city]['name'])
+        hub_url = '/homestays' if city == DEFAULT_CITY else f'/hotels/{city}-accommodation'
+        cats = ', '.join(f'<a href="/hotels/best-{slug}-in-{city}">Best {html.escape(title)} in {name}</a>' for slug, title in top)
+        teaser_lines.append(f'<li><a href="{hub_url}"><strong>{name}</strong></a>: {cats}</li>')
+    if teaser_lines:
+        parts.append('      <details class="rhs-footer-group"><summary>Stays</summary>')
+        parts.append(f'      <ul class="rhs-footer-stays-teaser">{"".join(teaser_lines)}</ul>')
+        parts.append('      <p class="rhs-footer-stays-all"><a href="/hotels">Browse all hotels by category and city &rarr;</a></p>')
+        parts.append('      </details>')
+    for fam in FAMILIES:
+        secs = family_sections(fam)
+        if not secs:
+            continue
+        parts.append(f'      <details class="rhs-footer-group"><summary>{html.escape(fam["group_title"])}</summary>')
+        parts.append('      <div class="rhs-footer-group-grid">')
+        for g, heading, links in secs:
+            parts.append(f'      <div class="rhs-footer-city-links">\n      <h3>{html.escape(heading)}</h3>')
+            parts.append(f'      <ul>{lis(links)}</ul>')
+            parts.append('      </div>')
+        parts.append('      </div>\n      </details>')
+    site = [('/about-us', 'About us'), ('/contact', 'Contact'), ('/privacy-policy', 'Privacy policy'), ('/terms', 'Terms')]
+    parts.append(f'      <ul class="rhs-footer-site">{lis(site)}</ul>')
+    parts += ['    </div>', '    ' + END]
+    return '\n'.join(parts)
 
 
 def grid_end(s):
