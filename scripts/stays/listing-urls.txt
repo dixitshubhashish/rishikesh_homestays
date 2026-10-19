@@ -94,6 +94,7 @@ https://apt-healing-house.uttarakhand-hotels.com/en/
 https://apt-heaven-on-earth.uttarakhand-hotels.com/en/
 https://apt-himalayan-haven-2bhk-luxury.uttarakhand-hotels.com/en/
 https://apt-himalayas.uttarakhand-hotels.com/en/
+https://apt-mannat-residency.uttarakhand-hotels.com/en/
 https://apt-minimalist-2-bedroom-near-aiims.uttarakhand-hotels.com/en/
 https://apt-moksha-a-luxury-2bhk-with-ganga-view.uttarakhand-hotels.com/en/
 https://apt-mountain-view-1bhk.uttarakhand-hotels.com/en/
@@ -142,7 +143,6 @@ https://around-stays-om-blessed-cottages-tapovan.uttarakhand-hotels.com/en/
 https://around-stays-rishikesh-tapovan.uttarakhand-hotels.com/en/
 https://around-stays-rising-hills-tapovan.uttarakhand-hotels.com/en/
 https://around-stays-rk-heritage-resort-tapovan.uttarakhand-hotels.com/en/
-https://around-stays-shanti-vilas-tapovan.uttarakhand-hotels.com/en/
 https://around-stays-the-golden-i-homestay-near-aiims.uttarakhand-hotels.com/en/
 https://art-bliss-homes.uttarakhand-hotels.com/en/
 https://arti-cottage-feel-like-home.uttarakhand-hotels.com/en/
@@ -193,6 +193,7 @@ https://blissful-stays-midsts-nature.uttarakhand-hotels.com/en/
 https://blissfull-stay-midsts-nature.uttarakhand-hotels.com/en/
 https://bloom-boutique-hills.uttarakhand-hotels.com/en/
 https://blue-heart-home-by-the-ganges-cosy-1bhk-veerbhadra.uttarakhand-hotels.com/en/
+https://blue-heart-home1bhk-luxury-cosy-flat-in-tapovan.uttarakhand-hotels.com/en/
 https://blue-moon-1.uttarakhand-hotels.com/en/
 https://blue-moon-rishikesh.uttarakhand-hotels.com/en/
 https://blue-river-hostel.uttarakhand-hotels.com/en/
@@ -343,7 +344,6 @@ https://ganga-forest-view.uttarakhand-hotels.com/en/
 https://ganga-grand-parking-lift-restaurant-near-ghat.uttarakhand-hotels.com/en/
 https://ganga-guesthouse-near-janki-jhula-ram-jhula.uttarakhand-hotels.com/en/
 https://ganga-kinare-a-riverside-boutique-resort.uttarakhand-hotels.com/en/
-https://ganga-mbs-best-location-family-hotel.uttarakhand-hotels.com/en/
 https://ganga-moksha-homestay.uttarakhand-hotels.com/en/
 https://ganga-nest-cosy-2bhk-with-ganga-view.uttarakhand-hotels.com/en/
 https://ganga-pearl.uttarakhand-hotels.com/en/
@@ -1186,6 +1186,7 @@ https://shiv-gauri-home-stay.uttarakhand-hotels.com/en/
 https://shiv-palace-yoga-world-retreat.uttarakhand-hotels.com/en/
 https://shiv-shakti-yogpeeth-cottages.uttarakhand-hotels.com/en/
 https://shiv-vilas-249192.uttarakhand-hotels.com/en/
+https://shiva-homestay.uttarakhand-hotels.com/en/
 https://shiva-keshav-nandan-tapovan.uttarakhand-hotels.com/en/
 https://shiva-yog-sthal.uttarakhand-hotels.com/en/
 https://shivaay-aiims.uttarakhand-hotels.com/en/
@@ -1272,7 +1273,6 @@ https://tamanna.uttarakhand-hotels.com/en/
 https://tapasthali-by-meera-hotels.uttarakhand-hotels.com/en/
 https://tapasya-home-stay-rishikesh.uttarakhand-hotels.com/en/
 https://tapomay-retreat.uttarakhand-hotels.com/en/
-https://taposthalam-sacred-retreat-in.uttarakhand-hotels.com/en/
 https://tapovan-1-bhk-i-rivara-i-ganga-i-high-speed-wifi.uttarakhand-hotels.com/en/
 https://tapovan-breeze-by-jabula-getaways.uttarakhand-hotels.com/en/
 https://tapovan-by-terraa-hotels.uttarakhand-hotels.com/en/
@@ -1341,7 +1341,6 @@ https://the-hosteller-rishikesh-laxman-jhula.uttarakhand-hotels.com/en/
 https://the-hosteller-rishikesh-tapovan.uttarakhand-hotels.com/en/
 https://the-hosteller-rishikesh-upper-tapovan.uttarakhand-hotels.com/en/
 https://the-house.uttarakhand-hotels.com/en/
-https://the-hummingbird.uttarakhand-hotels.com/en/
 https://the-jrs-rishikesh.uttarakhand-hotels.com/en/
 https://the-jrs.uttarakhand-hotels.com/en/
 https://the-leisure-cave-on-the-ganges.uttarakhand-hotels.com/en/
