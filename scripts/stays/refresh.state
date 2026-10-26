@@ -1,9 +1,9 @@
 {
-  "last_check": "2026-10-19",
-  "last_crawl": "2026-10-19",
+  "last_check": "2026-10-26",
+  "last_crawl": "2026-10-26",
   "gap_days": 7,
-  "total": 1552,
-  "next_due": "2026-10-26",
-  "last_added": 3,
-  "last_removed": 4
+  "total": 1636,
+  "next_due": "2026-11-02",
+  "last_added": 112,
+  "last_removed": 28
 }
