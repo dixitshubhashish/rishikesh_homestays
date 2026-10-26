@@ -41,3 +41,5 @@ kempty-falls	Kempty Falls	mussoorie	30.48732	78.03621		Wikipedia coordinates + O
 landour-char-dukan	Landour (Char Dukan)	mussoorie	30.45684	78.10224		OSM Nominatim (Landour Bakehouse, Char Dukan) + Wikipedia Landour	TouristAttraction	
 mussoorie-lake	Mussoorie Lake	mussoorie	30.44639	78.078		OSM Nominatim (water "Mussoorie lake")	TouristAttraction	
 happy-valley-mussoorie	Happy Valley (Shedup Choephelling Temple), Mussoorie	mussoorie	30.47184	78.04992		OSM Nominatim (place_of_worship, Happy Valley)	TouristAttraction	
+neer-garh-waterfall	Neer Garh Waterfall	rishikesh	30.14308	78.34058		OSM node 5050016221 (waterfall)	TouristAttraction	3
+lal-tibba-mussoorie	Lal Tibba	mussoorie	30.46674	78.09505		OSM node 506119103 (viewpoint, Tehri Road, Landour)	TouristAttraction	

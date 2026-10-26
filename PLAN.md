@@ -2,15 +2,15 @@
 
 Working plan for the task in progress. Rule (owner, 2026-10-18): plan here first, then execute, so each step costs the fewest tokens. Overwrite this file for every new task; ticket status stays in `TICKETS.md`, results in the `AGENTS.md` ledger.
 
-## Task: RH-BUG-12 accessibility (from the same PageSpeed report)
+## Task: RH-FEAT-9 more content pages (owner, 2026-10-24: "start on this")
 
-Findings to fix: select without a label, colour contrast, `tabindex` above 0, "accessibility tree not well-formed" (mobile 89, desktop 92).
+Goal: the AIIMS long-stay page and more landmark pages, using only verified facts (coordinates from OSM with a source, no guessed distances).
 
 | # | Step | Files | Risk | Check | Est. cost |
 |---|------|-------|------|-------|-----------|
-| 0 | Dropped from RH-BUG-11: the 331 KB stays-list HTML is only 35 KB gzipped on the wire, so no generator change is worth it | none | none | `gzip -c` | done |
-| 1 | Name the home page `#city` select with `aria-labelledby` pointing at the existing, already translated "Destination / area" label (no new string, so no 22-language translation) | `index.html` | Low | attribute present, home screenshots unchanged, `npm test` | small |
-| 2 | `tabindex` above 0: searched every root page, `hotels/stay.html` and `assets/js`: none in our code, so it comes from a third-party script (ads or a library) | none | none | grep | done |
-| 3 | Contrast and "tree not well-formed": the report did not show which elements; finding them without axe-core or Lighthouse needs a new dev dependency (owner's OK) or the expanded rows of the report | none until known | none | ask the owner | blocked |
+| 1 | AIIMS long-stay page = one search-phrase row `Long stay near AIIMS Rishikesh`, rule `kitchen & near:aiims-rishikesh:3` (49 stays, 48 linked, counted from the built data on 2026-10-24; MIN_PAGE is 5, so it is real, not thin) | `scripts/stays/search-pages.tsv` | Low | rebuild Rishikesh, `check:stays`, page has its own facts/FAQ from `page_content()` | small |
+| 2 | Landmark candidates: two research agents verify OSM coordinates + one fact each (Rishikesh, Haridwar/Dehradun/Mussoorie); anything doubtful is dropped | none (read-only) | none | each coordinate has a source URL | agents |
+| 3 | Add only landmarks with 5+ stays in range to `landmarks.tsv` (source column filled, `max_km` where road distance differs) | `scripts/stays/landmarks.tsv` | Low | count stays in range before adding | small |
+| 4 | Rebuild (`--city` per step, one city at a time: the Mac is short of memory), `npm run check:stays`, footer sync, i18n extract/status/sync (new strings only), search index | generated pages | Medium | `npm test`, visual tests when the Mac is idle | medium |
 
-Not in this plan: Lighthouse install (owner's OK). Nothing committed until step 1 passes `npm test`.
+Not in scope: hand-edits of generated pages; an AdSense risk to watch: new templated pages must pass the MIN_PAGE gate (RH-BUG-13).
