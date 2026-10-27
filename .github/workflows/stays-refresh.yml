@@ -39,6 +39,9 @@ jobs:
       # The stays pages' text templates for in-browser translation (docs/I18N.md): new
       # English templates show in English until they are translated (npm run i18n:status).
       - run: npm run --silent build:i18n
+      # The CI build has no local caches and once published a city with 40% of its stays gone: stop before committing that.
+      - name: Guard against a big drop in stays
+        run: node scripts/stays/stays-count-guard.mjs
       - name: Commit if anything changed
         id: commit
         run: |

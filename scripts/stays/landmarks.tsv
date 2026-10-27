@@ -43,3 +43,12 @@ mussoorie-lake	Mussoorie Lake	mussoorie	30.44639	78.078		OSM Nominatim (water "M
 happy-valley-mussoorie	Happy Valley (Shedup Choephelling Temple), Mussoorie	mussoorie	30.47184	78.04992		OSM Nominatim (place_of_worship, Happy Valley)	TouristAttraction	
 neer-garh-waterfall	Neer Garh Waterfall	rishikesh	30.14308	78.34058		OSM node 5050016221 (waterfall)	TouristAttraction	3
 lal-tibba-mussoorie	Lal Tibba	mussoorie	30.46674	78.09505		OSM node 506119103 (viewpoint, Tehri Road, Landour)	TouristAttraction	
+bharat-mandir	Bharat Mandir	rishikesh	30.10611	78.30203	/places-to-visit	OSM node 5217492021 (place_of_worship "Sri Bharat Mandir", Maya Kund)	TouristAttraction	
+gita-bhawan	Gita Bhawan	rishikesh	30.11677	78.31310	/places-to-visit	OSM ways 378172620, 378172627, 378172631 ("Gita Bhawan #3/#4/#5", centroid)	TouristAttraction	
+swarg-ashram	Swarg Ashram	rishikesh	30.11855	78.31382	/places-to-visit	OSM node 1185827080 (place=suburb "Swargashram")	Place	
+sivananda-ashram	Sivananda Ashram	rishikesh	30.12474	78.31232	/places-to-visit	OSM way 323211395 "Sivananda Ashram" + node 7285619485	TouristAttraction	
+patna-waterfalls	Patna Waterfalls	rishikesh	30.11431	78.36519	/places-to-visit	OSM node 4700827723 (waterfall)	TouristAttraction	3
+vashishta-gufa	Vashishta Gufa	rishikesh	30.11434	78.43191	/places-to-visit	OSM node 4045245689 (place_of_worship "Vashishta Guha", NH7)	TouristAttraction	3
+hemkund-sahib-gurdwara	Gurdwara Sri Hemkunt Sahib, Rishikesh	rishikesh	30.11205	78.30419	/places-to-visit	OSM way 1203023989 (place_of_worship, religion=sikh)	Place	
+bhootnath-temple	Bhootnath Temple	rishikesh	30.11660	78.31810	/places-to-visit	Komoot highlight 3562284 + Google plus code 4889+J6Q (agree within 5 m)	TouristAttraction	
+tera-manzil-temple	Tera Manzil Temple	rishikesh	30.12655	78.33108	/places-to-visit	OSM way 102676171 (place_of_worship "Trayambakeshwar Temple", 11 levels)	TouristAttraction	
