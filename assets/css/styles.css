@@ -8,6 +8,7 @@
   --river-2: #0f6f74;
   --leaf: #5f7f3b;
   --marigold: #d98b2b;
+  --marigold-text: #8a5a14; /* marigold as TEXT on a light surface (5.8:1 on #fbfaf5); --marigold stays for borders and icons */
   --clay: #b5573f;
   --sky: #e7f1ef;
   --shadow: 0 18px 46px rgba(23, 33, 31, 0.12);
@@ -1377,8 +1378,10 @@ a.homestay-photo:hover {
     margin: auto -16px 0;
     padding: 16px 16px 0;
     border-top: 1px solid var(--line);}
-  .nav-drawer-quick-action {
-    width: 100%;}
+  .nav-drawer-footer .nav-drawer-quick-action,
+  .nav-drawer-footer .nav-drawer-quick-action:hover {
+    width: 100%;
+    color: #fff;}
   .nav-drawer-contact {
     display: flex;
     flex-direction: column;
@@ -2356,7 +2359,7 @@ a.homestay-photo:hover {
 }
 
 .rhs-footer-nav span{
-    color:#64748b;
+    color:#94a3b8;
     user-select:none;
 }
 
@@ -3098,7 +3101,7 @@ input.sx-input {
   font-size: 0.82rem;
   font-variant-numeric: tabular-nums;}
 .sx-stars-ico {
-  color: var(--marigold);
+  color: var(--marigold-text);
   letter-spacing: 1px;}
 .sx-go {
   grid-column: 2;
@@ -3219,7 +3222,7 @@ input.sx-input {
   margin: 0 0 6px;
   font-size: 1.2rem;}
 .sx-own h2 span {
-  color: var(--marigold);
+  color: var(--marigold-text);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -3789,7 +3792,7 @@ body.whatsapp-drawer-open .rh-ad-rail {
 .rhs-footer-stays li:not(:last-child)::after {
   content: "|";
   margin: 0 10px;
-  color: #64748b;}
+  color: #94a3b8;}
 .rhs-footer-stays a {
   color: #cbd5e1;
   font-size: 14px;
@@ -4350,6 +4353,7 @@ html:lang(he) :is(body, h1, h2, h3, h4) {
     line-height: 1.15;}}
 
 :root[data-theme="dark"] {
+  --marigold-text: var(--marigold);
   color-scheme: dark;
   --ink: #e7ece9;
   --muted: #a3b0ac;
