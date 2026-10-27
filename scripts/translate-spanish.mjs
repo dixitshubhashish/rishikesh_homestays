@@ -244,8 +244,9 @@ function translateText(english) {
 }
 
 async function main() {
-  const jobFile = process.argv[2] || '/private/tmp/claude-502/-Users-shubhashish-rishikesh-homestays/b62cb5d9-33cb-4b37-a260-d14008e42204/scratchpad/wave2/es-1.json';
-  const outFile = process.argv[3] || '/private/tmp/claude-502/-Users-shubhashish-rishikesh-homestays/b62cb5d9-33cb-4b37-a260-d14008e42204/scratchpad/wave2/es-1.out.json';
+  const jobFile = process.argv[2];
+  const outFile = process.argv[3];
+  if (!jobFile || !outFile) { console.error('Usage: node scripts/translate-spanish.mjs <job.json> <out.json>'); process.exit(1); }
 
   console.log(`Reading job file: ${jobFile}`);
   const jobData = JSON.parse(fs.readFileSync(jobFile, 'utf-8'));
